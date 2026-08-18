@@ -41,34 +41,6 @@ export function generateFallbackIcon(text: string): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-async function sendBackgroundMessage<T = any>(msg: any): Promise<T | null> {
-  if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-    try {
-      const res = await chrome.runtime.sendMessage(msg);
-      if (res !== undefined && res !== null) {
-        return res;
-      }
-    } catch {
-      // fallback to callback
-    }
-
-    try {
-      return await new Promise<T | null>((resolve) => {
-        chrome.runtime.sendMessage(msg, (response) => {
-          if (chrome.runtime.lastError || !response) {
-            resolve(null);
-          } else {
-            resolve(response);
-          }
-        });
-      });
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
 /**
  * Convert any image URL to a compact Base64 Data URL (max 128x128)
  */
@@ -76,63 +48,86 @@ export async function urlToBase64Icon(imageUrl: string, maxSize = 128): Promise<
   if (!imageUrl) return '';
   if (imageUrl.startsWith('data:image/')) return imageUrl;
 
-  // 1. Privileged background fetch (bypasses all CORS and redirects in extension environment)
+  // 1. Try privileged background fetch if running as extension (bypasses all CORS and redirects)
   if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-    const resp = await sendBackgroundMessage<{ success: boolean; data?: string }>({
-      type: 'FETCH_BLOB_BASE64',
-      url: imageUrl,
-    });
-
-    if (resp?.success && resp.data && resp.data.startsWith('data:image/')) {
-      return resp.data;
-    }
-
-    // 2. Fallback: ask background to fetch DuckDuckGo CDN icon
     try {
-      const domain = new URL(imageUrl).hostname;
-      if (domain && !imageUrl.includes('duckduckgo.com')) {
-        const fallbackUrl = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
-        const fbResp = await sendBackgroundMessage<{ success: boolean; data?: string }>({
-          type: 'FETCH_BLOB_BASE64',
-          url: fallbackUrl,
+      const resp = await new Promise<any>((resolve) => {
+        chrome.runtime.sendMessage({ type: 'FETCH_BLOB_BASE64', url: imageUrl }, (res) => {
+          if (chrome.runtime.lastError || !res) {
+            resolve(null);
+          } else {
+            resolve(res);
+          }
         });
-
-        if (fbResp?.success && fbResp.data && fbResp.data.startsWith('data:image/')) {
-          return fbResp.data;
-        }
+      });
+      if (resp && resp.success && resp.data && resp.data.startsWith('data:image/')) {
+        return resp.data;
       }
     } catch {
-      // ignore
-    }
-
-    // 3. Fallback: ask background to fetch Google gstatic Favicon V2 CDN
-    try {
-      const domain = new URL(imageUrl).hostname;
-      if (domain && !imageUrl.includes('gstatic.com')) {
-        const gstaticUrl = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
-        const gResp = await sendBackgroundMessage<{ success: boolean; data?: string }>({
-          type: 'FETCH_BLOB_BASE64',
-          url: gstaticUrl,
-        });
-
-        if (gResp?.success && gResp.data && gResp.data.startsWith('data:image/')) {
-          return gResp.data;
-        }
-      }
-    } catch {
-      // ignore
-    }
-
-    // If all failed, return SVG fallback icon
-    try {
-      const domain = new URL(imageUrl).hostname;
-      return generateFallbackIcon(domain || 'W');
-    } catch {
-      return generateFallbackIcon('W');
+      // fallback to direct fetch
     }
   }
 
-  // Standalone dev preview (outside extension environment)
+  // 2. Try direct fetch
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+    const res = await fetch(imageUrl, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+      },
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const blob = await res.blob();
+      if (blob && blob.size > 0) {
+        return await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            resolve(result || imageUrl);
+          };
+          reader.onerror = () => resolve(imageUrl);
+          reader.readAsDataURL(blob);
+        });
+      }
+    }
+  } catch {
+    // direct fetch failed
+  }
+
+  // 3. Fallback: try DuckDuckGo or direct gstatic CDN (both support CORS and no 301 redirects)
+  try {
+    const domain = new URL(imageUrl).hostname;
+    if (domain && !imageUrl.includes('gstatic.com') && !imageUrl.includes('duckduckgo.com')) {
+      const fallbackUrl = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch(fallbackUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const blob = await res.blob();
+        if (blob && blob.size > 0) {
+          return await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              resolve(result || imageUrl);
+            };
+            reader.onerror = () => resolve(imageUrl);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+
   return imageUrl;
 }
 
@@ -188,8 +183,8 @@ export async function fileToBase64Icon(file: File, maxSize = 128): Promise<strin
  */
 export function getFaviconServiceUrls(hostname: string): string[] {
   return [
-    `https://icons.duckduckgo.com/ip3/${hostname}.ico`,
     `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostname}&size=128`,
+    `https://icons.duckduckgo.com/ip3/${hostname}.ico`,
     `https://api.faviconkit.com/${hostname}/144`,
   ];
 }
@@ -215,32 +210,22 @@ export async function fetchSiteMetadata(rawUrl: string): Promise<MetadataResult>
   let extractedTitle = defaultTitle;
   let extractedIcon = getFaviconServiceUrls(hostname)[0];
 
-  // Try to parse HTML via background privileged fetch or direct fetch
+  // Try direct fetch to parse HTML <title> and high-res <link rel="icon">
   try {
-    let html = '';
-    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-      const resp = await sendBackgroundMessage<{ success: boolean; data?: string }>({
-        type: 'FETCH_HTML',
-        url,
-      });
-      if (resp && resp.success && resp.data) {
-        html = resp.data;
-      }
-    } else {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-      const response = await fetch(url, {
-        signal: controller.signal,
-        headers: { 'Accept': 'text/html,application/xhtml+xml' },
-        mode: 'cors',
-      });
-      clearTimeout(timeoutId);
-      if (response.ok) {
-        html = await response.text();
-      }
-    }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-    if (html) {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml',
+      },
+      mode: 'cors',
+    });
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const html = await response.text();
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
 
@@ -281,7 +266,8 @@ export async function fetchSiteMetadata(rawUrl: string): Promise<MetadataResult>
       }
     }
   } catch {
-    extractedIcon = getFaviconServiceUrls(hostname)[0];
+    // Direct fetch failed (e.g. CORS or network failure). Use Google / DuckDuckGo favicon fallback
+    extractedIcon = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostname}&size=128`;
   }
 
   // Optimize & Cache as Base64 Data URL
