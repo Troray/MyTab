@@ -1,6 +1,6 @@
 {
   "name": "mytab",
-  "version": "1.0.2",
+  "version": "1.0.1",
   "description": "A modern, aesthetic New Tab extension with WebDAV & Git sync and smart metadata fetching for Chrome and Firefox",
   "author": "Troray",
   "homepage": "https://github.com/Troray/MyTab#readme",
