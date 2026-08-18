@@ -60,7 +60,24 @@ jobs:
           name: "MyTab Release ${{ github.ref_name }}"
           draft: false
           prerelease: false
-          generate_release_notes: true
+          body: |
+            ### 📖 如何安装
+
+            - **Chrome 浏览器用户**：
+              1. 请下载 Release 里的 `chrome.zip` 并解压到一个固定文件夹。
+              2. 打开 Chrome 地址栏输入：`chrome://extensions/`。
+              3. 开启右上角 **「开发者模式」(Developer mode)** 开关。
+              4. 点击左上角 **「加载已解压的扩展程序」(Load unpacked)**，选择刚刚解压的文件夹即可。
+
+            - **其他 Chromium 浏览器**：
+              - 可以直接下载并安装 `chrome.crx`。
+              - `chrome.crx` 支持在 **Brave / Vivaldi / 360 极速浏览器 / Cent Browser / 搜狗高速** 等浏览器中直接拖拽安装（非常适合非 Chrome 的国内/第三方 Chromium 用户）。
+
+            - **Microsoft Edge**：
+              - 直接到微软官方 Edge 扩展中心进行安装：[Edge 扩展中心](https://microsoftedge.microsoft.com/addons/detail/bchchngjdocafdpnnoiolnbfdnkngfjn)
+
+            - **Firefox**：
+              - 直接点击下载 Release 里的 `firefox.xpi` 进行安装。Mozilla Firefox 扩展中心正在审核中。
           files: |
             dist/chrome.zip
             dist/chrome.crx
