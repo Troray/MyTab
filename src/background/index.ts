@@ -68,25 +68,25 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
       }
 
       if (message.type === 'FETCH_BLOB_BASE64' && message.url) {
-        fetch(message.url)
+        fetch(message.url, { redirect: 'follow' })
           .then((res) => {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.blob();
           })
           .then((blob) => blobToBase64(blob))
           .then((base64) => sendResponse({ success: true, data: base64 }))
-          .catch((err) => sendResponse({ success: false, error: err.message }));
+          .catch((err) => sendResponse({ success: false, error: err?.message }));
         return true;
       }
 
       if (message.type === 'FETCH_HTML' && message.url) {
-        fetch(message.url)
+        fetch(message.url, { redirect: 'follow' })
           .then((res) => {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.text();
           })
           .then((html) => sendResponse({ success: true, data: html }))
-          .catch((err) => sendResponse({ success: false, error: err.message }));
+          .catch((err) => sendResponse({ success: false, error: err?.message }));
         return true;
       }
     });
