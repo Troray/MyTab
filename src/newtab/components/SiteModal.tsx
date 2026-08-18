@@ -198,6 +198,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
                 <img
                   src={previewIcon}
                   alt="Preview"
+                  referrerPolicy="no-referrer"
                   className="w-7 h-7 object-contain rounded"
                   onError={(e) => {
                     (e.target as HTMLElement).setAttribute('src', generateFallbackIcon(title || 'W'));
