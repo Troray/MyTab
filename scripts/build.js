@@ -20,7 +20,7 @@ async function buildExtension() {
   await fs.remove(tempBuildDir);
   await fs.ensureDir(tempBuildDir);
 
-  // 1. Run Vite Build
+  // 1. Run Vite Build for frontend UI
   console.log('📦 Compiling TypeScript & React assets with Vite...');
   await viteBuild({
     root: rootDir,
@@ -28,6 +28,28 @@ async function buildExtension() {
     build: {
       outDir: tempBuildDir,
       emptyOutDir: true,
+    },
+  });
+
+  // 2. Build standalone background script as self-contained IIFE (no imports, fully compatible with Firefox & Chrome)
+  console.log('📦 Bundling standalone background.js as IIFE...');
+  await viteBuild({
+    root: rootDir,
+    configFile: false,
+    build: {
+      outDir: tempBuildDir,
+      emptyOutDir: false,
+      lib: {
+        entry: path.resolve(rootDir, 'src/background/index.ts'),
+        name: 'Background',
+        formats: ['iife'],
+        fileName: () => 'background.js',
+      },
+      rollupOptions: {
+        output: {
+          extend: true,
+        },
+      },
     },
   });
 
