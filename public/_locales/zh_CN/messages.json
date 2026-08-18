@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "MyTab - 极简新标签页",
+    "description": "扩展程序名称"
+  },
+  "extensionDescription": {
+    "message": "现代化高颜值新标签页，支持智能图标抓取、聚合搜索、分类网格与 WebDAV / Git (GitHub/Gitee) 双重多设备云同步。",
+    "description": "扩展程序描述"
+  }
+}
