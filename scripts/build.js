@@ -66,12 +66,12 @@ async function buildExtension() {
       await fs.remove(srcInTarget);
     }
 
-    // Generate Manifest
+    const pkgJson = await fs.readJson(path.resolve(rootDir, 'package.json'));
     const manifest = {
       manifest_version: 3,
       name: 'MyTab - 极简新标签页',
       description: '现代化高颜值新标签页，支持智能图标抓取、聚合搜索、分类网格与 WebDAV / Git (GitHub/Gitee) 双重多设备云同步。',
-      version: '1.0.0',
+      version: pkgJson.version || '1.0.1',
       author: 'Troray',
       homepage_url: 'https://github.com/Troray/MyTab',
       icons: {
@@ -109,6 +109,9 @@ async function buildExtension() {
         gecko: {
           id: 'mytab@addon.local',
           strict_min_version: '109.0',
+          data_collection_permissions: {
+            required: ['none'],
+          },
         },
       };
     }

@@ -129,6 +129,7 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
             src={iconSrc}
             alt={site.title}
             draggable={false}
+            referrerPolicy="no-referrer"
             onError={() => setImgError(true)}
             style={{ width: `${iconImgSize}px`, height: `${iconImgSize}px` }}
             className="object-contain rounded-md select-none pointer-events-none"

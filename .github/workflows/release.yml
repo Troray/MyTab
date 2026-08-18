@@ -1,0 +1,85 @@
+name: Build & Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build and Publish Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extensions
+        run: npm run build
+
+      - name: Package zip and source files
+        run: npm run package
+
+      - name: Prepare standard zip files
+        run: |
+          cp dist/mytab-chrome.zip dist/chrome.zip
+          cp dist/mytab-firefox.zip dist/firefox.zip
+
+      - name: Build Chrome .crx
+        env:
+          CRX_KEY: ${{ secrets.CRX_PRIVATE_KEY }}
+        run: |
+          if [ -n "$CRX_KEY" ]; then
+            echo "$CRX_KEY" > crx-key.pem
+            npx -y crx pack dist/chrome -p crx-key.pem -o dist/chrome.crx
+            rm -f crx-key.pem
+            echo "✅ chrome.crx generated successfully."
+          else
+            echo "⚠️ CRX_PRIVATE_KEY is not set, skipping .crx generation."
+          fi
+
+      - name: Build Firefox .xpi
+        run: |
+          cp dist/mytab-firefox.zip dist/firefox.xpi
+          echo "✅ firefox.xpi generated successfully."
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "MyTab Release ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+          body: |
+            ### 📖 如何安装
+
+            - **Chrome 浏览器用户**：
+              1. 请下载 Release 里的 `chrome.zip` 并解压到一个固定文件夹。
+              2. 打开 Chrome 地址栏输入：`chrome://extensions/`。
+              3. 开启右上角 **「开发者模式」(Developer mode)** 开关。
+              4. 点击左上角 **「加载已解压的扩展程序」(Load unpacked)**，选择刚刚解压的文件夹即可。
+
+            - **其他 Chromium 浏览器**：
+              - 可以直接下载并安装 `chrome.crx`。
+              - `chrome.crx` 支持在 **Brave / Vivaldi / 360 极速浏览器 / Cent Browser / 搜狗高速** 等浏览器中直接拖拽安装（非常适合非 Chrome 的国内/第三方 Chromium 用户）。
+
+            - **Microsoft Edge**：
+              - 直接到微软官方 Edge 扩展中心进行安装：[Edge 扩展中心](https://microsoftedge.microsoft.com/addons/detail/bchchngjdocafdpnnoiolnbfdnkngfjn)
+
+            - **Firefox**：
+              - 直接点击下载 Release 里的 `firefox.xpi` 进行安装。Mozilla Firefox 扩展中心正在审核中。
+          files: |
+            dist/chrome.zip
+            dist/chrome.crx
+            dist/firefox.zip
+            dist/firefox.xpi

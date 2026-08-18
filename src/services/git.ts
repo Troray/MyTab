@@ -20,8 +20,6 @@ function getHeaders(config: GitSyncConfig): Record<string, string> {
   const headers: Record<string, string> = {
     'Accept': 'application/vnd.github.v3+json',
     'Content-Type': 'application/json; charset=utf-8',
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
   };
 
   if (config.token) {

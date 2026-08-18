@@ -48,53 +48,35 @@ export async function urlToBase64Icon(imageUrl: string, maxSize = 128): Promise<
   if (!imageUrl) return '';
   if (imageUrl.startsWith('data:image/')) return imageUrl;
 
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'Anonymous';
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-    const timeout = setTimeout(() => {
-      resolve(imageUrl); // Fallback to raw URL if timed out
-    }, 4000);
+    const res = await fetch(imageUrl, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+      },
+    });
+    clearTimeout(timeoutId);
 
-    img.onload = () => {
-      clearTimeout(timeout);
-      try {
-        const canvas = document.createElement('canvas');
-        let width = img.naturalWidth || img.width || 64;
-        let height = img.naturalHeight || img.height || 64;
+    if (res.ok) {
+      const blob = await res.blob();
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          resolve(result || imageUrl);
+        };
+        reader.onerror = () => resolve(imageUrl);
+        reader.readAsDataURL(blob);
+      });
+    }
+  } catch {
+    // Fallback to raw URL if fetch fails
+  }
 
-        if (width > maxSize || height > maxSize) {
-          if (width > height) {
-            height = Math.round((height * maxSize) / width);
-            width = maxSize;
-          } else {
-            width = Math.round((width * maxSize) / height);
-            height = maxSize;
-          }
-        }
-
-        canvas.width = Math.max(width, 16);
-        canvas.height = Math.max(height, 16);
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL('image/png', 0.9);
-          resolve(dataUrl);
-        } else {
-          resolve(imageUrl);
-        }
-      } catch {
-        resolve(imageUrl);
-      }
-    };
-
-    img.onerror = () => {
-      clearTimeout(timeout);
-      resolve(imageUrl);
-    };
-
-    img.src = imageUrl;
-  });
+  return imageUrl;
 }
 
 /**

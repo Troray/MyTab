@@ -98,7 +98,6 @@ export class WebdavClient {
       method: 'GET',
       headers: {
         ...getAuthHeader(this.config),
-        'Cache-Control': 'no-cache',
       },
     });
 
