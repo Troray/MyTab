@@ -46,8 +46,11 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
       return blob.arrayBuffer().then((buf) => {
         const bytes = new Uint8Array(buf);
         let binary = '';
-        for (let i = 0; i < bytes.byteLength; i++) {
-          binary += String.fromCharCode(bytes[i]);
+        const len = bytes.byteLength;
+        const chunkSize = 8192;
+        for (let i = 0; i < len; i += chunkSize) {
+          const chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
+          binary += String.fromCharCode.apply(null, chunk as any);
         }
         const b64 = btoa(binary);
         const mime = blob.type || 'image/png';
@@ -60,34 +63,44 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
   if (chrome.runtime.onMessage) {
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (message.type === 'TRIGGER_SYNC') {
-        loadAppState()
+        const p = loadAppState()
           .then((state) => executeWebdavSync(state))
-          .then((res) => sendResponse(res))
-          .catch((err) => sendResponse({ success: false, message: err.message }));
-        return true; // async response
+          .catch((err) => ({ success: false, message: err.message }));
+        p.then((res) => sendResponse(res));
+        return p;
       }
 
       if (message.type === 'FETCH_BLOB_BASE64' && message.url) {
-        fetch(message.url, { redirect: 'follow' })
-          .then((res) => {
+        const p = (async () => {
+          try {
+            const res = await fetch(message.url, { redirect: 'follow' });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.blob();
-          })
-          .then((blob) => blobToBase64(blob))
-          .then((base64) => sendResponse({ success: true, data: base64 }))
-          .catch((err) => sendResponse({ success: false, error: err?.message }));
-        return true;
+            const blob = await res.blob();
+            const base64 = await blobToBase64(blob);
+            return { success: true, data: base64 };
+          } catch (err: any) {
+            return { success: false, error: err?.message || 'Fetch failed' };
+          }
+        })();
+
+        p.then((res) => sendResponse(res));
+        return p;
       }
 
       if (message.type === 'FETCH_HTML' && message.url) {
-        fetch(message.url, { redirect: 'follow' })
-          .then((res) => {
+        const p = (async () => {
+          try {
+            const res = await fetch(message.url, { redirect: 'follow' });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.text();
-          })
-          .then((html) => sendResponse({ success: true, data: html }))
-          .catch((err) => sendResponse({ success: false, error: err?.message }));
-        return true;
+            const html = await res.text();
+            return { success: true, data: html };
+          } catch (err: any) {
+            return { success: false, error: err?.message || 'Fetch failed' };
+          }
+        })();
+
+        p.then((res) => sendResponse(res));
+        return p;
       }
     });
   }

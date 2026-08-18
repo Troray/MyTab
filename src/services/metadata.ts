@@ -41,6 +41,34 @@ export function generateFallbackIcon(text: string): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+async function sendBackgroundMessage<T = any>(msg: any): Promise<T | null> {
+  if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+    try {
+      const res = await chrome.runtime.sendMessage(msg);
+      if (res !== undefined && res !== null) {
+        return res;
+      }
+    } catch {
+      // fallback to callback
+    }
+
+    try {
+      return await new Promise<T | null>((resolve) => {
+        chrome.runtime.sendMessage(msg, (response) => {
+          if (chrome.runtime.lastError || !response) {
+            resolve(null);
+          } else {
+            resolve(response);
+          }
+        });
+      });
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 /**
  * Convert any image URL to a compact Base64 Data URL (max 128x128)
  */
@@ -50,22 +78,13 @@ export async function urlToBase64Icon(imageUrl: string, maxSize = 128): Promise<
 
   // 1. Privileged background fetch (bypasses all CORS and redirects in extension environment)
   if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-    try {
-      const resp = await new Promise<any>((resolve) => {
-        chrome.runtime.sendMessage({ type: 'FETCH_BLOB_BASE64', url: imageUrl }, (res) => {
-          if (chrome.runtime.lastError || !res) {
-            resolve(null);
-          } else {
-            resolve(res);
-          }
-        });
-      });
+    const resp = await sendBackgroundMessage<{ success: boolean; data?: string }>({
+      type: 'FETCH_BLOB_BASE64',
+      url: imageUrl,
+    });
 
-      if (resp && resp.success && resp.data && resp.data.startsWith('data:image/')) {
-        return resp.data;
-      }
-    } catch {
-      // background error
+    if (resp?.success && resp.data && resp.data.startsWith('data:image/')) {
+      return resp.data;
     }
 
     // 2. Fallback: ask background to fetch DuckDuckGo CDN icon
@@ -73,25 +92,38 @@ export async function urlToBase64Icon(imageUrl: string, maxSize = 128): Promise<
       const domain = new URL(imageUrl).hostname;
       if (domain && !imageUrl.includes('duckduckgo.com')) {
         const fallbackUrl = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
-        const resp = await new Promise<any>((resolve) => {
-          chrome.runtime.sendMessage({ type: 'FETCH_BLOB_BASE64', url: fallbackUrl }, (res) => {
-            if (chrome.runtime.lastError || !res) {
-              resolve(null);
-            } else {
-              resolve(res);
-            }
-          });
+        const fbResp = await sendBackgroundMessage<{ success: boolean; data?: string }>({
+          type: 'FETCH_BLOB_BASE64',
+          url: fallbackUrl,
         });
 
-        if (resp && resp.success && resp.data && resp.data.startsWith('data:image/')) {
-          return resp.data;
+        if (fbResp?.success && fbResp.data && fbResp.data.startsWith('data:image/')) {
+          return fbResp.data;
         }
       }
     } catch {
       // ignore
     }
 
-    // If both failed, return SVG fallback icon
+    // 3. Fallback: ask background to fetch Google gstatic Favicon V2 CDN
+    try {
+      const domain = new URL(imageUrl).hostname;
+      if (domain && !imageUrl.includes('gstatic.com')) {
+        const gstaticUrl = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
+        const gResp = await sendBackgroundMessage<{ success: boolean; data?: string }>({
+          type: 'FETCH_BLOB_BASE64',
+          url: gstaticUrl,
+        });
+
+        if (gResp?.success && gResp.data && gResp.data.startsWith('data:image/')) {
+          return gResp.data;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // If all failed, return SVG fallback icon
     try {
       const domain = new URL(imageUrl).hostname;
       return generateFallbackIcon(domain || 'W');
@@ -187,11 +219,9 @@ export async function fetchSiteMetadata(rawUrl: string): Promise<MetadataResult>
   try {
     let html = '';
     if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
-      const resp = await new Promise<any>((resolve) => {
-        chrome.runtime.sendMessage({ type: 'FETCH_HTML', url }, (res) => {
-          if (chrome.runtime.lastError || !res) resolve(null);
-          else resolve(res);
-        });
+      const resp = await sendBackgroundMessage<{ success: boolean; data?: string }>({
+        type: 'FETCH_HTML',
+        url,
       });
       if (resp && resp.success && resp.data) {
         html = resp.data;
