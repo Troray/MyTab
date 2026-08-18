@@ -109,6 +109,9 @@ async function buildExtension() {
         gecko: {
           id: 'mytab@addon.local',
           strict_min_version: '109.0',
+          data_collection_permissions: {
+            required: ['none'],
+          },
         },
       };
     }

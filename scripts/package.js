@@ -41,13 +41,37 @@ async function packageExtensions() {
 
   const chromeZip = path.resolve(distBase, 'mytab-chrome.zip');
   const firefoxZip = path.resolve(distBase, 'mytab-firefox.zip');
+  const sourceZip = path.resolve(distBase, 'mytab-source.zip');
 
   await zipDirectory(chromeDir, chromeZip);
   await zipDirectory(firefoxDir, firefoxZip);
 
+  // Package clean source code for AMO review
+  const sourceArchive = archiver('zip', { zlib: { level: 9 } });
+  const sourceStream = fs.createWriteStream(sourceZip);
+  await new Promise((resolve, reject) => {
+    sourceArchive
+      .glob('**/*', {
+        cwd: rootDir,
+        ignore: ['node_modules/**', 'dist/**', '.git/**', '.temp/**', '*.zip'],
+        dot: true,
+      })
+      .on('error', reject)
+      .pipe(sourceStream);
+
+    sourceStream.on('close', () => {
+      const sizeMB = (sourceArchive.pointer() / 1024 / 1024).toFixed(2);
+      console.log(`📦 Created ${path.basename(sourceZip)} (${sizeMB} MB / ${sourceArchive.pointer()} bytes)`);
+      resolve();
+    });
+
+    sourceArchive.finalize();
+  });
+
   console.log('\n🎉 All packages created successfully in "dist/" folder!');
   console.log(`- Chrome Extension:  ${chromeZip}`);
   console.log(`- Firefox Extension: ${firefoxZip}`);
+  console.log(`- Source Code (AMO): ${sourceZip}`);
 }
 
 packageExtensions().catch((err) => {
