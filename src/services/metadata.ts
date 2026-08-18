@@ -48,9 +48,10 @@ export async function urlToBase64Icon(imageUrl: string, maxSize = 128): Promise<
   if (!imageUrl) return '';
   if (imageUrl.startsWith('data:image/')) return imageUrl;
 
+  // 1. Try direct fetch
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
 
     const res = await fetch(imageUrl, {
       signal: controller.signal,
@@ -62,18 +63,49 @@ export async function urlToBase64Icon(imageUrl: string, maxSize = 128): Promise<
 
     if (res.ok) {
       const blob = await res.blob();
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const result = reader.result as string;
-          resolve(result || imageUrl);
-        };
-        reader.onerror = () => resolve(imageUrl);
-        reader.readAsDataURL(blob);
-      });
+      if (blob && blob.size > 0) {
+        return await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            resolve(result || imageUrl);
+          };
+          reader.onerror = () => resolve(imageUrl);
+          reader.readAsDataURL(blob);
+        });
+      }
     }
   } catch {
-    // Fallback to raw URL if fetch fails
+    // direct fetch failed
+  }
+
+  // 2. If direct fetch failed (e.g. anti-hotlinking 412/403 or network issue), try Google Favicon CDN
+  try {
+    const domain = new URL(imageUrl).hostname;
+    if (domain && !imageUrl.includes('google.com/s2/favicons')) {
+      const fallbackUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch(fallbackUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const blob = await res.blob();
+        if (blob && blob.size > 0) {
+          return await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              resolve(result || imageUrl);
+            };
+            reader.onerror = () => resolve(imageUrl);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    }
+  } catch {
+    // ignore
   }
 
   return imageUrl;
