@@ -48,7 +48,27 @@ export async function urlToBase64Icon(imageUrl: string, maxSize = 128): Promise<
   if (!imageUrl) return '';
   if (imageUrl.startsWith('data:image/')) return imageUrl;
 
-  // 1. Try direct fetch
+  // 1. Try privileged background fetch if running as extension (bypasses all CORS and redirects)
+  if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+    try {
+      const resp = await new Promise<any>((resolve) => {
+        chrome.runtime.sendMessage({ type: 'FETCH_BLOB_BASE64', url: imageUrl }, (res) => {
+          if (chrome.runtime.lastError || !res) {
+            resolve(null);
+          } else {
+            resolve(res);
+          }
+        });
+      });
+      if (resp && resp.success && resp.data && resp.data.startsWith('data:image/')) {
+        return resp.data;
+      }
+    } catch {
+      // fallback to direct fetch
+    }
+  }
+
+  // 2. Try direct fetch
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3500);
@@ -79,11 +99,11 @@ export async function urlToBase64Icon(imageUrl: string, maxSize = 128): Promise<
     // direct fetch failed
   }
 
-  // 2. If direct fetch failed (e.g. anti-hotlinking 412/403 or network issue), try Google Favicon CDN
+  // 3. Fallback: try DuckDuckGo or direct gstatic CDN (both support CORS and no 301 redirects)
   try {
     const domain = new URL(imageUrl).hostname;
-    if (domain && !imageUrl.includes('google.com/s2/favicons')) {
-      const fallbackUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    if (domain && !imageUrl.includes('gstatic.com') && !imageUrl.includes('duckduckgo.com')) {
+      const fallbackUrl = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3500);
       const res = await fetch(fallbackUrl, { signal: controller.signal });
@@ -163,7 +183,7 @@ export async function fileToBase64Icon(file: File, maxSize = 128): Promise<strin
  */
 export function getFaviconServiceUrls(hostname: string): string[] {
   return [
-    `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`,
+    `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostname}&size=128`,
     `https://icons.duckduckgo.com/ip3/${hostname}.ico`,
     `https://api.faviconkit.com/${hostname}/144`,
   ];
@@ -247,7 +267,7 @@ export async function fetchSiteMetadata(rawUrl: string): Promise<MetadataResult>
     }
   } catch {
     // Direct fetch failed (e.g. CORS or network failure). Use Google / DuckDuckGo favicon fallback
-    extractedIcon = `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`;
+    extractedIcon = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostname}&size=128`;
   }
 
   // Optimize & Cache as Base64 Data URL
