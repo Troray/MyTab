@@ -66,10 +66,18 @@ jobs:
             dist/firefox.xpi
           retention-days: 14
 
+      - name: Refresh dev-preview tag to latest commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f dev-preview ${{ github.sha }}
+          git push origin -f dev-preview
+
       - name: Update Dev Pre-release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "dev-preview"
+          target_commitish: ${{ github.sha }}
           name: "MyTab Dev Preview (开发预览版)"
           draft: false
           prerelease: true
