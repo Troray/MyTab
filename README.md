@@ -3,6 +3,8 @@
 一款极简、高颜值、支持毛玻璃与深浅色模式的现代化浏览器新标签页（New Tab）扩展。由 [Troray](https://github.com/Troray) 原创开发与维护。全面兼容 **Google Chrome (MV3)**、**Microsoft Edge**、**Mozilla Firefox** 及各大 Chromium 内核浏览器。
 
 - 🔗 **GitHub 开源仓库**：[https://github.com/Troray/MyTab](https://github.com/Troray/MyTab)
+- 🦊 **Firefox 附加组件中心**：[Firefox Add-ons 官方商店](https://addons.mozilla.org/zh-CN/firefox/addon/mytab-%E6%9E%81%E7%AE%80%E6%96%B0%E6%A0%87%E7%AD%BE%E9%A1%B5/)
+- 🌐 **Microsoft Edge 扩展中心**：[Edge Add-ons 官方商店](https://microsoftedge.microsoft.com/addons/detail/bchchngjdocafdpnnoiolnbfdnkngfjn)
 - 🐛 **问题反馈与建议**：[Issues](https://github.com/Troray/MyTab/issues)
 
 ---
@@ -20,9 +22,21 @@
 
 ---
 
-## 🚀 快速开始与安装使用
+## 🚀 安装与使用
 
-### 步骤一：克隆仓库并安装依赖
+### 方式一：官方扩展商店一键安装（推荐普通用户）
+
+| 浏览器平台 | 安装途径 | 状态 |
+| :--- | :--- | :--- |
+| **Microsoft Edge** | 🌐 [前往 Edge Add-ons 官方扩展中心安装](https://microsoftedge.microsoft.com/addons/detail/bchchngjdocafdpnnoiolnbfdnkngfjn) | ✅ 官方认证上架 |
+| **Mozilla Firefox** | 🦊 [前往 Firefox 附加组件中心一键安装](https://addons.mozilla.org/zh-CN/firefox/addon/mytab-%E6%9E%81%E7%AE%80%E6%96%B0%E6%A0%87%E7%AD%BE%E9%A1%B5/) | ✅ 官方认证上架 |
+| **Chrome / 其他 Chromium 浏览器** (Brave, 360, Vivaldi 等) | 📦 前往 [GitHub Releases 页面](https://github.com/Troray/MyTab/releases) 下载 `chrome.zip` 或 `chrome.crx` | 🚀 支持离线/拖拽安装 |
+
+---
+
+### 方式二：源码编译与本地调试（开发者）
+
+#### 步骤一：克隆仓库并安装依赖
 ```bash
 # 1. 克隆代码仓库
 git clone https://github.com/Troray/MyTab.git
@@ -32,7 +46,7 @@ cd MyTab
 npm install
 ```
 
-### 步骤二：一键构建扩展包
+#### 步骤二：一键构建扩展包
 ```bash
 # 构建全平台扩展产物 (同时生成 Chrome MV3 与 Firefox 产物)
 npm run build
@@ -46,20 +60,18 @@ npm run package
 - `dist/firefox/`：适用于 Mozilla Firefox 浏览器。
 - `dist/mytab-chrome.zip` / `dist/mytab-firefox.zip`：发布与分发压缩包。
 
-### 步骤三：加载至浏览器
+#### 步骤三：加载已编译扩展
 
-#### 1. Google Chrome / Microsoft Edge / Brave 等浏览器
-1. 打开浏览器，在地址栏访问：`chrome://extensions/`（Edge 访问 `edge://extensions/`）。
-2. 打开右上角的 **「开发者模式」(Developer mode)** 开关。
-3. 点击左上角的 **「加载已解压的扩展程序」(Load unpacked)**。
-4. 选择本项目目录下的 **`dist/chrome`** 文件夹。
-5. 新开一个标签页，即刻体验 MyTab！
+1. **Google Chrome / Microsoft Edge / Brave 等浏览器**：
+   - 打开浏览器，在地址栏访问：`chrome://extensions/`（Edge 访问 `edge://extensions/`）。
+   - 打开右上角 **「开发者模式」(Developer mode)** 开关。
+   - 点击左上角 **「加载已解压的扩展程序」(Load unpacked)**。
+   - 选择本项目目录下的 **`dist/chrome`** 文件夹即可。
 
-#### 2. Mozilla Firefox 浏览器
-1. 打开 Firefox 浏览器，在地址栏访问：`about:debugging#/runtime/this-firefox`。
-2. 点击 **「临时载入附加组件...」(Load Temporary Add-on...)**。
-3. 选择 `dist/firefox/manifest.json` 文件（或 `dist/mytab-firefox.zip`）。
-4. 打开新标签页即可使用。
+2. **Mozilla Firefox 浏览器**：
+   - 打开 Firefox 浏览器，在地址栏访问：`about:debugging#/runtime/this-firefox`。
+   - 点击 **「临时载入附加组件...」(Load Temporary Add-on...)**。
+   - 选择 `dist/firefox/manifest.json` 文件（或 `dist/mytab-firefox.zip`）即可。
 
 ---
 
