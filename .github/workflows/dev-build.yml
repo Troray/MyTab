@@ -1,0 +1,102 @@
+name: Dev Preview Build & Pre-release
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  dev-build:
+    name: Build Dev Preview
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extensions
+        run: npm run build
+
+      - name: Package zip and source files
+        run: npm run package
+
+      - name: Prepare standard zip files
+        run: |
+          cp dist/mytab-chrome.zip dist/chrome.zip
+          cp dist/mytab-firefox.zip dist/firefox.zip
+
+      - name: Build Chrome .crx
+        env:
+          CRX_KEY: ${{ secrets.CRX_PRIVATE_KEY }}
+        run: |
+          if [ -n "$CRX_KEY" ]; then
+            echo "$CRX_KEY" > crx-key.pem
+            npx -y crx pack dist/chrome -p crx-key.pem -o dist/chrome.crx
+            rm -f crx-key.pem
+            echo "✅ chrome.crx generated successfully."
+          else
+            echo "⚠️ CRX_PRIVATE_KEY is not set, skipping .crx generation."
+          fi
+
+      - name: Build Firefox .xpi
+        run: |
+          cp dist/mytab-firefox.zip dist/firefox.xpi
+          echo "✅ firefox.xpi generated successfully."
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mytab-dev-build
+          path: |
+            dist/chrome.zip
+            dist/chrome.crx
+            dist/firefox.zip
+            dist/firefox.xpi
+          retention-days: 14
+
+      - name: Update Dev Pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "dev-preview"
+          name: "MyTab Dev Preview (开发预览版)"
+          draft: false
+          prerelease: true
+          make_latest: "false"
+          body: |
+            ### 🧪 MyTab 滚动开发预览版 (Dev Preview)
+
+            > ⚠️ **注意**：本版本由 `dev` 分支最新提交自动编译生成，包含最新的未发布功能或实验性特性，仅供开发测试使用。
+            >
+            > - **最新提交 (Commit)**: `${{ github.sha }}`
+            > - **提交说明**: `${{ github.event.head_commit.message }}`
+
+            ---
+
+            ### 📦 安装方式
+
+            - **Chrome / Chromium 内核浏览器**（Brave, Edge, Vivaldi 等）：
+              - 下载下方附件中的 `chrome.zip` 解压后在 `chrome://extensions/` 开发者模式下加载已解压的扩展程序。
+              - 或直接拖拽 `chrome.crx` 安装。
+
+            - **Firefox 浏览器**：
+              - 下载下方附件中的 `firefox.xpi` 或 `firefox.zip` 安装体验。
+
+            ---
+            *如需稳定正式版，请前往 [Releases 页面](../../releases) 获取最新的正式版本。*
+          files: |
+            dist/chrome.zip
+            dist/chrome.crx
+            dist/firefox.zip
+            dist/firefox.xpi
