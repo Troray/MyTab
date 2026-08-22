@@ -1,4 +1,4 @@
-import { Category, SiteItem, SearchEngine, ThemeSettings, WebdavConfig, GitSyncConfig } from '../types';
+import { Category, SiteItem, SearchEngine, ThemeSettings, WebdavConfig, GitSyncConfig, GitPlatformConfig } from '../types';
 
 export const DEFAULT_SEARCH_ENGINES: SearchEngine[] = [
   {
@@ -140,9 +140,7 @@ export const DEFAULT_WEBDAV_CONFIG: WebdavConfig = {
   conflictStrategy: 'merge',
 };
 
-export const DEFAULT_GIT_CONFIG: GitSyncConfig = {
-  enabled: false,
-  provider: 'github',
+export const DEFAULT_GIT_PLATFORM_CONFIG: GitPlatformConfig = {
   mode: 'repo',
   gistId: '',
   owner: '',
@@ -150,5 +148,21 @@ export const DEFAULT_GIT_CONFIG: GitSyncConfig = {
   branch: 'main',
   path: 'mytab-backup.json',
   token: '',
+};
+
+export const DEFAULT_GIT_CONFIG: GitSyncConfig = {
+  enabled: false,
+  provider: 'github',
   autoSync: false,
+  providers: {
+    github: { ...DEFAULT_GIT_PLATFORM_CONFIG },
+    gitee: { ...DEFAULT_GIT_PLATFORM_CONFIG, branch: 'master' },
+  },
+  mode: 'repo',
+  gistId: '',
+  owner: '',
+  repo: '',
+  branch: 'main',
+  path: 'mytab-backup.json',
+  token: '',
 };

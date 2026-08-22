@@ -64,9 +64,28 @@ export interface WebdavConfig {
 export type GitProvider = 'github' | 'gitee';
 export type GitSyncMode = 'gist' | 'repo';
 
+export interface GitPlatformConfig {
+  mode?: GitSyncMode;
+  gistId?: string;
+  owner: string;
+  repo: string;
+  branch: string;
+  path: string;
+  token: string;
+  lastSyncTime?: number;
+  lastSyncStatus?: 'success' | 'failed' | 'in_progress';
+  lastSyncError?: string;
+}
+
 export interface GitSyncConfig {
   enabled: boolean;
   provider: GitProvider;
+  autoSync: boolean;
+  providers?: {
+    github?: GitPlatformConfig;
+    gitee?: GitPlatformConfig;
+  };
+  // Active provider properties (for backward compatibility & direct access)
   mode?: GitSyncMode; // 'repo' (default) or 'gist'
   gistId?: string; // Gist ID for gist mode
   owner: string;
@@ -74,7 +93,6 @@ export interface GitSyncConfig {
   branch: string;
   path: string; // e.g. 'mytab-backup.json'
   token: string;
-  autoSync: boolean;
   lastSyncTime?: number;
   lastSyncStatus?: 'success' | 'failed' | 'in_progress';
   lastSyncError?: string;

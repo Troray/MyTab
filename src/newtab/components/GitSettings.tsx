@@ -14,7 +14,7 @@ import {
   FolderGit2,
   Code2
 } from 'lucide-react';
-import { AppState, GitSyncConfig } from '../../types';
+import { AppState, GitSyncConfig, GitPlatformConfig, GitProvider } from '../../types';
 import { uploadToGit, restoreFromGit, GitClient, autoSetupGist, autoSetupRepo } from '../../services/git';
 import { ConfirmModal } from './ConfirmModal';
 import { t } from '../../utils/i18n';
@@ -73,14 +73,47 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
   const { git, settings } = appState;
   const isLight = settings.mode === 'light';
 
-  const [config, setConfig] = useState<GitSyncConfig>({
-    ...git,
-    mode: git.mode || 'repo',
+  // Initialize with platform isolation map
+  const [config, setConfig] = useState<GitSyncConfig>(() => {
+    const activeProvider = git.provider || 'github';
+    const existingProviders = git.providers || {};
+
+    const currentActivePlatform: GitPlatformConfig = existingProviders[activeProvider] || {
+      mode: git.mode || 'repo',
+      gistId: git.gistId || '',
+      owner: git.owner || '',
+      repo: git.repo || '',
+      branch: git.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
+      path: git.path || 'mytab-backup.json',
+      token: git.token || '',
+      lastSyncTime: git.lastSyncTime,
+      lastSyncStatus: git.lastSyncStatus,
+      lastSyncError: git.lastSyncError,
+    };
+
+    return {
+      ...git,
+      provider: activeProvider,
+      mode: currentActivePlatform.mode || 'repo',
+      gistId: currentActivePlatform.gistId || '',
+      owner: currentActivePlatform.owner || '',
+      repo: currentActivePlatform.repo || '',
+      branch: currentActivePlatform.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
+      path: currentActivePlatform.path || 'mytab-backup.json',
+      token: currentActivePlatform.token || '',
+      lastSyncTime: currentActivePlatform.lastSyncTime,
+      lastSyncStatus: currentActivePlatform.lastSyncStatus,
+      lastSyncError: currentActivePlatform.lastSyncError,
+      providers: {
+        ...existingProviders,
+        [activeProvider]: currentActivePlatform,
+      },
+    };
   });
 
   // Combined Repo URL / Identifier input for repo mode
   const [repoInput, setRepoInput] = useState<string>(
-    git.owner && git.repo ? `${git.owner}/${git.repo}` : ''
+    config.owner && config.repo ? `${config.owner}/${config.repo}` : ''
   );
 
   const [isConnecting, setIsConnecting] = useState(false);
@@ -91,16 +124,99 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
   const [showPullConfirm, setShowPullConfirm] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
 
-  useEffect(() => {
-    if (git.owner && git.repo && !repoInput) {
-      setRepoInput(`${git.owner}/${git.repo}`);
-    }
-  }, [git.owner, git.repo]);
-
+  // Synchronize fields and maintain isolation map
   const handleChange = (fields: Partial<GitSyncConfig>) => {
-    const updated = { ...config, ...fields };
+    const activeProvider = (fields.provider || config.provider) as GitProvider;
+    const merged = { ...config, ...fields };
+
+    const currentPlatformConfig: GitPlatformConfig = {
+      mode: merged.mode || 'repo',
+      gistId: merged.gistId || '',
+      owner: merged.owner || '',
+      repo: merged.repo || '',
+      branch: merged.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
+      path: merged.path || 'mytab-backup.json',
+      token: merged.token || '',
+      lastSyncTime: merged.lastSyncTime,
+      lastSyncStatus: merged.lastSyncStatus,
+      lastSyncError: merged.lastSyncError,
+    };
+
+    const updatedProviders = {
+      ...merged.providers,
+      [activeProvider]: currentPlatformConfig,
+    };
+
+    const updated: GitSyncConfig = {
+      ...merged,
+      providers: updatedProviders,
+    };
+
     setConfig(updated);
     onUpdateGit(updated);
+  };
+
+  // Seamless Platform Switcher with memory isolation
+  const handleProviderChange = (targetProvider: GitProvider) => {
+    if (config.provider === targetProvider) return;
+
+    // 1. Snapshot current active platform config
+    const currentPlatformConfig: GitPlatformConfig = {
+      mode: config.mode || 'repo',
+      gistId: config.gistId || '',
+      owner: config.owner || '',
+      repo: config.repo || '',
+      branch: config.branch || (config.provider === 'gitee' ? 'master' : 'main'),
+      path: config.path || 'mytab-backup.json',
+      token: config.token || '',
+      lastSyncTime: config.lastSyncTime,
+      lastSyncStatus: config.lastSyncStatus,
+      lastSyncError: config.lastSyncError,
+    };
+
+    const updatedProviders = {
+      ...config.providers,
+      [config.provider]: currentPlatformConfig,
+    };
+
+    // 2. Load target platform config (fresh blank if never configured before)
+    const targetPlatformConfig: GitPlatformConfig = updatedProviders[targetProvider] || {
+      mode: 'repo',
+      gistId: '',
+      owner: '',
+      repo: '',
+      branch: targetProvider === 'gitee' ? 'master' : 'main',
+      path: 'mytab-backup.json',
+      token: '',
+    };
+
+    const updated: GitSyncConfig = {
+      ...config,
+      provider: targetProvider,
+      providers: updatedProviders,
+      mode: targetPlatformConfig.mode || 'repo',
+      gistId: targetPlatformConfig.gistId || '',
+      owner: targetPlatformConfig.owner || '',
+      repo: targetPlatformConfig.repo || '',
+      branch: targetPlatformConfig.branch || (targetProvider === 'gitee' ? 'master' : 'main'),
+      path: targetPlatformConfig.path || 'mytab-backup.json',
+      token: targetPlatformConfig.token || '',
+      lastSyncTime: targetPlatformConfig.lastSyncTime,
+      lastSyncStatus: targetPlatformConfig.lastSyncStatus,
+      lastSyncError: targetPlatformConfig.lastSyncError,
+    };
+
+    setConfig(updated);
+    onUpdateGit(updated);
+
+    // 3. Reset input states and transient feedback
+    setRepoInput(
+      targetPlatformConfig.owner && targetPlatformConfig.repo
+        ? `${targetPlatformConfig.owner}/${targetPlatformConfig.repo}`
+        : ''
+    );
+    setConnectResult(null);
+    setSyncMsg('');
   };
 
   // Handle smart repo URL input changes
@@ -119,7 +235,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
   // 1. One-Click Smart Setup for Gist
   const handleSmartConnect = async () => {
     if (!config.token.trim()) {
-      setConnectResult({ success: false, message: '请先填写 Personal Access Token (令牌)' });
+      setConnectResult({ success: false, message: t('gitTokenPlaceholderGithub', settings.language) });
       return;
     }
 
@@ -129,16 +245,13 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     try {
       const res = await autoSetupGist(config.provider, config.token.trim());
       if (res.success) {
-        const updated: GitSyncConfig = {
-          ...config,
+        handleChange({
           enabled: true,
           mode: 'gist',
           owner: res.owner || config.owner,
           gistId: res.gistId,
           lastSyncError: undefined,
-        };
-        setConfig(updated);
-        onUpdateGit(updated);
+        });
         setConnectResult({ success: true, message: res.message, owner: res.owner });
       } else {
         setConnectResult({ success: false, message: res.message });
@@ -153,7 +266,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
   // 2. Test or Auto-Create Repo for Repo Mode
   const handleTestRepo = async () => {
     if (!config.token.trim()) {
-      setConnectResult({ success: false, message: '请先填写 Personal Access Token (令牌)' });
+      setConnectResult({ success: false, message: t('gitTokenPlaceholderRepo', settings.language) });
       return;
     }
 
@@ -167,17 +280,14 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
       const res = await autoSetupRepo(config.provider, config.token.trim(), targetRepo, targetOwner);
       if (res.success) {
-        const updated: GitSyncConfig = {
-          ...config,
+        handleChange({
           enabled: true,
           mode: 'repo',
           owner: res.owner || config.owner,
           repo: res.repo || targetRepo,
           lastSyncError: undefined,
-        };
-        setConfig(updated);
-        onUpdateGit(updated);
-        setRepoInput(`${updated.owner}/${updated.repo}`);
+        });
+        setRepoInput(`${res.owner || config.owner}/${res.repo || targetRepo}`);
         setConnectResult({ success: true, message: res.message, owner: res.owner });
       } else {
         setConnectResult({ success: false, message: res.message });
@@ -281,7 +391,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleChange({ provider: 'github' })}
+                onClick={() => handleProviderChange('github')}
                 className={`py-2 rounded-xl text-xs font-medium border transition-all ${config.provider === 'github'
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
                     : isLight
@@ -293,7 +403,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => handleChange({ provider: 'gitee' })}
+                onClick={() => handleProviderChange('gitee')}
                 className={`py-2 rounded-xl text-xs font-medium border transition-all ${config.provider === 'gitee'
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
                     : isLight
