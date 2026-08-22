@@ -23,6 +23,8 @@ export const en: Translation = {
   allCategories: 'All',
   addCategory: 'Add Category',
   editCategory: 'Edit Category',
+  deleteCategory: 'Delete Category',
+  confirmDeleteCategory: 'Are you sure you want to delete this category? Shortcuts inside will be moved to "Tools".',
   manageCategories: 'Manage Categories',
   categoryName: 'Category Name',
   showInAll: 'Show in "All" Category',

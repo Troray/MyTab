@@ -235,12 +235,12 @@ export const App: React.FC = () => {
   };
 
   // Handlers for Categories
-  const handleAddCategory = async (name: string) => {
+  const handleAddCategory = async (data: { name: string; showInAll: boolean }) => {
     const newCat: Category = {
       id: `cat-${Date.now()}`,
-      name,
+      name: data.name,
       sortOrder: categories.length,
-      showInAll: true,
+      showInAll: data.showInAll,
     };
     const updatedCats = [...categories, newCat];
     await saveCategories(updatedCats);

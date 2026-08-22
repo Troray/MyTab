@@ -23,6 +23,8 @@ export const ja: Translation = {
   allCategories: 'すべて',
   addCategory: 'カテゴリー追加',
   editCategory: 'カテゴリー編集',
+  deleteCategory: 'カテゴリー削除',
+  confirmDeleteCategory: 'このカテゴリーを削除しますか？内のショートカットは「常用ツール」に移動されます。',
   manageCategories: 'カテゴリー管理',
   categoryName: 'カテゴリー名',
   showInAll: '「すべて」に表示',

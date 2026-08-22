@@ -23,6 +23,8 @@ export const zhTW: Translation = {
   allCategories: '全部',
   addCategory: '新增分類',
   editCategory: '編輯分類',
+  deleteCategory: '刪除分類',
+  confirmDeleteCategory: '確定要刪除此分類嗎？該分類下的所有網站卡片將自動保留並歸入「常用工具」分類中。',
   manageCategories: '管理分類',
   categoryName: '分類名稱',
   showInAll: '在「全部」分類中展示',

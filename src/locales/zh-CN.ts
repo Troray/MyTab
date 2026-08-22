@@ -23,6 +23,8 @@ export const zhCN: Translation = {
   allCategories: '全部',
   addCategory: '添加分类',
   editCategory: '编辑分类',
+  deleteCategory: '删除分类',
+  confirmDeleteCategory: '确定要删除此分类吗？该分类下的所有网址卡片将自动保留并归入「常用工具」分类中。',
   manageCategories: '管理分类',
   categoryName: '分类名称',
   showInAll: '在“全部”分类中展示',

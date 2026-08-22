@@ -23,6 +23,8 @@ export const ko: Translation = {
   allCategories: '전체',
   addCategory: '카테고리 추가',
   editCategory: '카테고리 수정',
+  deleteCategory: '카테고리 삭제',
+  confirmDeleteCategory: '이 카테고리를 삭제하시겠습니까? 안의 바로가기는 "기본 도구"로 이동됩니다.',
   manageCategories: '카테고리 관리',
   categoryName: '카테고리 이름',
   showInAll: '"전체" 카테고리에 표시',

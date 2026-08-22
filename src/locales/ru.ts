@@ -23,6 +23,8 @@ export const ru: Translation = {
   allCategories: 'Все',
   addCategory: 'Создать категорию',
   editCategory: 'Редактировать категорию',
+  deleteCategory: 'Удалить категорию',
+  confirmDeleteCategory: 'Удалить эту категорию? Закладки из неё будут перемещены в "Инструменты".',
   manageCategories: 'Управление категориями',
   categoryName: 'Название категории',
   showInAll: 'Показывать во "Все"',

@@ -21,6 +21,8 @@ export interface Translation {
   allCategories: string;
   addCategory: string;
   editCategory: string;
+  deleteCategory: string;
+  confirmDeleteCategory: string;
   manageCategories: string;
   categoryName: string;
   showInAll: string;
