@@ -1,5 +1,6 @@
-import { AppState, Category, GitSyncConfig, SiteItem, SyncPayload } from '../types';
+import { AppState, Category, GitSyncConfig, GitPlatformConfig, SiteItem, SyncPayload, ThemeSettings } from '../types';
 import { loadAppState, saveCategories, saveGitConfig, saveSettings, saveSites } from './storage';
+import { DEFAULT_SETTINGS } from '../utils/constants';
 
 export interface GitTestResult {
   success: boolean;
@@ -498,6 +499,43 @@ export class GitClient {
   }
 }
 
+function buildUpdatedGitConfig(
+  git: GitSyncConfig,
+  status: 'success' | 'failed',
+  timestamp?: number,
+  error?: string
+): GitSyncConfig {
+  const activeProvider = git.provider || 'github';
+  const existingProviders = git.providers || {};
+  const currentPlatform: GitPlatformConfig = existingProviders[activeProvider] || {
+    mode: git.mode || 'repo',
+    gistId: git.gistId || '',
+    owner: git.owner || '',
+    repo: git.repo || '',
+    branch: git.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
+    path: git.path || 'mytab-backup.json',
+    token: git.token || '',
+  };
+
+  const updatedPlatform: GitPlatformConfig = {
+    ...currentPlatform,
+    lastSyncTime: timestamp !== undefined ? timestamp : currentPlatform.lastSyncTime,
+    lastSyncStatus: status,
+    lastSyncError: error,
+  };
+
+  return {
+    ...git,
+    lastSyncTime: timestamp !== undefined ? timestamp : git.lastSyncTime,
+    lastSyncStatus: status,
+    lastSyncError: error,
+    providers: {
+      ...existingProviders,
+      [activeProvider]: updatedPlatform,
+    },
+  };
+}
+
 /**
  * Execute Git Sync (Two-way smart merge)
  */
@@ -524,13 +562,7 @@ export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
       };
       await client.putData(payload);
 
-      await saveGitConfig({
-        ...git,
-        lastSyncTime: now,
-        lastSyncStatus: 'success',
-        lastSyncError: undefined,
-      });
-
+      await saveGitConfig(buildUpdatedGitConfig(git, 'success', now, undefined));
       return { success: true, action: 'uploaded', message: '已成功创建并同步至云端！' };
     }
 
@@ -578,21 +610,11 @@ export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
     };
     await client.putData(newPayload, remoteSha);
 
-    await saveGitConfig({
-      ...git,
-      lastSyncTime: now,
-      lastSyncStatus: 'success',
-      lastSyncError: undefined,
-    });
-
+    await saveGitConfig(buildUpdatedGitConfig(git, 'success', now, undefined));
     return { success: true, action: 'merged', message: 'Git 同步与双向合并完成' };
   } catch (err: any) {
     const errMsg = err.message || 'Git 同步失败';
-    await saveGitConfig({
-      ...git,
-      lastSyncStatus: 'failed',
-      lastSyncError: errMsg,
-    });
+    await saveGitConfig(buildUpdatedGitConfig(git, 'failed', undefined, errMsg));
     return { success: false, message: errMsg };
   }
 }
@@ -618,16 +640,11 @@ export async function uploadToGit(state: AppState): Promise<GitSyncResult> {
       settings: { ...state.settings, updatedAt: now },
     };
     await client.putData(payload, remoteSha);
-    await saveGitConfig({
-      ...git,
-      lastSyncTime: now,
-      lastSyncStatus: 'success',
-      lastSyncError: undefined,
-    });
+    await saveGitConfig(buildUpdatedGitConfig(git, 'success', now, undefined));
     return { success: true, action: 'uploaded', message: '已成功将本地数据备份至云端！' };
   } catch (err: any) {
     const errMsg = err.message || '上传备份失败';
-    await saveGitConfig({ ...git, lastSyncStatus: 'failed', lastSyncError: errMsg });
+    await saveGitConfig(buildUpdatedGitConfig(git, 'failed', undefined, errMsg));
     return { success: false, message: errMsg };
   }
 }
@@ -657,16 +674,11 @@ export async function restoreFromGit(state: AppState): Promise<GitSyncResult> {
       await saveSettings(remotePayload.settings);
     }
     const now = Date.now();
-    await saveGitConfig({
-      ...git,
-      lastSyncTime: now,
-      lastSyncStatus: 'success',
-      lastSyncError: undefined,
-    });
+    await saveGitConfig(buildUpdatedGitConfig(git, 'success', now, undefined));
     return { success: true, action: 'downloaded', message: '已成功拉取并恢复云端备份数据！' };
   } catch (err: any) {
     const errMsg = err.message || '拉取恢复失败';
-    await saveGitConfig({ ...git, lastSyncStatus: 'failed', lastSyncError: errMsg });
+    await saveGitConfig(buildUpdatedGitConfig(git, 'failed', undefined, errMsg));
     return { success: false, message: errMsg };
   }
 }

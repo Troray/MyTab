@@ -269,7 +269,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
                     ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700 hover:text-slate-900'
                     : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80 hover:text-white'
                 }`}
-                title="Upload Icon"
+                title={t('uploadIcon', settings.language)}
               >
                 <Upload className="w-4 h-4" />
                 <input

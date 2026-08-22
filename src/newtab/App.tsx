@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Settings as SettingsIcon, Plus } from 'lucide-react';
 import { AppState, Category, GitSyncConfig, SiteItem, ThemeSettings, WebdavConfig } from '../types';
 import {
@@ -76,14 +76,25 @@ export const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, [appState?.sites]);
 
-  // 3. Handle Auto-Sync (WebDAV & Git) if enabled
-  const triggerAutoSync = useCallback(async (currentState: AppState) => {
-    if (currentState.webdav?.enabled && currentState.webdav?.autoSync) {
-      await executeWebdavSync(currentState);
+  // 3. Handle Auto-Sync (WebDAV & Git) with smart debounce
+  const autoSyncTimerRef = useRef<any>(null);
+  const triggerAutoSync = useCallback((currentState: AppState) => {
+    if (autoSyncTimerRef.current) {
+      clearTimeout(autoSyncTimerRef.current);
     }
-    if (currentState.git?.enabled && currentState.git?.autoSync) {
-      await executeGitSync(currentState);
-    }
+
+    autoSyncTimerRef.current = setTimeout(async () => {
+      try {
+        if (currentState.webdav?.enabled && currentState.webdav?.autoSync) {
+          await executeWebdavSync(currentState);
+        }
+        if (currentState.git?.enabled && currentState.git?.autoSync) {
+          await executeGitSync(currentState);
+        }
+      } catch (e) {
+        console.error('[AutoSync Error]', e);
+      }
+    }, 1500);
   }, []);
 
   // 3. Theme mode class on document

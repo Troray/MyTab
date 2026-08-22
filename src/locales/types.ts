@@ -11,6 +11,7 @@ export interface Translation {
   siteIconPlaceholder: string;
   siteCategory: string;
   autoFetch: string;
+  uploadIcon: string;
   fetching: string;
   fetchSuccess: string;
   fetchFailed: string;
@@ -60,6 +61,7 @@ export interface Translation {
   searchEngine: string;
   sync: string;
   webdavSync: string;
+  webdavDesc: string;
   webdavEnable: string;
   webdavUrl: string;
   webdavUrlPlaceholder: string;
