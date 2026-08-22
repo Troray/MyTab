@@ -1,0 +1,62 @@
+name: Release Firefox AMO
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release_firefox:
+    name: Build & Publish to Firefox AMO
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extensions
+        run: npm run build
+
+      - name: Package zip and source files
+        run: npm run package
+
+      - name: Prepare standard zip files
+        run: |
+          cp dist/mytab-firefox.zip dist/firefox.zip
+          cp dist/mytab-firefox.zip dist/firefox.xpi
+
+      - name: Upload Firefox Assets to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "MyTab Release ${{ github.ref_name }}"
+          draft: false
+          prerelease: false
+          make_latest: "true"
+          files: |
+            dist/firefox.zip
+            dist/firefox.xpi
+            dist/mytab-source.zip
+
+      - name: Publish to Mozilla Firefox Add-ons (AMO)
+        if: env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
+        uses: wdzeng/firefox-addon@v1
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        with:
+          addon-guid: ${{ secrets.AMO_EXTENSION_ID || 'mytab@addon.local' }}
+          xpi-path: dist/firefox.zip
+          source-file-path: dist/mytab-source.zip
+          jwt-issuer: ${{ secrets.AMO_JWT_ISSUER }}
+          jwt-secret: ${{ secrets.AMO_JWT_SECRET }}

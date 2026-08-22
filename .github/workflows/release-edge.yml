@@ -1,4 +1,4 @@
-name: Build & Release Extension
+name: Release Chrome & Edge
 
 on:
   push:
@@ -6,9 +6,8 @@ on:
       - 'v*'
 
 jobs:
-  # 1. 核心构建与 GitHub Release 发布
-  build_and_release:
-    name: Build & GitHub Release
+  release_edge:
+    name: Build Chrome & Publish to Edge
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -33,9 +32,7 @@ jobs:
         run: npm run package
 
       - name: Prepare standard zip files
-        run: |
-          cp dist/mytab-chrome.zip dist/chrome.zip
-          cp dist/mytab-firefox.zip dist/firefox.zip
+        run: cp dist/mytab-chrome.zip dist/chrome.zip
 
       - name: Build Chrome .crx
         env:
@@ -50,12 +47,7 @@ jobs:
             echo "⚠️ CRX_PRIVATE_KEY is not set, skipping .crx generation."
           fi
 
-      - name: Build Firefox .xpi
-        run: |
-          cp dist/mytab-firefox.zip dist/firefox.xpi
-          echo "✅ firefox.xpi generated successfully."
-
-      - name: Create GitHub Release
+      - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: "MyTab Release ${{ github.ref_name }}"
@@ -80,34 +72,12 @@ jobs:
 
             - **Firefox 浏览器**：
               - **官方商店安装（推荐）**：前往 [Firefox 附加组件中心](https://addons.mozilla.org/zh-CN/firefox/addon/mytab-%E6%9E%81%E7%AE%80%E6%96%B0%E6%A0%87%E7%AD%BE%E9%A1%B5/) 一键安装。
-              - **离线安装**：点击下载下方附件中的 `firefox.xpi` 安装。
+              - **离线安装**：点击下载附件中的 `firefox.xpi` 安装。
           files: |
             dist/chrome.zip
             dist/chrome.crx
-            dist/firefox.zip
-            dist/firefox.xpi
-            dist/mytab-source.zip
 
-      - name: Upload artifacts for store deployment
-        uses: actions/upload-artifact@v4
-        with:
-          name: extension-dist
-          path: dist/
-          retention-days: 1
-
-  # 2. 独立的 Microsoft Edge 扩展商店提审 Job
-  publish_edge:
-    name: Publish to Microsoft Edge Add-ons
-    needs: build_and_release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download extension artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: extension-dist
-          path: dist/
-
-      - name: Submit to Edge Add-ons Store
+      - name: Publish to Microsoft Edge Add-ons
         if: env.EDGE_PRODUCT_ID != '' && env.EDGE_CLIENT_ID != '' && env.EDGE_API_KEY != '' && env.EDGE_ACCESS_TOKEN_URL != ''
         uses: wdzeng/edge-addon@v2
         env:
@@ -121,28 +91,3 @@ jobs:
           api-key: ${{ secrets.EDGE_KEY }}
           access-token-url: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
           zip-path: dist/chrome.zip
-
-  # 3. 独立的 Mozilla Firefox 扩展商店提审 Job
-  publish_firefox:
-    name: Publish to Mozilla Firefox Add-ons (AMO)
-    needs: build_and_release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download extension artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: extension-dist
-          path: dist/
-
-      - name: Submit to Firefox AMO Store
-        if: env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
-        uses: wdzeng/firefox-addon@v1
-        env:
-          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
-          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
-        with:
-          addon-guid: ${{ secrets.AMO_EXTENSION_ID || 'mytab@addon.local' }}
-          xpi-path: dist/firefox.zip
-          source-file-path: dist/mytab-source.zip
-          jwt-issuer: ${{ secrets.AMO_JWT_ISSUER }}
-          jwt-secret: ${{ secrets.AMO_JWT_SECRET }}
