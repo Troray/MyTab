@@ -39,6 +39,7 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
   const iconSrc = imgError || !site.icon ? generateFallbackIcon(site.title || site.url) : site.icon;
   const cardSize = settings.cardSize || 110;
   const iconRatio = settings.iconSizeRatio || 0.42;
+  const isLight = settings.mode === 'light';
 
   // Responsive scaling calculations based on cardSize and custom icon ratio
   const iconBoxSize = Math.max(24, Math.round(cardSize * iconRatio));
