@@ -6,8 +6,9 @@ on:
       - 'v*'
 
 jobs:
-  release:
-    name: Build and Publish Release
+  # 1. 核心构建与 GitHub Release 发布
+  build_and_release:
+    name: Build & GitHub Release
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -85,8 +86,28 @@ jobs:
             dist/chrome.crx
             dist/firefox.zip
             dist/firefox.xpi
+            dist/mytab-source.zip
 
-      - name: Publish to Microsoft Edge Add-ons
+      - name: Upload artifacts for store deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-dist
+          path: dist/
+          retention-days: 1
+
+  # 2. 独立的 Microsoft Edge 扩展商店提审 Job
+  publish_edge:
+    name: Publish to Microsoft Edge Add-ons
+    needs: build_and_release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download extension artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-dist
+          path: dist/
+
+      - name: Submit to Edge Add-ons Store
         if: env.EDGE_PRODUCT_ID != '' && env.EDGE_CLIENT_ID != '' && env.EDGE_API_KEY != '' && env.EDGE_ACCESS_TOKEN_URL != ''
         uses: wdzeng/edge-addon@v2
         env:
@@ -101,7 +122,19 @@ jobs:
           access-token-url: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
           zip-path: dist/chrome.zip
 
-      - name: Publish to Mozilla Firefox Add-ons (AMO)
+  # 3. 独立的 Mozilla Firefox 扩展商店提审 Job
+  publish_firefox:
+    name: Publish to Mozilla Firefox Add-ons (AMO)
+    needs: build_and_release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download extension artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-dist
+          path: dist/
+
+      - name: Submit to Firefox AMO Store
         if: env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
         uses: wdzeng/firefox-addon@v1
         env:
