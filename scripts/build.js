@@ -100,9 +100,6 @@ async function buildExtension() {
       chrome_url_overrides: {
         newtab: 'newtab.html',
       },
-      chrome_settings_overrides: {
-        homepage: 'newtab.html',
-      },
       permissions: ['storage', 'alarms', 'unlimitedStorage'],
       host_permissions: ['https://*/*', 'http://*/*'],
     };
@@ -115,6 +112,9 @@ async function buildExtension() {
     } else if (target === 'firefox') {
       manifest.background = {
         scripts: ['background.js'],
+      };
+      manifest.chrome_settings_overrides = {
+        homepage: 'newtab.html',
       };
       manifest.browser_specific_settings = {
         gecko: {
