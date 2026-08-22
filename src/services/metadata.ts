@@ -190,6 +190,15 @@ export function getFaviconServiceUrls(hostname: string): string[] {
 }
 
 /**
+ * Format domain name into clean display title (e.g. 'github.com' -> 'Github')
+ */
+function formatFallbackTitle(hostname: string): string {
+  const root = hostname.replace(/^www\./i, '');
+  const namePart = root.split('.')[0] || root;
+  return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+}
+
+/**
  * Extract title and favicon by querying HTML or using robust fallback APIs
  */
 export async function fetchSiteMetadata(rawUrl: string): Promise<MetadataResult> {
@@ -205,41 +214,70 @@ export async function fetchSiteMetadata(rawUrl: string): Promise<MetadataResult>
     };
   }
 
-  const hostname = parsed.hostname;
-  const defaultTitle = hostname.replace(/^www\./i, '');
-  let extractedTitle = defaultTitle;
+  const hostname = parsed.hostname.toLowerCase();
+  let extractedTitle = formatFallbackTitle(hostname);
   let extractedIcon = getFaviconServiceUrls(hostname)[0];
 
-  // Try direct fetch to parse HTML <title> and high-res <link rel="icon">
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+  // 1. Fetch HTML via privileged background service to bypass CORS, fallback to direct fetch
+  let html = '';
+  if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+    try {
+      const resp = await new Promise<any>((resolve) => {
+        chrome.runtime.sendMessage({ type: 'FETCH_HTML', url }, (res) => {
+          if (chrome.runtime.lastError || !res) {
+            resolve(null);
+          } else {
+            resolve(res);
+          }
+        });
+      });
+      if (resp && resp.success && resp.data) {
+        html = resp.data;
+      }
+    } catch {
+      // background fetch failed
+    }
+  }
 
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml',
-      },
-      mode: 'cors',
-    });
-    clearTimeout(timeoutId);
+  if (!html) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+        mode: 'cors',
+      });
+      clearTimeout(timeoutId);
+      if (response.ok) {
+        html = await response.text();
+      }
+    } catch {
+      // Direct fetch failed
+    }
+  }
 
-    if (response.ok) {
-      const html = await response.text();
+  // 2. Parse HTML to extract title and high-resolution icons
+  if (html) {
+    try {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
 
-      // 1. Extract Title: og:title -> twitter:title -> <title>
+      // Extract Title: og:site_name -> application-name -> og:title -> twitter:title -> <title>
+      const siteName = doc.querySelector('meta[property="og:site_name"]')?.getAttribute('content');
+      const appName = doc.querySelector('meta[name="application-name"]')?.getAttribute('content');
       const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content');
       const twitterTitle = doc.querySelector('meta[name="twitter:title"]')?.getAttribute('content');
       const docTitle = doc.querySelector('title')?.innerText;
 
-      const candidateTitle = (ogTitle || twitterTitle || docTitle || '').trim();
+      const candidateTitle = (siteName || appName || ogTitle || twitterTitle || docTitle || '').trim();
       if (candidateTitle) {
         extractedTitle = candidateTitle;
       }
 
-      // 2. Extract Favicon: apple-touch-icon -> icon -> shortcut icon
+      // Extract Favicon: apple-touch-icon -> icon -> shortcut icon
       const iconSelectors = [
         'link[rel="apple-touch-icon"]',
         'link[rel="apple-touch-icon-precomposed"]',
@@ -264,13 +302,12 @@ export async function fetchSiteMetadata(rawUrl: string): Promise<MetadataResult>
           }
         }
       }
+    } catch {
+      // ignore parse error
     }
-  } catch {
-    // Direct fetch failed (e.g. CORS or network failure). Use Google / DuckDuckGo favicon fallback
-    extractedIcon = `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostname}&size=128`;
   }
 
-  // Optimize & Cache as Base64 Data URL
+  // 4. Optimize & Cache as Base64 Data URL
   const cachedIcon = await urlToBase64Icon(extractedIcon);
 
   return {

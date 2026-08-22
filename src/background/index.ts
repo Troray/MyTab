@@ -80,7 +80,14 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
       }
 
       if (message.type === 'FETCH_HTML' && message.url) {
-        fetch(message.url)
+        fetch(message.url, {
+          headers: {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Cache-Control': 'no-cache',
+          },
+          redirect: 'follow',
+        })
           .then((res) => {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.text();
