@@ -18,7 +18,8 @@ import {
   Calendar,
   Sparkles,
   RotateCcw,
-  FileDown
+  FileDown,
+  ExternalLink
 } from 'lucide-react';
 import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ThemeSettings, WebdavConfig } from '../../types';
 import { PRESET_GRADIENTS } from '../../utils/constants';
@@ -624,7 +625,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       : 'bg-white/5 border-white/10 text-white'
                   }`}
                 >
-                  <span className="text-xs font-medium">{t('openInNewTab', settings.language)}</span>
+                  <div className="flex items-center gap-2.5">
+                    <ExternalLink className="w-4 h-4 text-indigo-500" />
+                    <span className="text-xs font-medium">{t('openInNewTab', settings.language)}</span>
+                  </div>
                   <input
                     type="checkbox"
                     checked={settings.openInNewTab}
