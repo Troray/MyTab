@@ -75,7 +75,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
   const [config, setConfig] = useState<GitSyncConfig>({
     ...git,
-    mode: git.mode || 'gist',
+    mode: git.mode || 'repo',
   });
 
   // Combined Repo URL / Identifier input for repo mode
@@ -244,11 +244,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     <div className="space-y-4">
       {/* 1. Enable Switch */}
       <div
-        className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
-          isLight
+        className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${isLight
             ? 'bg-black/5 border-black/10 text-slate-900'
             : 'bg-white/5 border-white/10 text-white'
-        }`}
+          }`}
       >
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-500">
@@ -283,26 +282,24 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => handleChange({ provider: 'github' })}
-                className={`py-2 rounded-xl text-xs font-medium border transition-all ${
-                  config.provider === 'github'
+                className={`py-2 rounded-xl text-xs font-medium border transition-all ${config.provider === 'github'
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
                     : isLight
-                    ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                }`}
+                      ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
+                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                  }`}
               >
                 GitHub
               </button>
               <button
                 type="button"
                 onClick={() => handleChange({ provider: 'gitee' })}
-                className={`py-2 rounded-xl text-xs font-medium border transition-all ${
-                  config.provider === 'gitee'
+                className={`py-2 rounded-xl text-xs font-medium border transition-all ${config.provider === 'gitee'
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
                     : isLight
-                    ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                }`}
+                      ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
+                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                  }`}
               >
                 Gitee (码云)
               </button>
@@ -318,27 +315,25 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => handleChange({ mode: 'gist' })}
-                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border transition-all ${
-                  config.mode === 'gist'
+                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border transition-all ${config.mode === 'gist'
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
                     : isLight
-                    ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                }`}
+                      ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
+                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                  }`}
               >
                 <Code2 className="w-3.5 h-3.5" />
-                <span>极简代码片段 (推荐)</span>
+                <span>极简代码片段</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleChange({ mode: 'repo' })}
-                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border transition-all ${
-                  config.mode === 'repo'
+                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border transition-all ${config.mode === 'repo'
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
                     : isLight
-                    ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                }`}
+                      ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
+                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                  }`}
               >
                 <FolderGit2 className="w-3.5 h-3.5" />
                 <span>自定义仓库 (高级)</span>
@@ -350,11 +345,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           {config.mode === 'gist' ? (
             /* --- Mode A: Gist 极简模式 --- */
             <div
-              className={`p-3.5 rounded-2xl border space-y-3 ${
-                isLight
+              className={`p-3.5 rounded-2xl border space-y-3 ${isLight
                   ? 'bg-indigo-50/50 border-indigo-200/80 text-slate-800'
                   : 'bg-indigo-950/20 border-indigo-500/20 text-white'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
@@ -384,11 +378,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     value={config.token}
                     onChange={(e) => handleChange({ token: e.target.value })}
                     placeholder={config.provider === 'github' ? '粘贴 GitHub Token (ghp_xxx)' : '粘贴 Gitee 私人令牌'}
-                    className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${
-                      isLight
+                    className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${isLight
                         ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400'
                         : 'bg-white/10 border-white/15 text-white placeholder-white/40'
-                    }`}
+                      }`}
                   />
                   <button
                     type="button"
@@ -409,11 +402,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               {/* Connected Badge Info */}
               {config.gistId && config.owner && (
                 <div
-                  className={`p-2.5 rounded-xl text-xs flex items-center justify-between border ${
-                    isLight
+                  className={`p-2.5 rounded-xl text-xs flex items-center justify-between border ${isLight
                       ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                       : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2">
                     <User className="w-3.5 h-3.5 text-emerald-600" />
@@ -428,11 +420,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           ) : (
             /* --- Mode B: Repo 独立仓库模式 (智能解析单输入框) --- */
             <div
-              className={`p-3.5 rounded-2xl border space-y-3 ${
-                isLight
+              className={`p-3.5 rounded-2xl border space-y-3 ${isLight
                   ? 'bg-slate-50/80 border-black/10 text-slate-800'
                   : 'bg-white/5 border-white/10 text-white'
-              }`}
+                }`}
             >
               {/* Token Input with Direct Link */}
               <div>
@@ -455,11 +446,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                   value={config.token}
                   onChange={(e) => handleChange({ token: e.target.value })}
                   placeholder={config.provider === 'github' ? '粘贴 GitHub Token (需要 repo 权限)' : '粘贴 Gitee 私人令牌'}
-                  className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${
-                    isLight
+                  className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${isLight
                       ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400'
                       : 'bg-white/10 border-white/15 text-white placeholder-white/40'
-                  }`}
+                    }`}
                 />
               </div>
 
@@ -474,11 +464,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     value={repoInput}
                     onChange={(e) => handleRepoInputChange(e.target.value)}
                     placeholder='默认: "用户名"/MyTab-Backup (留空则自动创建)'
-                    className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${
-                      isLight
+                    className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${isLight
                         ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400'
                         : 'bg-white/10 border-white/15 text-white placeholder-white/40'
-                    }`}
+                      }`}
                   />
                   <button
                     type="button"
@@ -513,9 +502,8 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     type="text"
                     value={config.branch || 'main'}
                     onChange={(e) => handleChange({ branch: e.target.value })}
-                    className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${
-                      isLight ? 'bg-white border-black/15 text-slate-900' : 'bg-white/10 border-white/15 text-white'
-                    }`}
+                    className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${isLight ? 'bg-white border-black/15 text-slate-900' : 'bg-white/10 border-white/15 text-white'
+                      }`}
                   />
                 </div>
                 <div>
@@ -524,9 +512,8 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     type="text"
                     value={config.path || 'mytab-backup.json'}
                     onChange={(e) => handleChange({ path: e.target.value })}
-                    className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${
-                      isLight ? 'bg-white border-black/15 text-slate-900' : 'bg-white/10 border-white/15 text-white'
-                    }`}
+                    className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${isLight ? 'bg-white border-black/15 text-slate-900' : 'bg-white/10 border-white/15 text-white'
+                      }`}
                   />
                 </div>
               </div>
@@ -536,15 +523,14 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           {/* Test / Connect Result Message */}
           {connectResult && (
             <div
-              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
-                connectResult.success
+              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${connectResult.success
                   ? isLight
                     ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                     : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                   : isLight
-                  ? 'bg-red-50 text-red-700 border border-red-200'
-                  : 'bg-red-500/20 text-red-300 border border-red-500/30'
-              }`}
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                }`}
             >
               {connectResult.success ? (
                 <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
@@ -590,11 +576,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                 type="button"
                 onClick={() => setShowPullConfirm(true)}
                 disabled={isUploading || isPulling || !config.token}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border disabled:opacity-50 text-xs font-medium transition-all cursor-pointer ${
-                  isLight
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border disabled:opacity-50 text-xs font-medium transition-all cursor-pointer ${isLight
                     ? 'bg-white hover:bg-slate-50 border-black/10 text-slate-800 shadow-sm'
                     : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
-                }`}
+                  }`}
                 title="从云端拉取最新备份并覆盖恢复到本地"
               >
                 {isPulling ? (
@@ -610,11 +595,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           {/* Sync Result Feedback */}
           {syncMsg && (
             <div
-              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
-                isLight
+              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${isLight
                   ? 'bg-indigo-50 border border-indigo-200 text-indigo-800'
                   : 'bg-indigo-500/20 border border-indigo-500/30 text-indigo-200'
-              }`}
+                }`}
             >
               <RefreshCw className="w-4 h-4 shrink-0 text-indigo-500" />
               <span>{syncMsg}</span>

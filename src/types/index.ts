@@ -67,7 +67,7 @@ export type GitSyncMode = 'gist' | 'repo';
 export interface GitSyncConfig {
   enabled: boolean;
   provider: GitProvider;
-  mode?: GitSyncMode; // 'gist' (default) or 'repo'
+  mode?: GitSyncMode; // 'repo' (default) or 'gist'
   gistId?: string; // Gist ID for gist mode
   owner: string;
   repo: string;
