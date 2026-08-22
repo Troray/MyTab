@@ -88,9 +88,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
 
   const formatLastSync = () => {
     if (!config.lastSyncTime) return t('neverSynced', settings.language);
-    return new Date(config.lastSyncTime).toLocaleString(
-      settings.language === 'zh-CN' ? 'zh-CN' : 'en-US'
-    );
+    return new Date(config.lastSyncTime).toLocaleString(settings.language || 'zh-CN');
   };
 
   return (

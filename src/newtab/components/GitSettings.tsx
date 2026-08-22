@@ -341,9 +341,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
   const formatLastSync = () => {
     if (!config.lastSyncTime) return t('neverSynced', settings.language);
-    return new Date(config.lastSyncTime).toLocaleString(
-      settings.language === 'zh-CN' ? 'zh-CN' : 'en-US'
-    );
+    return new Date(config.lastSyncTime).toLocaleString(settings.language || 'zh-CN');
   };
 
   const tokenGeneratorUrl =

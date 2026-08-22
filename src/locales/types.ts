@@ -127,4 +127,4 @@ export interface Translation {
 }
 
 export type TranslationKey = keyof Translation;
-export type Locale = 'zh-CN' | 'zh-TW' | 'en' | string;
+export type Locale = 'zh-CN' | 'zh-TW' | 'en' | 'ja' | 'ko' | 'fr' | 'ru' | string;
