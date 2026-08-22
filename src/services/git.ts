@@ -155,7 +155,7 @@ export async function autoSetupRepo(
   token: string,
   targetRepoName = 'MyTab-Backup',
   specifiedOwner?: string
-): Promise<GitTestResult & { repo?: string }> {
+): Promise<GitTestResult & { repo?: string; branch?: string }> {
   if (!token.trim()) {
     return { success: false, message: '请先填写 Personal Access Token (令牌)' };
   }
@@ -193,10 +193,12 @@ export async function autoSetupRepo(
     if (checkRes.status === 200) {
       const repoData = await checkRes.json();
       const isPrivate = repoData.private ? '私有仓库' : '公开仓库';
+      const branch = repoData.default_branch || (provider === 'gitee' ? 'master' : 'main');
       return {
         success: true,
         owner,
         repo: cleanRepo,
+        branch,
         message: `连接成功！已找到 ${isPrivate} [${repoData.full_name || `${owner}/${cleanRepo}`}]`,
       };
     }
@@ -223,10 +225,13 @@ export async function autoSetupRepo(
       });
 
       if (createRes.status === 201 || createRes.status === 200) {
+        const createdData = await createRes.json().catch(() => ({}));
+        const branch = createdData.default_branch || (provider === 'gitee' ? 'master' : 'main');
         return {
           success: true,
           owner,
           repo: cleanRepo,
+          branch,
           message: `已全自动为您创建并连接私有仓库 [${owner}/${cleanRepo}]！`,
         };
       } else {
@@ -246,6 +251,29 @@ export async function autoSetupRepo(
   }
 }
 
+/**
+ * Safe Base64 <-> UTF-8 utilities
+ */
+function utf8ToBase64(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function base64ToUtf8(base64: string): string {
+  const clean = base64.replace(/\s/g, '');
+  if (!clean) return '';
+  const binary = atob(clean);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
+
 export class GitClient {
   private config: GitSyncConfig;
 
@@ -261,7 +289,7 @@ export class GitClient {
    * Test connection & token validity
    */
   async testConnection(): Promise<GitTestResult> {
-    const { provider, token, mode, owner, repo, gistId } = this.config;
+    const { provider, token, owner, repo } = this.config;
     if (!token) {
       return { success: false, message: '请填写 Personal Access Token (令牌)' };
     }
@@ -415,7 +443,7 @@ export class GitClient {
     const { provider, owner, repo, branch, path, token } = this.config;
     const baseUrl = getApiBaseUrl(provider);
     const cleanPath = (path || 'mytab-backup.json').replace(/^\/+/, '');
-    const cleanBranch = branch || 'main';
+    const cleanBranch = branch || (provider === 'gitee' ? 'master' : 'main');
 
     let url = `${baseUrl}/repos/${owner}/${repo}/contents/${cleanPath}?ref=${cleanBranch}&_t=${Date.now()}`;
     if (provider === 'gitee') {
@@ -436,12 +464,21 @@ export class GitClient {
       throw new Error(`获取仓库文件失败: HTTP ${res.status}`);
     }
 
-    const data = await res.json();
-    const rawContent = data.content ? atob(data.content.replace(/\s/g, '')) : '';
-    const decoded = decodeURIComponent(escape(rawContent));
-    const payload = JSON.parse(decoded) as SyncPayload;
+    const data = await res.json().catch(() => null);
+    if (!data || !data.content) {
+      return { payload: null, sha: data?.sha };
+    }
 
-    return { payload, sha: data.sha };
+    try {
+      const decoded = base64ToUtf8(data.content);
+      if (!decoded.trim()) {
+        return { payload: null, sha: data.sha };
+      }
+      const payload = JSON.parse(decoded) as SyncPayload;
+      return { payload, sha: data.sha };
+    } catch {
+      return { payload: null, sha: data.sha };
+    }
   }
 
   /**
@@ -451,13 +488,13 @@ export class GitClient {
     const { provider, owner, repo, branch, path, token } = this.config;
     const baseUrl = getApiBaseUrl(provider);
     const cleanPath = (path || 'mytab-backup.json').replace(/^\/+/, '');
-    const cleanBranch = branch || 'main';
+    const cleanBranch = branch || (provider === 'gitee' ? 'master' : 'main');
 
     const url = `${baseUrl}/repos/${owner}/${repo}/contents/${cleanPath}`;
 
-    // Convert UTF-8 string to base64
+    // Convert UTF-8 string to Base64 safely
     const jsonString = JSON.stringify(payload, null, 2);
-    const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
+    const base64Content = utf8ToBase64(jsonString);
 
     // Format timestamp using user's local timezone (YYYY-MM-DD HH:mm:ss)
     const now = new Date();
@@ -478,8 +515,12 @@ export class GitClient {
       bodyData.access_token = token;
     }
 
+    // Gitee requires POST for creating new file, PUT for updating existing file
+    // GitHub supports PUT for both create and update
+    const httpMethod = (provider === 'gitee' && !previousSha) ? 'POST' : 'PUT';
+
     const res = await fetch(url, {
-      method: 'PUT',
+      method: httpMethod,
       headers: getHeaders(token, provider),
       body: JSON.stringify(bodyData),
     });

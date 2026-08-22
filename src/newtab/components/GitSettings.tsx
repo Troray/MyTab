@@ -285,6 +285,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           mode: 'repo',
           owner: res.owner || config.owner,
           repo: res.repo || targetRepo,
+          branch: res.branch || config.branch || (config.provider === 'gitee' ? 'master' : 'main'),
           lastSyncError: undefined,
         });
         setRepoInput(`${res.owner || config.owner}/${res.repo || targetRepo}`);
