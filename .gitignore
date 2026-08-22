@@ -26,6 +26,7 @@ Thumbs.db
 # IDE & Editor
 .vscode/
 .idea/
+.agents/
 *.suo
 *.ntvs*
 *.njsproj

@@ -48,8 +48,10 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
     }
   };
 
+  const isLight = settings.mode === 'light';
+
   return (
-    <div className="flex items-center justify-center gap-2 max-w-4xl mx-auto px-4 py-3 flex-wrap">
+    <div className="flex items-center justify-center gap-2 max-w-4xl mx-auto px-4 py-3 flex-wrap transition-colors">
       {categories.map((cat) => {
         const isActive = activeCategoryId === cat.id;
         const count = siteCounts[cat.id] || 0;
@@ -61,16 +63,24 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
           >
             <button
               onClick={() => onSelectCategory(cat.id)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-indigo-600/80 text-white shadow-md shadow-indigo-600/30 backdrop-blur-md ring-1 ring-white/20'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 backdrop-blur-md ring-1 ring-white/20'
+                  : isLight
+                  ? 'text-slate-700 hover:text-slate-900 bg-white/80 hover:bg-white backdrop-blur-md border border-black/10 shadow-sm'
                   : 'text-white/80 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10'
               }`}
             >
               <span>{cat.name}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                isActive ? 'bg-indigo-700/60 text-indigo-100' : 'bg-white/10 text-white/70'
-              }`}>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  isActive
+                    ? 'bg-indigo-700/60 text-indigo-100'
+                    : isLight
+                    ? 'bg-black/10 text-slate-700'
+                    : 'bg-white/10 text-white/70'
+                }`}
+              >
                 {count}
               </span>
             </button>
@@ -98,7 +108,11 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
             value={newCatName}
             onChange={(e) => setNewCatName(e.target.value)}
             placeholder={t('categoryName', settings.language)}
-            className="px-3.5 py-1.5 text-xs rounded-full bg-white/10 backdrop-blur-md border border-indigo-400/60 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/50 text-white placeholder-white/40 outline-none w-36 transition-colors shadow-sm"
+            className={`px-3.5 py-1.5 text-xs rounded-full backdrop-blur-md border outline-none w-36 transition-colors shadow-sm ${
+              isLight
+                ? 'bg-white text-slate-900 placeholder-slate-400 border-indigo-400 focus:ring-1 focus:ring-indigo-400'
+                : 'bg-white/10 text-white placeholder-white/40 border-indigo-400/60 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/50'
+            }`}
           />
           {/* Submit button */}
           <button
@@ -111,7 +125,11 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
           <button
             type="button"
             onClick={() => setIsAdding(false)}
-            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors cursor-pointer shrink-0"
+            className={`p-1.5 rounded-full transition-colors cursor-pointer shrink-0 ${
+              isLight
+                ? 'bg-black/5 hover:bg-black/10 text-slate-600 hover:text-slate-900'
+                : 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
+            }`}
             title="取消"
           >
             <X className="w-3.5 h-3.5" />
@@ -120,7 +138,11 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
       ) : (
         <button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border border-dashed border-white/20 transition-colors cursor-pointer"
+          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-dashed transition-colors cursor-pointer ${
+            isLight
+              ? 'text-slate-700 hover:text-slate-900 bg-white/60 hover:bg-white border-slate-300 shadow-sm'
+              : 'text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border-white/20'
+          }`}
           title={t('addCategory', settings.language)}
         >
           <FolderPlus className="w-3.5 h-3.5" />

@@ -26,6 +26,8 @@ export interface SearchEngine {
 export type ThemeMode = 'system' | 'dark' | 'light';
 export type BackgroundType = 'gradient' | 'bing' | 'unsplash' | 'custom' | 'color';
 
+import { Locale } from '../locales';
+
 export interface ThemeSettings {
   mode: ThemeMode;
   backgroundType: BackgroundType;
@@ -40,7 +42,7 @@ export interface ThemeSettings {
   showClock: boolean;
   showGreeting: boolean;
   showDate: boolean;
-  language: 'zh-CN' | 'en';
+  language: Locale;
   updatedAt?: number;
 }
 

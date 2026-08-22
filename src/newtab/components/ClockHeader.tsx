@@ -98,14 +98,28 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings })
     });
   };
 
+  const isLight = settings.mode === 'light';
+
   return (
-    <div className="flex flex-col items-center justify-center text-center select-none pt-6 pb-3">
-      <div className="text-6xl sm:text-7xl md:text-8xl font-extralight tracking-tight text-white drop-shadow-md tabular-nums">
+    <div className="flex flex-col items-center justify-center text-center select-none pt-6 pb-3 transition-colors">
+      <div
+        className={`text-6xl sm:text-7xl md:text-8xl font-extralight tracking-tight tabular-nums transition-colors ${
+          isLight
+            ? 'text-slate-900 drop-shadow-sm'
+            : 'text-white drop-shadow-md'
+        }`}
+      >
         {hours}<span className="opacity-75 animate-pulse">:</span>{minutes}
       </div>
 
       {(settings.showDate || settings.showGreeting) && (
-        <div className="flex items-center gap-2.5 mt-2.5 text-xs md:text-sm font-normal text-white/90 drop-shadow">
+        <div
+          className={`flex items-center gap-2.5 mt-2.5 text-xs md:text-sm font-normal transition-colors ${
+            isLight
+              ? 'text-slate-700 drop-shadow-sm'
+              : 'text-white/90 drop-shadow'
+          }`}
+        >
           {settings.showDate && <span>{formatDate()}</span>}
           {settings.showDate && settings.showGreeting && <span className="opacity-60">•</span>}
           {settings.showGreeting && (

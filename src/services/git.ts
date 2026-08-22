@@ -127,10 +127,13 @@ export class GitClient {
 
     // Convert UTF-8 string to base64
     const jsonString = JSON.stringify(payload, null, 2);
-    const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
+    // Format timestamp using user's local timezone (YYYY-MM-DD HH:mm:ss)
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const localTimeStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
     const bodyData: any = {
-      message: `backup: MyTab sync at ${new Date().toISOString()}`,
+      message: `backup: MyTab sync at ${localTimeStr}`,
       content: base64Content,
       branch: cleanBranch,
     };

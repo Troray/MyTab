@@ -59,13 +59,21 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
     }
   };
 
+  const isLight = settings.mode === 'light';
+
   return (
     <div className="relative z-30 w-full max-w-2xl mx-auto my-6 px-4 animate-slide-up">
       <form
         onSubmit={handleSearch}
-        className="relative flex items-center w-full h-14 rounded-2xl glass-panel shadow-lg shadow-black/10 transition-colors focus-within:ring-2 focus-within:ring-indigo-400/50 focus-within:shadow-indigo-500/20"
+        className={`relative flex items-center w-full h-14 rounded-2xl shadow-lg transition-all focus-within:ring-2 focus-within:ring-indigo-400/50 ${
+          isLight
+            ? 'border border-black/10 shadow-black/5'
+            : 'border border-white/15 shadow-black/20'
+        }`}
         style={{
-          background: `rgba(255, 255, 255, ${Math.max(0.12, settings.cardOpacity)})`,
+          background: isLight
+            ? `rgba(255, 255, 255, ${Math.max(0.85, settings.cardOpacity)})`
+            : `rgba(255, 255, 255, ${Math.max(0.12, settings.cardOpacity)})`,
           backdropFilter: `blur(${settings.cardBlur}px)`,
           WebkitBackdropFilter: `blur(${settings.cardBlur}px)`,
           transform: 'translateZ(0)',
@@ -76,7 +84,11 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
           <button
             type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-1.5 pl-4 pr-2.5 h-full text-sm font-medium text-white/90 hover:text-white transition-colors cursor-pointer select-none"
+            className={`flex items-center gap-1.5 pl-4 pr-2.5 h-full text-sm font-medium transition-colors cursor-pointer select-none ${
+              isLight
+                ? 'text-slate-800 hover:text-indigo-600'
+                : 'text-white/90 hover:text-white'
+            }`}
           >
             <span>{activeEngine.name}</span>
             <ChevronDown className={`w-4 h-4 opacity-70 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -85,14 +97,22 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
           {/* Engine Dropdown */}
           {isDropdownOpen && (
             <div
-              className="absolute left-2 top-[calc(100%+8px)] w-44 py-1.5 rounded-2xl border border-white/20 shadow-2xl shadow-black/40 z-50 animate-scale-in overflow-hidden"
+              className={`absolute left-2 top-[calc(100%+8px)] w-44 py-1.5 rounded-2xl border shadow-2xl z-50 animate-scale-in overflow-hidden ${
+                isLight
+                  ? 'border-black/10 shadow-black/10'
+                  : 'border-white/20 shadow-black/40'
+              }`}
               style={{
-                background: 'rgba(15, 15, 25, 0.70)',
+                background: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(15, 15, 25, 0.85)',
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
               }}
             >
-              <div className="px-3.5 py-1 text-[10px] font-semibold text-white/50 uppercase tracking-wider">
+              <div
+                className={`px-3.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${
+                  isLight ? 'text-slate-400' : 'text-white/50'
+                }`}
+              >
                 选择搜索引擎
               </div>
               {DEFAULT_SEARCH_ENGINES.map((engine) => (
@@ -106,13 +126,15 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
                   }}
                   className={`flex items-center justify-between w-full px-3.5 py-2 text-left text-xs font-medium transition-colors cursor-pointer ${
                     engine.id === activeEngine.id
-                      ? 'bg-indigo-500/30 text-indigo-300 font-semibold'
+                      ? 'bg-indigo-500/20 text-indigo-600 font-semibold'
+                      : isLight
+                      ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
                       : 'text-white/80 hover:bg-white/10 hover:text-white'
                   }`}
                 >
                   <span>{engine.name}</span>
                   {engine.id === activeEngine.id && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shadow-sm" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-sm" />
                   )}
                 </button>
               ))}
@@ -120,7 +142,7 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
           )}
         </div>
 
-        <div className="w-px h-6 bg-white/20 mr-2" />
+        <div className={`w-px h-6 mr-2 ${isLight ? 'bg-black/10' : 'bg-white/20'}`} />
 
         {/* Input */}
         <input
@@ -129,13 +151,21 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('searchPlaceholder', settings.language)}
-          className="flex-1 bg-transparent border-none outline-none px-2 text-white placeholder-white/50 text-sm md:text-base selection:bg-indigo-500 selection:text-white"
+          className={`flex-1 bg-transparent border-none outline-none px-2 text-sm md:text-base selection:bg-indigo-500 selection:text-white ${
+            isLight
+              ? 'text-slate-900 placeholder-slate-400'
+              : 'text-white placeholder-white/50'
+          }`}
         />
 
         {/* Search Action Button */}
         <button
           type="submit"
-          className="p-3 mr-2 rounded-xl text-white/80 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
+          className={`p-3 mr-2 rounded-xl transition-colors cursor-pointer ${
+            isLight
+              ? 'text-slate-600 hover:text-indigo-600 hover:bg-black/5'
+              : 'text-white/80 hover:text-white hover:bg-white/15'
+          }`}
           title="Search"
         >
           <Search className="w-5 h-5" />

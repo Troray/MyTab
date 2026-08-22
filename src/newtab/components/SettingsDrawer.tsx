@@ -19,7 +19,7 @@ import { PRESET_GRADIENTS } from '../../utils/constants';
 import { WebdavSettings } from './WebdavSettings';
 import { GitSettings } from './GitSettings';
 import { exportAllData, importData } from '../../services/storage';
-import { t } from '../../utils/i18n';
+import { t, supportedLocales } from '../../utils/i18n';
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -81,6 +81,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
     reader.readAsText(file);
   };
 
+  const isLight = settings.mode === 'light';
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">
       {/* Backdrop */}
@@ -92,34 +94,52 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
       {/* Drawer */}
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
         <div
-          className="w-screen max-w-md border-l border-white/15 shadow-2xl text-white flex flex-col"
+          className={`w-screen max-w-md shadow-2xl flex flex-col transition-colors duration-200 ${
+            isLight
+              ? 'border-l border-black/10 text-slate-900'
+              : 'border-l border-white/15 text-white'
+          }`}
           style={{
-            background: 'rgba(15, 15, 25, 0.72)',
+            background: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(15, 15, 25, 0.75)',
             backdropFilter: 'blur(32px)',
             WebkitBackdropFilter: 'blur(32px)',
           }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
+          <div
+            className={`flex items-center justify-between px-6 py-5 border-b ${
+              isLight ? 'border-black/10' : 'border-white/10'
+            }`}
+          >
             <h2 className="text-lg font-semibold tracking-wide flex items-center gap-2">
-              <Sliders className="w-5 h-5 text-indigo-400" />
+              <Sliders className="w-5 h-5 text-indigo-500" />
               <span>{t('settingsTitle', settings.language)}</span>
             </h2>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className={`p-1.5 rounded-full transition-colors ${
+                isLight
+                  ? 'text-slate-500 hover:text-slate-900 hover:bg-black/5'
+                  : 'text-white/60 hover:text-white hover:bg-white/10'
+              }`}
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Navigation Tabs (外观, 偏好, 同步, 备份与迁移) */}
-          <div className="flex px-6 pt-3 border-b border-white/10 gap-5 overflow-x-auto text-xs font-medium scrollbar-none">
+          <div
+            className={`flex px-6 pt-3 border-b gap-5 overflow-x-auto text-xs font-medium scrollbar-none ${
+              isLight ? 'border-black/10' : 'border-white/10'
+            }`}
+          >
             <button
               onClick={() => setActiveTab('appearance')}
               className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
                 activeTab === 'appearance'
-                  ? 'border-indigo-500 text-indigo-400 font-semibold'
+                  ? 'border-indigo-500 text-indigo-500 font-semibold'
+                  : isLight
+                  ? 'border-transparent text-slate-500 hover:text-slate-900'
                   : 'border-transparent text-white/60 hover:text-white'
               }`}
             >
@@ -130,7 +150,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               onClick={() => setActiveTab('behavior')}
               className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
                 activeTab === 'behavior'
-                  ? 'border-indigo-500 text-indigo-400 font-semibold'
+                  ? 'border-indigo-500 text-indigo-500 font-semibold'
+                  : isLight
+                  ? 'border-transparent text-slate-500 hover:text-slate-900'
                   : 'border-transparent text-white/60 hover:text-white'
               }`}
             >
@@ -141,7 +163,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               onClick={() => setActiveTab('sync')}
               className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
                 activeTab === 'sync'
-                  ? 'border-indigo-500 text-indigo-400 font-semibold'
+                  ? 'border-indigo-500 text-indigo-500 font-semibold'
+                  : isLight
+                  ? 'border-transparent text-slate-500 hover:text-slate-900'
                   : 'border-transparent text-white/60 hover:text-white'
               }`}
             >
@@ -152,7 +176,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               onClick={() => setActiveTab('backup')}
               className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
                 activeTab === 'backup'
-                  ? 'border-indigo-500 text-indigo-400 font-semibold'
+                  ? 'border-indigo-500 text-indigo-500 font-semibold'
+                  : isLight
+                  ? 'border-transparent text-slate-500 hover:text-slate-900'
                   : 'border-transparent text-white/60 hover:text-white'
               }`}
             >
@@ -168,7 +194,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               <div className="space-y-5">
                 {/* Theme Mode */}
                 <div>
-                  <label className="block text-xs font-medium text-white/80 mb-2">
+                  <label
+                    className={`block text-xs font-medium mb-2 ${
+                      isLight ? 'text-slate-800' : 'text-white/80'
+                    }`}
+                  >
                     {t('themeMode', settings.language)}
                   </label>
                   <div className="grid grid-cols-2 gap-3">
@@ -177,7 +207,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       onClick={() => handleSettingsChange({ mode: 'dark' })}
                       className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium transition-all ${
                         settings.mode === 'dark'
-                          ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300'
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                          : isLight
+                          ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
                           : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
                       }`}
                     >
@@ -189,7 +221,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       onClick={() => handleSettingsChange({ mode: 'light' })}
                       className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium transition-all ${
                         settings.mode === 'light'
-                          ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300'
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                          : isLight
+                          ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
                           : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
                       }`}
                     >
@@ -201,7 +235,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                 {/* Wallpaper Source */}
                 <div>
-                  <label className="block text-xs font-medium text-white/80 mb-2">
+                  <label
+                    className={`block text-xs font-medium mb-2 ${
+                      isLight ? 'text-slate-800' : 'text-white/80'
+                    }`}
+                  >
                     {t('background', settings.language)}
                   </label>
                   <div className="grid grid-cols-2 gap-2 mb-3">
@@ -221,7 +259,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               bg.id === 'bing'
                                 ? 'https://bing.biturl.top/?resolution=1920&format=image&index=0&mkt=zh-CN'
                                 : bg.id === 'unsplash'
-                                ? 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80'
+                                ? 'https://images.unsplash.com/photo-1507525428033-b723cf961d3e?auto=format&fit=crop&w=1920&q=80'
                                 : bg.id === 'custom'
                                 ? settings.backgroundValue.startsWith('http') || settings.backgroundValue.startsWith('data:') || settings.backgroundValue.includes('wallpaper')
                                   ? settings.backgroundValue
@@ -231,7 +269,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         }
                         className={`py-2 px-3 rounded-xl border text-xs font-medium transition-all ${
                           settings.backgroundType === bg.id
-                            ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300'
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                            : isLight
+                            ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
                             : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
                         }`}
                       >
@@ -250,7 +290,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           style={{ background: p.value }}
                           className={`h-16 rounded-xl border cursor-pointer relative flex items-end p-2 transition-transform hover:scale-[1.02] ${
                             settings.backgroundValue === p.value
-                              ? 'border-indigo-400 ring-2 ring-indigo-400/50'
+                              ? 'border-indigo-500 ring-2 ring-indigo-400/50'
+                              : isLight
+                              ? 'border-black/15 shadow-sm'
                               : 'border-white/20'
                           }`}
                         >
@@ -274,10 +316,18 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           value={settings.backgroundValue}
                           onChange={(e) => handleSettingsChange({ backgroundValue: e.target.value })}
                           placeholder={t('bgCustomPlaceholder', settings.language)}
-                          className="flex-1 px-3 py-2 rounded-xl bg-white/10 border border-white/15 focus:border-indigo-500 outline-none text-xs text-white placeholder-white/40"
+                          className={`flex-1 px-3 py-2 rounded-xl border outline-none text-xs ${
+                            isLight
+                              ? 'bg-black/5 border-black/15 text-slate-900 placeholder-slate-400 focus:border-indigo-500'
+                              : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-indigo-500'
+                          }`}
                         />
                         <label
-                          className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white/80 hover:text-white cursor-pointer transition-colors flex items-center gap-1.5 text-xs shrink-0"
+                          className={`px-3 py-2 rounded-xl border cursor-pointer transition-colors flex items-center gap-1.5 text-xs shrink-0 ${
+                            isLight
+                              ? 'bg-black/5 hover:bg-black/10 border-black/15 text-slate-700 hover:text-slate-900'
+                              : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80 hover:text-white'
+                          }`}
                           title="上传本地壁纸图片"
                         >
                           <Upload className="w-3.5 h-3.5" />
@@ -303,7 +353,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <button
                         type="button"
                         onClick={() => handleSettingsChange({ backgroundValue: './wallpapers/default-wallpaper.jpg' })}
-                        className="text-[11px] text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
+                        className="text-[11px] text-indigo-500 hover:text-indigo-600 underline cursor-pointer"
                       >
                         恢复默认落日海滩壁纸
                       </button>
@@ -313,9 +363,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                 {/* Card Size Slider */}
                 <div>
-                  <div className="flex justify-between text-xs font-medium text-white/80 mb-1.5">
-                    <span>卡片大小 (Card Size)</span>
-                    <span className="text-indigo-400">{settings.cardSize || 110}px</span>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>卡片大小 (Card Size)</span>
+                    <span className="text-indigo-500 font-semibold">{settings.cardSize || 110}px</span>
                   </div>
                   <input
                     type="range"
@@ -324,9 +374,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     step="5"
                     value={settings.cardSize || 110}
                     onChange={(e) => handleSettingsChange({ cardSize: parseInt(e.target.value, 10) })}
-                    className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                      isLight ? 'bg-slate-200' : 'bg-white/20'
+                    }`}
                   />
-                  <div className="flex justify-between text-[10px] text-white/40 mt-1">
+                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
                     <span>紧凑 (80px)</span>
                     <span>默认 (110px)</span>
                     <span>大卡片 (160px)</span>
@@ -335,9 +387,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                 {/* Card Opacity Slider */}
                 <div>
-                  <div className="flex justify-between text-xs font-medium text-white/80 mb-1.5">
-                    <span>卡片不透明度 (Opacity)</span>
-                    <span className="text-indigo-400">{Math.round(settings.cardOpacity * 100)}%</span>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>卡片不透明度 (Opacity)</span>
+                    <span className="text-indigo-500 font-semibold">{Math.round(settings.cardOpacity * 100)}%</span>
                   </div>
                   <input
                     type="range"
@@ -346,9 +398,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     step="0.05"
                     value={settings.cardOpacity}
                     onChange={(e) => handleSettingsChange({ cardOpacity: parseFloat(e.target.value) })}
-                    className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                      isLight ? 'bg-slate-200' : 'bg-white/20'
+                    }`}
                   />
-                  <div className="flex justify-between text-[10px] text-white/40 mt-1">
+                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
                     <span>极简透光 (5%)</span>
                     <span>半透毛玻璃 (30%)</span>
                     <span>实色浓郁 (90%)</span>
@@ -357,9 +411,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                 {/* Card Blur Slider */}
                 <div>
-                  <div className="flex justify-between text-xs font-medium text-white/80 mb-1.5">
-                    <span>{t('cardBlur', settings.language)}</span>
-                    <span className="text-indigo-400">{settings.cardBlur}px</span>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardBlur', settings.language)}</span>
+                    <span className="text-indigo-500 font-semibold">{settings.cardBlur}px</span>
                   </div>
                   <input
                     type="range"
@@ -368,15 +422,17 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     step="2"
                     value={settings.cardBlur}
                     onChange={(e) => handleSettingsChange({ cardBlur: parseInt(e.target.value, 10) })}
-                    className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                      isLight ? 'bg-slate-200' : 'bg-white/20'
+                    }`}
                   />
                 </div>
 
                 {/* Card Icon Ratio Slider */}
                 <div>
-                  <div className="flex justify-between text-xs font-medium text-white/80 mb-1.5">
-                    <span>{t('iconSizeRatio', settings.language)}</span>
-                    <span className="text-indigo-400">{Math.round((settings.iconSizeRatio || 0.42) * 100)}%</span>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconSizeRatio', settings.language)}</span>
+                    <span className="text-indigo-500 font-semibold">{Math.round((settings.iconSizeRatio || 0.42) * 100)}%</span>
                   </div>
                   <input
                     type="range"
@@ -385,9 +441,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     step="0.01"
                     value={settings.iconSizeRatio || 0.42}
                     onChange={(e) => handleSettingsChange({ iconSizeRatio: parseFloat(e.target.value) })}
-                    className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                      isLight ? 'bg-slate-200' : 'bg-white/20'
+                    }`}
                   />
-                  <div className="flex justify-between text-[10px] text-white/40 mt-1">
+                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
                     <span>精致留白 (28%)</span>
                     <span>默认 (42%)</span>
                     <span>饱满大图 (65%)</span>
@@ -396,9 +454,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                 {/* Max Cards Per Row Slider */}
                 <div>
-                  <div className="flex justify-between text-xs font-medium text-white/80 mb-1.5">
-                    <span>{t('maxCardsPerRow', settings.language)}</span>
-                    <span className="text-indigo-400">{settings.maxCardsPerRow || 8} 个/行</span>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('maxCardsPerRow', settings.language)}</span>
+                    <span className="text-indigo-500 font-semibold">{settings.maxCardsPerRow || 8} 个/行</span>
                   </div>
                   <input
                     type="range"
@@ -407,9 +465,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     step="1"
                     value={settings.maxCardsPerRow || 8}
                     onChange={(e) => handleSettingsChange({ maxCardsPerRow: parseInt(e.target.value, 10) })}
-                    className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                      isLight ? 'bg-slate-200' : 'bg-white/20'
+                    }`}
                   />
-                  <div className="flex justify-between text-[10px] text-white/40 mt-1">
+                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
                     <span>4 个 (紧凑)</span>
                     <span>8 个 (默认)</span>
                     <span>12 个 (宽屏)</span>
@@ -422,40 +482,65 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             {activeTab === 'behavior' && (
               <div className="space-y-4">
                 {/* Language */}
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 text-slate-900'
+                      : 'bg-white/5 border-white/10 text-white'
+                  }`}
+                >
                   <div className="flex items-center gap-2.5">
-                    <Globe className="w-4 h-4 text-indigo-400" />
+                    <Globe className="w-4 h-4 text-indigo-500" />
                     <span className="text-xs font-medium">语言 / Language</span>
                   </div>
                   <select
                     value={settings.language}
                     onChange={(e) => handleSettingsChange({ language: e.target.value as any })}
-                    className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs text-white outline-none cursor-pointer"
+                    className={`px-3 py-1.5 rounded-xl border text-xs outline-none cursor-pointer ${
+                      isLight
+                        ? 'bg-white border-black/10 text-slate-800 shadow-sm'
+                        : 'bg-white/10 border-white/15 text-white'
+                    }`}
                   >
-                    <option value="zh-CN" className="bg-slate-900 text-white">简体中文</option>
-                    <option value="en" className="bg-slate-900 text-white">English</option>
+                    {supportedLocales.map((loc) => (
+                      <option key={loc.code} value={loc.code} className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'}>
+                        {loc.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 {/* Open in New Tab */}
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 text-slate-900'
+                      : 'bg-white/5 border-white/10 text-white'
+                  }`}
+                >
                   <span className="text-xs font-medium">{t('openInNewTab', settings.language)}</span>
                   <input
                     type="checkbox"
                     checked={settings.openInNewTab}
                     onChange={(e) => handleSettingsChange({ openInNewTab: e.target.checked })}
-                    className="rounded bg-white/10 border-white/20 text-indigo-600 focus:ring-0 cursor-pointer"
+                    className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
                   />
                 </div>
 
                 {/* Show Clock & Greeting */}
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 text-slate-900'
+                      : 'bg-white/5 border-white/10 text-white'
+                  }`}
+                >
                   <span className="text-xs font-medium">{t('showClock', settings.language)}</span>
                   <input
                     type="checkbox"
                     checked={settings.showClock}
                     onChange={(e) => handleSettingsChange({ showClock: e.target.checked })}
-                    className="rounded bg-white/10 border-white/20 text-indigo-600 focus:ring-0 cursor-pointer"
+                    className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
                   />
                 </div>
               </div>
@@ -465,13 +550,19 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             {activeTab === 'sync' && (
               <div className="space-y-4">
                 {/* Sub-selector for Sync Method */}
-                <div className="flex p-1 rounded-2xl bg-white/10 border border-white/15 gap-1">
+                <div
+                  className={`flex p-1 rounded-2xl border gap-1 ${
+                    isLight ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/15'
+                  }`}
+                >
                   <button
                     type="button"
                     onClick={() => setSyncProvider('webdav')}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all ${
                       syncProvider === 'webdav'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold'
+                        : isLight
+                        ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
                         : 'text-white/70 hover:text-white hover:bg-white/5'
                     }`}
                   >
@@ -483,7 +574,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     onClick={() => setSyncProvider('git')}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all ${
                       syncProvider === 'git'
-                        ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                        ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30 font-semibold'
+                        : isLight
+                        ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
                         : 'text-white/70 hover:text-white hover:bg-white/5'
                     }`}
                   >
@@ -512,8 +605,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             {/* 4. 备份与迁移 Tab */}
             {activeTab === 'backup' && (
               <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                  <div className="text-xs text-white/70 leading-relaxed">
+                <div
+                  className={`p-4 rounded-2xl border space-y-3 ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 text-slate-700'
+                      : 'bg-white/5 border-white/10 text-white/70'
+                  }`}
+                >
+                  <div className="text-xs leading-relaxed">
                     随时导出所有快捷网址、分类和个性化设置配置为本地 JSON 文件，或在其他设备上一键导入恢复。
                   </div>
 
@@ -527,7 +626,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <span>{t('exportData', settings.language)}</span>
                     </button>
 
-                    <label className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white transition-colors cursor-pointer border border-white/15">
+                    <label
+                      className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
+                        isLight
+                          ? 'bg-white hover:bg-slate-50 border-black/10 text-slate-800 shadow-sm'
+                          : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
+                      }`}
+                    >
                       <Upload className="w-4 h-4" />
                       <span>{t('importData', settings.language)}</span>
                       <input
@@ -540,7 +645,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   </div>
 
                   {importStatus && (
-                    <div className="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-300 text-xs text-center">
+                    <div
+                      className={`p-2.5 rounded-xl text-xs text-center ${
+                        isLight
+                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                          : 'bg-indigo-500/20 text-indigo-300'
+                      }`}
+                    >
                       {importStatus}
                     </div>
                   )}

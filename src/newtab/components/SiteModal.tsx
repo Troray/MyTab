@@ -110,25 +110,38 @@ export const SiteModal: React.FC<SiteModalProps> = ({
   };
 
   const previewIcon = icon.trim() || generateFallbackIcon(title || url || 'W');
+  const isLight = settings.mode === 'light';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
       <div
-        className="relative w-full max-w-md p-6 rounded-3xl border border-white/20 shadow-2xl shadow-black/50 text-white animate-scale-in"
+        className={`relative w-full max-w-md p-6 rounded-3xl border shadow-2xl animate-scale-in transition-colors ${
+          isLight
+            ? 'border-black/10 text-slate-900 shadow-black/15'
+            : 'border-white/20 text-white shadow-black/50'
+        }`}
         style={{
-          background: 'rgba(15, 15, 25, 0.75)',
+          background: isLight ? 'rgba(255, 255, 255, 0.94)' : 'rgba(15, 15, 25, 0.85)',
           backdropFilter: 'blur(30px)',
           WebkitBackdropFilter: 'blur(30px)',
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+        <div
+          className={`flex items-center justify-between pb-4 mb-4 border-b ${
+            isLight ? 'border-black/10' : 'border-white/10'
+          }`}
+        >
           <h3 className="text-lg font-semibold tracking-wide">
             {editingSite ? t('editSite', settings.language) : t('addSite', settings.language)}
           </h3>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            className={`p-1.5 rounded-full transition-colors ${
+              isLight
+                ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
+                : 'text-white/60 hover:text-white hover:bg-white/10'
+            }`}
           >
             <X className="w-5 h-5" />
           </button>
@@ -138,8 +151,12 @@ export const SiteModal: React.FC<SiteModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* URL Input with Auto Fetch Button */}
           <div>
-            <label className="block text-xs font-medium text-white/80 mb-1.5">
-              {t('siteUrl', settings.language)} <span className="text-red-400">*</span>
+            <label
+              className={`block text-xs font-medium mb-1.5 ${
+                isLight ? 'text-slate-700' : 'text-white/80'
+              }`}
+            >
+              {t('siteUrl', settings.language)} <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-2">
               <input
@@ -150,13 +167,17 @@ export const SiteModal: React.FC<SiteModalProps> = ({
                 onChange={(e) => setUrl(e.target.value)}
                 onBlur={handleUrlBlur}
                 placeholder={t('siteUrlPlaceholder', settings.language)}
-                className="flex-1 px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/15 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm text-white placeholder-white/40 transition-all"
+                className={`flex-1 px-3.5 py-2.5 rounded-xl border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-all ${
+                  isLight
+                    ? 'bg-black/5 border-black/10 text-slate-900 placeholder-slate-400'
+                    : 'bg-white/10 border-white/15 text-white placeholder-white/40'
+                }`}
               />
               <button
                 type="button"
                 onClick={handleAutoFetch}
                 disabled={isFetching || !url.trim()}
-                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium transition-all shadow-md shadow-indigo-600/30 cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium transition-all shadow-md shadow-indigo-600/30 cursor-pointer shrink-0"
                 title={t('autoFetch', settings.language)}
               >
                 {isFetching ? (
@@ -168,14 +189,24 @@ export const SiteModal: React.FC<SiteModalProps> = ({
               </button>
             </div>
             {fetchMsg && (
-              <p className="text-[11px] text-indigo-300 mt-1.5">{fetchMsg}</p>
+              <p
+                className={`text-[11px] mt-1.5 ${
+                  isLight ? 'text-indigo-600 font-medium' : 'text-indigo-300'
+                }`}
+              >
+                {fetchMsg}
+              </p>
             )}
           </div>
 
           {/* Title Input */}
           <div>
-            <label className="block text-xs font-medium text-white/80 mb-1.5">
-              {t('siteTitle', settings.language)} <span className="text-red-400">*</span>
+            <label
+              className={`block text-xs font-medium mb-1.5 ${
+                isLight ? 'text-slate-700' : 'text-white/80'
+              }`}
+            >
+              {t('siteTitle', settings.language)} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -183,18 +214,30 @@ export const SiteModal: React.FC<SiteModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('siteTitlePlaceholder', settings.language)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/15 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm text-white placeholder-white/40 transition-all"
+              className={`w-full px-3.5 py-2.5 rounded-xl border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-all ${
+                isLight
+                  ? 'bg-black/5 border-black/10 text-slate-900 placeholder-slate-400'
+                  : 'bg-white/10 border-white/15 text-white placeholder-white/40'
+              }`}
             />
           </div>
 
           {/* Icon Input & Preview */}
           <div>
-            <label className="block text-xs font-medium text-white/80 mb-1.5">
+            <label
+              className={`block text-xs font-medium mb-1.5 ${
+                isLight ? 'text-slate-700' : 'text-white/80'
+              }`}
+            >
               {t('siteIcon', settings.language)}
             </label>
             <div className="flex items-center gap-3">
               {/* Live Preview */}
-              <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden shrink-0 shadow">
+              <div
+                className={`w-11 h-11 rounded-xl border flex items-center justify-center overflow-hidden shrink-0 shadow ${
+                  isLight ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/20'
+                }`}
+              >
                 <img
                   src={previewIcon}
                   alt="Preview"
@@ -212,12 +255,20 @@ export const SiteModal: React.FC<SiteModalProps> = ({
                 value={icon}
                 onChange={(e) => setIcon(e.target.value)}
                 placeholder={t('siteIconPlaceholder', settings.language)}
-                className="flex-1 px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/15 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm text-white placeholder-white/40 transition-all"
+                className={`flex-1 px-3.5 py-2.5 rounded-xl border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-all ${
+                  isLight
+                    ? 'bg-black/5 border-black/10 text-slate-900 placeholder-slate-400'
+                    : 'bg-white/10 border-white/15 text-white placeholder-white/40'
+                }`}
               />
 
               {/* Upload Local File */}
               <label
-                className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white/80 hover:text-white cursor-pointer transition-colors shrink-0"
+                className={`p-2.5 rounded-xl border cursor-pointer transition-colors shrink-0 ${
+                  isLight
+                    ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700 hover:text-slate-900'
+                    : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80 hover:text-white'
+                }`}
                 title="Upload Icon"
               >
                 <Upload className="w-4 h-4" />
@@ -233,18 +284,26 @@ export const SiteModal: React.FC<SiteModalProps> = ({
 
           {/* Category Select */}
           <div>
-            <label className="block text-xs font-medium text-white/80 mb-1.5">
+            <label
+              className={`block text-xs font-medium mb-1.5 ${
+                isLight ? 'text-slate-700' : 'text-white/80'
+              }`}
+            >
               {t('siteCategory', settings.language)}
             </label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/15 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm text-white transition-all cursor-pointer"
+              className={`w-full px-3.5 py-2.5 rounded-xl border focus:border-indigo-500 outline-none text-sm transition-all cursor-pointer ${
+                isLight
+                  ? 'bg-black/5 border-black/10 text-slate-900'
+                  : 'bg-white/10 border-white/15 text-white'
+              }`}
             >
               {categories
                 .filter((c) => c.id !== 'all')
                 .map((cat) => (
-                  <option key={cat.id} value={cat.id} className="bg-slate-900 text-white">
+                  <option key={cat.id} value={cat.id} className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'}>
                     {cat.name}
                   </option>
                 ))}
@@ -252,17 +311,21 @@ export const SiteModal: React.FC<SiteModalProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
+          <div className="flex justify-end gap-3 pt-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
+                isLight
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              }`}
             >
               {t('cancel', settings.language)}
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-all shadow-md shadow-indigo-600/30 cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
             >
               {t('save', settings.language)}
             </button>
