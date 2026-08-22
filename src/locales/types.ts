@@ -78,6 +78,32 @@ export interface Translation {
   greetingAfternoon: string;
   greetingEvening: string;
   greetingNight: string;
+  // Git Sync
+  gitBackup: string;
+  gitSync: string;
+  gitSyncDesc: string;
+  gitProvider: string;
+  gitSyncMode: string;
+  gitModeGist: string;
+  gitModeRepo: string;
+  gitGistSmartTitle: string;
+  gitGenerateToken: string;
+  gitGithubTokenTip: string;
+  gitGiteeTokenTip: string;
+  gitTokenPlaceholderGithub: string;
+  gitTokenPlaceholderGitee: string;
+  gitTokenPlaceholderRepo: string;
+  gitSmartConnect: string;
+  gitBoundAccount: string;
+  gitGistReady: string;
+  gitRepoUrl: string;
+  gitRepoPlaceholder: string;
+  gitVerifyAndConnect: string;
+  gitBoundRepo: string;
+  gitRepoTip: string;
+  gitBranch: string;
+  gitPath: string;
+  gitAutoSync: string;
 }
 
 export type TranslationKey = keyof Translation;
