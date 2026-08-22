@@ -574,7 +574,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     onClick={() => setSyncProvider('git')}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all ${
                       syncProvider === 'git'
-                        ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30 font-semibold'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold'
                         : isLight
                         ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
                         : 'text-white/70 hover:text-white hover:bg-white/5'
