@@ -4,6 +4,9 @@ import { loadAppState, saveCategories, saveGitConfig, saveSettings, saveSites } 
 export interface GitTestResult {
   success: boolean;
   message?: string;
+  owner?: string;
+  avatarUrl?: string;
+  gistId?: string;
 }
 
 export interface GitSyncResult {
@@ -12,25 +15,135 @@ export interface GitSyncResult {
   message?: string;
 }
 
+const GIST_FILENAME = 'mytab-backup.json';
+const GIST_DESCRIPTION = 'MyTab 新标签页配置备份数据';
+
 function getApiBaseUrl(provider: 'github' | 'gitee'): string {
   return provider === 'gitee' ? 'https://gitee.com/api/v5' : 'https://api.github.com';
 }
 
-function getHeaders(config: GitSyncConfig): Record<string, string> {
+function getHeaders(token: string, provider: 'github' | 'gitee'): Record<string, string> {
   const headers: Record<string, string> = {
     'Accept': 'application/vnd.github.v3+json',
     'Content-Type': 'application/json; charset=utf-8',
   };
 
-  if (config.token) {
-    if (config.provider === 'github') {
-      headers['Authorization'] = `Bearer ${config.token}`;
+  if (token) {
+    if (provider === 'github') {
+      headers['Authorization'] = `Bearer ${token}`;
     } else {
-      headers['Authorization'] = `token ${config.token}`;
+      headers['Authorization'] = `token ${token}`;
     }
   }
 
   return headers;
+}
+
+/**
+ * Auto-detect user identity and auto create/find private Gist
+ */
+export async function autoSetupGist(provider: 'github' | 'gitee', token: string): Promise<GitTestResult> {
+  if (!token.trim()) {
+    return { success: false, message: '请先填写 Personal Access Token (令牌)' };
+  }
+
+  const baseUrl = getApiBaseUrl(provider);
+  const headers = getHeaders(token, provider);
+
+  try {
+    // 1. Fetch user profile
+    let userUrl = `${baseUrl}/user?_t=${Date.now()}`;
+    if (provider === 'gitee') {
+      userUrl += `&access_token=${token}`;
+    }
+
+    const userRes = await fetch(userUrl, { method: 'GET', headers, cache: 'no-store' });
+    if (!userRes.ok) {
+      if (userRes.status === 401 || userRes.status === 403) {
+        return { success: false, message: 'Token 无效或已过期，请检查令牌权限' };
+      }
+      return { success: false, message: `获取用户信息失败 (HTTP ${userRes.status})` };
+    }
+
+    const userData = await userRes.json();
+    const owner = userData.login || userData.name || 'User';
+    const avatarUrl = userData.avatar_url;
+
+    // 2. Search for existing MyTab Gist
+    let gistsUrl = `${baseUrl}/gists?_t=${Date.now()}&per_page=100`;
+    if (provider === 'gitee') {
+      gistsUrl += `&access_token=${token}`;
+    }
+
+    const gistsRes = await fetch(gistsUrl, { method: 'GET', headers, cache: 'no-store' });
+    let existingGistId: string | undefined;
+
+    if (gistsRes.ok) {
+      const gists = await gistsRes.json();
+      if (Array.isArray(gists)) {
+        const found = gists.find((g: any) =>
+          (g.files && g.files[GIST_FILENAME]) ||
+          (g.description && g.description.includes('MyTab'))
+        );
+        if (found) {
+          existingGistId = found.id;
+        }
+      }
+    }
+
+    // 3. If no Gist found -> Create a new private Gist
+    if (!existingGistId) {
+      const createGistUrl = `${baseUrl}/gists`;
+      const initialPayload: SyncPayload = {
+        version: 1,
+        timestamp: Date.now(),
+        categories: [],
+        sites: [],
+        settings: { ...DEFAULT_SETTINGS, updatedAt: Date.now() },
+      };
+
+      const createBody: any = {
+        description: GIST_DESCRIPTION,
+        public: false,
+        files: {
+          [GIST_FILENAME]: {
+            content: JSON.stringify(initialPayload, null, 2),
+          },
+        },
+      };
+
+      if (provider === 'gitee') {
+        createBody.access_token = token;
+      }
+
+      const createRes = await fetch(createGistUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(createBody),
+      });
+
+      if (!createRes.ok) {
+        const err = await createRes.json().catch(() => ({}));
+        return {
+          success: false,
+          message: `创建私密代码片段失败: ${err.message || '请确认 Token 已勾选 gist/gists 权限'}`,
+        };
+      }
+
+      const createdData = await createRes.json();
+      existingGistId = createdData.id;
+    }
+
+    return {
+      success: true,
+      owner,
+      avatarUrl,
+      gistId: existingGistId,
+      message: `成功连接 @${owner}！私密代码片段已就绪。`,
+    };
+  } catch (err: any) {
+    return { success: false, message: err.message || '网络连接超时' };
+  }
 }
 
 export class GitClient {
@@ -40,24 +153,38 @@ export class GitClient {
     this.config = config;
   }
 
+  private isGistMode(): boolean {
+    return !this.config.mode || this.config.mode === 'gist';
+  }
+
   /**
-   * Test repo access and token validity
+   * Test connection & token validity
    */
   async testConnection(): Promise<GitTestResult> {
-    const { provider, owner, repo, token } = this.config;
+    const { provider, token, mode, owner, repo, gistId } = this.config;
+    if (!token) {
+      return { success: false, message: '请填写 Personal Access Token (令牌)' };
+    }
+
+    if (this.isGistMode()) {
+      return autoSetupGist(provider, token);
+    }
+
+    // Repo Mode
     if (!owner || !repo) {
       return { success: false, message: '请填写仓库所有者 (Owner) 与 仓库名 (Repo)' };
-    }
-    if (!token) {
-      return { success: false, message: '请填写 Personal Access Token (PAT)' };
     }
 
     try {
       const baseUrl = getApiBaseUrl(provider);
-      const url = `${baseUrl}/repos/${owner}/${repo}?_t=${Date.now()}`;
+      let url = `${baseUrl}/repos/${owner}/${repo}?_t=${Date.now()}`;
+      if (provider === 'gitee') {
+        url += `&access_token=${token}`;
+      }
+
       const res = await fetch(url, {
         method: 'GET',
-        headers: getHeaders(this.config),
+        headers: getHeaders(token, provider),
         cache: 'no-store',
       });
 
@@ -78,22 +205,126 @@ export class GitClient {
   }
 
   /**
-   * Get file from repository
+   * Unified Get Data (Dispatches to Gist or Repo)
    */
-  async getFile(): Promise<{ payload: SyncPayload | null; sha?: string }> {
-    const { provider, owner, repo, branch, path } = this.config;
-    const baseUrl = getApiBaseUrl(provider);
-    const cleanPath = path.replace(/^\/+/, '');
-    const cleanBranch = branch || 'main';
+  async getData(): Promise<{ payload: SyncPayload | null; sha?: string }> {
+    if (this.isGistMode()) {
+      return this.getGistData();
+    }
+    return this.getFile();
+  }
 
-    let url = `${baseUrl}/repos/${owner}/${repo}/contents/${cleanPath}?ref=${cleanBranch}&_t=${Date.now()}`;
+  /**
+   * Unified Put Data (Dispatches to Gist or Repo)
+   */
+  async putData(payload: SyncPayload, previousSha?: string): Promise<void> {
+    if (this.isGistMode()) {
+      return this.putGistData(payload);
+    }
+    return this.putFile(payload, previousSha);
+  }
+
+  /**
+   * Gist: Read payload from Gist
+   */
+  private async getGistData(): Promise<{ payload: SyncPayload | null; sha?: string }> {
+    const { provider, gistId, token } = this.config;
+    if (!gistId) return { payload: null };
+
+    const baseUrl = getApiBaseUrl(provider);
+    let url = `${baseUrl}/gists/${gistId}?_t=${Date.now()}`;
     if (provider === 'gitee') {
-      url += `&access_token=${this.config.token}`;
+      url += `&access_token=${token}`;
     }
 
     const res = await fetch(url, {
       method: 'GET',
-      headers: getHeaders(this.config),
+      headers: getHeaders(token, provider),
+      cache: 'no-store',
+    });
+
+    if (res.status === 404) {
+      return { payload: null };
+    }
+
+    if (!res.ok) {
+      throw new Error(`获取代码片段失败: HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const file = data.files && (data.files[GIST_FILENAME] || Object.values(data.files)[0]);
+    if (!file || !file.content) {
+      return { payload: null };
+    }
+
+    try {
+      const payload = JSON.parse(file.content) as SyncPayload;
+      return { payload };
+    } catch {
+      return { payload: null };
+    }
+  }
+
+  /**
+   * Gist: Update payload to Gist
+   */
+  private async putGistData(payload: SyncPayload): Promise<void> {
+    const { provider, gistId, token } = this.config;
+    if (!gistId) {
+      const setup = await autoSetupGist(provider, token);
+      if (!setup.success || !setup.gistId) {
+        throw new Error(setup.message || '未找到或无法创建代码片段');
+      }
+      this.config.gistId = setup.gistId;
+    }
+
+    const targetGistId = this.config.gistId!;
+    const baseUrl = getApiBaseUrl(provider);
+    const url = `${baseUrl}/gists/${targetGistId}`;
+
+    const jsonString = JSON.stringify(payload, null, 2);
+    const bodyData: any = {
+      description: GIST_DESCRIPTION,
+      files: {
+        [GIST_FILENAME]: {
+          content: jsonString,
+        },
+      },
+    };
+
+    if (provider === 'gitee') {
+      bodyData.access_token = token;
+    }
+
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: getHeaders(token, provider),
+      body: JSON.stringify(bodyData),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `同步至代码片段失败: HTTP ${res.status}`);
+    }
+  }
+
+  /**
+   * Repo: Get file from repository
+   */
+  async getFile(): Promise<{ payload: SyncPayload | null; sha?: string }> {
+    const { provider, owner, repo, branch, path, token } = this.config;
+    const baseUrl = getApiBaseUrl(provider);
+    const cleanPath = (path || 'mytab-backup.json').replace(/^\/+/, '');
+    const cleanBranch = branch || 'main';
+
+    let url = `${baseUrl}/repos/${owner}/${repo}/contents/${cleanPath}?ref=${cleanBranch}&_t=${Date.now()}`;
+    if (provider === 'gitee') {
+      url += `&access_token=${token}`;
+    }
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: getHeaders(token, provider),
       cache: 'no-store',
     });
 
@@ -107,7 +338,6 @@ export class GitClient {
 
     const data = await res.json();
     const rawContent = data.content ? atob(data.content.replace(/\s/g, '')) : '';
-    // Handle UTF-8 decoding
     const decoded = decodeURIComponent(escape(rawContent));
     const payload = JSON.parse(decoded) as SyncPayload;
 
@@ -115,12 +345,12 @@ export class GitClient {
   }
 
   /**
-   * Create or update file in repository (with auto-retry on SHA conflict)
+   * Repo: Create or update file in repository (with auto-retry on SHA conflict)
    */
   async putFile(payload: SyncPayload, previousSha?: string, retryCount = 0): Promise<void> {
     const { provider, owner, repo, branch, path, token } = this.config;
     const baseUrl = getApiBaseUrl(provider);
-    const cleanPath = path.replace(/^\/+/, '');
+    const cleanPath = (path || 'mytab-backup.json').replace(/^\/+/, '');
     const cleanBranch = branch || 'main';
 
     const url = `${baseUrl}/repos/${owner}/${repo}/contents/${cleanPath}`;
@@ -150,7 +380,7 @@ export class GitClient {
 
     const res = await fetch(url, {
       method: 'PUT',
-      headers: getHeaders(this.config),
+      headers: getHeaders(token, provider),
       body: JSON.stringify(bodyData),
     });
 
@@ -158,7 +388,6 @@ export class GitClient {
       const errJson = await res.json().catch(() => ({}));
       const errorMsg = errJson.message || '';
 
-      // Auto-recovery for SHA conflict (HTTP 409 or sha mismatch)
       if ((res.status === 409 || errorMsg.includes('does not match') || errorMsg.includes('sha')) && retryCount < 2) {
         console.warn('[Git Sync] SHA conflict detected, auto-fetching latest SHA and retrying...');
         const latest = await this.getFile();
@@ -171,21 +400,21 @@ export class GitClient {
 }
 
 /**
- * Execute Git Sync
+ * Execute Git Sync (Two-way smart merge)
  */
 export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
   const { git } = state;
-  if (!git.enabled || !git.owner || !git.repo || !git.token) {
-    return { success: false, message: 'Git 同步未完整配置或已禁用' };
+  if (!git.enabled || !git.token) {
+    return { success: false, message: 'Git 同步未配置或已禁用' };
   }
 
   const client = new GitClient(git);
 
   try {
-    const { payload: remotePayload, sha: remoteSha } = await client.getFile();
+    const { payload: remotePayload, sha: remoteSha } = await client.getData();
     const now = Date.now();
 
-    // 1. If file does not exist in repo yet -> upload local
+    // 1. If file does not exist yet -> upload local
     if (!remotePayload) {
       const payload: SyncPayload = {
         version: 1,
@@ -194,7 +423,7 @@ export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
         sites: state.sites,
         settings: state.settings,
       };
-      await client.putFile(payload);
+      await client.putData(payload);
 
       await saveGitConfig({
         ...git,
@@ -203,7 +432,7 @@ export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
         lastSyncError: undefined,
       });
 
-      return { success: true, action: 'uploaded', message: `已成功创建备份文件至 [${git.repo}] 仓库` };
+      return { success: true, action: 'uploaded', message: '已成功创建并同步至云端！' };
     }
 
     // 2. Merge sites & categories based on timestamp
@@ -224,17 +453,15 @@ export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
     }
     const mergedCats = Array.from(mapCats.values()).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
-    // Merge Settings (Appearance & Preferences) based on timestamp
+    // Merge Settings based on timestamp
     const localSettingsTime = state.settings?.updatedAt || 0;
     const remoteSettingsTime = remotePayload.settings?.updatedAt || remotePayload.timestamp || 0;
 
     let finalSettings: ThemeSettings;
     if (remotePayload.settings && remoteSettingsTime > localSettingsTime) {
-      // Remote settings are strictly newer -> update local from remote
       finalSettings = { ...state.settings, ...remotePayload.settings };
       await saveSettings(finalSettings);
     } else {
-      // Local settings are newer or equal -> keep local changes
       finalSettings = { ...state.settings };
       await saveSettings(finalSettings);
     }
@@ -242,7 +469,7 @@ export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
     await saveSites(mergedSites);
     await saveCategories(mergedCats);
 
-    // Upload merged result to Git repo
+    // Upload merged result
     const newPayload: SyncPayload = {
       version: 1,
       timestamp: now,
@@ -250,7 +477,7 @@ export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
       sites: mergedSites,
       settings: finalSettings,
     };
-    await client.putFile(newPayload, remoteSha);
+    await client.putData(newPayload, remoteSha);
 
     await saveGitConfig({
       ...git,
@@ -272,17 +499,17 @@ export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
 }
 
 /**
- * Explicit Upload/Backup from Local to Git Repository
+ * Explicit Upload/Backup from Local to Git
  */
 export async function uploadToGit(state: AppState): Promise<GitSyncResult> {
   const { git } = state;
-  if (!git.enabled || !git.owner || !git.repo || !git.token) {
-    return { success: false, message: 'Git 同步未完整配置或已禁用' };
+  if (!git.enabled || !git.token) {
+    return { success: false, message: 'Git 同步未配置或已禁用' };
   }
 
   const client = new GitClient(git);
   try {
-    const { sha: remoteSha } = await client.getFile();
+    const { sha: remoteSha } = await client.getData();
     const now = Date.now();
     const payload: SyncPayload = {
       version: 1,
@@ -291,14 +518,14 @@ export async function uploadToGit(state: AppState): Promise<GitSyncResult> {
       sites: state.sites,
       settings: { ...state.settings, updatedAt: now },
     };
-    await client.putFile(payload, remoteSha);
+    await client.putData(payload, remoteSha);
     await saveGitConfig({
       ...git,
       lastSyncTime: now,
       lastSyncStatus: 'success',
       lastSyncError: undefined,
     });
-    return { success: true, action: 'uploaded', message: `已成功将本地数据上传备份至 [${git.repo}] 仓库！` };
+    return { success: true, action: 'uploaded', message: '已成功将本地数据备份至云端！' };
   } catch (err: any) {
     const errMsg = err.message || '上传备份失败';
     await saveGitConfig({ ...git, lastSyncStatus: 'failed', lastSyncError: errMsg });
@@ -307,19 +534,19 @@ export async function uploadToGit(state: AppState): Promise<GitSyncResult> {
 }
 
 /**
- * Explicit Pull/Restore from Git Repository to Local
+ * Explicit Pull/Restore from Git to Local
  */
 export async function restoreFromGit(state: AppState): Promise<GitSyncResult> {
   const { git } = state;
-  if (!git.enabled || !git.owner || !git.repo || !git.token) {
-    return { success: false, message: 'Git 同步未完整配置或已禁用' };
+  if (!git.enabled || !git.token) {
+    return { success: false, message: 'Git 同步未配置或已禁用' };
   }
 
   const client = new GitClient(git);
   try {
-    const { payload: remotePayload } = await client.getFile();
+    const { payload: remotePayload } = await client.getData();
     if (!remotePayload) {
-      return { success: false, message: 'Git 仓库中未找到备份文件，请先在本地点击上传备份' };
+      return { success: false, message: '云端未找到备份数据，请先点击上传备份' };
     }
     if (remotePayload.categories && Array.isArray(remotePayload.categories)) {
       await saveCategories(remotePayload.categories);
@@ -337,7 +564,7 @@ export async function restoreFromGit(state: AppState): Promise<GitSyncResult> {
       lastSyncStatus: 'success',
       lastSyncError: undefined,
     });
-    return { success: true, action: 'downloaded', message: `已成功从 [${git.repo}] 仓库拉取并恢复数据！` };
+    return { success: true, action: 'downloaded', message: '已成功拉取并恢复云端备份数据！' };
   } catch (err: any) {
     const errMsg = err.message || '拉取恢复失败';
     await saveGitConfig({ ...git, lastSyncStatus: 'failed', lastSyncError: errMsg });

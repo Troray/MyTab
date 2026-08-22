@@ -143,6 +143,8 @@ export const DEFAULT_WEBDAV_CONFIG: WebdavConfig = {
 export const DEFAULT_GIT_CONFIG: GitSyncConfig = {
   enabled: false,
   provider: 'github',
+  mode: 'gist',
+  gistId: '',
   owner: '',
   repo: '',
   branch: 'main',

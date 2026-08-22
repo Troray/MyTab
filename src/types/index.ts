@@ -62,10 +62,13 @@ export interface WebdavConfig {
 }
 
 export type GitProvider = 'github' | 'gitee';
+export type GitSyncMode = 'gist' | 'repo';
 
 export interface GitSyncConfig {
   enabled: boolean;
   provider: GitProvider;
+  mode?: GitSyncMode; // 'gist' (default) or 'repo'
+  gistId?: string; // Gist ID for gist mode
   owner: string;
   repo: string;
   branch: string;
