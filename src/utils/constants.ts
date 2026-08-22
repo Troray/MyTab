@@ -135,7 +135,7 @@ export const DEFAULT_WEBDAV_CONFIG: WebdavConfig = {
   url: '',
   username: '',
   password: '',
-  syncPath: '/mytab/sync.json',
+  syncPath: '/mytab/MyTab-Backup.json',
   autoSync: false,
   conflictStrategy: 'merge',
 };

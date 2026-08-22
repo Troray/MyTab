@@ -53,7 +53,7 @@ export interface WebdavConfig {
   url: string;
   username: string;
   password?: string;
-  syncPath: string; // e.g. '/mytab/sync.json'
+  syncPath: string; // e.g. '/mytab/MyTab-Backup.json'
   autoSync: boolean;
   lastSyncTime?: number;
   lastSyncStatus?: 'success' | 'failed' | 'in_progress';
