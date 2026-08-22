@@ -328,10 +328,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               ? 'bg-black/5 hover:bg-black/10 border-black/15 text-slate-700 hover:text-slate-900'
                               : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80 hover:text-white'
                           }`}
-                          title="上传本地壁纸图片"
+                          title={t('bgLocal', settings.language)}
                         >
                           <Upload className="w-3.5 h-3.5" />
-                          <span>本地壁纸</span>
+                          <span>{t('bgLocal', settings.language)}</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -355,7 +355,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         onClick={() => handleSettingsChange({ backgroundValue: './wallpapers/default-wallpaper.jpg' })}
                         className="text-[11px] text-indigo-500 hover:text-indigo-600 underline cursor-pointer"
                       >
-                        恢复默认落日海滩壁纸
+                        {t('resetDefaultWallpaper', settings.language)}
                       </button>
                     </div>
                   )}
@@ -364,7 +364,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 {/* Card Size Slider */}
                 <div>
                   <div className="flex justify-between text-xs font-medium mb-1.5">
-                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>卡片大小 (Card Size)</span>
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardSizeTitle', settings.language)}</span>
                     <span className="text-indigo-500 font-semibold">{settings.cardSize || 110}px</span>
                   </div>
                   <input
@@ -379,16 +379,16 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     }`}
                   />
                   <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                    <span>紧凑 (80px)</span>
-                    <span>默认 (110px)</span>
-                    <span>大卡片 (160px)</span>
+                    <span>{t('cardSizeCompact', settings.language)}</span>
+                    <span>{t('cardSizeDefault', settings.language)}</span>
+                    <span>{t('cardSizeLarge', settings.language)}</span>
                   </div>
                 </div>
 
                 {/* Card Opacity Slider */}
                 <div>
                   <div className="flex justify-between text-xs font-medium mb-1.5">
-                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>卡片不透明度 (Opacity)</span>
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardOpacityTitle', settings.language)}</span>
                     <span className="text-indigo-500 font-semibold">{Math.round(settings.cardOpacity * 100)}%</span>
                   </div>
                   <input
@@ -403,9 +403,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     }`}
                   />
                   <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                    <span>极简透光 (5%)</span>
-                    <span>半透毛玻璃 (30%)</span>
-                    <span>实色浓郁 (90%)</span>
+                    <span>{t('cardOpacityLow', settings.language)}</span>
+                    <span>{t('cardOpacityMed', settings.language)}</span>
+                    <span>{t('cardOpacityHigh', settings.language)}</span>
                   </div>
                 </div>
 
@@ -446,9 +446,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     }`}
                   />
                   <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                    <span>精致留白 (28%)</span>
-                    <span>默认 (42%)</span>
-                    <span>饱满大图 (65%)</span>
+                    <span>{t('iconRatioLow', settings.language)}</span>
+                    <span>{t('iconRatioMed', settings.language)}</span>
+                    <span>{t('iconRatioHigh', settings.language)}</span>
                   </div>
                 </div>
 
@@ -456,7 +456,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 <div>
                   <div className="flex justify-between text-xs font-medium mb-1.5">
                     <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('maxCardsPerRow', settings.language)}</span>
-                    <span className="text-indigo-500 font-semibold">{settings.maxCardsPerRow || 8} 个/行</span>
+                    <span className="text-indigo-500 font-semibold">{settings.maxCardsPerRow || 8}</span>
                   </div>
                   <input
                     type="range"
@@ -470,9 +470,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     }`}
                   />
                   <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                    <span>4 个 (紧凑)</span>
-                    <span>8 个 (默认)</span>
-                    <span>12 个 (宽屏)</span>
+                    <span>{t('cardsPerRowCompact', settings.language)}</span>
+                    <span>{t('cardsPerRowDefault', settings.language)}</span>
+                    <span>{t('cardsPerRowWide', settings.language)}</span>
                   </div>
                 </div>
               </div>
@@ -491,7 +491,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 >
                   <div className="flex items-center gap-2.5">
                     <Globe className="w-4 h-4 text-indigo-500" />
-                    <span className="text-xs font-medium">语言 / Language</span>
+                    <span className="text-xs font-medium">{t('language', settings.language)}</span>
                   </div>
                   <select
                     value={settings.language}
@@ -567,7 +567,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     }`}
                   >
                     <Cloud className="w-3.5 h-3.5" />
-                    <span>WebDAV 同步</span>
+                    <span>{t('webdavSync', settings.language)}</span>
                   </button>
                   <button
                     type="button"
@@ -581,7 +581,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     }`}
                   >
                     <GitBranch className="w-3.5 h-3.5" />
-                    <span>Git 仓库备份</span>
+                    <span>{t('gitBackup', settings.language)}</span>
                   </button>
                 </div>
 
@@ -613,7 +613,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   }`}
                 >
                   <div className="text-xs leading-relaxed">
-                    随时导出所有快捷网址、分类和个性化设置配置为本地 JSON 文件，或在其他设备上一键导入恢复。
+                    {t('backupDescription', settings.language)}
                   </div>
 
                   <div className="flex flex-col gap-2.5 pt-2">
