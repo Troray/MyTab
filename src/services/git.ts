@@ -127,6 +127,8 @@ export class GitClient {
 
     // Convert UTF-8 string to base64
     const jsonString = JSON.stringify(payload, null, 2);
+    const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
+
     // Format timestamp using user's local timezone (YYYY-MM-DD HH:mm:ss)
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
