@@ -58,6 +58,17 @@ export interface Translation {
   behavior: string;
   openInNewTab: string;
   showClock: string;
+  showClockOnly: string;
+  showGreetingOnly: string;
+  showDateOnly: string;
+  customGreetings: string;
+  customGreetingsDesc: string;
+  importGreetings: string;
+  downloadGreetingTemplate: string;
+  resetGreetings: string;
+  importGreetingsSuccess: string;
+  importGreetingsFailed: string;
+  customGreetingsActive: string;
   searchEngine: string;
   sync: string;
   webdavSync: string;

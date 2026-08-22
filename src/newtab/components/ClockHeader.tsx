@@ -17,14 +17,41 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings })
   const greeting = useMemo(() => {
     const h = new Date().getHours();
     const lang = settings.language;
-    if (h >= 5 && h < 11) return t('greetingMorning', lang);
-    if (h >= 11 && h < 13) return t('greetingNoon', lang);
-    if (h >= 13 && h < 18) return t('greetingAfternoon', lang);
-    if (h >= 18 && h < 23) return t('greetingEvening', lang);
-    return t('greetingNight', lang);
-  }, [settings.language]);
+    const custom = settings.customGreetings;
 
-  if (!settings.showClock) return null;
+    let periodKey: 'morning' | 'noon' | 'afternoon' | 'evening' | 'night';
+    let defaultKey: 'greetingMorning' | 'greetingNoon' | 'greetingAfternoon' | 'greetingEvening' | 'greetingNight';
+
+    if (h >= 5 && h < 11) {
+      periodKey = 'morning';
+      defaultKey = 'greetingMorning';
+    } else if (h >= 11 && h < 13) {
+      periodKey = 'noon';
+      defaultKey = 'greetingNoon';
+    } else if (h >= 13 && h < 18) {
+      periodKey = 'afternoon';
+      defaultKey = 'greetingAfternoon';
+    } else if (h >= 18 && h < 23) {
+      periodKey = 'evening';
+      defaultKey = 'greetingEvening';
+    } else {
+      periodKey = 'night';
+      defaultKey = 'greetingNight';
+    }
+
+    if (custom && Array.isArray(custom[periodKey]) && custom[periodKey]!.length > 0) {
+      const pool = custom[periodKey]!.filter(Boolean);
+      if (pool.length > 0) {
+        const randomIndex = Math.floor(Math.random() * pool.length);
+        return pool[randomIndex];
+      }
+    }
+
+    return t(defaultKey, lang);
+  }, [settings.language, settings.customGreetings]);
+
+  const hasAnyDisplay = settings.showClock || settings.showDate || settings.showGreeting;
+  if (!hasAnyDisplay) return null;
 
   const hours = String(time.getHours()).padStart(2, '0');
   const minutes = String(time.getMinutes()).padStart(2, '0');
@@ -41,19 +68,21 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings })
 
   return (
     <div className="flex flex-col items-center justify-center text-center select-none pt-6 pb-3 transition-colors">
-      <div
-        className={`text-6xl sm:text-7xl md:text-8xl font-extralight tracking-tight tabular-nums transition-colors ${
-          isLight
-            ? 'text-slate-900 drop-shadow-sm'
-            : 'text-white drop-shadow-md'
-        }`}
-      >
-        {hours}<span className="opacity-75 animate-pulse">:</span>{minutes}
-      </div>
+      {settings.showClock && (
+        <div
+          className={`text-6xl sm:text-7xl md:text-8xl font-extralight tracking-tight tabular-nums transition-colors ${
+            isLight
+              ? 'text-slate-900 drop-shadow-sm'
+              : 'text-white drop-shadow-md'
+          }`}
+        >
+          {hours}<span className="opacity-75 animate-pulse">:</span>{minutes}
+        </div>
+      )}
 
       {(settings.showDate || settings.showGreeting) && (
         <div
-          className={`flex items-center gap-2.5 mt-2.5 text-xs md:text-sm font-normal transition-colors ${
+          className={`flex items-center gap-2.5 ${settings.showClock ? 'mt-2.5' : 'mt-1'} text-xs md:text-sm font-normal transition-colors ${
             isLight
               ? 'text-slate-700 drop-shadow-sm'
               : 'text-white/90 drop-shadow'

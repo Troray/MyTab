@@ -12,9 +12,15 @@ import {
   Check,
   FileJson,
   GitBranch,
-  RefreshCw
+  RefreshCw,
+  MessageSquareQuote,
+  Clock,
+  Calendar,
+  Sparkles,
+  RotateCcw,
+  FileDown
 } from 'lucide-react';
-import { AppState, BackgroundType, GitSyncConfig, ThemeSettings, WebdavConfig } from '../../types';
+import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ThemeSettings, WebdavConfig } from '../../types';
 import { PRESET_GRADIENTS } from '../../utils/constants';
 import { WebdavSettings } from './WebdavSettings';
 import { GitSettings } from './GitSettings';
@@ -44,11 +50,111 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   const [activeTab, setActiveTab] = useState<'appearance' | 'behavior' | 'sync' | 'backup'>('appearance');
   const [syncProvider, setSyncProvider] = useState<'webdav' | 'git'>('webdav');
   const [importStatus, setImportStatus] = useState<string>('');
+  const [greetingStatus, setGreetingStatus] = useState<{ success?: boolean; text: string } | null>(null);
 
   if (!isOpen) return null;
 
   const handleSettingsChange = (fields: Partial<ThemeSettings>) => {
     onUpdateSettings({ ...settings, ...fields });
+  };
+
+  const handleImportGreetingsFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        if (typeof reader.result !== 'string') return;
+        const parsed = JSON.parse(reader.result);
+        if (typeof parsed !== 'object' || parsed === null) {
+          throw new Error('Invalid JSON structure');
+        }
+
+        const cleaned: CustomGreetings = {};
+        const keys: (keyof CustomGreetings)[] = ['morning', 'noon', 'afternoon', 'evening', 'night'];
+        let hasValidField = false;
+
+        for (const k of keys) {
+          if (Array.isArray(parsed[k])) {
+            const arr = parsed[k].filter((item: any) => typeof item === 'string' && item.trim().length > 0);
+            if (arr.length > 0) {
+              cleaned[k] = arr;
+              hasValidField = true;
+            }
+          }
+        }
+
+        if (!hasValidField) {
+          throw new Error('No valid greetings arrays');
+        }
+
+        handleSettingsChange({ customGreetings: cleaned });
+        setGreetingStatus({ success: true, text: t('importGreetingsSuccess', settings.language) });
+      } catch {
+        setGreetingStatus({ success: false, text: t('importGreetingsFailed', settings.language) });
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const handleDownloadGreetingTemplate = () => {
+    const template = {
+      morning: [
+        "早上好！",
+        "早安，新的一天开始了。",
+        "清晨的阳光照亮你的心情，早安！",
+        "起床啦，世界在等你！",
+        "早安，愿你今天充满活力。",
+        "早，喝杯咖啡开始奋斗吧。"
+      ],
+      noon: [
+        "中午好，该吃午饭啦！",
+        "午安，休息一下再继续。",
+        "正午时分，注意防暑哦。",
+        "中午啦，别忘了补充能量。",
+        "午安，愿你下午精力充沛。",
+        "吃了吗？中午好！"
+      ],
+      afternoon: [
+        "下午好，继续加油！",
+        "午后时光，保持专注。",
+        "下午好，来杯茶提提神吧。",
+        "午后阳光正好，心情也要好。",
+        "下午了，离下班不远啦，加油！",
+        "下午好，愿你一切顺利。"
+      ],
+      evening: [
+        "晚上好，一天辛苦了。",
+        "傍晚时分，放松心情。",
+        "晚上好，和家人共度美好时光吧。",
+        "夜幕降临，愿你有个温馨的夜晚。",
+        "晚上好，晚餐吃了吗？",
+        "华灯初上，晚上好！"
+      ],
+      night: [
+        "晚安，好梦。",
+        "夜深了，早点休息。",
+        "晚安，愿你今夜安眠。",
+        "夜晚宁静，好好休息。",
+        "晚安，别熬夜哦。",
+        "月亮伴你入眠，晚安。"
+      ]
+    };
+
+    const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'greetings-example.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleResetGreetings = () => {
+    handleSettingsChange({ customGreetings: undefined });
+    setGreetingStatus(null);
   };
 
   const handleExport = async () => {
@@ -527,7 +633,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   />
                 </div>
 
-                {/* Show Clock & Greeting */}
+                {/* Show Clock */}
                 <div
                   className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
                     isLight
@@ -535,13 +641,146 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       : 'bg-white/5 border-white/10 text-white'
                   }`}
                 >
-                  <span className="text-xs font-medium">{t('showClock', settings.language)}</span>
+                  <div className="flex items-center gap-2.5">
+                    <Clock className="w-4 h-4 text-indigo-500" />
+                    <span className="text-xs font-medium">{t('showClockOnly', settings.language)}</span>
+                  </div>
                   <input
                     type="checkbox"
                     checked={settings.showClock}
                     onChange={(e) => handleSettingsChange({ showClock: e.target.checked })}
                     className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
                   />
+                </div>
+
+                {/* Show Date */}
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 text-slate-900'
+                      : 'bg-white/5 border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Calendar className="w-4 h-4 text-indigo-500" />
+                    <span className="text-xs font-medium">{t('showDateOnly', settings.language)}</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.showDate}
+                    onChange={(e) => handleSettingsChange({ showDate: e.target.checked })}
+                    className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
+                  />
+                </div>
+
+                {/* Show Greeting & Custom Greetings Section */}
+                <div
+                  className={`p-3.5 rounded-2xl border transition-colors space-y-3 ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 text-slate-900'
+                      : 'bg-white/5 border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <MessageSquareQuote className="w-4 h-4 text-indigo-500" />
+                      <span className="text-xs font-medium">{t('showGreetingOnly', settings.language)}</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.showGreeting}
+                      onChange={(e) => handleSettingsChange({ showGreeting: e.target.checked })}
+                      className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Greeting customization panel when showGreeting is enabled */}
+                  {settings.showGreeting && (
+                    <div
+                      className={`pt-3 border-t space-y-2.5 ${
+                        isLight ? 'border-black/5' : 'border-white/10'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                          {t('customGreetings', settings.language)}
+                        </span>
+                        {settings.customGreetings && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-medium flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            {t('customGreetingsActive', settings.language)}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                        {t('customGreetingsDesc', settings.language)}
+                      </p>
+
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {/* Import Greetings Button */}
+                        <label
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-colors ${
+                            isLight
+                              ? 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-700'
+                              : 'bg-indigo-500/20 hover:bg-indigo-500/30 border-indigo-500/30 text-indigo-300'
+                          }`}
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{t('importGreetings', settings.language)}</span>
+                          <input
+                            type="file"
+                            accept=".json"
+                            onChange={handleImportGreetingsFile}
+                            className="hidden"
+                          />
+                        </label>
+
+                        {/* Download Template Button */}
+                        <button
+                          type="button"
+                          onClick={handleDownloadGreetingTemplate}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
+                            isLight
+                              ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700'
+                              : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80'
+                          }`}
+                        >
+                          <FileDown className="w-3.5 h-3.5" />
+                          <span>{t('downloadGreetingTemplate', settings.language)}</span>
+                        </button>
+
+                        {/* Reset to Default */}
+                        {settings.customGreetings && (
+                          <button
+                            type="button"
+                            onClick={handleResetGreetings}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
+                              isLight
+                                ? 'bg-red-50 hover:bg-red-100 border-red-200 text-red-600'
+                                : 'bg-red-500/10 hover:bg-red-500/20 border-red-500/20 text-red-400'
+                            }`}
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>{t('resetGreetings', settings.language)}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Import Status Message */}
+                      {greetingStatus && (
+                        <div
+                          className={`text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 animate-fade-in ${
+                            greetingStatus.success
+                              ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                              : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                          }`}
+                        >
+                          <span>{greetingStatus.text}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

@@ -28,6 +28,14 @@ export type BackgroundType = 'gradient' | 'bing' | 'unsplash' | 'custom' | 'colo
 
 import { Locale } from '../locales';
 
+export interface CustomGreetings {
+  morning?: string[];
+  noon?: string[];
+  afternoon?: string[];
+  evening?: string[];
+  night?: string[];
+}
+
 export interface ThemeSettings {
   mode: ThemeMode;
   backgroundType: BackgroundType;
@@ -43,6 +51,7 @@ export interface ThemeSettings {
   showGreeting: boolean;
   showDate: boolean;
   language: Locale;
+  customGreetings?: CustomGreetings;
   updatedAt?: number;
 }
 
