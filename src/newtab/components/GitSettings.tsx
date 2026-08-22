@@ -15,7 +15,7 @@ import {
   Code2
 } from 'lucide-react';
 import { AppState, GitSyncConfig } from '../../types';
-import { uploadToGit, restoreFromGit, GitClient, autoSetupGist } from '../../services/git';
+import { uploadToGit, restoreFromGit, GitClient, autoSetupGist, autoSetupRepo } from '../../services/git';
 import { ConfirmModal } from './ConfirmModal';
 import { t } from '../../utils/i18n';
 
@@ -32,8 +32,9 @@ interface GitSettingsProps {
  * - https://gitee.com/owner/repo.git
  * - git@github.com:owner/repo.git
  * - owner/repo
+ * - repo (single name)
  */
-function parseRepoInput(input: string): { owner: string; repo: string; provider?: 'github' | 'gitee' } | null {
+function parseRepoInput(input: string): { owner?: string; repo: string; provider?: 'github' | 'gitee' } | null {
   const clean = input.trim();
   if (!clean) return null;
 
@@ -52,6 +53,11 @@ function parseRepoInput(input: string): { owner: string; repo: string; provider?
     return {
       owner: parts[0],
       repo: parts[1],
+      provider,
+    };
+  } else if (parts.length === 1) {
+    return {
+      repo: parts[0],
       provider,
     };
   }
@@ -103,7 +109,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     const parsed = parseRepoInput(value);
     if (parsed) {
       handleChange({
-        owner: parsed.owner,
+        owner: parsed.owner || config.owner,
         repo: parsed.repo,
         provider: parsed.provider || config.provider,
       });
@@ -144,14 +150,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     }
   };
 
-  // 2. Test Repo Connection for Repo Mode
+  // 2. Test or Auto-Create Repo for Repo Mode
   const handleTestRepo = async () => {
     if (!config.token.trim()) {
       setConnectResult({ success: false, message: '请先填写 Personal Access Token (令牌)' });
-      return;
-    }
-    if (!config.owner || !config.repo) {
-      setConnectResult({ success: false, message: '请输入完整的仓库地址或所有者/仓库名' });
       return;
     }
 
@@ -159,9 +161,27 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     setConnectResult(null);
 
     try {
-      const client = new GitClient(config);
-      const res = await client.testConnection();
-      setConnectResult(res);
+      const parsed = parseRepoInput(repoInput);
+      const targetRepo = parsed?.repo || config.repo || 'MyTab-Backup';
+      const targetOwner = parsed?.owner || config.owner;
+
+      const res = await autoSetupRepo(config.provider, config.token.trim(), targetRepo, targetOwner);
+      if (res.success) {
+        const updated: GitSyncConfig = {
+          ...config,
+          enabled: true,
+          mode: 'repo',
+          owner: res.owner || config.owner,
+          repo: res.repo || targetRepo,
+          lastSyncError: undefined,
+        };
+        setConfig(updated);
+        onUpdateGit(updated);
+        setRepoInput(`${updated.owner}/${updated.repo}`);
+        setConnectResult({ success: true, message: res.message, owner: res.owner });
+      } else {
+        setConnectResult({ success: false, message: res.message });
+      }
     } catch (err: any) {
       setConnectResult({ success: false, message: err.message || '连接失败' });
     } finally {
@@ -446,14 +466,14 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               {/* Smart Unified Repo URL/Path Input */}
               <div>
                 <label className={`block text-xs font-medium mb-1.5 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
-                  仓库地址 / 路径 <span className="text-red-500">*</span>
+                  仓库地址 / 路径
                 </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={repoInput}
                     onChange={(e) => handleRepoInputChange(e.target.value)}
-                    placeholder="输入仓库完整 URL 或 用户名/仓库名，如: octocat/my-backup"
+                    placeholder='默认: "用户名"/MyTab-Backup (留空则自动创建)'
                     className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${
                       isLight
                         ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400'
@@ -463,16 +483,24 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                   <button
                     type="button"
                     onClick={handleTestRepo}
-                    disabled={isTestingRepo || !config.token.trim() || !config.owner || !config.repo}
+                    disabled={isTestingRepo || !config.token.trim()}
                     className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium shadow-md shadow-indigo-600/30 transition-all cursor-pointer shrink-0"
                   >
-                    {isTestingRepo && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                    <span>验证连接</span>
+                    {isTestingRepo ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                    )}
+                    <span>验证并连接</span>
                   </button>
                 </div>
-                {config.owner && config.repo && (
+                {config.owner && config.repo ? (
                   <p className={`text-[11px] mt-1.5 ${isLight ? 'text-indigo-600' : 'text-indigo-400'}`}>
-                    已识别: 所有者 <strong>{config.owner}</strong> / 仓库 <strong>{config.repo}</strong>
+                    已绑定: 所有者 <strong>@{config.owner}</strong> / 仓库 <strong>{config.repo}</strong>
+                  </p>
+                ) : (
+                  <p className={`text-[10px] mt-1.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                    支持输入完整 URL 或 用户名/仓库名。若留空点“验证并连接”，系统将自动为您创建专属私有仓库。
                   </p>
                 )}
               </div>

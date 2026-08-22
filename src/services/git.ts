@@ -146,6 +146,105 @@ export async function autoSetupGist(provider: 'github' | 'gitee', token: string)
   }
 }
 
+/**
+ * Auto-detect user identity and auto create/connect private repository
+ */
+export async function autoSetupRepo(
+  provider: 'github' | 'gitee',
+  token: string,
+  targetRepoName = 'MyTab-Backup',
+  specifiedOwner?: string
+): Promise<GitTestResult & { repo?: string }> {
+  if (!token.trim()) {
+    return { success: false, message: '请先填写 Personal Access Token (令牌)' };
+  }
+
+  const baseUrl = getApiBaseUrl(provider);
+  const headers = getHeaders(token, provider);
+
+  try {
+    // 1. Fetch user profile
+    let userUrl = `${baseUrl}/user?_t=${Date.now()}`;
+    if (provider === 'gitee') {
+      userUrl += `&access_token=${token}`;
+    }
+
+    const userRes = await fetch(userUrl, { method: 'GET', headers, cache: 'no-store' });
+    if (!userRes.ok) {
+      if (userRes.status === 401 || userRes.status === 403) {
+        return { success: false, message: 'Token 无效或已过期，请检查令牌权限 (需勾选 repo 权限)' };
+      }
+      return { success: false, message: `获取用户信息失败 (HTTP ${userRes.status})` };
+    }
+
+    const userData = await userRes.json();
+    const owner = specifiedOwner || userData.login || userData.name || 'User';
+    const cleanRepo = targetRepoName.trim() || 'MyTab-Backup';
+
+    // 2. Check if repository exists
+    let repoUrl = `${baseUrl}/repos/${owner}/${cleanRepo}?_t=${Date.now()}`;
+    if (provider === 'gitee') {
+      repoUrl += `&access_token=${token}`;
+    }
+
+    const checkRes = await fetch(repoUrl, { method: 'GET', headers, cache: 'no-store' });
+
+    if (checkRes.status === 200) {
+      const repoData = await checkRes.json();
+      const isPrivate = repoData.private ? '私有仓库' : '公开仓库';
+      return {
+        success: true,
+        owner,
+        repo: cleanRepo,
+        message: `连接成功！已找到 ${isPrivate} [${repoData.full_name || `${owner}/${cleanRepo}`}]`,
+      };
+    }
+
+    // 3. If 404 (not found) -> Auto create private repository
+    if (checkRes.status === 404) {
+      const createRepoUrl = `${baseUrl}/user/repos`;
+      const createBody: any = {
+        name: cleanRepo,
+        private: true,
+        auto_init: true,
+        description: 'MyTab 新标签页配置备份数据',
+      };
+
+      if (provider === 'gitee') {
+        createBody.access_token = token;
+        createBody.private = 1;
+      }
+
+      const createRes = await fetch(createRepoUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(createBody),
+      });
+
+      if (createRes.status === 201 || createRes.status === 200) {
+        return {
+          success: true,
+          owner,
+          repo: cleanRepo,
+          message: `已全自动为您创建并连接私有仓库 [${owner}/${cleanRepo}]！`,
+        };
+      } else {
+        const err = await createRes.json().catch(() => ({}));
+        return {
+          success: false,
+          owner,
+          repo: cleanRepo,
+          message: `自动创建仓库失败: ${err.message || '请确认 Token 已勾选 repo 读写权限'}`,
+        };
+      }
+    }
+
+    return { success: false, message: `访问仓库返回状态码 HTTP ${checkRes.status}` };
+  } catch (err: any) {
+    return { success: false, message: err.message || '网络连接超时' };
+  }
+}
+
 export class GitClient {
   private config: GitSyncConfig;
 
