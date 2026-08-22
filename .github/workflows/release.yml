@@ -88,7 +88,7 @@ jobs:
 
       - name: Publish to Microsoft Edge Add-ons
         if: env.EDGE_PRODUCT_ID != '' && env.EDGE_CLIENT_ID != '' && env.EDGE_API_KEY != '' && env.EDGE_ACCESS_TOKEN_URL != ''
-        uses: wocal/edge-addon-action@v1
+        uses: wdzeng/edge-addon@v2
         env:
           EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCTID }}
           EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENTID }}
@@ -103,13 +103,13 @@ jobs:
 
       - name: Publish to Mozilla Firefox Add-ons (AMO)
         if: env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
-        uses: wocal/firefox-addon-action@v1
+        uses: wdzeng/firefox-addon@v1
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
         with:
-          guid: 'mytab@addon.local'
-          xpi-path: dist/firefox.zip
+          addon-id: 'mytab@addon.local'
+          zip-path: dist/firefox.zip
           src-path: dist/mytab-source.zip
           jwt-issuer: ${{ secrets.AMO_JWT_ISSUER }}
           jwt-secret: ${{ secrets.AMO_JWT_SECRET }}
