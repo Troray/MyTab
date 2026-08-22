@@ -20,8 +20,11 @@ export interface Translation {
   confirmDelete: string;
   allCategories: string;
   addCategory: string;
+  editCategory: string;
   manageCategories: string;
   categoryName: string;
+  showInAll: string;
+  showInAllDesc: string;
   settingsTitle: string;
   appearance: string;
   themeMode: string;

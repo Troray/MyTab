@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, X, FolderPlus, Check } from 'lucide-react';
+import { Plus, X, FolderPlus, Check, Pencil } from 'lucide-react';
 import { Category, ThemeSettings } from '../../types';
 import { ConfirmModal } from './ConfirmModal';
+import { CategoryEditModal } from './CategoryEditModal';
 import { t } from '../../utils/i18n';
 
 interface CategoryTabsProps {
@@ -11,6 +12,7 @@ interface CategoryTabsProps {
   siteCounts: Record<string, number>;
   onSelectCategory: (id: string) => void;
   onAddCategory: (name: string) => void;
+  onUpdateCategory: (id: string, updates: Partial<Category>) => void;
   onDeleteCategory: (id: string) => void;
 }
 
@@ -21,10 +23,12 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
   siteCounts,
   onSelectCategory,
   onAddCategory,
+  onUpdateCategory,
   onDeleteCategory,
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newCatName, setNewCatName] = useState('');
+  const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [deletingCat, setDeletingCat] = useState<Category | null>(null);
 
   const handleCreate = (e: React.FormEvent) => {
@@ -34,6 +38,11 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
       setNewCatName('');
       setIsAdding(false);
     }
+  };
+
+  const handleEdit = (e: React.MouseEvent, cat: Category) => {
+    e.stopPropagation();
+    setEditingCat(cat);
   };
 
   const handleDelete = (e: React.MouseEvent, cat: Category) => {
@@ -85,15 +94,24 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
               </span>
             </button>
 
-            {/* Delete custom category button with confirmation */}
+            {/* Action buttons for custom category */}
             {!cat.isDefault && (
-              <button
-                onClick={(e) => handleDelete(e, cat)}
-                title={t('confirmDelete', settings.language)}
-                className="hidden group-hover:flex absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500/80 hover:bg-red-600 text-white items-center justify-center transition-transform hover:scale-110 shadow cursor-pointer"
-              >
-                <X className="w-2.5 h-2.5" />
-              </button>
+              <div className="hidden group-hover:flex absolute -top-1.5 -right-1.5 items-center gap-1 z-10 animate-fade-in">
+                <button
+                  onClick={(e) => handleEdit(e, cat)}
+                  title={t('editCategory', settings.language)}
+                  className="w-4 h-4 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white flex items-center justify-center transition-transform hover:scale-110 shadow cursor-pointer"
+                >
+                  <Pencil className="w-2.5 h-2.5" />
+                </button>
+                <button
+                  onClick={(e) => handleDelete(e, cat)}
+                  title={t('confirmDelete', settings.language)}
+                  className="w-4 h-4 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-transform hover:scale-110 shadow cursor-pointer"
+                >
+                  <X className="w-2.5 h-2.5" />
+                </button>
+              </div>
             )}
           </div>
         );
@@ -149,6 +167,15 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
           <span className="hidden sm:inline">{t('addCategory', settings.language)}</span>
         </button>
       )}
+
+      {/* Edit Category Modal */}
+      <CategoryEditModal
+        isOpen={Boolean(editingCat)}
+        category={editingCat}
+        settings={settings}
+        onClose={() => setEditingCat(null)}
+        onSave={onUpdateCategory}
+      />
 
       {/* Delete Category Confirmation Modal */}
       <ConfirmModal

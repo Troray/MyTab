@@ -144,22 +144,28 @@ export const App: React.FC = () => {
 
   const { sites, categories, settings, activeCategoryId, isFirstLaunch } = appState;
 
-  // Filter sites based on active category
+  // Filter sites based on active category and showInAll flag
+  const hiddenInAllCatIds = new Set(
+    categories.filter((c) => c.showInAll === false).map((c) => c.id)
+  );
+
   const filteredSites =
     activeCategoryId === 'all'
-      ? sites
+      ? sites.filter((s) => !hiddenInAllCatIds.has(s.categoryId))
       : sites.filter((s) => s.categoryId === activeCategoryId);
 
   // Compute count of sites per category
+  const allVisibleCount = sites.filter((s) => !hiddenInAllCatIds.has(s.categoryId)).length;
+
   const siteCounts: Record<string, number> = {
     ...categories.reduce((acc, cat) => {
       acc[cat.id] =
         cat.id === 'all'
-          ? sites.length
+          ? allVisibleCount
           : sites.filter((s) => s.categoryId === cat.id).length;
       return acc;
     }, {} as Record<string, number>),
-    all: sites.length,
+    all: allVisibleCount,
   };
 
   // Handlers for Sites
@@ -234,8 +240,19 @@ export const App: React.FC = () => {
       id: `cat-${Date.now()}`,
       name,
       sortOrder: categories.length,
+      showInAll: true,
     };
     const updatedCats = [...categories, newCat];
+    await saveCategories(updatedCats);
+    const nextState = { ...appState, categories: updatedCats };
+    setAppState(nextState);
+    triggerAutoSync(nextState);
+  };
+
+  const handleUpdateCategory = async (catId: string, updates: Partial<Category>) => {
+    const updatedCats = categories.map((c) =>
+      c.id === catId ? { ...c, ...updates } : c
+    );
     await saveCategories(updatedCats);
     const nextState = { ...appState, categories: updatedCats };
     setAppState(nextState);
@@ -379,6 +396,7 @@ export const App: React.FC = () => {
           siteCounts={siteCounts}
           onSelectCategory={handleSelectCategory}
           onAddCategory={handleAddCategory}
+          onUpdateCategory={handleUpdateCategory}
           onDeleteCategory={handleDeleteCategory}
         />
 

@@ -14,6 +14,7 @@ export interface Category {
   name: string;
   sortOrder: number;
   isDefault?: boolean;
+  showInAll?: boolean;
 }
 
 export interface SearchEngine {
