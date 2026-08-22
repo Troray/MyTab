@@ -65,12 +65,60 @@ export async function loadAppState(): Promise<AppState> {
     getItem<string>(STORAGE_KEYS.ACTIVE_CATEGORY, 'all'),
   ]);
 
+  // Backward compatibility normalization for Git sync providers
+  const activeProvider = git.provider || 'github';
+  const existingProviders = git.providers || {};
+  const currentPlatform = existingProviders[activeProvider] || {
+    mode: git.mode || 'repo',
+    gistId: git.gistId || '',
+    owner: git.owner || '',
+    repo: git.repo || '',
+    branch: git.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
+    path: git.path || 'mytab-backup.json',
+    token: git.token || '',
+    lastSyncTime: git.lastSyncTime,
+    lastSyncStatus: git.lastSyncStatus,
+    lastSyncError: git.lastSyncError,
+  };
+
+  const normalizedGit: GitSyncConfig = {
+    ...DEFAULT_GIT_CONFIG,
+    ...git,
+    providers: {
+      github: existingProviders.github || {
+        mode: activeProvider === 'github' ? currentPlatform.mode : 'repo',
+        gistId: activeProvider === 'github' ? currentPlatform.gistId : '',
+        owner: activeProvider === 'github' ? currentPlatform.owner : '',
+        repo: activeProvider === 'github' ? currentPlatform.repo : '',
+        branch: activeProvider === 'github' ? currentPlatform.branch : 'main',
+        path: activeProvider === 'github' ? currentPlatform.path : 'mytab-backup.json',
+        token: activeProvider === 'github' ? currentPlatform.token : '',
+        lastSyncTime: activeProvider === 'github' ? currentPlatform.lastSyncTime : undefined,
+        lastSyncStatus: activeProvider === 'github' ? currentPlatform.lastSyncStatus : undefined,
+        lastSyncError: activeProvider === 'github' ? currentPlatform.lastSyncError : undefined,
+      },
+      gitee: existingProviders.gitee || {
+        mode: activeProvider === 'gitee' ? currentPlatform.mode : 'repo',
+        gistId: activeProvider === 'gitee' ? currentPlatform.gistId : '',
+        owner: activeProvider === 'gitee' ? currentPlatform.owner : '',
+        repo: activeProvider === 'gitee' ? currentPlatform.repo : '',
+        branch: activeProvider === 'gitee' ? currentPlatform.branch : 'master',
+        path: activeProvider === 'gitee' ? currentPlatform.path : 'mytab-backup.json',
+        token: activeProvider === 'gitee' ? currentPlatform.token : '',
+        lastSyncTime: activeProvider === 'gitee' ? currentPlatform.lastSyncTime : undefined,
+        lastSyncStatus: activeProvider === 'gitee' ? currentPlatform.lastSyncStatus : undefined,
+        lastSyncError: activeProvider === 'gitee' ? currentPlatform.lastSyncError : undefined,
+      },
+      [activeProvider]: currentPlatform,
+    },
+  };
+
   return {
     sites,
     categories,
     settings: { ...DEFAULT_SETTINGS, ...settings },
     webdav: { ...DEFAULT_WEBDAV_CONFIG, ...webdav },
-    git: { ...DEFAULT_GIT_CONFIG, ...git },
+    git: normalizedGit,
     isFirstLaunch: isFirst,
     activeCategoryId: activeCat,
   };

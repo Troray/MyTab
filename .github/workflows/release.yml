@@ -60,6 +60,7 @@ jobs:
           name: "MyTab Release ${{ github.ref_name }}"
           draft: false
           prerelease: false
+          make_latest: "true"
           body: |
             ### 📖 如何安装
 
@@ -76,10 +77,39 @@ jobs:
             - **Microsoft Edge**：
               - 直接到微软官方 Edge 扩展中心进行安装：[Edge 扩展中心](https://microsoftedge.microsoft.com/addons/detail/bchchngjdocafdpnnoiolnbfdnkngfjn)
 
-            - **Firefox**：
-              - 直接点击下载 Release 里的 `firefox.xpi` 进行安装。Mozilla Firefox 扩展中心正在审核中。
+            - **Firefox 浏览器**：
+              - **官方商店安装（推荐）**：前往 [Firefox 附加组件中心](https://addons.mozilla.org/zh-CN/firefox/addon/mytab-%E6%9E%81%E7%AE%80%E6%96%B0%E6%A0%87%E7%AD%BE%E9%A1%B5/) 一键安装。
+              - **离线安装**：点击下载下方附件中的 `firefox.xpi` 安装。
           files: |
             dist/chrome.zip
             dist/chrome.crx
             dist/firefox.zip
             dist/firefox.xpi
+
+      - name: Publish to Microsoft Edge Add-ons
+        if: env.EDGE_PRODUCT_ID != '' && env.EDGE_CLIENT_ID != '' && env.EDGE_API_KEY != '' && env.EDGE_ACCESS_TOKEN_URL != ''
+        uses: wocal/edge-addon-action@v1
+        env:
+          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCTID }}
+          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENTID }}
+          EDGE_API_KEY: ${{ secrets.EDGE_KEY }}
+          EDGE_ACCESS_TOKEN_URL: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
+        with:
+          product-id: ${{ secrets.EDGE_PRODUCTID }}
+          client-id: ${{ secrets.EDGE_CLIENTID }}
+          api-key: ${{ secrets.EDGE_KEY }}
+          access-token-url: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
+          zip-path: dist/chrome.zip
+
+      - name: Publish to Mozilla Firefox Add-ons (AMO)
+        if: env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != ''
+        uses: wocal/firefox-addon-action@v1
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        with:
+          guid: 'mytab@addon.local'
+          xpi-path: dist/firefox.zip
+          src-path: dist/mytab-source.zip
+          jwt-issuer: ${{ secrets.AMO_JWT_ISSUER }}
+          jwt-secret: ${{ secrets.AMO_JWT_SECRET }}

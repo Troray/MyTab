@@ -12,14 +12,21 @@ import {
   Check,
   FileJson,
   GitBranch,
-  RefreshCw
+  RefreshCw,
+  MessageSquareQuote,
+  Clock,
+  Calendar,
+  Sparkles,
+  RotateCcw,
+  FileDown,
+  ExternalLink
 } from 'lucide-react';
-import { AppState, BackgroundType, GitSyncConfig, ThemeSettings, WebdavConfig } from '../../types';
+import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ThemeSettings, WebdavConfig } from '../../types';
 import { PRESET_GRADIENTS } from '../../utils/constants';
 import { WebdavSettings } from './WebdavSettings';
 import { GitSettings } from './GitSettings';
 import { exportAllData, importData } from '../../services/storage';
-import { t } from '../../utils/i18n';
+import { t, supportedLocales } from '../../utils/i18n';
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -44,11 +51,111 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   const [activeTab, setActiveTab] = useState<'appearance' | 'behavior' | 'sync' | 'backup'>('appearance');
   const [syncProvider, setSyncProvider] = useState<'webdav' | 'git'>('webdav');
   const [importStatus, setImportStatus] = useState<string>('');
+  const [greetingStatus, setGreetingStatus] = useState<{ success?: boolean; text: string } | null>(null);
 
   if (!isOpen) return null;
 
   const handleSettingsChange = (fields: Partial<ThemeSettings>) => {
     onUpdateSettings({ ...settings, ...fields });
+  };
+
+  const handleImportGreetingsFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        if (typeof reader.result !== 'string') return;
+        const parsed = JSON.parse(reader.result);
+        if (typeof parsed !== 'object' || parsed === null) {
+          throw new Error('Invalid JSON structure');
+        }
+
+        const cleaned: CustomGreetings = {};
+        const keys: (keyof CustomGreetings)[] = ['morning', 'noon', 'afternoon', 'evening', 'night'];
+        let hasValidField = false;
+
+        for (const k of keys) {
+          if (Array.isArray(parsed[k])) {
+            const arr = parsed[k].filter((item: any) => typeof item === 'string' && item.trim().length > 0);
+            if (arr.length > 0) {
+              cleaned[k] = arr;
+              hasValidField = true;
+            }
+          }
+        }
+
+        if (!hasValidField) {
+          throw new Error('No valid greetings arrays');
+        }
+
+        handleSettingsChange({ customGreetings: cleaned });
+        setGreetingStatus({ success: true, text: t('importGreetingsSuccess', settings.language) });
+      } catch {
+        setGreetingStatus({ success: false, text: t('importGreetingsFailed', settings.language) });
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const handleDownloadGreetingTemplate = () => {
+    const template = {
+      morning: [
+        "早上好！",
+        "早安，新的一天开始了。",
+        "清晨的阳光照亮你的心情，早安！",
+        "起床啦，世界在等你！",
+        "早安，愿你今天充满活力。",
+        "早，喝杯咖啡开始奋斗吧。"
+      ],
+      noon: [
+        "中午好，该吃午饭啦！",
+        "午安，休息一下再继续。",
+        "正午时分，注意防暑哦。",
+        "中午啦，别忘了补充能量。",
+        "午安，愿你下午精力充沛。",
+        "吃了吗？中午好！"
+      ],
+      afternoon: [
+        "下午好，继续加油！",
+        "午后时光，保持专注。",
+        "下午好，来杯茶提提神吧。",
+        "午后阳光正好，心情也要好。",
+        "下午了，离下班不远啦，加油！",
+        "下午好，愿你一切顺利。"
+      ],
+      evening: [
+        "晚上好，一天辛苦了。",
+        "傍晚时分，放松心情。",
+        "晚上好，和家人共度美好时光吧。",
+        "夜幕降临，愿你有个温馨的夜晚。",
+        "晚上好，晚餐吃了吗？",
+        "华灯初上，晚上好！"
+      ],
+      night: [
+        "晚安，好梦。",
+        "夜深了，早点休息。",
+        "晚安，愿你今夜安眠。",
+        "夜晚宁静，好好休息。",
+        "晚安，别熬夜哦。",
+        "月亮伴你入眠，晚安。"
+      ]
+    };
+
+    const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'greetings-example.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleResetGreetings = () => {
+    handleSettingsChange({ customGreetings: undefined });
+    setGreetingStatus(null);
   };
 
   const handleExport = async () => {
@@ -81,6 +188,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
     reader.readAsText(file);
   };
 
+  const isLight = settings.mode === 'light';
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">
       {/* Backdrop */}
@@ -92,34 +201,52 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
       {/* Drawer */}
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
         <div
-          className="w-screen max-w-md border-l border-white/15 shadow-2xl text-white flex flex-col"
+          className={`w-screen max-w-md shadow-2xl flex flex-col transition-colors duration-200 ${
+            isLight
+              ? 'border-l border-black/10 text-slate-900'
+              : 'border-l border-white/15 text-white'
+          }`}
           style={{
-            background: 'rgba(15, 15, 25, 0.72)',
+            background: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(15, 15, 25, 0.75)',
             backdropFilter: 'blur(32px)',
             WebkitBackdropFilter: 'blur(32px)',
           }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
+          <div
+            className={`flex items-center justify-between px-6 py-5 border-b ${
+              isLight ? 'border-black/10' : 'border-white/10'
+            }`}
+          >
             <h2 className="text-lg font-semibold tracking-wide flex items-center gap-2">
-              <Sliders className="w-5 h-5 text-indigo-400" />
+              <Sliders className="w-5 h-5 text-indigo-500" />
               <span>{t('settingsTitle', settings.language)}</span>
             </h2>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className={`p-1.5 rounded-full transition-colors ${
+                isLight
+                  ? 'text-slate-500 hover:text-slate-900 hover:bg-black/5'
+                  : 'text-white/60 hover:text-white hover:bg-white/10'
+              }`}
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Navigation Tabs (外观, 偏好, 同步, 备份与迁移) */}
-          <div className="flex px-6 pt-3 border-b border-white/10 gap-5 overflow-x-auto text-xs font-medium scrollbar-none">
+          <div
+            className={`flex px-6 pt-3 border-b gap-5 overflow-x-auto text-xs font-medium scrollbar-none ${
+              isLight ? 'border-black/10' : 'border-white/10'
+            }`}
+          >
             <button
               onClick={() => setActiveTab('appearance')}
               className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
                 activeTab === 'appearance'
-                  ? 'border-indigo-500 text-indigo-400 font-semibold'
+                  ? 'border-indigo-500 text-indigo-500 font-semibold'
+                  : isLight
+                  ? 'border-transparent text-slate-500 hover:text-slate-900'
                   : 'border-transparent text-white/60 hover:text-white'
               }`}
             >
@@ -130,7 +257,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               onClick={() => setActiveTab('behavior')}
               className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
                 activeTab === 'behavior'
-                  ? 'border-indigo-500 text-indigo-400 font-semibold'
+                  ? 'border-indigo-500 text-indigo-500 font-semibold'
+                  : isLight
+                  ? 'border-transparent text-slate-500 hover:text-slate-900'
                   : 'border-transparent text-white/60 hover:text-white'
               }`}
             >
@@ -141,7 +270,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               onClick={() => setActiveTab('sync')}
               className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
                 activeTab === 'sync'
-                  ? 'border-indigo-500 text-indigo-400 font-semibold'
+                  ? 'border-indigo-500 text-indigo-500 font-semibold'
+                  : isLight
+                  ? 'border-transparent text-slate-500 hover:text-slate-900'
                   : 'border-transparent text-white/60 hover:text-white'
               }`}
             >
@@ -152,7 +283,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               onClick={() => setActiveTab('backup')}
               className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
                 activeTab === 'backup'
-                  ? 'border-indigo-500 text-indigo-400 font-semibold'
+                  ? 'border-indigo-500 text-indigo-500 font-semibold'
+                  : isLight
+                  ? 'border-transparent text-slate-500 hover:text-slate-900'
                   : 'border-transparent text-white/60 hover:text-white'
               }`}
             >
@@ -168,7 +301,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               <div className="space-y-5">
                 {/* Theme Mode */}
                 <div>
-                  <label className="block text-xs font-medium text-white/80 mb-2">
+                  <label
+                    className={`block text-xs font-medium mb-2 ${
+                      isLight ? 'text-slate-800' : 'text-white/80'
+                    }`}
+                  >
                     {t('themeMode', settings.language)}
                   </label>
                   <div className="grid grid-cols-2 gap-3">
@@ -177,7 +314,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       onClick={() => handleSettingsChange({ mode: 'dark' })}
                       className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium transition-all ${
                         settings.mode === 'dark'
-                          ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300'
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                          : isLight
+                          ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
                           : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
                       }`}
                     >
@@ -189,7 +328,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       onClick={() => handleSettingsChange({ mode: 'light' })}
                       className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium transition-all ${
                         settings.mode === 'light'
-                          ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300'
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                          : isLight
+                          ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
                           : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
                       }`}
                     >
@@ -201,7 +342,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                 {/* Wallpaper Source */}
                 <div>
-                  <label className="block text-xs font-medium text-white/80 mb-2">
+                  <label
+                    className={`block text-xs font-medium mb-2 ${
+                      isLight ? 'text-slate-800' : 'text-white/80'
+                    }`}
+                  >
                     {t('background', settings.language)}
                   </label>
                   <div className="grid grid-cols-2 gap-2 mb-3">
@@ -221,7 +366,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               bg.id === 'bing'
                                 ? 'https://bing.biturl.top/?resolution=1920&format=image&index=0&mkt=zh-CN'
                                 : bg.id === 'unsplash'
-                                ? 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80'
+                                ? 'https://images.unsplash.com/photo-1507525428033-b723cf961d3e?auto=format&fit=crop&w=1920&q=80'
                                 : bg.id === 'custom'
                                 ? settings.backgroundValue.startsWith('http') || settings.backgroundValue.startsWith('data:') || settings.backgroundValue.includes('wallpaper')
                                   ? settings.backgroundValue
@@ -231,7 +376,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         }
                         className={`py-2 px-3 rounded-xl border text-xs font-medium transition-all ${
                           settings.backgroundType === bg.id
-                            ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300'
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                            : isLight
+                            ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
                             : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
                         }`}
                       >
@@ -250,7 +397,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           style={{ background: p.value }}
                           className={`h-16 rounded-xl border cursor-pointer relative flex items-end p-2 transition-transform hover:scale-[1.02] ${
                             settings.backgroundValue === p.value
-                              ? 'border-indigo-400 ring-2 ring-indigo-400/50'
+                              ? 'border-indigo-500 ring-2 ring-indigo-400/50'
+                              : isLight
+                              ? 'border-black/15 shadow-sm'
                               : 'border-white/20'
                           }`}
                         >
@@ -274,14 +423,22 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           value={settings.backgroundValue}
                           onChange={(e) => handleSettingsChange({ backgroundValue: e.target.value })}
                           placeholder={t('bgCustomPlaceholder', settings.language)}
-                          className="flex-1 px-3 py-2 rounded-xl bg-white/10 border border-white/15 focus:border-indigo-500 outline-none text-xs text-white placeholder-white/40"
+                          className={`flex-1 px-3 py-2 rounded-xl border outline-none text-xs ${
+                            isLight
+                              ? 'bg-black/5 border-black/15 text-slate-900 placeholder-slate-400 focus:border-indigo-500'
+                              : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-indigo-500'
+                          }`}
                         />
                         <label
-                          className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white/80 hover:text-white cursor-pointer transition-colors flex items-center gap-1.5 text-xs shrink-0"
-                          title="上传本地壁纸图片"
+                          className={`px-3 py-2 rounded-xl border cursor-pointer transition-colors flex items-center gap-1.5 text-xs shrink-0 ${
+                            isLight
+                              ? 'bg-black/5 hover:bg-black/10 border-black/15 text-slate-700 hover:text-slate-900'
+                              : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80 hover:text-white'
+                          }`}
+                          title={t('bgLocal', settings.language)}
                         >
                           <Upload className="w-3.5 h-3.5" />
-                          <span>本地壁纸</span>
+                          <span>{t('bgLocal', settings.language)}</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -303,9 +460,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <button
                         type="button"
                         onClick={() => handleSettingsChange({ backgroundValue: './wallpapers/default-wallpaper.jpg' })}
-                        className="text-[11px] text-indigo-400 hover:text-indigo-300 underline cursor-pointer"
+                        className="text-[11px] text-indigo-500 hover:text-indigo-600 underline cursor-pointer"
                       >
-                        恢复默认落日海滩壁纸
+                        {t('resetDefaultWallpaper', settings.language)}
                       </button>
                     </div>
                   )}
@@ -313,9 +470,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                 {/* Card Size Slider */}
                 <div>
-                  <div className="flex justify-between text-xs font-medium text-white/80 mb-1.5">
-                    <span>卡片大小 (Card Size)</span>
-                    <span className="text-indigo-400">{settings.cardSize || 110}px</span>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardSizeTitle', settings.language)}</span>
+                    <span className="text-indigo-500 font-semibold">{settings.cardSize || 110}px</span>
                   </div>
                   <input
                     type="range"
@@ -324,20 +481,22 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     step="5"
                     value={settings.cardSize || 110}
                     onChange={(e) => handleSettingsChange({ cardSize: parseInt(e.target.value, 10) })}
-                    className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                      isLight ? 'bg-slate-200' : 'bg-white/20'
+                    }`}
                   />
-                  <div className="flex justify-between text-[10px] text-white/40 mt-1">
-                    <span>紧凑 (80px)</span>
-                    <span>默认 (110px)</span>
-                    <span>大卡片 (160px)</span>
+                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                    <span>{t('cardSizeCompact', settings.language)}</span>
+                    <span>{t('cardSizeDefault', settings.language)}</span>
+                    <span>{t('cardSizeLarge', settings.language)}</span>
                   </div>
                 </div>
 
                 {/* Card Opacity Slider */}
                 <div>
-                  <div className="flex justify-between text-xs font-medium text-white/80 mb-1.5">
-                    <span>卡片不透明度 (Opacity)</span>
-                    <span className="text-indigo-400">{Math.round(settings.cardOpacity * 100)}%</span>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardOpacityTitle', settings.language)}</span>
+                    <span className="text-indigo-500 font-semibold">{Math.round(settings.cardOpacity * 100)}%</span>
                   </div>
                   <input
                     type="range"
@@ -346,20 +505,22 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     step="0.05"
                     value={settings.cardOpacity}
                     onChange={(e) => handleSettingsChange({ cardOpacity: parseFloat(e.target.value) })}
-                    className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                      isLight ? 'bg-slate-200' : 'bg-white/20'
+                    }`}
                   />
-                  <div className="flex justify-between text-[10px] text-white/40 mt-1">
-                    <span>极简透光 (5%)</span>
-                    <span>半透毛玻璃 (30%)</span>
-                    <span>实色浓郁 (90%)</span>
+                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                    <span>{t('cardOpacityLow', settings.language)}</span>
+                    <span>{t('cardOpacityMed', settings.language)}</span>
+                    <span>{t('cardOpacityHigh', settings.language)}</span>
                   </div>
                 </div>
 
                 {/* Card Blur Slider */}
                 <div>
-                  <div className="flex justify-between text-xs font-medium text-white/80 mb-1.5">
-                    <span>{t('cardBlur', settings.language)}</span>
-                    <span className="text-indigo-400">{settings.cardBlur}px</span>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardBlur', settings.language)}</span>
+                    <span className="text-indigo-500 font-semibold">{settings.cardBlur}px</span>
                   </div>
                   <input
                     type="range"
@@ -368,15 +529,17 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     step="2"
                     value={settings.cardBlur}
                     onChange={(e) => handleSettingsChange({ cardBlur: parseInt(e.target.value, 10) })}
-                    className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                      isLight ? 'bg-slate-200' : 'bg-white/20'
+                    }`}
                   />
                 </div>
 
                 {/* Card Icon Ratio Slider */}
                 <div>
-                  <div className="flex justify-between text-xs font-medium text-white/80 mb-1.5">
-                    <span>{t('iconSizeRatio', settings.language)}</span>
-                    <span className="text-indigo-400">{Math.round((settings.iconSizeRatio || 0.42) * 100)}%</span>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconSizeRatio', settings.language)}</span>
+                    <span className="text-indigo-500 font-semibold">{Math.round((settings.iconSizeRatio || 0.42) * 100)}%</span>
                   </div>
                   <input
                     type="range"
@@ -385,20 +548,22 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     step="0.01"
                     value={settings.iconSizeRatio || 0.42}
                     onChange={(e) => handleSettingsChange({ iconSizeRatio: parseFloat(e.target.value) })}
-                    className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                      isLight ? 'bg-slate-200' : 'bg-white/20'
+                    }`}
                   />
-                  <div className="flex justify-between text-[10px] text-white/40 mt-1">
-                    <span>精致留白 (28%)</span>
-                    <span>默认 (42%)</span>
-                    <span>饱满大图 (65%)</span>
+                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                    <span>{t('iconRatioLow', settings.language)}</span>
+                    <span>{t('iconRatioMed', settings.language)}</span>
+                    <span>{t('iconRatioHigh', settings.language)}</span>
                   </div>
                 </div>
 
                 {/* Max Cards Per Row Slider */}
                 <div>
-                  <div className="flex justify-between text-xs font-medium text-white/80 mb-1.5">
-                    <span>{t('maxCardsPerRow', settings.language)}</span>
-                    <span className="text-indigo-400">{settings.maxCardsPerRow || 8} 个/行</span>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('maxCardsPerRow', settings.language)}</span>
+                    <span className="text-indigo-500 font-semibold">{settings.maxCardsPerRow || 8}</span>
                   </div>
                   <input
                     type="range"
@@ -407,12 +572,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     step="1"
                     value={settings.maxCardsPerRow || 8}
                     onChange={(e) => handleSettingsChange({ maxCardsPerRow: parseInt(e.target.value, 10) })}
-                    className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
+                      isLight ? 'bg-slate-200' : 'bg-white/20'
+                    }`}
                   />
-                  <div className="flex justify-between text-[10px] text-white/40 mt-1">
-                    <span>4 个 (紧凑)</span>
-                    <span>8 个 (默认)</span>
-                    <span>12 个 (宽屏)</span>
+                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                    <span>{t('cardsPerRowCompact', settings.language)}</span>
+                    <span>{t('cardsPerRowDefault', settings.language)}</span>
+                    <span>{t('cardsPerRowWide', settings.language)}</span>
                   </div>
                 </div>
               </div>
@@ -422,41 +589,202 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             {activeTab === 'behavior' && (
               <div className="space-y-4">
                 {/* Language */}
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 text-slate-900'
+                      : 'bg-white/5 border-white/10 text-white'
+                  }`}
+                >
                   <div className="flex items-center gap-2.5">
-                    <Globe className="w-4 h-4 text-indigo-400" />
-                    <span className="text-xs font-medium">语言 / Language</span>
+                    <Globe className="w-4 h-4 text-indigo-500" />
+                    <span className="text-xs font-medium">{t('language', settings.language)}</span>
                   </div>
                   <select
                     value={settings.language}
                     onChange={(e) => handleSettingsChange({ language: e.target.value as any })}
-                    className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs text-white outline-none cursor-pointer"
+                    className={`px-3 py-1.5 rounded-xl border text-xs outline-none cursor-pointer ${
+                      isLight
+                        ? 'bg-white border-black/10 text-slate-800 shadow-sm'
+                        : 'bg-white/10 border-white/15 text-white'
+                    }`}
                   >
-                    <option value="zh-CN" className="bg-slate-900 text-white">简体中文</option>
-                    <option value="en" className="bg-slate-900 text-white">English</option>
+                    {supportedLocales.map((loc) => (
+                      <option key={loc.code} value={loc.code} className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'}>
+                        {loc.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 {/* Open in New Tab */}
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
-                  <span className="text-xs font-medium">{t('openInNewTab', settings.language)}</span>
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 text-slate-900'
+                      : 'bg-white/5 border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <ExternalLink className="w-4 h-4 text-indigo-500" />
+                    <span className="text-xs font-medium">{t('openInNewTab', settings.language)}</span>
+                  </div>
                   <input
                     type="checkbox"
                     checked={settings.openInNewTab}
                     onChange={(e) => handleSettingsChange({ openInNewTab: e.target.checked })}
-                    className="rounded bg-white/10 border-white/20 text-indigo-600 focus:ring-0 cursor-pointer"
+                    className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
                   />
                 </div>
 
-                {/* Show Clock & Greeting */}
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/10">
-                  <span className="text-xs font-medium">{t('showClock', settings.language)}</span>
+                {/* Show Clock */}
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 text-slate-900'
+                      : 'bg-white/5 border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Clock className="w-4 h-4 text-indigo-500" />
+                    <span className="text-xs font-medium">{t('showClockOnly', settings.language)}</span>
+                  </div>
                   <input
                     type="checkbox"
                     checked={settings.showClock}
                     onChange={(e) => handleSettingsChange({ showClock: e.target.checked })}
-                    className="rounded bg-white/10 border-white/20 text-indigo-600 focus:ring-0 cursor-pointer"
+                    className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
                   />
+                </div>
+
+                {/* Show Date */}
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 text-slate-900'
+                      : 'bg-white/5 border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Calendar className="w-4 h-4 text-indigo-500" />
+                    <span className="text-xs font-medium">{t('showDateOnly', settings.language)}</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.showDate}
+                    onChange={(e) => handleSettingsChange({ showDate: e.target.checked })}
+                    className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
+                  />
+                </div>
+
+                {/* Show Greeting & Custom Greetings Section */}
+                <div
+                  className={`p-3.5 rounded-2xl border transition-colors space-y-3 ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 text-slate-900'
+                      : 'bg-white/5 border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <MessageSquareQuote className="w-4 h-4 text-indigo-500" />
+                      <span className="text-xs font-medium">{t('showGreetingOnly', settings.language)}</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={settings.showGreeting}
+                      onChange={(e) => handleSettingsChange({ showGreeting: e.target.checked })}
+                      className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Greeting customization panel when showGreeting is enabled */}
+                  {settings.showGreeting && (
+                    <div
+                      className={`pt-3 border-t space-y-2.5 ${
+                        isLight ? 'border-black/5' : 'border-white/10'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                          {t('customGreetings', settings.language)}
+                        </span>
+                        {settings.customGreetings && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-medium flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            {t('customGreetingsActive', settings.language)}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                        {t('customGreetingsDesc', settings.language)}
+                      </p>
+
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {/* Import Greetings Button */}
+                        <label
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-colors ${
+                            isLight
+                              ? 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-700'
+                              : 'bg-indigo-500/20 hover:bg-indigo-500/30 border-indigo-500/30 text-indigo-300'
+                          }`}
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{t('importGreetings', settings.language)}</span>
+                          <input
+                            type="file"
+                            accept=".json"
+                            onChange={handleImportGreetingsFile}
+                            className="hidden"
+                          />
+                        </label>
+
+                        {/* Download Template Button */}
+                        <button
+                          type="button"
+                          onClick={handleDownloadGreetingTemplate}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
+                            isLight
+                              ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700'
+                              : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80'
+                          }`}
+                        >
+                          <FileDown className="w-3.5 h-3.5" />
+                          <span>{t('downloadGreetingTemplate', settings.language)}</span>
+                        </button>
+
+                        {/* Reset to Default */}
+                        {settings.customGreetings && (
+                          <button
+                            type="button"
+                            onClick={handleResetGreetings}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
+                              isLight
+                                ? 'bg-red-50 hover:bg-red-100 border-red-200 text-red-600'
+                                : 'bg-red-500/10 hover:bg-red-500/20 border-red-500/20 text-red-400'
+                            }`}
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>{t('resetGreetings', settings.language)}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Import Status Message */}
+                      {greetingStatus && (
+                        <div
+                          className={`text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 animate-fade-in ${
+                            greetingStatus.success
+                              ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                              : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                          }`}
+                        >
+                          <span>{greetingStatus.text}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -465,30 +793,38 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             {activeTab === 'sync' && (
               <div className="space-y-4">
                 {/* Sub-selector for Sync Method */}
-                <div className="flex p-1 rounded-2xl bg-white/10 border border-white/15 gap-1">
+                <div
+                  className={`flex p-1 rounded-2xl border gap-1 ${
+                    isLight ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/15'
+                  }`}
+                >
                   <button
                     type="button"
                     onClick={() => setSyncProvider('webdav')}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all ${
                       syncProvider === 'webdav'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold'
+                        : isLight
+                        ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
                         : 'text-white/70 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     <Cloud className="w-3.5 h-3.5" />
-                    <span>WebDAV 同步</span>
+                    <span>{t('webdavSync', settings.language)}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setSyncProvider('git')}
                     className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all ${
                       syncProvider === 'git'
-                        ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold'
+                        : isLight
+                        ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
                         : 'text-white/70 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     <GitBranch className="w-3.5 h-3.5" />
-                    <span>Git 仓库备份</span>
+                    <span>{t('gitBackup', settings.language)}</span>
                   </button>
                 </div>
 
@@ -512,9 +848,15 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             {/* 4. 备份与迁移 Tab */}
             {activeTab === 'backup' && (
               <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                  <div className="text-xs text-white/70 leading-relaxed">
-                    随时导出所有快捷网址、分类和个性化设置配置为本地 JSON 文件，或在其他设备上一键导入恢复。
+                <div
+                  className={`p-4 rounded-2xl border space-y-3 ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 text-slate-700'
+                      : 'bg-white/5 border-white/10 text-white/70'
+                  }`}
+                >
+                  <div className="text-xs leading-relaxed">
+                    {t('backupDescription', settings.language)}
                   </div>
 
                   <div className="flex flex-col gap-2.5 pt-2">
@@ -527,7 +869,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <span>{t('exportData', settings.language)}</span>
                     </button>
 
-                    <label className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white transition-colors cursor-pointer border border-white/15">
+                    <label
+                      className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
+                        isLight
+                          ? 'bg-white hover:bg-slate-50 border-black/10 text-slate-800 shadow-sm'
+                          : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
+                      }`}
+                    >
                       <Upload className="w-4 h-4" />
                       <span>{t('importData', settings.language)}</span>
                       <input
@@ -540,7 +888,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   </div>
 
                   {importStatus && (
-                    <div className="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-300 text-xs text-center">
+                    <div
+                      className={`p-2.5 rounded-xl text-xs text-center ${
+                        isLight
+                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                          : 'bg-indigo-500/20 text-indigo-300'
+                      }`}
+                    >
                       {importStatus}
                     </div>
                   )}

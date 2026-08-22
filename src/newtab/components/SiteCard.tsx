@@ -39,6 +39,7 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
   const iconSrc = imgError || !site.icon ? generateFallbackIcon(site.title || site.url) : site.icon;
   const cardSize = settings.cardSize || 110;
   const iconRatio = settings.iconSizeRatio || 0.42;
+  const isLight = settings.mode === 'light';
 
   // Responsive scaling calculations based on cardSize and custom icon ratio
   const iconBoxSize = Math.max(24, Math.round(cardSize * iconRatio));
@@ -106,6 +107,8 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
             ? `rgba(99, 102, 241, 0.35)`
             : isJustDropped
             ? `rgba(99, 102, 241, 0.40)`
+            : isLight
+            ? `rgba(255, 255, 255, ${Math.max(0.78, settings.cardOpacity)})`
             : `rgba(255, 255, 255, ${settings.cardOpacity})`,
           backdropFilter: `blur(${settings.cardBlur}px)`,
           WebkitBackdropFilter: `blur(${settings.cardBlur}px)`,
@@ -117,13 +120,17 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
             ? 'ios-dragged border-indigo-400 ring-2 ring-indigo-400/60'
             : isJustDropped
             ? 'ios-drop-spring border-indigo-400 ring-2 ring-indigo-400/90'
+            : isLight
+            ? 'border-black/10 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/10 hover:border-black/20 hover:scale-[1.02]'
             : 'border-white/15 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/25 hover:border-white/35 hover:scale-[1.02]'
         }`}
       >
         {/* Icon Container */}
         <div
           style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px` }}
-          className="rounded-xl flex items-center justify-center bg-white/10 shadow-sm overflow-hidden mb-2 transition-transform duration-150 group-hover:scale-105 shrink-0 pointer-events-none"
+          className={`rounded-xl flex items-center justify-center shadow-sm overflow-hidden mb-2 transition-transform duration-150 group-hover:scale-105 shrink-0 pointer-events-none ${
+            isLight ? 'bg-black/[0.04]' : 'bg-white/10'
+          }`}
         >
           <img
             src={iconSrc}
@@ -143,7 +150,11 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
           style={{
             fontSize: cardSize < 95 ? '11px' : cardSize > 130 ? '14px' : '12px',
           }}
-          className="font-medium text-white/90 group-hover:text-white truncate max-w-full text-center tracking-wide drop-shadow px-1 select-none pointer-events-none"
+          className={`font-medium truncate max-w-full text-center tracking-wide px-1 select-none pointer-events-none transition-colors ${
+            isLight
+              ? 'text-slate-800 group-hover:text-indigo-600'
+              : 'text-white/90 group-hover:text-white drop-shadow'
+          }`}
         >
           {site.title || 'Untitled'}
         </span>
@@ -156,7 +167,11 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
-            className="p-1 rounded-lg text-white/70 hover:text-white hover:bg-white/20 transition-colors"
+            className={`p-1 rounded-lg transition-colors ${
+              isLight
+                ? 'text-slate-500 hover:text-slate-900 hover:bg-black/10'
+                : 'text-white/70 hover:text-white hover:bg-white/20'
+            }`}
             title="More actions"
           >
             <MoreVertical className="w-3.5 h-3.5" />
@@ -166,9 +181,13 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
           {showMenu && (
             <div
               onClick={(e) => e.stopPropagation()}
-              className="absolute right-0 top-6 w-28 py-1 rounded-xl border border-white/15 shadow-2xl z-40 animate-scale-in text-xs font-medium overflow-hidden"
+              className={`absolute right-0 top-6 w-28 py-1 rounded-xl border shadow-2xl z-40 animate-scale-in text-xs font-medium overflow-hidden ${
+                isLight
+                  ? 'border-black/10 shadow-black/10'
+                  : 'border-white/15 shadow-black/40'
+              }`}
               style={{
-                background: 'rgba(15, 15, 25, 0.75)',
+                background: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(15, 15, 25, 0.75)',
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
               }}
@@ -178,7 +197,11 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
                   setShowMenu(false);
                   onEdit(site);
                 }}
-                className="flex items-center gap-2 w-full px-3 py-1.5 text-left text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                className={`flex items-center gap-2 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+                  isLight
+                    ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                    : 'text-white/80 hover:bg-white/10 hover:text-white'
+                }`}
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 <span>{t('editSite', settings.language)}</span>
@@ -188,7 +211,11 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
                   setShowMenu(false);
                   onDelete(site.id);
                 }}
-                className="flex items-center gap-2 w-full px-3 py-1.5 text-left text-red-400 hover:bg-red-500/20 transition-colors"
+                className={`flex items-center gap-2 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+                  isLight
+                    ? 'text-red-600 hover:bg-red-50'
+                    : 'text-red-400 hover:bg-red-500/10'
+                }`}
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>{t('deleteSite', settings.language)}</span>

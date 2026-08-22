@@ -14,6 +14,7 @@ export interface Category {
   name: string;
   sortOrder: number;
   isDefault?: boolean;
+  showInAll?: boolean;
 }
 
 export interface SearchEngine {
@@ -25,6 +26,16 @@ export interface SearchEngine {
 
 export type ThemeMode = 'system' | 'dark' | 'light';
 export type BackgroundType = 'gradient' | 'bing' | 'unsplash' | 'custom' | 'color';
+
+import { Locale } from '../locales';
+
+export interface CustomGreetings {
+  morning?: string[];
+  noon?: string[];
+  afternoon?: string[];
+  evening?: string[];
+  night?: string[];
+}
 
 export interface ThemeSettings {
   mode: ThemeMode;
@@ -40,7 +51,8 @@ export interface ThemeSettings {
   showClock: boolean;
   showGreeting: boolean;
   showDate: boolean;
-  language: 'zh-CN' | 'en';
+  language: Locale;
+  customGreetings?: CustomGreetings;
   updatedAt?: number;
 }
 
@@ -51,7 +63,7 @@ export interface WebdavConfig {
   url: string;
   username: string;
   password?: string;
-  syncPath: string; // e.g. '/mytab/sync.json'
+  syncPath: string; // e.g. '/mytab/MyTab-Backup.json'
   autoSync: boolean;
   lastSyncTime?: number;
   lastSyncStatus?: 'success' | 'failed' | 'in_progress';
@@ -60,16 +72,37 @@ export interface WebdavConfig {
 }
 
 export type GitProvider = 'github' | 'gitee';
+export type GitSyncMode = 'gist' | 'repo';
+
+export interface GitPlatformConfig {
+  mode?: GitSyncMode;
+  gistId?: string;
+  owner: string;
+  repo: string;
+  branch: string;
+  path: string;
+  token: string;
+  lastSyncTime?: number;
+  lastSyncStatus?: 'success' | 'failed' | 'in_progress';
+  lastSyncError?: string;
+}
 
 export interface GitSyncConfig {
   enabled: boolean;
   provider: GitProvider;
+  autoSync: boolean;
+  providers?: {
+    github?: GitPlatformConfig;
+    gitee?: GitPlatformConfig;
+  };
+  // Active provider properties (for backward compatibility & direct access)
+  mode?: GitSyncMode; // 'repo' (default) or 'gist'
+  gistId?: string; // Gist ID for gist mode
   owner: string;
   repo: string;
   branch: string;
   path: string; // e.g. 'mytab-backup.json'
   token: string;
-  autoSync: boolean;
   lastSyncTime?: number;
   lastSyncStatus?: 'success' | 'failed' | 'in_progress';
   lastSyncError?: string;

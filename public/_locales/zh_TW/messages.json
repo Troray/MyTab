@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "MyTab - 極簡新分頁",
+    "description": "擴充功能名稱"
+  },
+  "extensionDescription": {
+    "message": "現代化高顏值新分頁，支援智慧圖示擷取、聚合搜尋、分類網格與 WebDAV / Git (GitHub/Gitee) 雙重多裝置雲端同步。",
+    "description": "擴充功能描述"
+  }
+}

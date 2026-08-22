@@ -53,6 +53,13 @@ async function buildExtension() {
       await fs.copy(wallpapersSrc, wallpapersDest);
     }
 
+    // Copy public _locales
+    const localesSrc = path.resolve(rootDir, 'public/_locales');
+    const localesDest = path.resolve(targetDir, '_locales');
+    if (fs.existsSync(localesSrc)) {
+      await fs.copy(localesSrc, localesDest);
+    }
+
     // Rename index.html to newtab.html if needed
     const indexHtml = path.resolve(targetDir, 'index.html');
     const newtabHtml = path.resolve(targetDir, 'newtab.html');
@@ -69,8 +76,9 @@ async function buildExtension() {
     const pkgJson = await fs.readJson(path.resolve(rootDir, 'package.json'));
     const manifest = {
       manifest_version: 3,
-      name: 'MyTab - 极简新标签页',
-      description: '现代化高颜值新标签页，支持智能图标抓取、聚合搜索、分类网格与 WebDAV / Git (GitHub/Gitee) 双重多设备云同步。',
+      name: '__MSG_extensionName__',
+      description: '__MSG_extensionDescription__',
+      default_locale: 'zh_CN',
       version: pkgJson.version || '1.0.1',
       author: 'Troray',
       homepage_url: 'https://github.com/Troray/MyTab',
@@ -82,7 +90,7 @@ async function buildExtension() {
         '512': 'icons/icon-512.png',
       },
       action: {
-        default_title: 'MyTab',
+        default_title: '__MSG_extensionName__',
         default_icon: {
           '16': 'icons/icon-16.png',
           '32': 'icons/icon-32.png',
@@ -104,6 +112,9 @@ async function buildExtension() {
     } else if (target === 'firefox') {
       manifest.background = {
         scripts: ['background.js'],
+      };
+      manifest.chrome_settings_overrides = {
+        homepage: 'newtab.html',
       };
       manifest.browser_specific_settings = {
         gecko: {

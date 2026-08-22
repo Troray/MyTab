@@ -48,9 +48,30 @@ export async function urlToBase64Icon(imageUrl: string, maxSize = 128): Promise<
   if (!imageUrl) return '';
   if (imageUrl.startsWith('data:image/')) return imageUrl;
 
+  // 1. Try privileged background fetch if running as extension (bypasses all CORS and redirects)
+  if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+    try {
+      const resp = await new Promise<any>((resolve) => {
+        chrome.runtime.sendMessage({ type: 'FETCH_BLOB_BASE64', url: imageUrl }, (res) => {
+          if (chrome.runtime.lastError || !res) {
+            resolve(null);
+          } else {
+            resolve(res);
+          }
+        });
+      });
+      if (resp && resp.success && resp.data && resp.data.startsWith('data:image/')) {
+        return resp.data;
+      }
+    } catch {
+      // fallback to direct fetch
+    }
+  }
+
+  // 2. Try direct fetch
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
 
     const res = await fetch(imageUrl, {
       signal: controller.signal,
@@ -62,18 +83,49 @@ export async function urlToBase64Icon(imageUrl: string, maxSize = 128): Promise<
 
     if (res.ok) {
       const blob = await res.blob();
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const result = reader.result as string;
-          resolve(result || imageUrl);
-        };
-        reader.onerror = () => resolve(imageUrl);
-        reader.readAsDataURL(blob);
-      });
+      if (blob && blob.size > 0) {
+        return await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            resolve(result || imageUrl);
+          };
+          reader.onerror = () => resolve(imageUrl);
+          reader.readAsDataURL(blob);
+        });
+      }
     }
   } catch {
-    // Fallback to raw URL if fetch fails
+    // direct fetch failed
+  }
+
+  // 3. Fallback: try DuckDuckGo or direct gstatic CDN (both support CORS and no 301 redirects)
+  try {
+    const domain = new URL(imageUrl).hostname;
+    if (domain && !imageUrl.includes('gstatic.com') && !imageUrl.includes('duckduckgo.com')) {
+      const fallbackUrl = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch(fallbackUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const blob = await res.blob();
+        if (blob && blob.size > 0) {
+          return await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              resolve(result || imageUrl);
+            };
+            reader.onerror = () => resolve(imageUrl);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    }
+  } catch {
+    // ignore
   }
 
   return imageUrl;
@@ -131,10 +183,19 @@ export async function fileToBase64Icon(file: File, maxSize = 128): Promise<strin
  */
 export function getFaviconServiceUrls(hostname: string): string[] {
   return [
-    `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`,
+    `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostname}&size=128`,
     `https://icons.duckduckgo.com/ip3/${hostname}.ico`,
     `https://api.faviconkit.com/${hostname}/144`,
   ];
+}
+
+/**
+ * Format domain name into clean display title (e.g. 'github.com' -> 'Github')
+ */
+function formatFallbackTitle(hostname: string): string {
+  const root = hostname.replace(/^www\./i, '');
+  const namePart = root.split('.')[0] || root;
+  return namePart.charAt(0).toUpperCase() + namePart.slice(1);
 }
 
 /**
@@ -153,41 +214,70 @@ export async function fetchSiteMetadata(rawUrl: string): Promise<MetadataResult>
     };
   }
 
-  const hostname = parsed.hostname;
-  const defaultTitle = hostname.replace(/^www\./i, '');
-  let extractedTitle = defaultTitle;
+  const hostname = parsed.hostname.toLowerCase();
+  let extractedTitle = formatFallbackTitle(hostname);
   let extractedIcon = getFaviconServiceUrls(hostname)[0];
 
-  // Try direct fetch to parse HTML <title> and high-res <link rel="icon">
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+  // 1. Fetch HTML via privileged background service to bypass CORS, fallback to direct fetch
+  let html = '';
+  if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+    try {
+      const resp = await new Promise<any>((resolve) => {
+        chrome.runtime.sendMessage({ type: 'FETCH_HTML', url }, (res) => {
+          if (chrome.runtime.lastError || !res) {
+            resolve(null);
+          } else {
+            resolve(res);
+          }
+        });
+      });
+      if (resp && resp.success && resp.data) {
+        html = resp.data;
+      }
+    } catch {
+      // background fetch failed
+    }
+  }
 
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml',
-      },
-      mode: 'cors',
-    });
-    clearTimeout(timeoutId);
+  if (!html) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+        mode: 'cors',
+      });
+      clearTimeout(timeoutId);
+      if (response.ok) {
+        html = await response.text();
+      }
+    } catch {
+      // Direct fetch failed
+    }
+  }
 
-    if (response.ok) {
-      const html = await response.text();
+  // 2. Parse HTML to extract title and high-resolution icons
+  if (html) {
+    try {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
 
-      // 1. Extract Title: og:title -> twitter:title -> <title>
+      // Extract Title: og:site_name -> application-name -> og:title -> twitter:title -> <title>
+      const siteName = doc.querySelector('meta[property="og:site_name"]')?.getAttribute('content');
+      const appName = doc.querySelector('meta[name="application-name"]')?.getAttribute('content');
       const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content');
       const twitterTitle = doc.querySelector('meta[name="twitter:title"]')?.getAttribute('content');
       const docTitle = doc.querySelector('title')?.innerText;
 
-      const candidateTitle = (ogTitle || twitterTitle || docTitle || '').trim();
+      const candidateTitle = (siteName || appName || ogTitle || twitterTitle || docTitle || '').trim();
       if (candidateTitle) {
         extractedTitle = candidateTitle;
       }
 
-      // 2. Extract Favicon: apple-touch-icon -> icon -> shortcut icon
+      // Extract Favicon: apple-touch-icon -> icon -> shortcut icon
       const iconSelectors = [
         'link[rel="apple-touch-icon"]',
         'link[rel="apple-touch-icon-precomposed"]',
@@ -212,13 +302,12 @@ export async function fetchSiteMetadata(rawUrl: string): Promise<MetadataResult>
           }
         }
       }
+    } catch {
+      // ignore parse error
     }
-  } catch {
-    // Direct fetch failed (e.g. CORS or network failure). Use Google / DuckDuckGo favicon fallback
-    extractedIcon = `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`;
   }
 
-  // Optimize & Cache as Base64 Data URL
+  // 4. Optimize & Cache as Base64 Data URL
   const cachedIcon = await urlToBase64Icon(extractedIcon);
 
   return {

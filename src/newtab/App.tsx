@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Settings as SettingsIcon, Plus } from 'lucide-react';
 import { AppState, Category, GitSyncConfig, SiteItem, ThemeSettings, WebdavConfig } from '../types';
 import {
@@ -76,14 +76,25 @@ export const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, [appState?.sites]);
 
-  // 3. Handle Auto-Sync (WebDAV & Git) if enabled
-  const triggerAutoSync = useCallback(async (currentState: AppState) => {
-    if (currentState.webdav?.enabled && currentState.webdav?.autoSync) {
-      await executeWebdavSync(currentState);
+  // 3. Handle Auto-Sync (WebDAV & Git) with smart debounce
+  const autoSyncTimerRef = useRef<any>(null);
+  const triggerAutoSync = useCallback((currentState: AppState) => {
+    if (autoSyncTimerRef.current) {
+      clearTimeout(autoSyncTimerRef.current);
     }
-    if (currentState.git?.enabled && currentState.git?.autoSync) {
-      await executeGitSync(currentState);
-    }
+
+    autoSyncTimerRef.current = setTimeout(async () => {
+      try {
+        if (currentState.webdav?.enabled && currentState.webdav?.autoSync) {
+          await executeWebdavSync(currentState);
+        }
+        if (currentState.git?.enabled && currentState.git?.autoSync) {
+          await executeGitSync(currentState);
+        }
+      } catch (e) {
+        console.error('[AutoSync Error]', e);
+      }
+    }, 1500);
   }, []);
 
   // 3. Theme mode class on document
@@ -133,22 +144,28 @@ export const App: React.FC = () => {
 
   const { sites, categories, settings, activeCategoryId, isFirstLaunch } = appState;
 
-  // Filter sites based on active category
+  // Filter sites based on active category and showInAll flag
+  const hiddenInAllCatIds = new Set(
+    categories.filter((c) => c.showInAll === false).map((c) => c.id)
+  );
+
   const filteredSites =
     activeCategoryId === 'all'
-      ? sites
+      ? sites.filter((s) => !hiddenInAllCatIds.has(s.categoryId))
       : sites.filter((s) => s.categoryId === activeCategoryId);
 
   // Compute count of sites per category
+  const allVisibleCount = sites.filter((s) => !hiddenInAllCatIds.has(s.categoryId)).length;
+
   const siteCounts: Record<string, number> = {
     ...categories.reduce((acc, cat) => {
       acc[cat.id] =
         cat.id === 'all'
-          ? sites.length
+          ? allVisibleCount
           : sites.filter((s) => s.categoryId === cat.id).length;
       return acc;
     }, {} as Record<string, number>),
-    all: sites.length,
+    all: allVisibleCount,
   };
 
   // Handlers for Sites
@@ -218,13 +235,24 @@ export const App: React.FC = () => {
   };
 
   // Handlers for Categories
-  const handleAddCategory = async (name: string) => {
+  const handleAddCategory = async (data: { name: string; showInAll: boolean }) => {
     const newCat: Category = {
       id: `cat-${Date.now()}`,
-      name,
+      name: data.name,
       sortOrder: categories.length,
+      showInAll: data.showInAll,
     };
     const updatedCats = [...categories, newCat];
+    await saveCategories(updatedCats);
+    const nextState = { ...appState, categories: updatedCats };
+    setAppState(nextState);
+    triggerAutoSync(nextState);
+  };
+
+  const handleUpdateCategory = async (catId: string, updates: Partial<Category>) => {
+    const updatedCats = categories.map((c) =>
+      c.id === catId ? { ...c, ...updates } : c
+    );
     await saveCategories(updatedCats);
     const nextState = { ...appState, categories: updatedCats };
     setAppState(nextState);
@@ -283,20 +311,34 @@ export const App: React.FC = () => {
     setAppState({ ...appState, isFirstLaunch: false });
   };
 
+  const isLight = settings.mode === 'light';
+
   return (
     <div
       style={backgroundStyle}
       className="relative min-h-screen w-full flex flex-col justify-between overflow-x-hidden selection:bg-indigo-500 selection:text-white"
     >
-      {/* Dark tint overlay for non-gradient wallpapers */}
+      {/* Dynamic tint overlay for non-gradient wallpapers */}
       {settings.backgroundType !== 'gradient' && (
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] pointer-events-none z-0" />
+        <div
+          className={`absolute inset-0 pointer-events-none z-0 transition-colors duration-300 ${
+            isLight
+              ? 'bg-white/20 backdrop-blur-[1px]'
+              : 'bg-black/40 backdrop-blur-[2px]'
+          }`}
+        />
       )}
 
       {/* Top Floating Actions Bar */}
       <header className="relative z-10 w-full flex items-center justify-between p-5 md:px-8">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold tracking-wider text-white/80 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+          <span
+            className={`text-sm font-semibold tracking-wider px-3 py-1 rounded-full border backdrop-blur-md transition-colors ${
+              isLight
+                ? 'text-slate-800 bg-white/70 border-black/10 shadow-sm'
+                : 'text-white/80 bg-white/10 border-white/10'
+            }`}
+          >
             MyTab
           </span>
         </div>
@@ -308,7 +350,11 @@ export const App: React.FC = () => {
               setEditingSite(null);
               setIsSiteModalOpen(true);
             }}
-            className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 text-white/80 hover:text-white shadow-lg transition-all duration-200 cursor-pointer"
+            className={`p-2.5 rounded-full backdrop-blur-md border shadow-lg transition-all duration-200 cursor-pointer ${
+              isLight
+                ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-slate-900 border-black/10 shadow-black/5'
+                : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/15'
+            }`}
             title="Add shortcut"
           >
             <Plus className="w-5 h-5" />
@@ -317,7 +363,11 @@ export const App: React.FC = () => {
           {/* Settings Button */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/15 text-white/80 hover:text-white shadow-lg transition-all duration-200 cursor-pointer"
+            className={`p-2.5 rounded-full backdrop-blur-md border shadow-lg transition-all duration-200 cursor-pointer ${
+              isLight
+                ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-slate-900 border-black/10 shadow-black/5'
+                : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/15'
+            }`}
             title="Settings"
           >
             <SettingsIcon className="w-5 h-5" />
@@ -346,6 +396,7 @@ export const App: React.FC = () => {
           siteCounts={siteCounts}
           onSelectCategory={handleSelectCategory}
           onAddCategory={handleAddCategory}
+          onUpdateCategory={handleUpdateCategory}
           onDeleteCategory={handleDeleteCategory}
         />
 
@@ -367,13 +418,21 @@ export const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 text-center py-3 text-[11px] text-white/40 select-none">
+      <footer
+        className={`relative z-10 text-center py-3 text-[11px] select-none transition-colors ${
+          isLight ? 'text-slate-600' : 'text-white/40'
+        }`}
+      >
         Powered by{' '}
         <a
           href="https://github.com/Troray/MyTab"
           target="_blank"
           rel="noreferrer"
-          className="hover:text-white/80 transition-colors underline decoration-white/20"
+          className={`transition-colors underline ${
+            isLight
+              ? 'hover:text-slate-900 decoration-slate-400'
+              : 'hover:text-white/80 decoration-white/20'
+          }`}
         >
           MyTab
         </a>{' '}
