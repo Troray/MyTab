@@ -30,7 +30,7 @@
 | :--- | :--- | :--- |
 | **Microsoft Edge** | 🌐 [前往 Edge Add-ons 官方扩展中心安装](https://microsoftedge.microsoft.com/addons/detail/bchchngjdocafdpnnoiolnbfdnkngfjn) | ✅ 官方认证上架 |
 | **Mozilla Firefox** | 🦊 [前往 Firefox 附加组件中心一键安装](https://addons.mozilla.org/zh-CN/firefox/addon/mytab-%E6%9E%81%E7%AE%80%E6%96%B0%E6%A0%87%E7%AD%BE%E9%A1%B5/) | ✅ 官方认证上架 |
-| **Google Chrome** | 🟡因注册 Chrome 应用商店开发者`需要交纳5美元的费用`，所以暂时不想注册 | 🚀 支持离线/拖拽安装 |
+| **Google Chrome** | 🟡 因注册 Chrome 应用商店开发者`需要交纳5美元的费用`，正在众筹中... | 🚀 支持离线/拖拽安装 |
 | **其他 Chromium 浏览器** (Brave, 360, QQ, 搜狗, UC, 115  等) | 📦 前往 [GitHub Releases 页面](https://github.com/Troray/MyTab/releases) 下载 `chrome.zip` 或 `chrome.crx`  | 🚀 支持离线/拖拽安装  |
 
 ---
@@ -136,6 +136,19 @@ npm run dev
 - **数据隐私承诺**：本扩展遵守严格的零数据收集与零追踪策略，无任何埋点、统计或第三方 Cookie，详情可参阅 [PRIVACY.md](./PRIVACY.md)。
 
 ---
+
+## ❤️ 支持项目
+
+如果觉得这个项目对你有帮助，你可以通过以下方式支持我：
+
+1. ⭐ 给项目点个 Star，让更多的人看到
+2. 📢 分享给更多有需要的朋友
+3. ☕ 请作者喝杯冰阔乐~
+
+<div align="center">
+<img src="img/wechat.jpg" alt="微信" height="300">
+<img src="img/alipay.jpg" alt="支付宝" height="300" style="margin-right: 20px">
+</div>
 
 ## 📄 License
 MIT License © 2026 [Troray](https://github.com/Troray) (MyTab)
