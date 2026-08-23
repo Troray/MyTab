@@ -30,7 +30,7 @@
 | :--- | :--- | :--- |
 | **Microsoft Edge** | 🌐 [前往 Edge Add-ons 官方扩展中心安装](https://microsoftedge.microsoft.com/addons/detail/bchchngjdocafdpnnoiolnbfdnkngfjn) | ✅ 官方认证上架 |
 | **Mozilla Firefox** | 🦊 [前往 Firefox 附加组件中心一键安装](https://addons.mozilla.org/zh-CN/firefox/addon/mytab-%E6%9E%81%E7%AE%80%E6%96%B0%E6%A0%87%E7%AD%BE%E9%A1%B5/) | ✅ 官方认证上架 |
-| **Google Chrome** | 🟡因注册 Chrome 应用商店开发者需要交纳5美元的费用，所以暂时不想注册 | 🚀 支持离线/拖拽安装 |
+| **Google Chrome** | 🟡因注册 Chrome 应用商店开发者`需要交纳5美元的费用`，所以暂时不想注册 | 🚀 支持离线/拖拽安装 |
 | **其他 Chromium 浏览器** (Brave, 360, QQ, 搜狗, UC, 115  等) | 📦 前往 [GitHub Releases 页面](https://github.com/Troray/MyTab/releases) 下载 `chrome.zip` 或 `chrome.crx`  | 🚀 支持离线/拖拽安装  |
 
 ---
@@ -95,21 +95,23 @@ MyTab 提供两套完全去中心化、保护隐私的云端同步方式：
 
 MyTab 深度整合了 GitHub 与 Gitee API，支持平台独立隔离与无缝切换，提供两种灵活的同步模式：
 
-#### 方案 A：私密 Gist 代码片段同步（✨ 极简推荐 · 零配置一键全自动）
+#### 方案 A：私密 Gist 代码片段同步（极简）
 只需一个 Token，无需手动建仓建分支，即可实现全自动私有化同步：
 1. **获取 Token (令牌)**：
-   - **GitHub**：点击设置页内置的快捷链接生成一个带有 **`gist`** 权限的 Personal Access Token。
+   - **GitHub**：点击设置页内置的快捷链接生成一个带有 **`gist`**  权限的 Personal Access Token。
    - **Gitee**：点击设置页快捷链接生成一个带有 **`gists`** 权限的私人令牌。
 2. **一键自动配置**：
    - 进入「⚙️ 设置 -> 同步 -> Git 同步」，选择对应平台并粘贴 Token。
    - 点击 **「测试连接 / 自动配置」**，MyTab 将自动获取用户信息，并在云端**自动查找或一键创建专属私密 Gist** (`mytab-backup.json`)。
 
 #### 方案 B：独立私有仓库同步 (Repo 模式)
-适合习惯将数据备份存放在独立 Git Repository 的高级用户：
+适合习惯将数据备份存放在独立 Git 仓库的高级用户：
 1. **获取 Token**：生成带有 **`repo`** (GitHub) 或 **`projects`** (Gitee) 权限的 Token。
-2. **智能解析与一键建仓**：
-   - 支持直接粘贴仓库完整链接（如 `https://github.com/username/my-backup` 或 `username/my-backup`），插件将自动识别拆分所有字段。
-   - 若尚未创建仓库，可在填写仓库名后直接点击 **「一键创建私有仓库」** 按钮，由插件调用 API 自动完成建仓。
+2. **智能连接与自动建仓**：
+   - 填入 Token 与仓库名（支持自定义名称如 `my-tab-backup` 或直接粘贴完整仓库链接，留空则默认 `MyTab-Backup`）。
+   - 点击 **「验证并连接」**：
+     - **若仓库已存在**：插件将自动识别、关联该仓库并检测主分支；
+     - **若仓库不存在**：插件将通过 API **自动在远端创建全新的私有仓库并自动完成关联**，全程无需前往网页手动建仓。
 
 #### ⚡ 自动化与多端漫游
 - **自动同步**：开启「数据变动时自动云端同步」后，增删改查书签与配置变动时后台将自动同步至云端。
