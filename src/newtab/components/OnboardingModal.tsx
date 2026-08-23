@@ -49,8 +49,14 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-md p-8 rounded-3xl bg-slate-900/95 border border-white/20 shadow-2xl text-white text-center animate-scale-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+      <div
+        className="relative w-full max-w-md p-8 rounded-3xl border border-white/15 shadow-2xl text-white text-center animate-scale-in"
+        style={{
+          backdropFilter: 'blur(32px)',
+          WebkitBackdropFilter: 'blur(32px)',
+        }}
+      >
         {/* Step Icon */}
         <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-white/10 flex items-center justify-center border border-white/15 shadow-inner">
           {current.icon}

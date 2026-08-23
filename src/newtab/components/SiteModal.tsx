@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, Sparkles, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
-import { Category, SiteItem, ThemeSettings } from '../../types';
+import { SiteItem, ThemeSettings, Category } from '../../types';
 import { fetchSiteMetadata, generateFallbackIcon, normalizeUrl, fileToBase64Icon, urlToBase64Icon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
+import { CustomSelect } from './CustomSelect';
 
 interface SiteModalProps {
   isOpen: boolean;
@@ -118,12 +119,12 @@ export const SiteModal: React.FC<SiteModalProps> = ({
         className={`relative w-full max-w-md p-6 rounded-3xl border shadow-2xl animate-scale-in transition-colors ${
           isLight
             ? 'border-black/10 text-slate-900 shadow-black/15'
-            : 'border-white/20 text-white shadow-black/50'
+            : 'border-white/15 text-white shadow-black/50'
         }`}
         style={{
-          background: isLight ? 'rgba(255, 255, 255, 0.94)' : 'rgba(15, 15, 25, 0.85)',
-          backdropFilter: 'blur(30px)',
-          WebkitBackdropFilter: 'blur(30px)',
+          background: isLight ? 'rgba(255, 255, 255, 0.75)' : undefined,
+          backdropFilter: 'blur(32px)',
+          WebkitBackdropFilter: 'blur(32px)',
         }}
       >
         {/* Header */}
@@ -291,23 +292,17 @@ export const SiteModal: React.FC<SiteModalProps> = ({
             >
               {t('siteCategory', settings.language)}
             </label>
-            <select
+            <CustomSelect
               value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className={`w-full px-3.5 py-2.5 rounded-xl border focus:border-indigo-500 outline-none text-sm transition-all cursor-pointer ${
-                isLight
-                  ? 'bg-black/5 border-black/10 text-slate-900'
-                  : 'bg-white/10 border-white/15 text-white'
-              }`}
-            >
-              {categories
+              onChange={setCategoryId}
+              isLight={isLight}
+              options={categories
                 .filter((c) => c.id !== 'all')
-                .map((cat) => (
-                  <option key={cat.id} value={cat.id} className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'}>
-                    {cat.name}
-                  </option>
-                ))}
-            </select>
+                .map((cat) => ({
+                  value: cat.id,
+                  label: cat.name,
+                }))}
+            />
           </div>
 
           {/* Actions */}

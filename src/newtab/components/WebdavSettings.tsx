@@ -3,6 +3,7 @@ import { Cloud, CheckCircle, AlertCircle, RefreshCw, Radio, Lock, UploadCloud, D
 import { AppState, WebdavConfig } from '../../types';
 import { uploadToWebdav, restoreFromWebdav, WebdavClient } from '../../services/webdav';
 import { ConfirmModal } from './ConfirmModal';
+import { CustomSelect } from './CustomSelect';
 import { t } from '../../utils/i18n';
 
 interface WebdavSettingsProps {
@@ -201,25 +202,16 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
             <label className={`block text-xs font-medium mb-1.5 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
               {t('webdavConflict', settings.language)}
             </label>
-            <select
+            <CustomSelect
               value={config.conflictStrategy}
-              onChange={(e) => handleChange({ conflictStrategy: e.target.value as any })}
-              className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 cursor-pointer ${
-                isLight
-                  ? 'bg-white border-black/15 text-slate-900'
-                  : 'bg-slate-900 border-white/15 text-white'
-              }`}
-            >
-              <option value="merge" className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'}>
-                {t('strategyMerge', settings.language)}
-              </option>
-              <option value="local" className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'}>
-                {t('strategyLocal', settings.language)}
-              </option>
-              <option value="remote" className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'}>
-                {t('strategyRemote', settings.language)}
-              </option>
-            </select>
+              onChange={(val) => handleChange({ conflictStrategy: val as any })}
+              isLight={isLight}
+              options={[
+                { value: 'merge', label: t('strategyMerge', settings.language) },
+                { value: 'local', label: t('strategyLocal', settings.language) },
+                { value: 'remote', label: t('strategyRemote', settings.language) },
+              ]}
+            />
           </div>
 
           {/* Auto Sync Switch */}
