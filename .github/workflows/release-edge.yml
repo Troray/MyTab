@@ -78,16 +78,15 @@ jobs:
             dist/chrome.crx
 
       - name: Publish to Microsoft Edge Add-ons
-        if: env.EDGE_PRODUCT_ID != '' && env.EDGE_CLIENT_ID != '' && env.EDGE_API_KEY != '' && env.EDGE_ACCESS_TOKEN_URL != ''
+        if: env.EDGE_PRODUCT_ID != '' && env.EDGE_CLIENT_ID != '' && env.EDGE_API_KEY != ''
         uses: wdzeng/edge-addon@v2
         env:
           EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCTID }}
           EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENTID }}
           EDGE_API_KEY: ${{ secrets.EDGE_KEY }}
-          EDGE_ACCESS_TOKEN_URL: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
         with:
           product-id: ${{ secrets.EDGE_PRODUCTID }}
           client-id: ${{ secrets.EDGE_CLIENTID }}
           api-key: ${{ secrets.EDGE_KEY }}
-          access-token-url: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
           zip-path: dist/chrome.zip
+

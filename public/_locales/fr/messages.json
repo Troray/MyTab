@@ -4,7 +4,7 @@
     "description": "Nom de l'extension"
   },
   "extensionDescription": {
-    "message": "Une extension de nouvel onglet moderne, fluide et hautement personnalisable. Prend en charge la catégorisation libre, le tri par glisser-déposer, le masquage des catégories privées et la sauvegarde cloud via WebDAV et Git.",
+    "message": "Nouvel onglet moderne et minimaliste avec synchronisation WebDAV & Git, gestion des favoris et personnalisation poussée.",
     "description": "Description de l'extension"
   }
 }

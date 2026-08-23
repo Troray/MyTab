@@ -4,7 +4,7 @@
     "description": "The name of the extension."
   },
   "extensionDescription": {
-    "message": "A minimal, sleek, and highly customizable New Tab extension. Features flexible categorization, drag-and-drop sorting, private category hiding, and WebDAV / Git private cloud backups.",
+    "message": "A sleek, minimal New Tab extension with WebDAV & Git cloud sync, bookmark organization, and customizable themes.",
     "description": "The description of the extension."
   }
 }
