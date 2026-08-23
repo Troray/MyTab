@@ -187,9 +187,9 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
                   : 'border-white/15 shadow-black/40'
               }`}
               style={{
-                background: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(15, 15, 25, 0.75)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
+                background: isLight ? 'rgba(255, 255, 255, 0.80)' : 'rgba(15, 15, 25, 0.45)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
               }}
             >
               <button

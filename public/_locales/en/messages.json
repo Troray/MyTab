@@ -4,7 +4,7 @@
     "description": "The name of the extension."
   },
   "extensionDescription": {
-    "message": "A modern, aesthetic New Tab extension with WebDAV & Git sync, smart favicon fetching, categorized grid, and multi-engine search.",
+    "message": "A minimal, sleek, and highly customizable New Tab extension. Features flexible categorization, drag-and-drop sorting, private category hiding, and WebDAV / Git private cloud backups.",
     "description": "The description of the extension."
   }
 }

@@ -79,7 +79,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Frosted Glass Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-md transition-opacity animate-fade-in"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-fade-in"
         onClick={onCancel}
       />
 
@@ -88,12 +88,12 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         className={`relative w-full max-w-md rounded-3xl border shadow-2xl p-6 overflow-hidden animate-scale-in transition-colors ${
           isLight
             ? 'border-black/10 text-slate-900 shadow-black/15'
-            : 'border-white/20 text-white shadow-black/50'
+            : 'border-white/15 text-white shadow-black/50'
         }`}
         style={{
-          background: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(18, 18, 30, 0.85)',
-          backdropFilter: 'blur(36px)',
-          WebkitBackdropFilter: 'blur(36px)',
+          background: isLight ? 'rgba(255, 255, 255, 0.75)' : undefined,
+          backdropFilter: 'blur(32px)',
+          WebkitBackdropFilter: 'blur(32px)',
         }}
       >
         {/* Close Button */}

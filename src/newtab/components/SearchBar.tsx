@@ -103,9 +103,9 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
                   : 'border-white/20 shadow-black/40'
               }`}
               style={{
-                background: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(15, 15, 25, 0.85)',
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
+                background: isLight ? 'rgba(255, 255, 255, 0.80)' : 'rgba(15, 15, 25, 0.45)',
+                backdropFilter: 'blur(28px)',
+                WebkitBackdropFilter: 'blur(28px)',
               }}
             >
               <div

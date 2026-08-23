@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "MyTab - ミニマルで美しい新しいタブ",
+    "description": "拡張機能の名前"
+  },
+  "extensionDescription": {
+    "message": "シンプルで滑らか、高度にカスタマイズ可能な新しいタブ拡張機能。ブックマークの自由なカテゴリ分けやドラッグ＆ドロップ並べ替え、プライベートカテゴリの非表示、WebDAVやGit（GitHub/Gitee）によるクラウドバックアップに対応。",
+    "description": "拡張機能の説明"
+  }
+}

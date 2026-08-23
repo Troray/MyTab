@@ -27,6 +27,7 @@ import { WebdavSettings } from './WebdavSettings';
 import { GitSettings } from './GitSettings';
 import { exportAllData, importData } from '../../services/storage';
 import { t, supportedLocales } from '../../utils/i18n';
+import { CustomSelect } from './CustomSelect';
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -207,7 +208,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               : 'border-l border-white/15 text-white'
           }`}
           style={{
-            background: isLight ? 'rgba(255, 255, 255, 0.90)' : 'rgba(15, 15, 25, 0.75)',
+            background: isLight ? 'rgba(255, 255, 255, 0.75)' : undefined,
             backdropFilter: 'blur(32px)',
             WebkitBackdropFilter: 'blur(32px)',
           }}
@@ -600,21 +601,16 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <Globe className="w-4 h-4 text-indigo-500" />
                     <span className="text-xs font-medium">{t('language', settings.language)}</span>
                   </div>
-                  <select
+                  <CustomSelect
                     value={settings.language}
-                    onChange={(e) => handleSettingsChange({ language: e.target.value as any })}
-                    className={`px-3 py-1.5 rounded-xl border text-xs outline-none cursor-pointer ${
-                      isLight
-                        ? 'bg-white border-black/10 text-slate-800 shadow-sm'
-                        : 'bg-white/10 border-white/15 text-white'
-                    }`}
-                  >
-                    {supportedLocales.map((loc) => (
-                      <option key={loc.code} value={loc.code} className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'}>
-                        {loc.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => handleSettingsChange({ language: val as any })}
+                    isLight={isLight}
+                    className="w-36"
+                    options={supportedLocales.map((loc) => ({
+                      value: loc.code,
+                      label: loc.label,
+                    }))}
+                  />
                 </div>
 
                 {/* Open in New Tab */}

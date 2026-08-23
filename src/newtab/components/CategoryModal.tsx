@@ -65,7 +65,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-fade-in"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-fade-in"
           onClick={onClose}
         />
 
@@ -73,9 +73,14 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         <div
           className={`relative w-full max-w-md rounded-3xl p-6 shadow-2xl transition-all duration-300 transform scale-100 animate-scale-in border ${
             isLight
-              ? 'bg-white/95 text-slate-900 border-black/10 shadow-slate-200/50'
-              : 'bg-slate-900/90 text-white border-white/10 backdrop-blur-xl'
+              ? 'border-black/10 text-slate-900 shadow-black/15'
+              : 'border-white/15 text-white shadow-black/50'
           }`}
+          style={{
+            background: isLight ? 'rgba(255, 255, 255, 0.75)' : undefined,
+            backdropFilter: 'blur(32px)',
+            WebkitBackdropFilter: 'blur(32px)',
+          }}
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-black/5 dark:border-white/10">
