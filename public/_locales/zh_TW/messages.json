@@ -4,7 +4,7 @@
     "description": "擴充功能名稱"
   },
   "extensionDescription": {
-    "message": "現代化高顏值新分頁，支援智慧圖示擷取、聚合搜尋、分類網格與 WebDAV / Git (GitHub/Gitee) 雙重多裝置雲端同步。",
+    "message": "一款極簡、絲滑且高度可自訂的現代化新分頁。支援網址自由分類與拖曳排序、私密分類一鍵隱藏，並提供 WebDAV 與 Git (GitHub/Gitee) 等多種私有雲端備份，資料自主掌控。",
     "description": "擴充功能描述"
   }
 }

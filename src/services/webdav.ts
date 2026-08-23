@@ -1,4 +1,4 @@
-import { AppState, Category, SiteItem, SyncPayload, WebdavConfig } from '../types';
+import { AppState, Category, SiteItem, SyncPayload, ThemeSettings, WebdavConfig } from '../types';
 import { loadAppState, saveCategories, saveSettings, saveSites, saveWebdavConfig } from './storage';
 
 export interface WebdavTestResult {

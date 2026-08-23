@@ -25,7 +25,7 @@ async function getItem<T>(key: string, defaultValue: T): Promise<T> {
     try {
       const res = await chrome.storage.local.get(key);
       if (res && res[key] !== undefined) {
-        return res[key];
+        return res[key] as T;
       }
     } catch (e) {
       console.warn(`[Storage] Failed to read ${key} from extension storage, falling back to localStorage`, e);

@@ -4,7 +4,7 @@
     "description": "扩展程序名称"
   },
   "extensionDescription": {
-    "message": "现代化高颜值新标签页，支持智能图标抓取、聚合搜索、分类网格与 WebDAV / Git (GitHub/Gitee) 双重多设备云同步。",
+    "message": "一款极简、丝滑且高度可定制的现代化新标签页。支持网址自由分类与拖拽排序、私密分类一键隐藏，并提供 WebDAV 与 Git (GitHub/Gitee) 等多种私有云备份，数据自主掌控。",
     "description": "扩展程序描述"
   }
 }

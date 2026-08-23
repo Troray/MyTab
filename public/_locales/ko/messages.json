@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "MyTab - 미니멀 새 탭",
+    "description": "확장 프로그램 이름"
+  },
+  "extensionDescription": {
+    "message": "심플하고 매끄러우며 자유롭게 커스텀 가능한 모던 새 탭 확장 프로그램. 자유로운 카테고리 분류, 드래그 앤 드롭 정렬, 비밀 카테고리 숨김 및 WebDAV / Git 다중 클라우드 백업을 지원합니다.",
+    "description": "확장 프로그램 설명"
+  }
+}
