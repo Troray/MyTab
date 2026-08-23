@@ -15,10 +15,10 @@
 - ⚡ **智能图标抓取与离线缓存**：添加网址时自动解析并抓取目标网站的高清 Favicon 与 Title，在本地自动转为 Base64 持久化缓存，实现 0 毫秒秒开、无网络白块闪烁，支持自定义上传本地图标。
 - 🗂️ **分类与拖拽排序**：支持多分组管理、卡片 iOS 级平滑拖拽重排 (Drag & Drop)、快捷增删改查。
 - 🔍 **多引擎聚合搜索**：内置 Google、Bing、百度、DuckDuckGo、Yandex、GitHub 搜索引擎快速切换，支持按 `/` 键秒级聚焦输入。
-- 🐙 **Git 仓库云端备份 (GitHub / Gitee)**：支持将全量配置与网址备份至个人私有 Git 仓库，原生通过 Contents API 读写，支持「上传备份」与「拉取恢复」。
+- 🐙 **Git 云端备份 (GitHub / Gitee)**：支持 **私密 Gist 代码片段（仅需 Token 一键全自动同步）** 与 **私有 Git 仓库** 双模式，原生通过 GitHub / Gitee API 读写，支持「自动识别建仓/建Gist」、「上传备份」、「拉取恢复」与智能冲突合并。
 - ☁️ **WebDAV 多端私有同步**：无缝对接坚果云、Nextcloud、ownCloud、Alist、群晖 NAS 等私有 WebDAV 服务，支持毫秒级时间戳智能版本仲裁与双向同步。
 - 📦 **本地备份与恢复**：支持全量配置与网址数据的 JSON 一键导出与导入。
-- 🌐 **双语支持**：完整支持简体中文与英文国际化。
+- 🌐 **多语言国际化**：完整支持简体中文、繁体中文、英语 (English)、日语 (日本語)、韩语 (한국어)、法语 (Français)、俄语 (Русский) 7 种国际化语言。
 
 ---
 
@@ -30,7 +30,8 @@
 | :--- | :--- | :--- |
 | **Microsoft Edge** | 🌐 [前往 Edge Add-ons 官方扩展中心安装](https://microsoftedge.microsoft.com/addons/detail/bchchngjdocafdpnnoiolnbfdnkngfjn) | ✅ 官方认证上架 |
 | **Mozilla Firefox** | 🦊 [前往 Firefox 附加组件中心一键安装](https://addons.mozilla.org/zh-CN/firefox/addon/mytab-%E6%9E%81%E7%AE%80%E6%96%B0%E6%A0%87%E7%AD%BE%E9%A1%B5/) | ✅ 官方认证上架 |
-| **Chrome / 其他 Chromium 浏览器** (Brave, 360, Vivaldi 等) | 📦 前往 [GitHub Releases 页面](https://github.com/Troray/MyTab/releases) 下载 `chrome.zip` 或 `chrome.crx` | 🚀 支持离线/拖拽安装 |
+| **Google Chrome** | 🟡因注册 Chrome 应用商店开发者需要交纳5美元的费用，所以暂时不想注册 | 🚀 支持离线/拖拽安装 |
+| **其他 Chromium 浏览器** (Brave, 360, QQ, 搜狗, UC, 115  等) | 📦 前往 [GitHub Releases 页面](https://github.com/Troray/MyTab/releases) 下载 `chrome.zip` 或 `chrome.crx`  | 🚀 支持离线/拖拽安装  |
 
 ---
 
@@ -90,10 +91,29 @@ MyTab 提供两套完全去中心化、保护隐私的云端同步方式：
 - 打开「⚙️ 设置 -> 同步 -> WebDAV」，填入对应信息后点击 **「测试连接」**。
 - 可随时点击 **「⬆️ 上传备份」** 或 **「⬇️ 拉取恢复」**，亦可开启「数据变动时自动同步」。
 
-### 2. Git 仓库同步（GitHub / Gitee）
-- 在 GitHub 或 Gitee 上新建一个私有仓库（例如 `mytab-backup`）。
-- 创建一个带有 `repo` / `Contents: Read and write` 权限的 Personal Access Token (PAT)。
-- 打开「⚙️ 设置 -> 同步 -> Git 仓库」，填入用户名、仓库名与 Token 即可实现多设备版本化漫游。
+### 2. Git 云端同步（GitHub / Gitee）
+
+MyTab 深度整合了 GitHub 与 Gitee API，支持平台独立隔离与无缝切换，提供两种灵活的同步模式：
+
+#### 方案 A：私密 Gist 代码片段同步（✨ 极简推荐 · 零配置一键全自动）
+只需一个 Token，无需手动建仓建分支，即可实现全自动私有化同步：
+1. **获取 Token (令牌)**：
+   - **GitHub**：点击设置页内置的快捷链接生成一个带有 **`gist`** 权限的 Personal Access Token。
+   - **Gitee**：点击设置页快捷链接生成一个带有 **`gists`** 权限的私人令牌。
+2. **一键自动配置**：
+   - 进入「⚙️ 设置 -> 同步 -> Git 同步」，选择对应平台并粘贴 Token。
+   - 点击 **「测试连接 / 自动配置」**，MyTab 将自动获取用户信息，并在云端**自动查找或一键创建专属私密 Gist** (`mytab-backup.json`)。
+
+#### 方案 B：独立私有仓库同步 (Repo 模式)
+适合习惯将数据备份存放在独立 Git Repository 的高级用户：
+1. **获取 Token**：生成带有 **`repo`** (GitHub) 或 **`projects`** (Gitee) 权限的 Token。
+2. **智能解析与一键建仓**：
+   - 支持直接粘贴仓库完整链接（如 `https://github.com/username/my-backup` 或 `username/my-backup`），插件将自动识别拆分所有字段。
+   - 若尚未创建仓库，可在填写仓库名后直接点击 **「一键创建私有仓库」** 按钮，由插件调用 API 自动完成建仓。
+
+#### ⚡ 自动化与多端漫游
+- **自动同步**：开启「数据变动时自动云端同步」后，增删改查书签与配置变动时后台将自动同步至云端。
+- **双向漫游**：支持随时「⬆️ 上传备份」与「⬇️ 拉取恢复」，内置多端时间戳智能版本仲裁与数据合并机制。
 
 ---
 
