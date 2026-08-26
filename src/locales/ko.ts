@@ -117,6 +117,7 @@ export const ko: Translation = {
   onboardingStep2: '✨ 스마트 추출: URL만 입력하면 고화질 아이콘과 제목이 자동 완성됩니다.',
   onboardingStep3: '☁️ 클라우드 동기화: WebDAV / Git을 통해 여러 기기에서 완벽하게 동기화.',
   onboardingStart: '시작하기',
+  onboardingNext: '다음',
   greetingMorning: '좋은 아침입니다, 활기찬 하루 되세요',
   greetingNoon: '즐거운 점심시간입니다, 잠시 쉬어가세요',
   greetingAfternoon: '좋은 오후입니다, 끝까지 집중해 볼까요',

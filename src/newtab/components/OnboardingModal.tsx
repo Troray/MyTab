@@ -89,7 +89,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               onClick={handleNext}
               className="w-full py-3 rounded-2xl bg-white/10 hover:bg-white/20 font-semibold text-sm text-white border border-white/15 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
             >
-              <span>{settings.language === 'zh-CN' ? '下一步' : 'Next'}</span>
+              <span>{t('onboardingNext', settings.language)}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           )}

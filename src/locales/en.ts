@@ -117,6 +117,7 @@ export const en: Translation = {
   onboardingStep2: '✨ Smart Fetch: Simply enter a URL to automatically grab high-res icons and titles.',
   onboardingStep3: '☁️ Cloud Sync: Seamless sync via WebDAV / Git across all your devices securely.',
   onboardingStart: 'Get Started',
+  onboardingNext: 'Next',
   greetingMorning: 'Good morning, wishing you a productive day',
   greetingNoon: 'Good afternoon, take a relaxing break',
   greetingAfternoon: 'Good afternoon, stay focused and energized',

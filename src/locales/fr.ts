@@ -117,6 +117,7 @@ export const fr: Translation = {
   onboardingStep2: '✨ Détection intelligente : Entrez simplement une URL, l\'icône et le titre sont trouvés automatiquement.',
   onboardingStep3: '☁️ Synchronisation cloud : Sauvegardez vos données en toute sécurité via WebDAV / Git.',
   onboardingStart: 'Commencer',
+  onboardingNext: 'Suivant',
   greetingMorning: 'Bonjour, passez une excellente journée',
   greetingNoon: 'Bon appétit, faites une pause agréable',
   greetingAfternoon: 'Bon après-midi, restez concentré',

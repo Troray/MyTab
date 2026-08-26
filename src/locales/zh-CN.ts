@@ -117,6 +117,7 @@ export const zhCN: Translation = {
   onboardingStep2: '✨ 智能抓取：只需输入网址，全自动匹配高清网站图标与标题。',
   onboardingStep3: '☁️ 云端同步：支持 WebDAV / Git 多设备无缝漫游，数据完全由你掌控。',
   onboardingStart: '开始探索',
+  onboardingNext: '下一步',
   greetingMorning: '早上好，新的一天元气满满',
   greetingNoon: '中午好，适当休息一下吧',
   greetingAfternoon: '下午好，保持高效专注',

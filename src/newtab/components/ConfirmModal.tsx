@@ -33,7 +33,12 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       if (!isOpen) return;
       if (e.key === 'Escape') {
         onCancel();
-      } else if (e.key === 'Enter') {
+      } else if (
+        e.key === 'Enter' &&
+        document.activeElement?.tagName !== 'INPUT' &&
+        document.activeElement?.tagName !== 'TEXTAREA' &&
+        document.activeElement?.tagName !== 'BUTTON'
+      ) {
         onConfirm();
       }
     };

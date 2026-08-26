@@ -1,5 +1,6 @@
 import { loadAppState } from '../services/storage';
 import { executeWebdavSync } from '../services/webdav';
+import { executeGitSync } from '../services/git';
 
 console.log('[MyTab Background] Service Worker initialized.');
 
@@ -25,6 +26,10 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
           if (state.webdav?.enabled && state.webdav?.autoSync) {
             console.log('[MyTab Background] Running periodic WebDAV sync...');
             await executeWebdavSync(state);
+          }
+          if (state.git?.enabled && state.git?.autoSync) {
+            console.log('[MyTab Background] Running periodic Git sync...');
+            await executeGitSync(state);
           }
         } catch (err) {
           console.error('[MyTab Background] Periodic sync error:', err);
@@ -61,7 +66,16 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (message.type === 'TRIGGER_SYNC') {
         loadAppState()
-          .then((state) => executeWebdavSync(state))
+          .then(async (state) => {
+            const results = [];
+            if (state.webdav?.enabled) {
+              results.push(await executeWebdavSync(state));
+            }
+            if (state.git?.enabled) {
+              results.push(await executeGitSync(state));
+            }
+            return { success: true, results };
+          })
           .then((res) => sendResponse(res))
           .catch((err) => sendResponse({ success: false, message: err.message }));
         return true; // async response

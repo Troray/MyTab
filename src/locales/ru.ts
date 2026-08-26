@@ -117,6 +117,7 @@ export const ru: Translation = {
   onboardingStep2: '✨ Автопоиск: просто введите адрес, иконка и заголовок найдутся автоматически.',
   onboardingStep3: '☁️ Облачная синхронизация: мгновенная синхронизация через WebDAV / Git.',
   onboardingStart: 'Начать',
+  onboardingNext: 'Далее',
   greetingMorning: 'Доброе утро! Продуктивного вам дня',
   greetingNoon: 'Добрый день! Не забудьте отдохнуть',
   greetingAfternoon: 'Добрый день! Сохраняйте фокус',

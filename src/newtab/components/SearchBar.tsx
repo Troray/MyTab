@@ -40,12 +40,14 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('mousedown', handleClickOutside);
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [isDropdownOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
