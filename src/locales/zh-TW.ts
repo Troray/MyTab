@@ -117,6 +117,7 @@ export const zhTW: Translation = {
   onboardingStep2: '✨ 智慧抓取：只需輸入網址，全自動匹配高畫質網站圖示與標題。',
   onboardingStep3: '☁️ 雲端同步：支援 WebDAV / Git 多裝置無縫同步，資料完全由你掌控。',
   onboardingStart: '開始探索',
+  onboardingNext: '下一步',
   greetingMorning: '早安，新的一天充滿活力',
   greetingNoon: '午安，適當休息一下吧',
   greetingAfternoon: '下午好，保持高效專注',

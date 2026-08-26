@@ -15,7 +15,7 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings })
   }, []);
 
   const greeting = useMemo(() => {
-    const h = new Date().getHours();
+    const h = time.getHours();
     const lang = settings.language;
     const custom = settings.customGreetings;
 
@@ -48,7 +48,7 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings })
     }
 
     return t(defaultKey, lang);
-  }, [settings.language, settings.customGreetings]);
+  }, [time.getHours(), settings.language, settings.customGreetings]);
 
   const hasAnyDisplay = settings.showClock || settings.showDate || settings.showGreeting;
   if (!hasAnyDisplay) return null;

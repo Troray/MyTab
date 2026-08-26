@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Palette,
@@ -61,6 +61,15 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   const [isUnsplashTopicModalOpen, setIsUnsplashTopicModalOpen] = useState(false);
   const [isFetchingUnsplash, setIsFetchingUnsplash] = useState(false);
   const [unsplashError, setUnsplashError] = useState<string | null>(null);
+
+  // Reset transient UI states every time the drawer is opened
+  useEffect(() => {
+    if (isOpen) {
+      setImportStatus('');
+      setGreetingStatus(null);
+      setUnsplashError(null);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

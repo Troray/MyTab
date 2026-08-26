@@ -115,6 +115,7 @@ export interface Translation {
   onboardingStep2: string;
   onboardingStep3: string;
   onboardingStart: string;
+  onboardingNext: string;
   greetingMorning: string;
   greetingNoon: string;
   greetingAfternoon: string;

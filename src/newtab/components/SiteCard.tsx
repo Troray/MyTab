@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import { SiteItem, ThemeSettings } from '../../types';
 import { generateFallbackIcon } from '../../services/metadata';
@@ -35,6 +35,22 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
 }, ref) => {
   const [imgError, setImgError] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showMenu) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
 
   const iconSrc = imgError || !site.icon ? generateFallbackIcon(site.title || site.url) : site.icon;
   const cardSize = settings.cardSize || 110;
@@ -60,6 +76,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
   };
 
   const handleDragStartInternal = (e: React.DragEvent<HTMLDivElement>) => {
+    setShowMenu(false);
     if (e.currentTarget) {
       const w = e.currentTarget.offsetWidth;
       const h = e.currentTarget.offsetHeight;
@@ -167,7 +184,12 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
         </span>
 
         {/* Action Menu Button */}
-        <div className="site-card-action absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+        <div
+          ref={menuRef}
+          className={`site-card-action absolute top-1.5 right-1.5 transition-opacity duration-150 ${
+            showMenu ? 'opacity-100 z-50' : 'opacity-0 group-hover:opacity-100 z-10'
+          }`}
+        >
           <button
             type="button"
             onClick={(e) => {
