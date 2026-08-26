@@ -117,6 +117,7 @@ export const ja: Translation = {
   onboardingStep2: '✨ スマート取得：URL を入力するだけで、高画質なアイコンとタイトルを自動マッチ。',
   onboardingStep3: '☁️ クラウド同期：WebDAV / Git で複数デバイス間でシームレスに同期。',
   onboardingStart: '使ってみる',
+  onboardingNext: '次へ',
   greetingMorning: 'おはようございます、素晴らしい一日を',
   greetingNoon: 'こんにちは、少し休憩しましょう',
   greetingAfternoon: 'こんにちは、集中力を保って進めましょう',
