@@ -12,10 +12,12 @@ import {
   User,
   ShieldCheck,
   FolderGit2,
-  Code2
+  Code2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { AppState, GitSyncConfig, GitPlatformConfig, GitProvider } from '../../types';
-import { uploadToGit, restoreFromGit, GitClient, autoSetupGist, autoSetupRepo } from '../../services/git';
+import { uploadToGit, restoreFromGit, GitClient, autoSetupGist, autoSetupRepo, isTokenLike } from '../../services/git';
 import { ConfirmModal } from './ConfirmModal';
 import { t } from '../../utils/i18n';
 
@@ -38,6 +40,11 @@ function parseRepoInput(input: string): { owner?: string; repo: string; provider
   const clean = input.trim();
   if (!clean) return null;
 
+  // Filter out tokens accidentally pasted or autofilled into repo input
+  if (isTokenLike(clean)) {
+    return { repo: 'MyTab-Backup' };
+  }
+
   let provider: 'github' | 'gitee' | undefined;
   if (clean.includes('gitee.com')) provider = 'gitee';
   else if (clean.includes('github.com')) provider = 'github';
@@ -50,14 +57,17 @@ function parseRepoInput(input: string): { owner?: string; repo: string; provider
 
   const parts = pathOnly.split('/').filter(Boolean);
   if (parts.length >= 2) {
+    const owner = isTokenLike(parts[0]) ? undefined : parts[0];
+    const repo = isTokenLike(parts[1]) ? 'MyTab-Backup' : parts[1];
     return {
-      owner: parts[0],
-      repo: parts[1],
+      owner,
+      repo,
       provider,
     };
   } else if (parts.length === 1) {
+    const repo = isTokenLike(parts[0]) ? 'MyTab-Backup' : parts[0];
     return {
-      repo: parts[0],
+      repo,
       provider,
     };
   }
@@ -74,165 +84,226 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
   const isLight = settings.mode === 'light';
 
   // Initialize with platform isolation map
-  const [config, setConfig] = useState<GitSyncConfig>(() => {
-    const activeProvider = git.provider || 'github';
-    const existingProviders = git.providers || {};
+  const activeProvider = git?.provider || 'github';
+  const existingProviders = git?.providers || {};
+  const rawOwner = git?.owner || '';
+  const rawRepo = git?.repo || '';
+  const safeOwner = isTokenLike(rawOwner) ? '' : rawOwner;
+  const safeRepo = isTokenLike(rawRepo) ? 'MyTab-Backup' : rawRepo;
 
-    const currentActivePlatform: GitPlatformConfig = existingProviders[activeProvider] || {
-      mode: git.mode || 'repo',
-      gistId: git.gistId || '',
-      owner: git.owner || '',
-      repo: git.repo || '',
-      branch: git.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
-      path: git.path || 'mytab-backup.json',
-      token: git.token || '',
-      lastSyncTime: git.lastSyncTime,
-      lastSyncStatus: git.lastSyncStatus,
-      lastSyncError: git.lastSyncError,
-    };
+  const currentActivePlatform: GitPlatformConfig = existingProviders[activeProvider] || {
+    mode: git?.mode || 'repo',
+    gistId: git?.gistId || '',
+    owner: safeOwner,
+    repo: safeRepo,
+    branch: git?.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
+    path: git?.path || 'mytab-backup.json',
+    token: git?.token || '',
+    lastSyncTime: git?.lastSyncTime,
+    lastSyncStatus: git?.lastSyncStatus,
+    lastSyncError: git?.lastSyncError,
+  };
 
-    return {
-      ...git,
-      provider: activeProvider,
-      mode: currentActivePlatform.mode || 'repo',
-      gistId: currentActivePlatform.gistId || '',
-      owner: currentActivePlatform.owner || '',
-      repo: currentActivePlatform.repo || '',
-      branch: currentActivePlatform.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
-      path: currentActivePlatform.path || 'mytab-backup.json',
-      token: currentActivePlatform.token || '',
-      lastSyncTime: currentActivePlatform.lastSyncTime,
-      lastSyncStatus: currentActivePlatform.lastSyncStatus,
-      lastSyncError: currentActivePlatform.lastSyncError,
-      providers: {
-        ...existingProviders,
-        [activeProvider]: currentActivePlatform,
+  const initialRepo = isTokenLike(currentActivePlatform.repo) ? 'MyTab-Backup' : (currentActivePlatform.repo || '');
+  const initialOwner = isTokenLike(currentActivePlatform.owner) ? '' : (currentActivePlatform.owner || '');
+
+  const [config, setConfig] = useState<GitSyncConfig>(() => ({
+    ...(git || {}),
+    provider: activeProvider,
+    mode: currentActivePlatform.mode || 'repo',
+    gistId: currentActivePlatform.gistId || '',
+    owner: initialOwner,
+    repo: initialRepo,
+    branch: currentActivePlatform.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
+    path: currentActivePlatform.path || 'mytab-backup.json',
+    token: currentActivePlatform.token || '',
+    lastSyncTime: currentActivePlatform.lastSyncTime,
+    lastSyncStatus: currentActivePlatform.lastSyncStatus,
+    lastSyncError: currentActivePlatform.lastSyncError,
+    providers: {
+      ...existingProviders,
+      [activeProvider]: {
+        ...currentActivePlatform,
+        owner: initialOwner,
+        repo: initialRepo,
       },
-    };
-  });
+    },
+  }));
 
   // Combined Repo URL / Identifier input for repo mode
-  const [repoInput, setRepoInput] = useState<string>(
-    config.owner && config.repo ? `${config.owner}/${config.repo}` : ''
-  );
+  const [repoInput, setRepoInput] = useState<string>(() => {
+    if (initialOwner && initialRepo) return `${initialOwner}/${initialRepo}`;
+    return initialRepo;
+  });
 
   const [isConnecting, setIsConnecting] = useState(false);
-  const [connectResult, setConnectResult] = useState<{ success?: boolean; message?: string; owner?: string } | null>(null);
   const [isTestingRepo, setIsTestingRepo] = useState(false);
+  const [connectResult, setConnectResult] = useState<{ success?: boolean; message?: string; owner?: string } | null>(null);
+
   const [isUploading, setIsUploading] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
   const [showPullConfirm, setShowPullConfirm] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
+  const [showToken, setShowToken] = useState(false);
 
-  // Synchronize fields and maintain isolation map
+  // Sync external appState to local state if updated
+  useEffect(() => {
+    if (git) {
+      const activeProvider = git.provider || config.provider || 'github';
+      const existingProviders = git.providers || config.providers || {};
+      const currentActivePlatform = existingProviders[activeProvider] || {
+        mode: git.mode || 'repo',
+        gistId: git.gistId || '',
+        owner: git.owner || '',
+        repo: git.repo || '',
+        branch: git.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
+        path: git.path || 'mytab-backup.json',
+        token: git.token || '',
+        lastSyncTime: git.lastSyncTime,
+        lastSyncStatus: git.lastSyncStatus,
+        lastSyncError: git.lastSyncError,
+      };
+
+      setConfig((prev) => ({
+        ...prev,
+        ...git,
+        provider: activeProvider,
+        mode: currentActivePlatform.mode || 'repo',
+        gistId: currentActivePlatform.gistId || '',
+        owner: currentActivePlatform.owner || '',
+        repo: currentActivePlatform.repo || '',
+        branch: currentActivePlatform.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
+        path: currentActivePlatform.path || 'mytab-backup.json',
+        token: currentActivePlatform.token || '',
+        lastSyncTime: currentActivePlatform.lastSyncTime,
+        lastSyncStatus: currentActivePlatform.lastSyncStatus,
+        lastSyncError: currentActivePlatform.lastSyncError,
+        providers: {
+          ...prev.providers,
+          ...existingProviders,
+          [activeProvider]: currentActivePlatform,
+        },
+      }));
+
+      if (currentActivePlatform.owner && currentActivePlatform.repo) {
+        setRepoInput(`${currentActivePlatform.owner}/${currentActivePlatform.repo}`);
+      }
+    }
+  }, [git]);
+
+  // Persist and isolate platform fields when changing config
   const handleChange = (fields: Partial<GitSyncConfig>) => {
-    const activeProvider = (fields.provider || config.provider) as GitProvider;
-    const merged = { ...config, ...fields };
+    const currentProvider = fields.provider || config.provider || 'github';
 
-    const currentPlatformConfig: GitPlatformConfig = {
-      mode: merged.mode || 'repo',
-      gistId: merged.gistId || '',
-      owner: merged.owner || '',
-      repo: merged.repo || '',
-      branch: merged.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
-      path: merged.path || 'mytab-backup.json',
-      token: merged.token || '',
-      lastSyncTime: merged.lastSyncTime,
-      lastSyncStatus: merged.lastSyncStatus,
-      lastSyncError: merged.lastSyncError,
+    const updatedPlatformData: GitPlatformConfig = {
+      mode: fields.mode !== undefined ? fields.mode : config.mode,
+      gistId: fields.gistId !== undefined ? fields.gistId : config.gistId,
+      owner: fields.owner !== undefined ? fields.owner : config.owner,
+      repo: fields.repo !== undefined ? fields.repo : config.repo,
+      branch: fields.branch !== undefined ? fields.branch : config.branch,
+      path: fields.path !== undefined ? fields.path : config.path,
+      token: fields.token !== undefined ? fields.token : config.token,
+      lastSyncTime: fields.lastSyncTime !== undefined ? fields.lastSyncTime : config.lastSyncTime,
+      lastSyncStatus: fields.lastSyncStatus !== undefined ? fields.lastSyncStatus : config.lastSyncStatus,
+      lastSyncError: fields.lastSyncError !== undefined ? fields.lastSyncError : config.lastSyncError,
     };
 
     const updatedProviders = {
-      ...merged.providers,
-      [activeProvider]: currentPlatformConfig,
+      ...(config.providers || {}),
+      [currentProvider]: updatedPlatformData,
     };
 
-    const updated: GitSyncConfig = {
-      ...merged,
+    const nextConfig: GitSyncConfig = {
+      ...config,
+      ...fields,
       providers: updatedProviders,
     };
 
-    setConfig(updated);
-    onUpdateGit(updated);
+    setConfig(nextConfig);
+    onUpdateGit(nextConfig);
   };
 
-  // Seamless Platform Switcher with memory isolation
-  const handleProviderChange = (targetProvider: GitProvider) => {
-    if (config.provider === targetProvider) return;
+  // Switch Provider Tab (GitHub <-> Gitee) with automatic isolated config restoration
+  const handleProviderChange = (newProvider: GitProvider) => {
+    if (newProvider === config.provider) return;
 
-    // 1. Snapshot current active platform config
-    const currentPlatformConfig: GitPlatformConfig = {
-      mode: config.mode || 'repo',
-      gistId: config.gistId || '',
-      owner: config.owner || '',
-      repo: config.repo || '',
-      branch: config.branch || (config.provider === 'gitee' ? 'master' : 'main'),
-      path: config.path || 'mytab-backup.json',
-      token: config.token || '',
+    // 1. Save current provider state
+    const currentPlatformData: GitPlatformConfig = {
+      mode: config.mode,
+      gistId: config.gistId,
+      owner: config.owner,
+      repo: config.repo,
+      branch: config.branch,
+      path: config.path,
+      token: config.token,
       lastSyncTime: config.lastSyncTime,
       lastSyncStatus: config.lastSyncStatus,
       lastSyncError: config.lastSyncError,
     };
 
     const updatedProviders = {
-      ...config.providers,
-      [config.provider]: currentPlatformConfig,
+      ...(config.providers || {}),
+      [config.provider]: currentPlatformData,
     };
 
-    // 2. Load target platform config (fresh blank if never configured before)
-    const targetPlatformConfig: GitPlatformConfig = updatedProviders[targetProvider] || {
+    // 2. Load target provider isolated config (or defaults)
+    const targetPlatformData: GitPlatformConfig = updatedProviders[newProvider] || {
       mode: 'repo',
       gistId: '',
       owner: '',
       repo: '',
-      branch: targetProvider === 'gitee' ? 'master' : 'main',
+      branch: newProvider === 'gitee' ? 'master' : 'main',
       path: 'mytab-backup.json',
       token: '',
     };
 
-    const updated: GitSyncConfig = {
+    const nextConfig: GitSyncConfig = {
       ...config,
-      provider: targetProvider,
+      provider: newProvider,
+      mode: targetPlatformData.mode || 'repo',
+      gistId: targetPlatformData.gistId || '',
+      owner: targetPlatformData.owner || '',
+      repo: targetPlatformData.repo || '',
+      branch: targetPlatformData.branch || (newProvider === 'gitee' ? 'master' : 'main'),
+      path: targetPlatformData.path || 'mytab-backup.json',
+      token: targetPlatformData.token || '',
+      lastSyncTime: targetPlatformData.lastSyncTime,
+      lastSyncStatus: targetPlatformData.lastSyncStatus,
+      lastSyncError: targetPlatformData.lastSyncError,
       providers: updatedProviders,
-      mode: targetPlatformConfig.mode || 'repo',
-      gistId: targetPlatformConfig.gistId || '',
-      owner: targetPlatformConfig.owner || '',
-      repo: targetPlatformConfig.repo || '',
-      branch: targetPlatformConfig.branch || (targetProvider === 'gitee' ? 'master' : 'main'),
-      path: targetPlatformConfig.path || 'mytab-backup.json',
-      token: targetPlatformConfig.token || '',
-      lastSyncTime: targetPlatformConfig.lastSyncTime,
-      lastSyncStatus: targetPlatformConfig.lastSyncStatus,
-      lastSyncError: targetPlatformConfig.lastSyncError,
     };
 
-    setConfig(updated);
-    onUpdateGit(updated);
-
-    // 3. Reset input states and transient feedback
-    setRepoInput(
-      targetPlatformConfig.owner && targetPlatformConfig.repo
-        ? `${targetPlatformConfig.owner}/${targetPlatformConfig.repo}`
-        : ''
-    );
+    setConfig(nextConfig);
     setConnectResult(null);
     setSyncMsg('');
+
+    if (targetPlatformData.owner && targetPlatformData.repo) {
+      setRepoInput(`${targetPlatformData.owner}/${targetPlatformData.repo}`);
+    } else {
+      setRepoInput(targetPlatformData.repo || '');
+    }
+
+    onUpdateGit(nextConfig);
   };
 
-  // Handle smart repo URL input changes
-  const handleRepoInputChange = (value: string) => {
-    setRepoInput(value);
-    const parsed = parseRepoInput(value);
+  // Smart Parse Repo URL / Identifier on input change
+  const handleRepoInputChange = (val: string) => {
+    setRepoInput(val);
+    const parsed = parseRepoInput(val);
     if (parsed) {
+      if (parsed.provider && parsed.provider !== config.provider) {
+        handleProviderChange(parsed.provider);
+      }
       handleChange({
         owner: parsed.owner || config.owner,
         repo: parsed.repo,
-        provider: parsed.provider || config.provider,
       });
+    } else {
+      handleChange({ repo: val });
     }
   };
 
-  // 1. One-Click Smart Setup for Gist
+  // 1. Smart Gist One-Click Connect
   const handleSmartConnect = async () => {
     if (!config.token.trim()) {
       setConnectResult({ success: false, message: t('gitTokenPlaceholderGithub', settings.language) });
@@ -243,7 +314,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     setConnectResult(null);
 
     try {
-      const res = await autoSetupGist(config.provider, config.token.trim());
+      const res = await autoSetupGist(config.provider, config.token.trim(), config.gistId);
       if (res.success) {
         handleChange({
           enabled: true,
@@ -275,21 +346,25 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
     try {
       const parsed = parseRepoInput(repoInput);
-      const targetRepo = parsed?.repo || config.repo || 'MyTab-Backup';
-      const targetOwner = parsed?.owner || config.owner;
+      let targetRepo = parsed?.repo || (isTokenLike(config.repo) ? '' : config.repo) || 'MyTab-Backup';
+      if (isTokenLike(targetRepo)) targetRepo = 'MyTab-Backup';
+
+      const targetOwner = isTokenLike(parsed?.owner) ? undefined : (parsed?.owner || (isTokenLike(config.owner) ? undefined : config.owner));
 
       const res = await autoSetupRepo(config.provider, config.token.trim(), targetRepo, targetOwner);
       if (res.success) {
+        const finalOwner = res.owner || targetOwner || config.owner || 'User';
+        const finalRepo = res.repo || targetRepo;
         handleChange({
           enabled: true,
           mode: 'repo',
-          owner: res.owner || config.owner,
-          repo: res.repo || targetRepo,
+          owner: finalOwner,
+          repo: finalRepo,
           branch: res.branch || config.branch || (config.provider === 'gitee' ? 'master' : 'main'),
           lastSyncError: undefined,
         });
-        setRepoInput(`${res.owner || config.owner}/${res.repo || targetRepo}`);
-        setConnectResult({ success: true, message: res.message, owner: res.owner });
+        setRepoInput(`${finalOwner}/${finalRepo}`);
+        setConnectResult({ success: true, message: res.message, owner: finalOwner });
       } else {
         setConnectResult({ success: false, message: res.message });
       }
@@ -350,21 +425,28 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
       : 'https://gitee.com/profile/personal_access_tokens/new';
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* 1. Enable Switch */}
       <div
-        className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${isLight
-            ? 'bg-black/5 border-black/10 text-slate-900'
-            : 'bg-white/5 border-white/10 text-white'
-          }`}
+        className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
+          isLight
+            ? 'bg-black/[0.03] border-black/8 text-slate-900'
+            : 'bg-white/[0.05] border-white/10 text-white'
+        }`}
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-500">
-            <GitBranch className="w-5 h-5" />
+          <div
+            className={`p-2 rounded-xl border ${
+              isLight
+                ? 'bg-black/[0.04] border-black/5 text-slate-800'
+                : 'bg-white/10 border-white/10 text-white'
+            }`}
+          >
+            <GitBranch className="w-4.5 h-4.5" />
           </div>
           <div>
-            <div className="text-sm font-semibold">{t('gitSync', settings.language)}</div>
-            <div className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+            <div className="text-xs font-semibold">{t('gitSync', settings.language)}</div>
+            <div className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
               {t('gitSyncDesc', settings.language)}
             </div>
           </div>
@@ -376,12 +458,16 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
             onChange={(e) => handleChange({ enabled: e.target.checked })}
             className="sr-only peer"
           />
-          <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+          <div className={`w-11 h-6 rounded-full transition-colors peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
+            isLight
+              ? 'bg-slate-300 peer-checked:bg-slate-900'
+              : 'bg-white/20 peer-checked:bg-white after:peer-checked:bg-slate-900'
+          }`}></div>
         </label>
       </div>
 
       {config.enabled && (
-        <div className="space-y-3.5 pt-1 animate-fade-in">
+        <div className="space-y-3 pt-1 animate-fade-in">
           {/* 2. Provider Selector (GitHub | Gitee) */}
           <div>
             <label className={`block text-xs font-medium mb-1.5 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
@@ -391,31 +477,37 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => handleProviderChange('github')}
-                className={`py-2 rounded-xl text-xs font-medium border transition-all ${config.provider === 'github'
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                className={`py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer active:scale-95 ${
+                  config.provider === 'github'
+                    ? isLight
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                      : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
                     : isLight
-                      ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
-                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                  }`}
+                    ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
+                    : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+                }`}
               >
                 GitHub
               </button>
               <button
                 type="button"
                 onClick={() => handleProviderChange('gitee')}
-                className={`py-2 rounded-xl text-xs font-medium border transition-all ${config.provider === 'gitee'
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                className={`py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer active:scale-95 ${
+                  config.provider === 'gitee'
+                    ? isLight
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                      : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
                     : isLight
-                      ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
-                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                  }`}
+                    ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
+                    : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+                }`}
               >
                 Gitee
               </button>
             </div>
           </div>
 
-          {/* 3. Sync Mode Switch (紧随托管平台下方，逻辑清晰直观) */}
+          {/* 3. Sync Mode Switch */}
           <div>
             <label className={`block text-xs font-medium mb-1.5 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
               {t('gitSyncMode', settings.language)}
@@ -424,12 +516,15 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => handleChange({ mode: 'gist' })}
-                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border transition-all ${config.mode === 'gist'
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer active:scale-95 ${
+                  config.mode === 'gist'
+                    ? isLight
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                      : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
                     : isLight
-                      ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
-                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                  }`}
+                    ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
+                    : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+                }`}
               >
                 <Code2 className="w-3.5 h-3.5" />
                 <span>{t('gitModeGist', settings.language)}</span>
@@ -437,12 +532,15 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => handleChange({ mode: 'repo' })}
-                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border transition-all ${config.mode === 'repo'
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer active:scale-95 ${
+                  config.mode === 'repo'
+                    ? isLight
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                      : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
                     : isLight
-                      ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
-                      : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
-                  }`}
+                    ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
+                    : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+                }`}
               >
                 <FolderGit2 className="w-3.5 h-3.5" />
                 <span>{t('gitModeRepo', settings.language)}</span>
@@ -454,21 +552,24 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           {config.mode === 'gist' ? (
             /* --- Mode A: Gist 极简模式 --- */
             <div
-              className={`p-3.5 rounded-2xl border space-y-3 ${isLight
-                  ? 'bg-indigo-50/50 border-indigo-200/80 text-slate-800'
-                  : 'bg-indigo-950/20 border-indigo-500/20 text-white'
-                }`}
+              className={`p-3.5 rounded-2xl border space-y-3 ${
+                isLight
+                  ? 'bg-black/[0.03] border-black/8 text-slate-800'
+                  : 'bg-white/[0.05] border-white/10 text-white'
+              }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                  <Sparkles className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1.5 text-xs font-semibold">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>{t('gitGistSmartTitle', settings.language)}</span>
                 </div>
                 <a
                   href={tokenGeneratorUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[11px] text-indigo-600 hover:text-indigo-700 underline flex items-center gap-1 font-medium cursor-pointer"
+                  className={`text-[11px] underline flex items-center gap-1 font-medium cursor-pointer ${
+                    isLight ? 'text-amber-700 hover:text-black' : 'text-amber-400 hover:text-white'
+                  }`}
                 >
                   <span>{t('gitGenerateToken', settings.language)}</span>
                   <ExternalLink className="w-3 h-3" />
@@ -476,31 +577,52 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               </div>
 
               <div>
-                <div className="text-[11px] text-slate-500 dark:text-white/60 mb-1.5">
+                <div className="text-[11px] opacity-70 mb-1.5">
                   {config.provider === 'github'
                     ? t('gitGithubTokenTip', settings.language)
                     : t('gitGiteeTokenTip', settings.language)}
                 </div>
                 <div className="flex gap-2">
-                  <input
-                    type="password"
-                    value={config.token}
-                    onChange={(e) => handleChange({ token: e.target.value })}
-                    placeholder={
-                      config.provider === 'github'
-                        ? t('gitTokenPlaceholderGithub', settings.language)
-                        : t('gitTokenPlaceholderGitee', settings.language)
-                    }
-                    className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${isLight
-                        ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400'
-                        : 'bg-white/10 border-white/15 text-white placeholder-white/40'
+                  <div className="relative flex-1">
+                    <input
+                      type={showToken ? 'text' : 'password'}
+                      value={config.token}
+                      onChange={(e) => handleChange({ token: e.target.value })}
+                      placeholder={
+                        config.provider === 'github'
+                          ? t('gitTokenPlaceholderGithub', settings.language)
+                          : t('gitTokenPlaceholderGitee', settings.language)
+                      }
+                      className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
+                        isLight
+                          ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
+                          : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
                       }`}
-                  />
+                    />
+                    {config.token && (
+                      <button
+                        type="button"
+                        onClick={() => setShowToken(!showToken)}
+                        className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors cursor-pointer ${
+                          isLight
+                            ? 'text-slate-400 hover:text-slate-700 hover:bg-black/5'
+                            : 'text-white/40 hover:text-white hover:bg-white/10'
+                        }`}
+                        title={showToken ? '隐藏' : '显示'}
+                      >
+                        {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={handleSmartConnect}
                     disabled={isConnecting || !config.token.trim()}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium shadow-md shadow-indigo-600/30 transition-all cursor-pointer shrink-0"
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium shadow-sm transition-all cursor-pointer shrink-0 disabled:opacity-40 active:scale-95 ${
+                      isLight
+                        ? 'bg-slate-900 hover:bg-black text-white'
+                        : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
+                    }`}
                   >
                     {isConnecting ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -515,10 +637,11 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               {/* Connected Badge Info */}
               {config.gistId && config.owner && (
                 <div
-                  className={`p-2.5 rounded-xl text-xs flex items-center justify-between border ${isLight
+                  className={`p-2.5 rounded-xl text-xs flex items-center justify-between border ${
+                    isLight
                       ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                       : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
-                    }`}
+                  }`}
                 >
                   <div className="flex items-center gap-2">
                     <User className="w-3.5 h-3.5 text-emerald-600" />
@@ -531,12 +654,13 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               )}
             </div>
           ) : (
-            /* --- Mode B: Repo 独立仓库模式 (智能解析单输入框) --- */
+            /* --- Mode B: Repo 独立仓库模式 --- */
             <div
-              className={`p-3.5 rounded-2xl border space-y-3 ${isLight
-                  ? 'bg-slate-50/80 border-black/10 text-slate-800'
-                  : 'bg-white/5 border-white/10 text-white'
-                }`}
+              className={`p-3.5 rounded-2xl border space-y-3 ${
+                isLight
+                  ? 'bg-black/[0.03] border-black/8 text-slate-800'
+                  : 'bg-white/[0.05] border-white/10 text-white'
+              }`}
             >
               {/* Token Input with Direct Link */}
               <div>
@@ -548,26 +672,45 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     href={tokenGeneratorUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[11px] text-indigo-600 hover:text-indigo-700 underline flex items-center gap-1 font-medium cursor-pointer"
+                    className={`text-[11px] underline flex items-center gap-1 font-medium cursor-pointer ${
+                      isLight ? 'text-amber-700 hover:text-black' : 'text-amber-400 hover:text-white'
+                    }`}
                   >
                     <span>{t('gitGenerateToken', settings.language)}</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
-                <input
-                  type="password"
-                  value={config.token}
-                  onChange={(e) => handleChange({ token: e.target.value })}
-                  placeholder={
-                    config.provider === 'github'
-                      ? t('gitTokenPlaceholderRepo', settings.language)
-                      : t('gitTokenPlaceholderGitee', settings.language)
-                  }
-                  className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${isLight
-                      ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400'
-                      : 'bg-white/10 border-white/15 text-white placeholder-white/40'
+                <div className="relative">
+                  <input
+                    type={showToken ? 'text' : 'password'}
+                    value={config.token}
+                    onChange={(e) => handleChange({ token: e.target.value })}
+                    placeholder={
+                      config.provider === 'github'
+                        ? t('gitTokenPlaceholderRepo', settings.language)
+                        : t('gitTokenPlaceholderGitee', settings.language)
+                    }
+                    className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
+                      isLight
+                        ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
+                        : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
                     }`}
-                />
+                  />
+                  {config.token && (
+                    <button
+                      type="button"
+                      onClick={() => setShowToken(!showToken)}
+                      className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors cursor-pointer ${
+                        isLight
+                          ? 'text-slate-400 hover:text-slate-700 hover:bg-black/5'
+                          : 'text-white/40 hover:text-white hover:bg-white/10'
+                      }`}
+                      title={showToken ? '隐藏' : '显示'}
+                    >
+                      {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Smart Unified Repo URL/Path Input */}
@@ -581,16 +724,27 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     value={repoInput}
                     onChange={(e) => handleRepoInputChange(e.target.value)}
                     placeholder={t('gitRepoPlaceholder', settings.language)}
-                    className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${isLight
-                        ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400'
-                        : 'bg-white/10 border-white/15 text-white placeholder-white/40'
-                      }`}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
+                      isLight
+                        ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
+                        : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
+                    }`}
                   />
                   <button
                     type="button"
                     onClick={handleTestRepo}
                     disabled={isTestingRepo || !config.token.trim()}
-                    className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium shadow-md shadow-indigo-600/30 transition-all cursor-pointer shrink-0"
+                    className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-medium shadow-sm transition-all cursor-pointer shrink-0 disabled:opacity-40 active:scale-95 ${
+                      isLight
+                        ? 'bg-slate-900 hover:bg-black text-white'
+                        : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
+                    }`}
                   >
                     {isTestingRepo ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -601,7 +755,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                   </button>
                 </div>
                 {config.owner && config.repo ? (
-                  <p className={`text-[11px] mt-1.5 ${isLight ? 'text-indigo-600' : 'text-indigo-400'}`}>
+                  <p className={`text-[11px] mt-1.5 ${isLight ? 'text-amber-700 font-medium' : 'text-amber-300'}`}>
                     {t('gitBoundRepo', settings.language)}: <strong>@{config.owner}</strong> / <strong>{config.repo}</strong>
                   </p>
                 ) : (
@@ -619,8 +773,9 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     type="text"
                     value={config.branch || 'main'}
                     onChange={(e) => handleChange({ branch: e.target.value })}
-                    className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${isLight ? 'bg-white border-black/15 text-slate-900' : 'bg-white/10 border-white/15 text-white'
-                      }`}
+                    className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${
+                      isLight ? 'bg-white border-black/15 text-slate-900' : 'bg-white/10 border-white/15 text-white'
+                    }`}
                   />
                 </div>
                 <div>
@@ -629,8 +784,9 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     type="text"
                     value={config.path || 'mytab-backup.json'}
                     onChange={(e) => handleChange({ path: e.target.value })}
-                    className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${isLight ? 'bg-white border-black/15 text-slate-900' : 'bg-white/10 border-white/15 text-white'
-                      }`}
+                    className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${
+                      isLight ? 'bg-white border-black/15 text-slate-900' : 'bg-white/10 border-white/15 text-white'
+                    }`}
                   />
                 </div>
               </div>
@@ -640,14 +796,15 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           {/* Test / Connect Result Message */}
           {connectResult && (
             <div
-              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${connectResult.success
+              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
+                connectResult.success
                   ? isLight
                     ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                     : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                   : isLight
                     ? 'bg-red-50 text-red-700 border border-red-200'
                     : 'bg-red-500/20 text-red-300 border border-red-500/30'
-                }`}
+              }`}
             >
               {connectResult.success ? (
                 <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
@@ -660,14 +817,14 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
           {/* Auto Sync Switch */}
           <div className="flex items-center justify-between py-1">
-            <span className={`text-xs ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+            <span className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
               {t('gitAutoSync', settings.language)}
             </span>
             <input
               type="checkbox"
               checked={config.autoSync}
               onChange={(e) => handleChange({ autoSync: e.target.checked })}
-              className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
+              className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
             />
           </div>
 
@@ -678,7 +835,11 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                 type="button"
                 onClick={handleUpload}
                 disabled={isUploading || isPulling || !config.token}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-xs font-medium text-white shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-40 active:scale-95 ${
+                  isLight
+                    ? 'bg-slate-900 hover:bg-black text-white shadow-sm'
+                    : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm'
+                }`}
                 title={t('uploadBackup', settings.language)}
               >
                 {isUploading ? (
@@ -693,10 +854,11 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                 type="button"
                 onClick={() => setShowPullConfirm(true)}
                 disabled={isUploading || isPulling || !config.token}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border disabled:opacity-50 text-xs font-medium transition-all cursor-pointer ${isLight
-                    ? 'bg-white hover:bg-slate-50 border-black/10 text-slate-800 shadow-sm'
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer disabled:opacity-40 active:scale-95 ${
+                  isLight
+                    ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'
                     : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
-                  }`}
+                }`}
                 title={t('pullRestore', settings.language)}
               >
                 {isPulling ? (
@@ -712,18 +874,19 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           {/* Sync Result Feedback */}
           {syncMsg && (
             <div
-              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${isLight
-                  ? 'bg-indigo-50 border border-indigo-200 text-indigo-800'
-                  : 'bg-indigo-500/20 border border-indigo-500/30 text-indigo-200'
-                }`}
+              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
+                isLight
+                  ? 'bg-black/5 border border-black/10 text-slate-800'
+                  : 'bg-white/10 border border-white/15 text-white'
+              }`}
             >
-              <RefreshCw className="w-4 h-4 shrink-0 text-indigo-500" />
+              <RefreshCw className="w-4 h-4 shrink-0" />
               <span>{syncMsg}</span>
             </div>
           )}
 
           {/* Last sync info */}
-          <div className={`text-[11px] pt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+          <div className={`text-[11px] pt-0.5 font-tabular ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
             {t('lastSync', settings.language)}: {formatLastSync()}
           </div>
 
@@ -733,7 +896,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
             type="warning"
             title={t('pullRestore', settings.language)}
             message={t('confirmPull', settings.language)}
-            confirmText={t('save', settings.language)}
+            confirmText={t('confirm', settings.language)}
             language={settings.language}
             onConfirm={handlePullExecute}
             onCancel={() => setShowPullConfirm(false)}

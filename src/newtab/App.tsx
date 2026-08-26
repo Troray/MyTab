@@ -350,27 +350,27 @@ export const App: React.FC = () => {
               setEditingSite(null);
               setIsSiteModalOpen(true);
             }}
-            className={`p-2.5 rounded-full backdrop-blur-md border shadow-lg transition-all duration-200 cursor-pointer ${
+            className={`p-2.5 rounded-xl backdrop-blur-md border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 ${
               isLight
-                ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-slate-900 border-black/10 shadow-black/5'
-                : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/15'
+                ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
+                : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
             }`}
             title="Add shortcut"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4.5 h-4.5" />
           </button>
 
           {/* Settings Button */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className={`p-2.5 rounded-full backdrop-blur-md border shadow-lg transition-all duration-200 cursor-pointer ${
+            className={`p-2.5 rounded-xl backdrop-blur-md border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 ${
               isLight
-                ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-slate-900 border-black/10 shadow-black/5'
-                : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/15'
+                ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
+                : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
             }`}
             title="Settings"
           >
-            <SettingsIcon className="w-5 h-5" />
+            <SettingsIcon className="w-4.5 h-4.5" />
           </button>
         </div>
       </header>
@@ -417,34 +417,67 @@ export const App: React.FC = () => {
         />
       </main>
 
-      {/* Footer */}
+      {/* Footer & Photo Attribution */}
       <footer
-        className={`relative z-10 text-center py-3 text-[11px] select-none transition-colors ${
-          isLight ? 'text-slate-600' : 'text-white/40'
+        className={`relative z-10 flex items-center justify-between px-6 py-3 text-[11px] select-none transition-colors ${
+          isLight ? 'text-slate-600' : 'text-white/45'
         }`}
       >
-        Powered by{' '}
-        <a
-          href="https://github.com/Troray/MyTab"
-          target="_blank"
-          rel="noreferrer"
-          className={`transition-colors underline ${
-            isLight
-              ? 'hover:text-slate-900 decoration-slate-400'
-              : 'hover:text-white/80 decoration-white/20'
-          }`}
-        >
-          MyTab
-        </a>{' '}
-        • Made with ❤️ by{' '}
-        <a
-          href="https://github.com/Troray"
-          target="_blank"
-          rel="noreferrer"
-          className="hover:text-white/80 transition-colors underline decoration-white/20"
-        >
-          Troray
-        </a>
+        <div className="w-1/3 text-left">
+          {settings.backgroundType === 'unsplash' && settings.unsplashAuthorName && (
+            <span className="inline-flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+              <span>Photo by</span>
+              <a
+                href={settings.unsplashAuthorUrl || 'https://unsplash.com'}
+                target="_blank"
+                rel="noreferrer"
+                className={`underline decoration-dotted underline-offset-2 ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
+              >
+                {settings.unsplashAuthorName}
+              </a>
+              <span>on</span>
+              <a
+                href="https://unsplash.com/?utm_source=mytab&utm_medium=referral"
+                target="_blank"
+                rel="noreferrer"
+                className={`underline decoration-dotted underline-offset-2 ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
+              >
+                Unsplash
+              </a>
+            </span>
+          )}
+        </div>
+
+        <div className="w-1/3 text-center">
+          Powered by{' '}
+          <a
+            href="https://github.com/Troray/MyTab"
+            target="_blank"
+            rel="noreferrer"
+            className={`transition-colors underline decoration-dotted underline-offset-2 ${
+              isLight
+                ? 'hover:text-black decoration-slate-400'
+                : 'hover:text-white decoration-white/30'
+            }`}
+          >
+            MyTab
+          </a>{' '}
+          • Made with ❤️ by{' '}
+          <a
+            href="https://github.com/Troray"
+            target="_blank"
+            rel="noreferrer"
+            className={`transition-colors underline decoration-dotted underline-offset-2 ${
+              isLight
+                ? 'hover:text-black decoration-slate-400'
+                : 'hover:text-white decoration-white/30'
+            }`}
+          >
+            Troray
+          </a>
+        </div>
+
+        <div className="w-1/3 text-right"></div>
       </footer>
 
       {/* Modals & Drawers */}

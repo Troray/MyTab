@@ -41,7 +41,7 @@ export interface ThemeSettings {
   mode: ThemeMode;
   backgroundType: BackgroundType;
   backgroundValue: string;
-  cardBlur: number; // in px, e.g. 16
+  cardBlur: number; // 0 ~ 100% (default 50)
   cardOpacity: number; // 0.1 ~ 1.0 (default 0.3)
   cardSize: number; // in px or scale: e.g. 90 ~ 160 (default 110)
   iconSizeRatio?: number; // 0.28 ~ 0.68, default 0.42
@@ -53,6 +53,13 @@ export interface ThemeSettings {
   showDate: boolean;
   language: Locale;
   customGreetings?: CustomGreetings;
+  unsplashAccessKey?: string;
+  unsplashActiveTab?: string;
+  unsplashKeywords?: string[];
+  unsplashCustomQuery?: string;
+  unsplashAuthorName?: string;
+  unsplashAuthorUrl?: string;
+  unsplashLastUrl?: string;
   updatedAt?: number;
 }
 

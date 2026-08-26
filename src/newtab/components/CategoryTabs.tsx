@@ -39,7 +39,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
   const isLight = settings.mode === 'light';
 
   return (
-    <div className="flex items-center justify-center gap-2 max-w-4xl mx-auto px-4 py-3 flex-wrap transition-colors">
+    <div className="flex items-center justify-center gap-1.5 max-w-4xl mx-auto px-4 py-2.5 flex-wrap transition-colors">
       {categories.map((cat) => {
         const isActive = activeCategoryId === cat.id;
         const count = siteCounts[cat.id] || 0;
@@ -51,22 +51,26 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
           >
             <button
               onClick={() => onSelectCategory(cat.id)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs md:text-sm font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs md:text-sm font-medium transition-all duration-150 cursor-pointer select-none active:scale-95 ${
                 isActive
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 backdrop-blur-md ring-1 ring-white/20'
+                  ? isLight
+                    ? 'bg-slate-900 text-white shadow-md shadow-slate-900/15 ring-1 ring-black/10 font-semibold'
+                    : 'bg-white text-slate-950 shadow-md shadow-white/10 ring-1 ring-white/30 font-semibold'
                   : isLight
-                  ? 'text-slate-700 hover:text-slate-900 bg-white/80 hover:bg-white backdrop-blur-md border border-black/10 shadow-sm'
-                  : 'text-white/80 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10'
+                  ? 'text-slate-700 hover:text-black bg-white/70 hover:bg-white/95 backdrop-blur-md border border-black/8 shadow-sm shadow-black/[0.02]'
+                  : 'text-white/75 hover:text-white bg-white/8 hover:bg-white/15 backdrop-blur-md border border-white/10'
               }`}
             >
               <span>{cat.name}</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-tabular ${
                   isActive
-                    ? 'bg-indigo-700/60 text-indigo-100'
+                    ? isLight
+                      ? 'bg-white/20 text-white'
+                      : 'bg-black/15 text-slate-900 font-semibold'
                     : isLight
-                    ? 'bg-black/10 text-slate-700'
-                    : 'bg-white/10 text-white/70'
+                    ? 'bg-black/[0.06] text-slate-600'
+                    : 'bg-white/10 text-white/60'
                 }`}
               >
                 {count}
@@ -81,7 +85,11 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
                   setModalCategory(cat);
                 }}
                 title={t('editCategory', settings.language)}
-                className="hidden group-hover:flex absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white items-center justify-center transition-transform hover:scale-110 shadow cursor-pointer z-10 animate-fade-in"
+                className={`hidden group-hover:flex absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full items-center justify-center transition-transform hover:scale-110 shadow-sm cursor-pointer z-10 ${
+                  isLight
+                    ? 'bg-slate-800 text-white hover:bg-black'
+                    : 'bg-white text-slate-900 hover:bg-slate-100'
+                }`}
               >
                 <Pencil className="w-2.5 h-2.5" />
               </button>
@@ -90,13 +98,13 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
         );
       })}
 
-      {/* Add Category Button (opens modal) */}
+      {/* Add Category Button */}
       <button
         onClick={() => setModalCategory(null)}
-        className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-dashed transition-colors cursor-pointer ${
+        className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-dashed transition-all cursor-pointer select-none active:scale-95 ${
           isLight
-            ? 'text-slate-700 hover:text-slate-900 bg-white/60 hover:bg-white border-slate-300 shadow-sm'
-            : 'text-white/70 hover:text-white bg-white/5 hover:bg-white/15 border-white/20'
+            ? 'text-slate-600 hover:text-black bg-white/50 hover:bg-white border-black/15 shadow-sm'
+            : 'text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/10 border-white/15'
         }`}
         title={t('addCategory', settings.language)}
       >

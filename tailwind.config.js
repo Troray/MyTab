@@ -27,6 +27,10 @@ export default {
           900: '#312e81',
         }
       },
+      opacity: {
+        '8': '0.08',
+        '12': '0.12',
+      },
       backdropBlur: {
         xs: '2px',
       },

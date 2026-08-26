@@ -47,110 +47,98 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     switch (type) {
       case 'danger':
         return (
-          <div className="p-3 rounded-2xl bg-red-500/20 text-red-400 border border-red-500/30 shadow-lg shadow-red-500/20">
-            <Trash2 className="w-6 h-6" />
+          <div className="p-3 rounded-2xl bg-red-500/15 text-red-400 border border-red-500/25 shadow-sm">
+            <Trash2 className="w-5 h-5" />
           </div>
         );
       case 'warning':
         return (
-          <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-lg shadow-amber-500/20">
-            <DownloadCloud className="w-6 h-6" />
+          <div className="p-3 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/25 shadow-sm">
+            <DownloadCloud className="w-5 h-5" />
           </div>
         );
       default:
         return (
-          <div className="p-3 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shadow-lg shadow-indigo-500/20">
-            <AlertCircle className="w-6 h-6" />
+          <div className="p-3 rounded-2xl bg-slate-500/15 text-slate-300 border border-slate-500/25 shadow-sm">
+            <AlertCircle className="w-5 h-5" />
           </div>
         );
     }
   };
 
+  const isLight = typeof document !== 'undefined' && document.documentElement.classList.contains('light');
+
   const confirmBtnClass =
     type === 'danger'
-      ? 'bg-red-600 hover:bg-red-700 shadow-md shadow-red-600/30'
+      ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm'
       : type === 'warning'
-      ? 'bg-amber-600 hover:bg-amber-700 shadow-md shadow-amber-600/30'
-      : 'bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-600/30';
-
-  const isLight = typeof document !== 'undefined' && document.documentElement.classList.contains('light');
+      ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
+      : isLight
+      ? 'bg-slate-900 hover:bg-black text-white'
+      : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Frosted Glass Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-fade-in"
+        className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-fade-in"
         onClick={onCancel}
       />
 
       {/* Modal Card */}
       <div
-        className={`relative w-full max-w-md rounded-3xl border shadow-2xl p-6 overflow-hidden animate-scale-in transition-colors ${
+        className={`glass-modal relative w-full max-w-md rounded-3xl border shadow-2xl p-6 overflow-hidden animate-scale-in transition-all ${
           isLight
             ? 'border-black/10 text-slate-900 shadow-black/15'
-            : 'border-white/15 text-white shadow-black/50'
+            : 'border-white/15 text-white shadow-black/80'
         }`}
-        style={{
-          background: isLight ? 'rgba(255, 255, 255, 0.75)' : undefined,
-          backdropFilter: 'blur(32px)',
-          WebkitBackdropFilter: 'blur(32px)',
-        }}
       >
         {/* Close Button */}
         <button
-          type="button"
           onClick={onCancel}
-          className={`absolute top-4 right-4 p-1.5 rounded-full transition-colors cursor-pointer ${
+          className={`absolute top-4 right-4 p-1.5 rounded-xl transition-colors cursor-pointer ${
             isLight
-              ? 'text-slate-400 hover:text-slate-900 hover:bg-black/5'
-              : 'text-white/50 hover:text-white hover:bg-white/10'
+              ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
+              : 'text-white/40 hover:text-white hover:bg-white/10'
           }`}
         >
-          <X className="w-4 h-4" />
+          <X className="w-4.5 h-4.5" />
         </button>
 
-        {/* Content */}
-        <div className="flex flex-col items-center text-center space-y-4 pt-2">
-          {renderIcon()}
-
-          <div className="space-y-1.5 px-2">
-            <h3
-              className={`text-base font-semibold tracking-wide ${
-                isLight ? 'text-slate-900' : 'text-white drop-shadow-sm'
-              }`}
-            >
-              {title}
-            </h3>
+        <div className="flex items-start gap-4">
+          <div className="shrink-0">{renderIcon()}</div>
+          <div className="space-y-1 pr-6 flex-1">
+            <h3 className="text-base font-semibold tracking-tight">{title}</h3>
             <p
-              className={`text-xs leading-relaxed whitespace-pre-line ${
+              className={`text-xs leading-relaxed ${
                 isLight ? 'text-slate-600' : 'text-white/70'
               }`}
             >
               {message}
             </p>
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 w-full pt-3">
-            <button
-              type="button"
-              onClick={onCancel}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
-                isLight
-                  ? 'bg-black/5 hover:bg-black/10 text-slate-700 border-black/10'
-                  : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/15'
-              }`}
-            >
-              {cancelText || t('cancel', language)}
-            </button>
-            <button
-              type="button"
-              onClick={onConfirm}
-              className={`flex-1 py-2.5 rounded-xl text-white text-xs font-medium transition-all cursor-pointer ${confirmBtnClass}`}
-            >
-              {confirmText || (language === 'zh-CN' ? '确认' : 'Confirm')}
-            </button>
-          </div>
+        {/* Action Buttons */}
+        <div className="mt-6 flex items-center justify-end gap-2.5">
+          <button
+            type="button"
+            onClick={onCancel}
+            className={`px-4 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+              isLight
+                ? 'bg-black/5 hover:bg-black/10 text-slate-700'
+                : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white'
+            }`}
+          >
+            {cancelText || t('cancel', language)}
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className={`px-5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer active:scale-95 ${confirmBtnClass}`}
+          >
+            {confirmText || t('confirm', language)}
+          </button>
         </div>
       </div>
     </div>
