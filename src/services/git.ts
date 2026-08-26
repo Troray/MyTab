@@ -148,6 +148,26 @@ export async function autoSetupGist(provider: 'github' | 'gitee', token: string)
 }
 
 /**
+ * Helper to identify if a string is a token rather than a repository or username
+ */
+export function isTokenLike(str?: string): boolean {
+  if (!str) return false;
+  const s = str.trim();
+  if (
+    s.startsWith('ghp_') ||
+    s.startsWith('github_pat_') ||
+    s.startsWith('gho_') ||
+    s.startsWith('ghu_') ||
+    s.startsWith('ghs_') ||
+    s.startsWith('ghr_') ||
+    (s.length >= 36 && /^[a-f0-9]+$/i.test(s))
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * Auto-detect user identity and auto create/connect private repository
  */
 export async function autoSetupRepo(
@@ -155,7 +175,7 @@ export async function autoSetupRepo(
   token: string,
   targetRepoName = 'MyTab-Backup',
   specifiedOwner?: string
-): Promise<GitTestResult & { repo?: string; branch?: string }> {
+): Promise<GitTestResult & { repo?: string; branch?: string; owner?: string }> {
   if (!token.trim()) {
     return { success: false, message: '请先填写 Personal Access Token (令牌)' };
   }
@@ -179,8 +199,15 @@ export async function autoSetupRepo(
     }
 
     const userData = await userRes.json();
-    const owner = specifiedOwner || userData.login || userData.name || 'User';
-    const cleanRepo = targetRepoName.trim() || 'MyTab-Backup';
+    const userLogin = userData.login || userData.name || 'User';
+    // If specifiedOwner is token-like or default, fallback to userLogin
+    const owner = (specifiedOwner && !isTokenLike(specifiedOwner) && specifiedOwner !== 'User') ? specifiedOwner : userLogin;
+
+    // Sanitize targetRepoName - NEVER allow token-like string as repo name
+    let cleanRepo = targetRepoName.trim();
+    if (!cleanRepo || isTokenLike(cleanRepo) || cleanRepo === owner) {
+      cleanRepo = 'MyTab-Backup';
+    }
 
     // 2. Check if repository exists
     let repoUrl = `${baseUrl}/repos/${owner}/${cleanRepo}?_t=${Date.now()}`;
@@ -188,7 +215,43 @@ export async function autoSetupRepo(
       repoUrl += `&access_token=${token}`;
     }
 
-    const checkRes = await fetch(repoUrl, { method: 'GET', headers, cache: 'no-store' });
+    let checkRes = await fetch(repoUrl, { method: 'GET', headers, cache: 'no-store' });
+
+    // If 404 and owner was different from userLogin, check under userLogin
+    if (checkRes.status === 404 && owner !== userLogin) {
+      const fallbackRepoUrl = `${baseUrl}/repos/${userLogin}/${cleanRepo}?_t=${Date.now()}${provider === 'gitee' ? `&access_token=${token}` : ''}`;
+      const fallbackRes = await fetch(fallbackRepoUrl, { method: 'GET', headers, cache: 'no-store' });
+      if (fallbackRes.status === 200) {
+        checkRes = fallbackRes;
+      }
+    }
+
+    // If still 404, check user repositories list to find any existing MyTab-Backup
+    if (checkRes.status === 404 && cleanRepo.toLowerCase() === 'mytab-backup') {
+      try {
+        const listReposUrl = `${baseUrl}/user/repos?per_page=100&affiliation=owner,collaborator&_t=${Date.now()}${provider === 'gitee' ? `&access_token=${token}` : ''}`;
+        const listRes = await fetch(listReposUrl, { method: 'GET', headers, cache: 'no-store' });
+        if (listRes.ok) {
+          const reposList: any[] = await listRes.json();
+          const matched = reposList.find(
+            (r) => r.name?.toLowerCase() === 'mytab-backup' || r.name?.toLowerCase() === 'mytab_backup'
+          );
+          if (matched) {
+            const isPrivate = matched.private ? '私有仓库' : '公开仓库';
+            const branch = matched.default_branch || (provider === 'gitee' ? 'master' : 'main');
+            return {
+              success: true,
+              owner: matched.owner?.login || userLogin,
+              repo: matched.name,
+              branch,
+              message: `连接成功！已找到 ${isPrivate} [${matched.full_name || `${matched.owner?.login}/${matched.name}`}]`,
+            };
+          }
+        }
+      } catch {
+        // continue
+      }
+    }
 
     if (checkRes.status === 200) {
       const repoData = await checkRes.json();
@@ -196,8 +259,8 @@ export async function autoSetupRepo(
       const branch = repoData.default_branch || (provider === 'gitee' ? 'master' : 'main');
       return {
         success: true,
-        owner,
-        repo: cleanRepo,
+        owner: repoData.owner?.login || owner,
+        repo: repoData.name || cleanRepo,
         branch,
         message: `连接成功！已找到 ${isPrivate} [${repoData.full_name || `${owner}/${cleanRepo}`}]`,
       };
@@ -229,16 +292,16 @@ export async function autoSetupRepo(
         const branch = createdData.default_branch || (provider === 'gitee' ? 'master' : 'main');
         return {
           success: true,
-          owner,
+          owner: userLogin,
           repo: cleanRepo,
           branch,
-          message: `已全自动为您创建并连接私有仓库 [${owner}/${cleanRepo}]！`,
+          message: `已全自动为您创建并连接私有仓库 [${userLogin}/${cleanRepo}]！`,
         };
       } else {
         const err = await createRes.json().catch(() => ({}));
         return {
           success: false,
-          owner,
+          owner: userLogin,
           repo: cleanRepo,
           message: `自动创建仓库失败: ${err.message || '请确认 Token 已勾选 repo 读写权限'}`,
         };

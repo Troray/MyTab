@@ -116,7 +116,7 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   mode: 'dark',
   backgroundType: 'custom',
   backgroundValue: './wallpapers/default-wallpaper.jpg',
-  cardBlur: 16,
+  cardBlur: 50,      // 默认毛玻璃模糊度 50%
   cardOpacity: 0.30, // 默认卡片透明度 30%
   cardSize: 110,     // 默认卡片大小 110px
   iconSizeRatio: 0.42, // 默认图标占比 42%
@@ -127,6 +127,8 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   showGreeting: true,
   showDate: true,
   language: 'zh-CN',
+  unsplashActiveTab: 'nature',
+  unsplashKeywords: ['nature', 'landscape'],
   updatedAt: 0,
 };
 

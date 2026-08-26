@@ -52,8 +52,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-medium transition-all cursor-pointer ${
           isLight
-            ? `bg-black/5 hover:bg-black/10 text-slate-900 ${isOpen ? 'border-indigo-500 ring-1 ring-indigo-500/20' : 'border-black/10'}`
-            : `bg-white/10 hover:bg-white/15 text-white ${isOpen ? 'border-white/30 ring-1 ring-white/20' : 'border-white/15'}`
+            ? `bg-black/5 hover:bg-black/10 text-slate-900 ${isOpen ? 'border-black/30 ring-2 ring-black/10' : 'border-black/10'}`
+            : `bg-white/10 hover:bg-white/15 text-white ${isOpen ? 'border-white/30 ring-2 ring-white/20' : 'border-white/15'}`
         }`}
       >
         <span className="truncate flex items-center gap-2">
@@ -61,7 +61,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown
-          className={`w-4 h-4 opacity-70 transition-transform duration-200 shrink-0 ml-2 ${
+          className={`w-4 h-4 opacity-60 transition-transform duration-200 shrink-0 ml-2 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -72,11 +72,10 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         <div
           className={`absolute left-0 right-0 top-[calc(100%+6px)] max-h-56 overflow-y-auto rounded-2xl border shadow-2xl z-50 animate-scale-in p-1.5 scrollbar-thin ${
             isLight
-              ? 'border-black/10 shadow-black/15'
-              : 'border-white/20 shadow-black/60'
+              ? 'border-black/10 shadow-black/15 bg-white/95 text-slate-900'
+              : 'border-white/15 shadow-black/80 bg-slate-900/95 text-white'
           }`}
           style={{
-            background: isLight ? 'rgba(255, 255, 255, 0.88)' : 'rgba(30, 32, 40, 0.75)',
             backdropFilter: 'blur(32px)',
             WebkitBackdropFilter: 'blur(32px)',
           }}
@@ -94,10 +93,10 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs sm:text-sm transition-colors cursor-pointer ${
                   isSelected
                     ? isLight
-                      ? 'bg-indigo-50 text-indigo-600 font-semibold'
-                      : 'bg-white/20 text-white font-semibold shadow-sm'
+                      ? 'bg-black/5 text-black font-semibold'
+                      : 'bg-white/15 text-white font-semibold'
                     : isLight
-                    ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                    ? 'text-slate-700 hover:bg-black/5 hover:text-black'
                     : 'text-white/80 hover:bg-white/10 hover:text-white'
                 }`}
               >
@@ -107,8 +106,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                 </span>
                 {isSelected && (
                   <Check
-                    className={`w-4 h-4 shrink-0 ml-2 ${
-                      isLight ? 'text-indigo-600' : 'text-indigo-300'
+                    className={`w-3.5 h-3.5 shrink-0 ml-2 ${
+                      isLight ? 'text-amber-600' : 'text-amber-400'
                     }`}
                   />
                 )}

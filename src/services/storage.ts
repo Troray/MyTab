@@ -113,10 +113,16 @@ export async function loadAppState(): Promise<AppState> {
     },
   };
 
+  // Normalize settings cardBlur (migrate from old 0-32px scale to 0-100% percentage scale)
+  const normalizedSettings = { ...DEFAULT_SETTINGS, ...settings };
+  if (settings && typeof settings.cardBlur === 'number' && settings.cardBlur <= 32 && settings.cardBlur > 0) {
+    normalizedSettings.cardBlur = Math.round((settings.cardBlur / 32) * 100);
+  }
+
   return {
     sites,
     categories,
-    settings: { ...DEFAULT_SETTINGS, ...settings },
+    settings: normalizedSettings,
     webdav: { ...DEFAULT_WEBDAV_CONFIG, ...webdav },
     git: normalizedGit,
     isFirstLaunch: isFirst,

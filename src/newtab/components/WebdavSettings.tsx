@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cloud, CheckCircle, AlertCircle, RefreshCw, Radio, Lock, UploadCloud, DownloadCloud } from 'lucide-react';
+import { Cloud, CheckCircle, AlertCircle, RefreshCw, Radio, Lock, UploadCloud, DownloadCloud, Eye, EyeOff } from 'lucide-react';
 import { AppState, WebdavConfig } from '../../types';
 import { uploadToWebdav, restoreFromWebdav, WebdavClient } from '../../services/webdav';
 import { ConfirmModal } from './ConfirmModal';
@@ -27,6 +27,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
   const [isPulling, setIsPulling] = useState(false);
   const [showPullConfirm, setShowPullConfirm] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (fields: Partial<WebdavConfig>) => {
     const updated = { ...config, ...fields };
@@ -93,22 +94,28 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* Enable Switch */}
       <div
         className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
           isLight
-            ? 'bg-black/5 border-black/10 text-slate-900'
-            : 'bg-white/5 border-white/10 text-white'
+            ? 'bg-black/[0.03] border-black/8 text-slate-900'
+            : 'bg-white/[0.05] border-white/10 text-white'
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-500">
-            <Cloud className="w-5 h-5" />
+          <div
+            className={`p-2 rounded-xl border ${
+              isLight
+                ? 'bg-black/[0.04] border-black/5 text-slate-800'
+                : 'bg-white/10 border-white/10 text-white'
+            }`}
+          >
+            <Cloud className="w-4.5 h-4.5" />
           </div>
           <div>
-            <div className="text-sm font-semibold">{t('webdavEnable', settings.language)}</div>
-            <div className={`text-xs ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+            <div className="text-xs font-semibold">{t('webdavEnable', settings.language)}</div>
+            <div className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
               {t('webdavDesc', settings.language)}
             </div>
           </div>
@@ -120,12 +127,16 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
             onChange={(e) => handleChange({ enabled: e.target.checked })}
             className="sr-only peer"
           />
-          <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+          <div className={`w-11 h-6 rounded-full transition-colors peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
+            isLight
+              ? 'bg-slate-300 peer-checked:bg-slate-900'
+              : 'bg-white/20 peer-checked:bg-white after:peer-checked:bg-slate-900'
+          }`}></div>
         </label>
       </div>
 
       {config.enabled && (
-        <div className="space-y-3.5 pt-1 animate-fade-in">
+        <div className="space-y-3 pt-1 animate-fade-in">
           {/* Server URL */}
           <div>
             <label className={`block text-xs font-medium mb-1.5 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
@@ -136,16 +147,16 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
               value={config.url}
               onChange={(e) => handleChange({ url: e.target.value })}
               placeholder={t('webdavUrlPlaceholder', settings.language)}
-              className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${
+              className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
                 isLight
-                  ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400'
-                  : 'bg-white/10 border-white/15 text-white placeholder-white/40'
+                  ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900 placeholder-slate-400'
+                  : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white placeholder-white/40'
               }`}
             />
           </div>
 
           {/* Username & Password */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
               <label className={`block text-xs font-medium mb-1.5 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
                 {t('webdavUser', settings.language)}
@@ -155,10 +166,10 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                 value={config.username}
                 onChange={(e) => handleChange({ username: e.target.value })}
                 placeholder={t('webdavUserPlaceholder', settings.language)}
-                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${
+                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
                   isLight
-                    ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400'
-                    : 'bg-white/10 border-white/15 text-white placeholder-white/40'
+                    ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900 placeholder-slate-400'
+                    : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white placeholder-white/40'
                 }`}
               />
             </div>
@@ -166,17 +177,31 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
               <label className={`block text-xs font-medium mb-1.5 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
                 {t('webdavPass', settings.language)}
               </label>
-              <input
-                type="password"
-                value={config.password || ''}
-                onChange={(e) => handleChange({ password: e.target.value })}
-                placeholder={t('webdavPassPlaceholder', settings.language)}
-                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${
-                  isLight
-                    ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400'
-                    : 'bg-white/10 border-white/15 text-white placeholder-white/40'
-                }`}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={config.password || ''}
+                  onChange={(e) => handleChange({ password: e.target.value })}
+                  placeholder={t('webdavPassPlaceholder', settings.language)}
+                  className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
+                    isLight
+                      ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900 placeholder-slate-400'
+                      : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white placeholder-white/40'
+                  }`}
+                />
+                {config.password && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors cursor-pointer ${
+                      isLight ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5' : 'text-white/40 hover:text-white hover:bg-white/10'
+                    }`}
+                    title={showPassword ? '隐藏' : '显示'}
+                  >
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -189,10 +214,10 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
               type="text"
               value={config.syncPath}
               onChange={(e) => handleChange({ syncPath: e.target.value })}
-              className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none focus:border-indigo-500 transition-colors ${
+              className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
                 isLight
-                  ? 'bg-white border-black/15 text-slate-900'
-                  : 'bg-white/10 border-white/15 text-white'
+                  ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900'
+                  : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white'
               }`}
             />
           </div>
@@ -216,14 +241,14 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
 
           {/* Auto Sync Switch */}
           <div className="flex items-center justify-between py-1">
-            <span className={`text-xs ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+            <span className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
               {t('webdavAutoSync', settings.language)}
             </span>
             <input
               type="checkbox"
               checked={config.autoSync}
               onChange={(e) => handleChange({ autoSync: e.target.checked })}
-              className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
+              className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
             />
           </div>
 
@@ -234,7 +259,11 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                 type="button"
                 onClick={handleUpload}
                 disabled={isUploading || isPulling || !config.url}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-xs font-medium text-white shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-40 active:scale-95 ${
+                  isLight
+                    ? 'bg-slate-900 hover:bg-black text-white shadow-sm'
+                    : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm'
+                }`}
                 title={t('uploadBackup', settings.language)}
               >
                 {isUploading ? (
@@ -249,9 +278,9 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                 type="button"
                 onClick={() => setShowPullConfirm(true)}
                 disabled={isUploading || isPulling || !config.url}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border disabled:opacity-50 text-xs font-medium transition-all cursor-pointer ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer disabled:opacity-40 active:scale-95 ${
                   isLight
-                    ? 'bg-white hover:bg-slate-50 border-black/10 text-slate-800 shadow-sm'
+                    ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'
                     : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
                 }`}
                 title={t('pullRestore', settings.language)}
@@ -269,10 +298,10 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
               type="button"
               onClick={handleTest}
               disabled={isTesting || !config.url}
-              className={`w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border disabled:opacity-50 text-xs font-medium transition-all cursor-pointer ${
+              className={`w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer disabled:opacity-40 active:scale-95 ${
                 isLight
-                  ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700'
-                  : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80'
+                  ? 'bg-black/[0.03] hover:bg-black/[0.08] border-black/8 text-slate-700'
+                  : 'bg-white/[0.05] hover:bg-white/10 border-white/10 text-white/80'
               }`}
             >
               {isTesting && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
@@ -307,17 +336,17 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
             <div
               className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
                 isLight
-                  ? 'bg-indigo-50 border border-indigo-200 text-indigo-800'
-                  : 'bg-indigo-500/20 border border-indigo-500/30 text-indigo-200'
+                  ? 'bg-black/5 border border-black/10 text-slate-800'
+                  : 'bg-white/10 border border-white/15 text-white'
               }`}
             >
-              <RefreshCw className="w-4 h-4 shrink-0 text-indigo-500" />
+              <RefreshCw className="w-4 h-4 shrink-0" />
               <span>{syncMsg}</span>
             </div>
           )}
 
           {/* Last sync info */}
-          <div className={`text-[11px] pt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+          <div className={`text-[11px] pt-0.5 font-tabular ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
             {t('lastSync', settings.language)}: {formatLastSync()}
           </div>
 
@@ -327,7 +356,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
             type="warning"
             title={t('pullRestore', settings.language)}
             message={t('confirmPull', settings.language)}
-            confirmText={t('save', settings.language)}
+            confirmText={t('confirm', settings.language)}
             language={settings.language}
             onConfirm={handlePullExecute}
             onCancel={() => setShowPullConfirm(false)}
