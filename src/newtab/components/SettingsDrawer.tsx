@@ -19,7 +19,8 @@ import {
   Sparkles,
   RotateCcw,
   FileDown,
-  ExternalLink
+  ExternalLink,
+  ChevronDown
 } from 'lucide-react';
 import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ThemeSettings, WebdavConfig } from '../../types';
 import { PRESET_GRADIENTS } from '../../utils/constants';
@@ -28,6 +29,9 @@ import { GitSettings } from './GitSettings';
 import { exportAllData, importData } from '../../services/storage';
 import { t, supportedLocales } from '../../utils/i18n';
 import { CustomSelect } from './CustomSelect';
+import { UNSPLASH_CATEGORIES } from '../../utils/unsplashTopics';
+import { UnsplashTopicModal } from './UnsplashTopicModal';
+import { fetchUnsplashRandomPhoto, preloadImage } from '../../services/unsplash';
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -53,11 +57,43 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   const [syncProvider, setSyncProvider] = useState<'webdav' | 'git'>('webdav');
   const [importStatus, setImportStatus] = useState<string>('');
   const [greetingStatus, setGreetingStatus] = useState<{ success?: boolean; text: string } | null>(null);
+  const [isCardLayoutExpanded, setIsCardLayoutExpanded] = useState(false);
+  const [isUnsplashTopicModalOpen, setIsUnsplashTopicModalOpen] = useState(false);
+  const [isFetchingUnsplash, setIsFetchingUnsplash] = useState(false);
+  const [unsplashError, setUnsplashError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleSettingsChange = (fields: Partial<ThemeSettings>) => {
     onUpdateSettings({ ...settings, ...fields });
+  };
+
+  const handleRefreshUnsplash = async (customFields?: Partial<ThemeSettings>) => {
+    setIsFetchingUnsplash(true);
+    setUnsplashError(null);
+    try {
+      const mergedSettings = { ...settings, ...(customFields || {}) };
+      const res = await fetchUnsplashRandomPhoto(mergedSettings);
+      if (res.error) {
+        setUnsplashError(res.error);
+      }
+      // Preload image so button spinner continues until image is loaded in browser (max 2.5s)
+      if (res.url) {
+        await preloadImage(res.url, 2500);
+      }
+      handleSettingsChange({
+        ...(customFields || {}),
+        backgroundType: 'unsplash',
+        backgroundValue: res.url,
+        unsplashLastUrl: res.url,
+        unsplashAuthorName: res.authorName,
+        unsplashAuthorUrl: res.authorUrl,
+      });
+    } catch (err: any) {
+      setUnsplashError(err?.message || 'Failed to fetch image');
+    } finally {
+      setIsFetchingUnsplash(false);
+    }
   };
 
   const handleImportGreetingsFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,60 +231,57 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
     <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
         onClick={onClose}
       />
 
-      {/* Drawer */}
-      <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
+      {/* Drawer Container */}
+      <div className="absolute inset-y-0 right-0 max-w-full flex pointer-events-none">
         <div
-          className={`w-screen max-w-md shadow-2xl flex flex-col transition-colors duration-200 ${
+          className={`glass-drawer w-screen max-w-md shadow-2xl flex flex-col pointer-events-auto transition-all duration-200 ${
             isLight
               ? 'border-l border-black/10 text-slate-900'
-              : 'border-l border-white/15 text-white'
+              : 'border-l border-white/10 text-white'
           }`}
-          style={{
-            background: isLight ? 'rgba(255, 255, 255, 0.75)' : undefined,
-            backdropFilter: 'blur(32px)',
-            WebkitBackdropFilter: 'blur(32px)',
-          }}
         >
           {/* Header */}
           <div
-            className={`flex items-center justify-between px-6 py-5 border-b ${
-              isLight ? 'border-black/10' : 'border-white/10'
+            className={`flex items-center justify-between px-6 py-4.5 border-b ${
+              isLight ? 'border-black/8' : 'border-white/10'
             }`}
           >
-            <h2 className="text-lg font-semibold tracking-wide flex items-center gap-2">
-              <Sliders className="w-5 h-5 text-indigo-500" />
+            <h2 className="text-base font-semibold tracking-tight flex items-center gap-2">
+              <Sliders className="w-4.5 h-4.5 opacity-70" />
               <span>{t('settingsTitle', settings.language)}</span>
             </h2>
             <button
               onClick={onClose}
-              className={`p-1.5 rounded-full transition-colors ${
+              className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
                 isLight
-                  ? 'text-slate-500 hover:text-slate-900 hover:bg-black/5'
+                  ? 'text-slate-500 hover:text-black hover:bg-black/5'
                   : 'text-white/60 hover:text-white hover:bg-white/10'
               }`}
             >
-              <X className="w-5 h-5" />
+              <X className="w-4.5 h-4.5" />
             </button>
           </div>
 
           {/* Navigation Tabs (外观, 偏好, 同步, 备份与迁移) */}
           <div
-            className={`flex px-6 pt-3 border-b gap-5 overflow-x-auto text-xs font-medium scrollbar-none ${
-              isLight ? 'border-black/10' : 'border-white/10'
+            className={`flex px-6 pt-2 border-b gap-5 overflow-x-auto text-xs font-medium scrollbar-none ${
+              isLight ? 'border-black/8' : 'border-white/10'
             }`}
           >
             <button
               onClick={() => setActiveTab('appearance')}
-              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
                 activeTab === 'appearance'
-                  ? 'border-indigo-500 text-indigo-500 font-semibold'
+                  ? isLight
+                    ? 'border-slate-900 text-slate-900 font-semibold'
+                    : 'border-white text-white font-semibold'
                   : isLight
                   ? 'border-transparent text-slate-500 hover:text-slate-900'
-                  : 'border-transparent text-white/60 hover:text-white'
+                  : 'border-transparent text-white/50 hover:text-white'
               }`}
             >
               <Palette className="w-3.5 h-3.5" />
@@ -256,12 +289,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('behavior')}
-              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
                 activeTab === 'behavior'
-                  ? 'border-indigo-500 text-indigo-500 font-semibold'
+                  ? isLight
+                    ? 'border-slate-900 text-slate-900 font-semibold'
+                    : 'border-white text-white font-semibold'
                   : isLight
                   ? 'border-transparent text-slate-500 hover:text-slate-900'
-                  : 'border-transparent text-white/60 hover:text-white'
+                  : 'border-transparent text-white/50 hover:text-white'
               }`}
             >
               <Sliders className="w-3.5 h-3.5" />
@@ -269,12 +304,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('sync')}
-              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
                 activeTab === 'sync'
-                  ? 'border-indigo-500 text-indigo-500 font-semibold'
+                  ? isLight
+                    ? 'border-slate-900 text-slate-900 font-semibold'
+                    : 'border-white text-white font-semibold'
                   : isLight
                   ? 'border-transparent text-slate-500 hover:text-slate-900'
-                  : 'border-transparent text-white/60 hover:text-white'
+                  : 'border-transparent text-white/50 hover:text-white'
               }`}
             >
               <Cloud className="w-3.5 h-3.5" />
@@ -282,12 +319,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('backup')}
-              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
                 activeTab === 'backup'
-                  ? 'border-indigo-500 text-indigo-500 font-semibold'
+                  ? isLight
+                    ? 'border-slate-900 text-slate-900 font-semibold'
+                    : 'border-white text-white font-semibold'
                   : isLight
                   ? 'border-transparent text-slate-500 hover:text-slate-900'
-                  : 'border-transparent text-white/60 hover:text-white'
+                  : 'border-transparent text-white/50 hover:text-white'
               }`}
             >
               <FileJson className="w-3.5 h-3.5" />
@@ -309,16 +348,18 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   >
                     {t('themeMode', settings.language)}
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2.5">
                     <button
                       type="button"
                       onClick={() => handleSettingsChange({ mode: 'dark' })}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium transition-all ${
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer active:scale-95 ${
                         settings.mode === 'dark'
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                          ? isLight
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                            : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
                           : isLight
-                          ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
-                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                          ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
+                          : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
                       }`}
                     >
                       <Moon className="w-4 h-4" />
@@ -327,12 +368,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <button
                       type="button"
                       onClick={() => handleSettingsChange({ mode: 'light' })}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium transition-all ${
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer active:scale-95 ${
                         settings.mode === 'light'
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                          ? isLight
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                            : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
                           : isLight
-                          ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
-                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                          ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
+                          : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
                       }`}
                     >
                       <Sun className="w-4 h-4" />
@@ -360,27 +403,38 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <button
                         key={bg.id}
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
+                          if (bg.id === 'unsplash') {
+                            if (settings.unsplashLastUrl) {
+                              handleSettingsChange({
+                                backgroundType: 'unsplash',
+                                backgroundValue: settings.unsplashLastUrl,
+                              });
+                            } else {
+                              handleRefreshUnsplash();
+                            }
+                            return;
+                          }
                           handleSettingsChange({
                             backgroundType: bg.id as BackgroundType,
                             backgroundValue:
                               bg.id === 'bing'
                                 ? 'https://bing.biturl.top/?resolution=1920&format=image&index=0&mkt=zh-CN'
-                                : bg.id === 'unsplash'
-                                ? 'https://images.unsplash.com/photo-1507525428033-b723cf961d3e?auto=format&fit=crop&w=1920&q=80'
                                 : bg.id === 'custom'
                                 ? settings.backgroundValue.startsWith('http') || settings.backgroundValue.startsWith('data:') || settings.backgroundValue.includes('wallpaper')
                                   ? settings.backgroundValue
                                   : './wallpapers/default-wallpaper.jpg'
                                 : PRESET_GRADIENTS[0].value,
-                          })
-                        }
-                        className={`py-2 px-3 rounded-xl border text-xs font-medium transition-all ${
+                          });
+                        }}
+                        className={`py-2 px-3 rounded-xl border text-xs font-medium transition-all cursor-pointer active:scale-95 ${
                           settings.backgroundType === bg.id
-                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 font-semibold'
+                            ? isLight
+                              ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                              : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
                             : isLight
-                            ? 'bg-black/5 border-black/10 text-slate-700 hover:bg-black/10'
-                            : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                            ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
+                            : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
                         }`}
                       >
                         {bg.label}
@@ -398,7 +452,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           style={{ background: p.value }}
                           className={`h-16 rounded-xl border cursor-pointer relative flex items-end p-2 transition-transform hover:scale-[1.02] ${
                             settings.backgroundValue === p.value
-                              ? 'border-indigo-500 ring-2 ring-indigo-400/50'
+                              ? 'border-amber-500 ring-2 ring-amber-500/50 shadow-md'
                               : isLight
                               ? 'border-black/15 shadow-sm'
                               : 'border-white/20'
@@ -426,8 +480,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           placeholder={t('bgCustomPlaceholder', settings.language)}
                           className={`flex-1 px-3 py-2 rounded-xl border outline-none text-xs ${
                             isLight
-                              ? 'bg-black/5 border-black/15 text-slate-900 placeholder-slate-400 focus:border-indigo-500'
-                              : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-indigo-500'
+                              ? 'bg-black/5 border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
+                              : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
                           }`}
                         />
                         <label
@@ -461,144 +515,336 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <button
                         type="button"
                         onClick={() => handleSettingsChange({ backgroundValue: './wallpapers/default-wallpaper.jpg' })}
-                        className="text-[11px] text-indigo-500 hover:text-indigo-600 underline cursor-pointer"
+                        className={`text-[11px] underline cursor-pointer ${
+                          isLight ? 'text-slate-600 hover:text-black' : 'text-white/60 hover:text-white'
+                        }`}
                       >
                         {t('resetDefaultWallpaper', settings.language)}
                       </button>
                     </div>
                   )}
+
+                  {/* Unsplash Custom Configuration Panel */}
+                  {settings.backgroundType === 'unsplash' && (
+                    <div
+                      className={`mt-2 p-3.5 rounded-2xl border space-y-3 animate-fade-in ${
+                        isLight ? 'bg-black/[0.02] border-black/10' : 'bg-white/[0.04] border-white/10'
+                      }`}
+                    >
+                      {/* Access Key */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                            {t('unsplashAccessKey', settings.language)}
+                          </label>
+                          <a
+                            href="https://unsplash.com/developers"
+                            target="_blank"
+                            rel="noreferrer"
+                            className={`text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-colors ${
+                              isLight ? 'text-slate-600 hover:text-black underline' : 'text-white/60 hover:text-white underline'
+                            }`}
+                          >
+                            <span>{t('unsplashGetAccessKey', settings.language)}</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                        <input
+                          type="password"
+                          value={settings.unsplashAccessKey || ''}
+                          onChange={(e) => handleSettingsChange({ unsplashAccessKey: e.target.value })}
+                          placeholder={t('unsplashAccessKeyPlaceholder', settings.language)}
+                          className={`w-full px-3.5 py-2.5 rounded-xl border outline-none text-xs transition-all ${
+                            isLight
+                              ? 'bg-black/5 border-black/10 text-slate-900 placeholder-slate-400 focus:border-black/30'
+                              : 'bg-white/10 border-white/10 text-white placeholder-white/40 focus:border-white/30'
+                          }`}
+                        />
+                        <p className={`text-[10px] mt-1.5 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                          {t('unsplashAccessKeyTip', settings.language)}
+                        </p>
+                      </div>
+
+                      {/* Topic Category & Keywords Trigger */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                            {t('unsplashTopicsBtn', settings.language)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsUnsplashTopicModalOpen(true)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer active:scale-95 ${
+                              isLight
+                                ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700'
+                                : 'bg-white/10 hover:bg-white/15 border-white/10 text-white/80'
+                            }`}
+                          >
+                            {t('edit', settings.language) || '更改'}
+                          </button>
+                        </div>
+                        <div
+                          onClick={() => setIsUnsplashTopicModalOpen(true)}
+                          className={`p-2.5 rounded-xl border cursor-pointer flex flex-wrap items-center gap-1.5 transition-all ${
+                            isLight
+                              ? 'bg-black/[0.03] border-black/10 hover:bg-black/[0.06]'
+                              : 'bg-white/[0.05] border-white/10 hover:bg-white/[0.08]'
+                          }`}
+                        >
+                          <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${
+                            isLight ? 'bg-slate-900 text-white' : 'bg-white text-slate-950'
+                          }`}>
+                            {t((UNSPLASH_CATEGORIES.find(c => c.id === (settings.unsplashActiveTab || 'nature'))?.nameKey || 'topicNature') as any, settings.language)}
+                          </span>
+                          {(settings.unsplashKeywords && settings.unsplashKeywords.length > 0
+                            ? settings.unsplashKeywords
+                            : ['nature', 'landscape']
+                          ).slice(0, 4).map((kw, i) => (
+                            <span
+                              key={i}
+                              className={`px-2 py-0.5 rounded-md text-[11px] border ${
+                                isLight
+                                  ? 'bg-white/80 border-black/10 text-slate-700'
+                                  : 'bg-white/10 border-white/10 text-white/80'
+                              }`}
+                            >
+                              #{kw}
+                            </span>
+                          ))}
+                          {(settings.unsplashKeywords?.length || 0) > 4 && (
+                            <span className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                              +{(settings.unsplashKeywords?.length || 0) - 4}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons & Status */}
+                      <div className="pt-1 flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleRefreshUnsplash()}
+                          disabled={isFetchingUnsplash}
+                          className={`flex-1 py-2.5 px-3 rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 ${
+                            isLight
+                              ? 'bg-slate-900 hover:bg-black text-white font-semibold shadow-sm'
+                              : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm'
+                          }`}
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${isFetchingUnsplash ? 'animate-spin' : ''}`} />
+                          <span>{isFetchingUnsplash ? t('unsplashFetching', settings.language) : t('unsplashRefresh', settings.language)}</span>
+                        </button>
+                      </div>
+
+                      {unsplashError && (
+                        <p className="text-[10px] text-amber-500 font-medium">
+                          ⚠️ {unsplashError}
+                        </p>
+                      )}
+
+                      {/* Author Credit */}
+                      {settings.unsplashAuthorName && (
+                        <div className={`text-[10px] pt-1.5 border-t flex items-center justify-between ${
+                          isLight ? 'border-black/8 text-slate-500' : 'border-white/8 text-white/50'
+                        }`}>
+                          <span>
+                            {t('unsplashCredit', settings.language)}:{' '}
+                            <a
+                              href={settings.unsplashAuthorUrl || 'https://unsplash.com'}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-medium underline hover:text-current"
+                            >
+                              {settings.unsplashAuthorName}
+                            </a>
+                          </span>
+                          <a
+                            href="https://unsplash.com/?utm_source=mytab&utm_medium=referral"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="hover:underline"
+                          >
+                            Unsplash
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {/* Card Size Slider */}
-                <div>
-                  <div className="flex justify-between text-xs font-medium mb-1.5">
-                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardSizeTitle', settings.language)}</span>
-                    <span className="text-indigo-500 font-semibold">{settings.cardSize || 110}px</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="80"
-                    max="160"
-                    step="5"
-                    value={settings.cardSize || 110}
-                    onChange={(e) => handleSettingsChange({ cardSize: parseInt(e.target.value, 10) })}
-                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
-                      isLight ? 'bg-slate-200' : 'bg-white/20'
+                {/* Collapsible Card & Layout Sliders Accordion */}
+                <div
+                  className={`rounded-2xl border transition-all overflow-hidden ${
+                    isLight ? 'bg-black/[0.02] border-black/10' : 'bg-white/[0.04] border-white/10'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setIsCardLayoutExpanded(!isCardLayoutExpanded)}
+                    className={`w-full flex items-center justify-between p-3.5 transition-colors cursor-pointer text-left ${
+                      isLight ? 'hover:bg-black/[0.03]' : 'hover:bg-white/[0.04]'
                     }`}
-                  />
-                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                    <span>{t('cardSizeCompact', settings.language)}</span>
-                    <span>{t('cardSizeDefault', settings.language)}</span>
-                    <span>{t('cardSizeLarge', settings.language)}</span>
-                  </div>
-                </div>
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`p-2 rounded-xl border ${
+                          isLight
+                            ? 'bg-black/[0.04] border-black/5 text-slate-800'
+                            : 'bg-white/10 border-white/10 text-white'
+                        }`}
+                      >
+                        <Sliders className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className={`text-xs font-semibold ${isLight ? 'text-slate-800' : 'text-white'}`}>
+                          {t('cardLayoutAdvanced', settings.language)}
+                        </div>
+                        <div className={`text-[10px] mt-0.5 font-tabular ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                          {settings.cardSize || 110}px · {Math.round(settings.cardOpacity * 100)}% · {settings.cardBlur ?? 50}% · {settings.maxCardsPerRow || 8}{t('cardsPerRowUnit', settings.language)}
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 shrink-0 opacity-60 ${
+                        isCardLayoutExpanded ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
 
-                {/* Card Opacity Slider */}
-                <div>
-                  <div className="flex justify-between text-xs font-medium mb-1.5">
-                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardOpacityTitle', settings.language)}</span>
-                    <span className="text-indigo-500 font-semibold">{Math.round(settings.cardOpacity * 100)}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.05"
-                    max="0.9"
-                    step="0.05"
-                    value={settings.cardOpacity}
-                    onChange={(e) => handleSettingsChange({ cardOpacity: parseFloat(e.target.value) })}
-                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
-                      isLight ? 'bg-slate-200' : 'bg-white/20'
-                    }`}
-                  />
-                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                    <span>{t('cardOpacityLow', settings.language)}</span>
-                    <span>{t('cardOpacityMed', settings.language)}</span>
-                    <span>{t('cardOpacityHigh', settings.language)}</span>
-                  </div>
-                </div>
+                  {isCardLayoutExpanded && (
+                    <div
+                      className={`p-4 pt-3 space-y-5 border-t animate-fade-in ${
+                        isLight ? 'border-black/5 bg-white/40' : 'border-white/5 bg-black/20'
+                      }`}
+                    >
+                      {/* Card Size Slider */}
+                      <div>
+                        <div className="flex justify-between text-xs font-medium mb-1.5">
+                          <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardSizeTitle', settings.language)}</span>
+                          <span className="font-tabular font-semibold">{settings.cardSize || 110}px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="80"
+                          max="160"
+                          step="5"
+                          value={settings.cardSize || 110}
+                          onChange={(e) => handleSettingsChange({ cardSize: parseInt(e.target.value, 10) })}
+                          className="range-slider"
+                        />
+                        <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                          <span>{t('cardSizeCompact', settings.language)}</span>
+                          <span>{t('cardSizeDefault', settings.language)}</span>
+                          <span>{t('cardSizeLarge', settings.language)}</span>
+                        </div>
+                      </div>
 
-                {/* Card Blur Slider */}
-                <div>
-                  <div className="flex justify-between text-xs font-medium mb-1.5">
-                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardBlur', settings.language)}</span>
-                    <span className="text-indigo-500 font-semibold">{settings.cardBlur}px</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="32"
-                    step="2"
-                    value={settings.cardBlur}
-                    onChange={(e) => handleSettingsChange({ cardBlur: parseInt(e.target.value, 10) })}
-                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
-                      isLight ? 'bg-slate-200' : 'bg-white/20'
-                    }`}
-                  />
-                </div>
+                      {/* Card Opacity Slider */}
+                      <div>
+                        <div className="flex justify-between text-xs font-medium mb-1.5">
+                          <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardOpacityTitle', settings.language)}</span>
+                          <span className="font-tabular font-semibold">{Math.round(settings.cardOpacity * 100)}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.05"
+                          max="0.9"
+                          step="0.05"
+                          value={settings.cardOpacity}
+                          onChange={(e) => handleSettingsChange({ cardOpacity: parseFloat(e.target.value) })}
+                          className="range-slider"
+                        />
+                        <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                          <span>{t('cardOpacityLow', settings.language)}</span>
+                          <span>{t('cardOpacityMed', settings.language)}</span>
+                          <span>{t('cardOpacityHigh', settings.language)}</span>
+                        </div>
+                      </div>
 
-                {/* Card Icon Ratio Slider */}
-                <div>
-                  <div className="flex justify-between text-xs font-medium mb-1.5">
-                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconSizeRatio', settings.language)}</span>
-                    <span className="text-indigo-500 font-semibold">{Math.round((settings.iconSizeRatio || 0.42) * 100)}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.28"
-                    max="0.65"
-                    step="0.01"
-                    value={settings.iconSizeRatio || 0.42}
-                    onChange={(e) => handleSettingsChange({ iconSizeRatio: parseFloat(e.target.value) })}
-                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
-                      isLight ? 'bg-slate-200' : 'bg-white/20'
-                    }`}
-                  />
-                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                    <span>{t('iconRatioLow', settings.language)}</span>
-                    <span>{t('iconRatioMed', settings.language)}</span>
-                    <span>{t('iconRatioHigh', settings.language)}</span>
-                  </div>
-                </div>
+                      {/* Card Blur Slider */}
+                      <div>
+                        <div className="flex justify-between text-xs font-medium mb-1.5">
+                          <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardBlur', settings.language)}</span>
+                          <span className="font-tabular font-semibold">{settings.cardBlur ?? 50}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={settings.cardBlur ?? 50}
+                          onChange={(e) => handleSettingsChange({ cardBlur: parseInt(e.target.value, 10) })}
+                          className="range-slider"
+                        />
+                        <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                          <span>{t('cardBlurLow', settings.language)}</span>
+                          <span>{t('cardBlurMed', settings.language)}</span>
+                          <span>{t('cardBlurHigh', settings.language)}</span>
+                        </div>
+                      </div>
 
-                {/* Max Cards Per Row Slider */}
-                <div>
-                  <div className="flex justify-between text-xs font-medium mb-1.5">
-                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('maxCardsPerRow', settings.language)}</span>
-                    <span className="text-indigo-500 font-semibold">{settings.maxCardsPerRow || 8}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="4"
-                    max="12"
-                    step="1"
-                    value={settings.maxCardsPerRow || 8}
-                    onChange={(e) => handleSettingsChange({ maxCardsPerRow: parseInt(e.target.value, 10) })}
-                    className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-indigo-500 ${
-                      isLight ? 'bg-slate-200' : 'bg-white/20'
-                    }`}
-                  />
-                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                    <span>{t('cardsPerRowCompact', settings.language)}</span>
-                    <span>{t('cardsPerRowDefault', settings.language)}</span>
-                    <span>{t('cardsPerRowWide', settings.language)}</span>
-                  </div>
+                      {/* Card Icon Ratio Slider */}
+                      <div>
+                        <div className="flex justify-between text-xs font-medium mb-1.5">
+                          <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconSizeRatio', settings.language)}</span>
+                          <span className="font-tabular font-semibold">{Math.round((settings.iconSizeRatio || 0.42) * 100)}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.28"
+                          max="0.65"
+                          step="0.01"
+                          value={settings.iconSizeRatio || 0.42}
+                          onChange={(e) => handleSettingsChange({ iconSizeRatio: parseFloat(e.target.value) })}
+                          className="range-slider"
+                        />
+                        <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                          <span>{t('iconRatioLow', settings.language)}</span>
+                          <span>{t('iconRatioMed', settings.language)}</span>
+                          <span>{t('iconRatioHigh', settings.language)}</span>
+                        </div>
+                      </div>
+
+                      {/* Max Cards Per Row Slider */}
+                      <div>
+                        <div className="flex justify-between text-xs font-medium mb-1.5">
+                          <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('maxCardsPerRow', settings.language)}</span>
+                          <span className="font-tabular font-semibold">{settings.maxCardsPerRow || 8}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="4"
+                          max="12"
+                          step="1"
+                          value={settings.maxCardsPerRow || 8}
+                          onChange={(e) => handleSettingsChange({ maxCardsPerRow: parseInt(e.target.value, 10) })}
+                          className="range-slider"
+                        />
+                        <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                          <span>{t('cardsPerRowCompact', settings.language)}</span>
+                          <span>{t('cardsPerRowDefault', settings.language)}</span>
+                          <span>{t('cardsPerRowWide', settings.language)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {/* 2. 偏好 Tab */}
             {activeTab === 'behavior' && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* Language */}
                 <div
                   className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
                     isLight
-                      ? 'bg-black/5 border-black/10 text-slate-900'
-                      : 'bg-white/5 border-white/10 text-white'
+                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                      : 'bg-white/[0.05] border-white/10 text-white'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Globe className="w-4 h-4 text-indigo-500" />
+                    <Globe className="w-4 h-4 opacity-70" />
                     <span className="text-xs font-medium">{t('language', settings.language)}</span>
                   </div>
                   <CustomSelect
@@ -617,19 +863,19 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 <div
                   className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
                     isLight
-                      ? 'bg-black/5 border-black/10 text-slate-900'
-                      : 'bg-white/5 border-white/10 text-white'
+                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                      : 'bg-white/[0.05] border-white/10 text-white'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <ExternalLink className="w-4 h-4 text-indigo-500" />
+                    <ExternalLink className="w-4 h-4 opacity-70" />
                     <span className="text-xs font-medium">{t('openInNewTab', settings.language)}</span>
                   </div>
                   <input
                     type="checkbox"
                     checked={settings.openInNewTab}
                     onChange={(e) => handleSettingsChange({ openInNewTab: e.target.checked })}
-                    className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
+                    className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
                   />
                 </div>
 
@@ -637,19 +883,19 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 <div
                   className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
                     isLight
-                      ? 'bg-black/5 border-black/10 text-slate-900'
-                      : 'bg-white/5 border-white/10 text-white'
+                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                      : 'bg-white/[0.05] border-white/10 text-white'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Clock className="w-4 h-4 text-indigo-500" />
+                    <Clock className="w-4 h-4 opacity-70" />
                     <span className="text-xs font-medium">{t('showClockOnly', settings.language)}</span>
                   </div>
                   <input
                     type="checkbox"
                     checked={settings.showClock}
                     onChange={(e) => handleSettingsChange({ showClock: e.target.checked })}
-                    className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
+                    className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
                   />
                 </div>
 
@@ -657,19 +903,19 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 <div
                   className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
                     isLight
-                      ? 'bg-black/5 border-black/10 text-slate-900'
-                      : 'bg-white/5 border-white/10 text-white'
+                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                      : 'bg-white/[0.05] border-white/10 text-white'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Calendar className="w-4 h-4 text-indigo-500" />
+                    <Calendar className="w-4 h-4 opacity-70" />
                     <span className="text-xs font-medium">{t('showDateOnly', settings.language)}</span>
                   </div>
                   <input
                     type="checkbox"
                     checked={settings.showDate}
                     onChange={(e) => handleSettingsChange({ showDate: e.target.checked })}
-                    className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
+                    className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
                   />
                 </div>
 
@@ -677,20 +923,20 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 <div
                   className={`p-3.5 rounded-2xl border transition-colors space-y-3 ${
                     isLight
-                      ? 'bg-black/5 border-black/10 text-slate-900'
-                      : 'bg-white/5 border-white/10 text-white'
+                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                      : 'bg-white/[0.05] border-white/10 text-white'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <MessageSquareQuote className="w-4 h-4 text-indigo-500" />
+                      <MessageSquareQuote className="w-4 h-4 opacity-70" />
                       <span className="text-xs font-medium">{t('showGreetingOnly', settings.language)}</span>
                     </div>
                     <input
                       type="checkbox"
                       checked={settings.showGreeting}
                       onChange={(e) => handleSettingsChange({ showGreeting: e.target.checked })}
-                      className="w-4 h-4 rounded bg-transparent border-gray-400 text-indigo-600 focus:ring-0 cursor-pointer"
+                      className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
                     />
                   </div>
 
@@ -698,7 +944,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   {settings.showGreeting && (
                     <div
                       className={`pt-3 border-t space-y-2.5 ${
-                        isLight ? 'border-black/5' : 'border-white/10'
+                        isLight ? 'border-black/8' : 'border-white/10'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -722,8 +968,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         <label
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-colors ${
                             isLight
-                              ? 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-700'
-                              : 'bg-indigo-500/20 hover:bg-indigo-500/30 border-indigo-500/30 text-indigo-300'
+                              ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'
+                              : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
                           }`}
                         >
                           <Upload className="w-3.5 h-3.5" />
@@ -740,10 +986,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         <button
                           type="button"
                           onClick={handleDownloadGreetingTemplate}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
                             isLight
-                              ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700'
-                              : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80'
+                              ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'
+                              : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
                           }`}
                         >
                           <FileDown className="w-3.5 h-3.5" />
@@ -755,11 +1001,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           <button
                             type="button"
                             onClick={handleResetGreetings}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors ${
-                              isLight
-                                ? 'bg-red-50 hover:bg-red-100 border-red-200 text-red-600'
-                                : 'bg-red-500/10 hover:bg-red-500/20 border-red-500/20 text-red-400'
-                            }`}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors text-red-500 bg-red-500/10 hover:bg-red-500/20 border-red-500/20 cursor-pointer"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
                             <span>{t('resetGreetings', settings.language)}</span>
@@ -797,12 +1039,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => setSyncProvider('webdav')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer active:scale-95 ${
                       syncProvider === 'webdav'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold'
+                        ? isLight
+                          ? 'bg-slate-900 text-white shadow-sm font-semibold'
+                          : 'bg-white text-slate-950 shadow-sm font-semibold'
                         : isLight
-                        ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
-                        : 'text-white/70 hover:text-white hover:bg-white/5'
+                        ? 'text-slate-600 hover:text-slate-900'
+                        : 'text-white/70 hover:text-white'
                     }`}
                   >
                     <Cloud className="w-3.5 h-3.5" />
@@ -811,12 +1055,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => setSyncProvider('git')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer active:scale-95 ${
                       syncProvider === 'git'
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold'
+                        ? isLight
+                          ? 'bg-slate-900 text-white shadow-sm font-semibold'
+                          : 'bg-white text-slate-950 shadow-sm font-semibold'
                         : isLight
-                        ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
-                        : 'text-white/70 hover:text-white hover:bg-white/5'
+                        ? 'text-slate-600 hover:text-slate-900'
+                        : 'text-white/70 hover:text-white'
                     }`}
                   >
                     <GitBranch className="w-3.5 h-3.5" />
@@ -847,8 +1093,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 <div
                   className={`p-4 rounded-2xl border space-y-3 ${
                     isLight
-                      ? 'bg-black/5 border-black/10 text-slate-700'
-                      : 'bg-white/5 border-white/10 text-white/70'
+                      ? 'bg-black/[0.03] border-black/8 text-slate-700'
+                      : 'bg-white/[0.05] border-white/10 text-white/70'
                   }`}
                 >
                   <div className="text-xs leading-relaxed">
@@ -859,7 +1105,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <button
                       type="button"
                       onClick={handleExport}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-medium text-white transition-colors cursor-pointer shadow-md shadow-indigo-600/30"
+                      className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer active:scale-95 ${
+                        isLight
+                          ? 'bg-slate-900 hover:bg-black text-white'
+                          : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
+                      }`}
                     >
                       <Download className="w-4 h-4" />
                       <span>{t('exportData', settings.language)}</span>
@@ -887,8 +1137,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <div
                       className={`p-2.5 rounded-xl text-xs text-center ${
                         isLight
-                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                          : 'bg-indigo-500/20 text-indigo-300'
+                          ? 'bg-black/5 text-slate-800 border border-black/10'
+                          : 'bg-white/10 text-white'
                       }`}
                     >
                       {importStatus}
@@ -900,6 +1150,22 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Unsplash Category & Topic Modal */}
+      <UnsplashTopicModal
+        isOpen={isUnsplashTopicModalOpen}
+        onClose={() => setIsUnsplashTopicModalOpen(false)}
+        initialActiveTab={settings.unsplashActiveTab || 'nature'}
+        initialKeywords={settings.unsplashKeywords || ['nature', 'landscape']}
+        language={settings.language}
+        isLight={isLight}
+        onSave={(newActiveTab, newKeywords) => {
+          handleRefreshUnsplash({
+            unsplashActiveTab: newActiveTab,
+            unsplashKeywords: newKeywords,
+          });
+        }}
+      />
     </div>
   );
 };

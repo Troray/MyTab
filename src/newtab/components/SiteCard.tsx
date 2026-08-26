@@ -19,7 +19,7 @@ interface SiteCardProps {
   onDragEnd: () => void;
 }
 
-export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
+export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProps>(({
   site,
   index,
   settings,
@@ -45,6 +45,7 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
   const iconBoxSize = Math.max(24, Math.round(cardSize * iconRatio));
   const iconImgSize = Math.max(16, Math.round(iconBoxSize * 0.70));
   const paddingPx = Math.max(6, Math.round(cardSize * 0.10));
+  const blurPx = Math.round(((settings.cardBlur ?? 50) / 100) * 32);
 
   const handleClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.site-card-action')) {
@@ -95,7 +96,7 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
         minHeight: `${cardSize}px`,
       }}
       className={`relative shrink-0 select-none cursor-grab active:cursor-grabbing will-change-transform ${
-        isDragging ? 'pointer-events-none opacity-40' : ''
+        isDragging ? 'opacity-30 scale-95' : ''
       }`}
     >
       {/* Inner Animated Visual Card Layer */}
@@ -104,32 +105,38 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
           width: '100%',
           minHeight: `${cardSize}px`,
           background: isDragging
-            ? `rgba(99, 102, 241, 0.35)`
+            ? isLight
+              ? 'rgba(0, 0, 0, 0.06)'
+              : 'rgba(255, 255, 255, 0.15)'
             : isJustDropped
-            ? `rgba(99, 102, 241, 0.40)`
+            ? isLight
+              ? 'rgba(0, 0, 0, 0.08)'
+              : 'rgba(255, 255, 255, 0.18)'
             : isLight
-            ? `rgba(255, 255, 255, ${Math.max(0.78, settings.cardOpacity)})`
+            ? `rgba(255, 255, 255, ${Math.max(0.82, settings.cardOpacity)})`
             : `rgba(255, 255, 255, ${settings.cardOpacity})`,
-          backdropFilter: `blur(${settings.cardBlur}px)`,
-          WebkitBackdropFilter: `blur(${settings.cardBlur}px)`,
+          backdropFilter: `blur(${blurPx}px)`,
+          WebkitBackdropFilter: `blur(${blurPx}px)`,
           padding: `${paddingPx}px`,
           transform: 'translateZ(0)',
         }}
         className={`group relative flex flex-col items-center justify-center rounded-2xl border transition-all duration-200 ease-out h-full w-full ${jiggleClass} ${
           isDragging
-            ? 'ios-dragged border-indigo-400 ring-2 ring-indigo-400/60'
+            ? 'ios-dragged border-amber-500/60 ring-2 ring-amber-500/30'
             : isJustDropped
-            ? 'ios-drop-spring border-indigo-400 ring-2 ring-indigo-400/90'
+            ? 'ios-drop-spring border-amber-500/80 ring-2 ring-amber-500/40'
             : isLight
-            ? 'border-black/10 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/10 hover:border-black/20 hover:scale-[1.02]'
-            : 'border-white/15 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/25 hover:border-white/35 hover:scale-[1.02]'
+            ? 'border-black/10 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/5 hover:border-black/20 hover:scale-[1.02]'
+            : 'border-white/10 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 hover:border-white/25 hover:scale-[1.02]'
         }`}
       >
-        {/* Icon Container */}
+        {/* Icon Inset Container */}
         <div
           style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px` }}
-          className={`rounded-xl flex items-center justify-center shadow-sm overflow-hidden mb-2 transition-transform duration-150 group-hover:scale-105 shrink-0 pointer-events-none ${
-            isLight ? 'bg-black/[0.04]' : 'bg-white/10'
+          className={`rounded-xl flex items-center justify-center shadow-inner overflow-hidden mb-2 transition-transform duration-150 group-hover:scale-105 shrink-0 pointer-events-none ${
+            isLight
+              ? 'bg-black/[0.03] border border-black/5'
+              : 'bg-white/[0.08] border border-white/10'
           }`}
         >
           <img
@@ -152,7 +159,7 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
           }}
           className={`font-medium truncate max-w-full text-center tracking-wide px-1 select-none pointer-events-none transition-colors ${
             isLight
-              ? 'text-slate-800 group-hover:text-indigo-600'
+              ? 'text-slate-800 group-hover:text-black'
               : 'text-white/90 group-hover:text-white drop-shadow'
           }`}
         >
@@ -183,11 +190,10 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
               onClick={(e) => e.stopPropagation()}
               className={`absolute right-0 top-6 w-28 py-1 rounded-xl border shadow-2xl z-40 animate-scale-in text-xs font-medium overflow-hidden ${
                 isLight
-                  ? 'border-black/10 shadow-black/10'
-                  : 'border-white/15 shadow-black/40'
+                  ? 'border-black/10 shadow-black/10 bg-white/95 text-slate-800'
+                  : 'border-white/15 shadow-black/60 bg-slate-900/90 text-white'
               }`}
               style={{
-                background: isLight ? 'rgba(255, 255, 255, 0.80)' : 'rgba(15, 15, 25, 0.45)',
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
               }}
@@ -226,4 +232,4 @@ export const SiteCard = React.forwardRef<HTMLDivElement, SiteCardProps>(({
       </div>
     </div>
   );
-});
+}));

@@ -146,8 +146,8 @@ npm run dev
 3. ☕ 请作者喝杯冰阔乐~
 
 <div align="center">
-<img src="img/wechat.jpg" alt="微信" height="300">
-<img src="img/alipay.jpg" alt="支付宝" height="300" style="margin-right: 20px">
+<img src="img/wechat.jpg" alt="微信" height="400">
+<img src="img/alipay.jpg" alt="支付宝" height="400" style="margin-right: 20px">
 </div>
 
 ## 📄 License

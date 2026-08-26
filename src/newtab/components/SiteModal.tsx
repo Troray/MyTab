@@ -98,8 +98,16 @@ export const SiteModal: React.FC<SiteModalProps> = ({
     const finalTitle = title.trim() || new URL(finalUrl).hostname.replace(/^www\./i, '');
     let finalIcon = icon.trim() || generateFallbackIcon(finalTitle);
 
-    if (finalIcon.startsWith('http://') || finalIcon.startsWith('https://')) {
-      finalIcon = await urlToBase64Icon(finalIcon, 128);
+    // If icon is remote http(s) URL, try to cache as Base64 to prevent future CORS/offline issues
+    if (finalIcon && (finalIcon.startsWith('http://') || finalIcon.startsWith('https://'))) {
+      try {
+        const base64 = await urlToBase64Icon(finalIcon, 128);
+        if (base64 && base64.startsWith('data:image/')) {
+          finalIcon = base64;
+        }
+      } catch {
+        // keep remote url as fallback
+      }
     }
 
     onSave({
@@ -110,41 +118,42 @@ export const SiteModal: React.FC<SiteModalProps> = ({
     });
   };
 
-  const previewIcon = icon.trim() || generateFallbackIcon(title || url || 'W');
   const isLight = settings.mode === 'light';
+  const previewIcon = icon.trim() || generateFallbackIcon(title.trim() || url.trim() || 'W');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
       <div
-        className={`relative w-full max-w-md p-6 rounded-3xl border shadow-2xl animate-scale-in transition-colors ${
+        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity"
+        onClick={onClose}
+      />
+
+      {/* Modal Container */}
+      <div
+        className={`glass-modal relative z-10 w-full max-w-md rounded-3xl p-6 border shadow-2xl transition-all ${
           isLight
-            ? 'border-black/10 text-slate-900 shadow-black/15'
-            : 'border-white/15 text-white shadow-black/50'
+            ? 'border-black/10 shadow-black/15 text-slate-900'
+            : 'border-white/15 shadow-black/80 text-white'
         }`}
-        style={{
-          background: isLight ? 'rgba(255, 255, 255, 0.75)' : undefined,
-          backdropFilter: 'blur(32px)',
-          WebkitBackdropFilter: 'blur(32px)',
-        }}
       >
         {/* Header */}
-        <div
-          className={`flex items-center justify-between pb-4 mb-4 border-b ${
-            isLight ? 'border-black/10' : 'border-white/10'
-          }`}
-        >
-          <h3 className="text-lg font-semibold tracking-wide">
+        <div className={`flex items-center justify-between pb-4 mb-4 border-b ${
+          isLight ? 'border-black/10' : 'border-white/10'
+        }`}>
+          <h3 className="text-base font-semibold tracking-tight">
             {editingSite ? t('editSite', settings.language) : t('addSite', settings.language)}
           </h3>
           <button
+            type="button"
             onClick={onClose}
-            className={`p-1.5 rounded-full transition-colors ${
+            className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
               isLight
-                ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
+                ? 'text-slate-500 hover:text-black hover:bg-black/5'
                 : 'text-white/60 hover:text-white hover:bg-white/10'
             }`}
           >
-            <X className="w-5 h-5" />
+            <X className="w-4.5 h-4.5" />
           </button>
         </div>
 
@@ -168,17 +177,21 @@ export const SiteModal: React.FC<SiteModalProps> = ({
                 onChange={(e) => setUrl(e.target.value)}
                 onBlur={handleUrlBlur}
                 placeholder={t('siteUrlPlaceholder', settings.language)}
-                className={`flex-1 px-3.5 py-2.5 rounded-xl border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-all ${
+                className={`flex-1 px-3.5 py-2.5 rounded-xl border outline-none text-sm transition-all ${
                   isLight
-                    ? 'bg-black/5 border-black/10 text-slate-900 placeholder-slate-400'
-                    : 'bg-white/10 border-white/15 text-white placeholder-white/40'
+                    ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900 placeholder-slate-400'
+                    : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white placeholder-white/40'
                 }`}
               />
               <button
                 type="button"
                 onClick={handleAutoFetch}
                 disabled={isFetching || !url.trim()}
-                className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium transition-all shadow-md shadow-indigo-600/30 cursor-pointer shrink-0"
+                className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all shadow-sm cursor-pointer shrink-0 disabled:opacity-50 active:scale-95 ${
+                  isLight
+                    ? 'bg-slate-900 hover:bg-black text-white'
+                    : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
+                }`}
                 title={t('autoFetch', settings.language)}
               >
                 {isFetching ? (
@@ -192,7 +205,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
             {fetchMsg && (
               <p
                 className={`text-[11px] mt-1.5 ${
-                  isLight ? 'text-indigo-600 font-medium' : 'text-indigo-300'
+                  isLight ? 'text-amber-700 font-medium' : 'text-amber-300'
                 }`}
               >
                 {fetchMsg}
@@ -215,10 +228,10 @@ export const SiteModal: React.FC<SiteModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('siteTitlePlaceholder', settings.language)}
-              className={`w-full px-3.5 py-2.5 rounded-xl border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-all ${
+              className={`w-full px-3.5 py-2.5 rounded-xl border outline-none text-sm transition-all ${
                 isLight
-                  ? 'bg-black/5 border-black/10 text-slate-900 placeholder-slate-400'
-                  : 'bg-white/10 border-white/15 text-white placeholder-white/40'
+                  ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900 placeholder-slate-400'
+                  : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white placeholder-white/40'
               }`}
             />
           </div>
@@ -235,7 +248,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
             <div className="flex items-center gap-3">
               {/* Live Preview */}
               <div
-                className={`w-11 h-11 rounded-xl border flex items-center justify-center overflow-hidden shrink-0 shadow ${
+                className={`w-11 h-11 rounded-xl border flex items-center justify-center overflow-hidden shrink-0 shadow-inner ${
                   isLight ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/20'
                 }`}
               >
@@ -256,10 +269,10 @@ export const SiteModal: React.FC<SiteModalProps> = ({
                 value={icon}
                 onChange={(e) => setIcon(e.target.value)}
                 placeholder={t('siteIconPlaceholder', settings.language)}
-                className={`flex-1 px-3.5 py-2.5 rounded-xl border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-all ${
+                className={`flex-1 px-3.5 py-2.5 rounded-xl border outline-none text-sm transition-all ${
                   isLight
-                    ? 'bg-black/5 border-black/10 text-slate-900 placeholder-slate-400'
-                    : 'bg-white/10 border-white/15 text-white placeholder-white/40'
+                    ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900 placeholder-slate-400'
+                    : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white placeholder-white/40'
                 }`}
               />
 
@@ -320,7 +333,11 @@ export const SiteModal: React.FC<SiteModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-lg shadow-indigo-600/30 transition-all cursor-pointer"
+              className={`px-5 py-2 rounded-xl text-sm font-medium shadow-sm transition-all cursor-pointer active:scale-95 ${
+                isLight
+                  ? 'bg-slate-900 hover:bg-black text-white'
+                  : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
+              }`}
             >
               {t('save', settings.language)}
             </button>
