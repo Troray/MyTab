@@ -15,7 +15,7 @@ export default defineConfig({
     emptyOutDir: false,
     rollupOptions: {
       input: {
-        newtab: path.resolve(__dirname, 'index.html'),
+        mytab: path.resolve(__dirname, 'index.html'),
         background: path.resolve(__dirname, 'src/background/index.ts'),
       },
       output: {

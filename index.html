@@ -5,19 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MyTab - 新标签页</title>
     <link rel="icon" type="image/svg+xml" href="./icons/icon-48.svg" />
-    <script>
-      try {
-        var mode = localStorage.getItem('mytab_theme_mode');
-        if (mode === 'dark') document.documentElement.classList.add('dark');
-        
-        var bg = localStorage.getItem('mytab_bg_cache');
-        if (bg) {
-          var style = document.createElement('style');
-          style.innerHTML = 'body { ' + bg + ' background-size: cover; background-position: center; background-repeat: no-repeat; margin: 0; }';
-          document.head.appendChild(style);
-        }
-      } catch(e) {}
-    </script>
+    <script src="./init.js"></script>
   </head>
   <body class="min-h-screen">
     <div id="root"></div>
