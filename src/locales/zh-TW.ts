@@ -149,6 +149,7 @@ export const zhTW: Translation = {
   gitBranch: '目標分支',
   gitPath: '備份檔案路徑',
   gitAutoSync: '資料變動時自動同步至雲端',
+  edit: '更改',
   // Unsplash 隨機桌布
   unsplashSettings: 'Unsplash 隨機桌布客製化',
   unsplashAccessKey: 'Access Key (API 金鑰)',

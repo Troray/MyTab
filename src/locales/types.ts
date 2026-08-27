@@ -145,6 +145,9 @@ export interface Translation {
   gitBranch: string;
   gitPath: string;
   gitAutoSync: string;
+  gitBoundRepo: string;
+  gitRepoTip: string;
+  edit: string;
   // Unsplash
   unsplashSettings: string;
   unsplashAccessKey: string;

@@ -149,6 +149,7 @@ export const en: Translation = {
   gitBranch: 'Target Branch',
   gitPath: 'Backup File Path',
   gitAutoSync: 'Auto sync to cloud on changes',
+  edit: 'Edit',
   // Unsplash
   unsplashSettings: 'Unsplash Wallpaper Customization',
   unsplashAccessKey: 'Access Key (API Key)',
