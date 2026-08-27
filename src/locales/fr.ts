@@ -148,7 +148,8 @@ export const fr: Translation = {
   gitRepoTip: 'URL complète ou Propriétaire/Dépôt. Laisser vide pour auto-création.',
   gitBranch: 'Branche cible',
   gitPath: 'Chemin du fichier de sauvegarde',
-  gitAutoSync: 'Synchronisation automatique lors des modifications',
+  gitAutoSync: 'Synchronisation automatique vers le cloud en cas de modifications',
+  edit: 'Éditer',
   // Unsplash
   unsplashSettings: 'Personnalisation Unsplash',
   unsplashAccessKey: 'Access Key (Clé API)',

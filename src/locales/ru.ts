@@ -148,7 +148,8 @@ export const ru: Translation = {
   gitRepoTip: 'URL или Владелец/Репозиторий. Если оставить пустым, репозиторий создастся сам.',
   gitBranch: 'Ветка',
   gitPath: 'Путь к файлу бэкапа',
-  gitAutoSync: 'Автосинхронизация при изменениях',
+  gitAutoSync: 'Автоматическая синхронизация при изменениях',
+  edit: 'Изменить',
   // Unsplash
   unsplashSettings: 'Настройка обоев Unsplash',
   unsplashAccessKey: 'Access Key (API Ключ)',
