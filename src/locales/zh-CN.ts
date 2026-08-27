@@ -149,6 +149,7 @@ export const zhCN: Translation = {
   gitBranch: '目标分支',
   gitPath: '备份文件路径',
   gitAutoSync: '数据变动时自动同步至云端',
+  edit: '更改',
   // Unsplash 随机壁纸
   unsplashSettings: 'Unsplash 随机壁纸定制',
   unsplashAccessKey: 'Access Key (API 密钥)',

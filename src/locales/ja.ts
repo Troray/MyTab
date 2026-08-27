@@ -149,6 +149,7 @@ export const ja: Translation = {
   gitBranch: '対象ブランチ',
   gitPath: 'バックアップファイルパス',
   gitAutoSync: 'データ変更時にクラウドへ自動同期',
+  edit: '編集',
   // Unsplash
   unsplashSettings: 'Unsplash 壁紙カスタマイズ',
   unsplashAccessKey: 'Access Key (API キー)',

@@ -8,14 +8,19 @@ interface ClockHeaderProps {
 
 export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings }) => {
   const [time, setTime] = useState(new Date());
+  const [hours, setHours] = useState(new Date().getHours());
 
   useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
+    const timer = setInterval(() => {
+      const now = new Date();
+      setTime(now);
+      setHours(now.getHours());
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
   const greeting = useMemo(() => {
-    const h = time.getHours();
+    const h = hours;
     const lang = settings.language;
     const custom = settings.customGreetings;
 
@@ -48,12 +53,12 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings })
     }
 
     return t(defaultKey, lang);
-  }, [time.getHours(), settings.language, settings.customGreetings]);
+  }, [hours, settings.language, settings.customGreetings]);
 
   const hasAnyDisplay = settings.showClock || settings.showDate || settings.showGreeting;
   if (!hasAnyDisplay) return null;
 
-  const hours = String(time.getHours()).padStart(2, '0');
+  const displayHours = String(time.getHours()).padStart(2, '0');
   const minutes = String(time.getMinutes()).padStart(2, '0');
 
   const formatDate = () => {
@@ -76,7 +81,7 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings })
               : 'text-white drop-shadow-md'
           }`}
         >
-          {hours}<span className="opacity-75 animate-pulse">:</span>{minutes}
+          {displayHours}<span className="opacity-75 animate-pulse">:</span>{minutes}
         </div>
       )}
 

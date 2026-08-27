@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react';
 import { Plus } from 'lucide-react';
 import { SiteItem, ThemeSettings } from '../../types';
 import { SiteCard } from './SiteCard';
@@ -24,6 +24,18 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
   const [displaySites, setDisplaySites] = useState<SiteItem[]>(sites);
   const [draggingSiteId, setDraggingSiteId] = useState<string | null>(null);
   const [justDroppedSiteId, setJustDroppedSiteId] = useState<string | null>(null);
+
+  // Refs for callbacks to avoid breaking React.memo on SiteCards
+  const displaySitesRef = useRef<SiteItem[]>(sites);
+  const draggingSiteIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    displaySitesRef.current = displaySites;
+  }, [displaySites]);
+
+  useEffect(() => {
+    draggingSiteIdRef.current = draggingSiteId;
+  }, [draggingSiteId]);
   const cardSize = settings.cardSize || 110;
 
   // DOM node references and previous bounding rects for FLIP animation
@@ -79,50 +91,46 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
     }
   }, [sites, draggingSiteId]);
 
-  const handleDragStart = (e: React.DragEvent, siteId: string) => {
+  const handleDragStart = useCallback((e: React.DragEvent, siteId: string) => {
     setDraggingSiteId(siteId);
     lastSwapTime.current = Date.now();
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', siteId);
-  };
+  }, []);
 
-  const handleDragOver = (e: React.DragEvent, targetSiteId: string) => {
+  const handleDragOver = useCallback((e: React.DragEvent, targetSiteId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
 
-    if (!draggingSiteId || draggingSiteId === targetSiteId) return;
+    const currentDragId = draggingSiteIdRef.current;
+    if (!currentDragId || currentDragId === targetSiteId) return;
 
-    // 1. Swap Debounce Cooldown (prevents high-frequency flip-flop ping-pong)
+    // 1. Swap Debounce Cooldown
     const now = Date.now();
     if (now - lastSwapTime.current < 200) {
       return;
     }
 
-    const fromIndex = displaySites.findIndex((s) => s.id === draggingSiteId);
-    const toIndex = displaySites.findIndex((s) => s.id === targetSiteId);
+    const currentDisplaySites = displaySitesRef.current;
+    const fromIndex = currentDisplaySites.findIndex((s) => s.id === currentDragId);
+    const toIndex = currentDisplaySites.findIndex((s) => s.id === targetSiteId);
     if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
 
-    // 2. Midpoint Hysteresis (only trigger swap when passing through the target card center)
+    // 2. Midpoint Hysteresis
     const targetEl = cardElements.current.get(targetSiteId);
     if (targetEl) {
       const rect = targetEl.getBoundingClientRect();
       const midX = rect.left + rect.width / 2;
 
-      // If dragging from left to right, pointer must pass beyond target midpoint
-      if (fromIndex < toIndex && e.clientX < midX) {
-        return;
-      }
-      // If dragging from right to left, pointer must pass before target midpoint
-      if (fromIndex > toIndex && e.clientX > midX) {
-        return;
-      }
+      if (fromIndex < toIndex && e.clientX < midX) return;
+      if (fromIndex > toIndex && e.clientX > midX) return;
     }
 
     lastSwapTime.current = now;
     recordRects();
 
     setDisplaySites((prev) => {
-      const fIdx = prev.findIndex((s) => s.id === draggingSiteId);
+      const fIdx = prev.findIndex((s) => s.id === currentDragId);
       const tIdx = prev.findIndex((s) => s.id === targetSiteId);
       if (fIdx === -1 || tIdx === -1 || fIdx === tIdx) return prev;
 
@@ -131,14 +139,14 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
       next.splice(tIdx, 0, moved);
       return next;
     });
-  };
+  }, []);
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    if (!draggingSiteId) return;
+    const currentDragId = draggingSiteIdRef.current;
+    if (!currentDragId) return;
 
-    const currentDragId = draggingSiteId;
-    const committedSites = displaySites.map((site, index) => ({
+    const committedSites = displaySitesRef.current.map((site, index) => ({
       ...site,
       sortOrder: index,
       updatedAt: Date.now(),
@@ -151,12 +159,12 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
     setTimeout(() => {
       setJustDroppedSiteId(null);
     }, 550);
-  };
+  }, [onReorderSites]);
 
-  const handleDragEnd = () => {
-    if (draggingSiteId) {
-      const currentDragId = draggingSiteId;
-      const committedSites = displaySites.map((site, index) => ({
+  const handleDragEnd = useCallback(() => {
+    const currentDragId = draggingSiteIdRef.current;
+    if (currentDragId) {
+      const committedSites = displaySitesRef.current.map((site, index) => ({
         ...site,
         sortOrder: index,
         updatedAt: Date.now(),
@@ -169,7 +177,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
         setJustDroppedSiteId(null);
       }, 550);
     }
-  };
+  }, [onReorderSites]);
 
   const gap = Math.max(12, Math.round(cardSize * 0.14));
   const maxPerRow = settings.maxCardsPerRow || 8;

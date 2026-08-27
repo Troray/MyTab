@@ -9,34 +9,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
   // Listen for extension installation/update
   chrome.runtime.onInstalled?.addListener((details) => {
     console.log('[MyTab Background] Installed:', details.reason);
-    // Setup periodic sync alarm (e.g. every 60 minutes)
-    if (chrome.alarms) {
-      chrome.alarms.create('mytab_periodic_sync', {
-        periodInMinutes: 60,
-      });
-    }
   });
-
-  // Handle Alarms for background WebDAV sync
-  if (chrome.alarms) {
-    chrome.alarms.onAlarm.addListener(async (alarm) => {
-      if (alarm.name === 'mytab_periodic_sync') {
-        try {
-          const state = await loadAppState();
-          if (state.webdav?.enabled && state.webdav?.autoSync) {
-            console.log('[MyTab Background] Running periodic WebDAV sync...');
-            await executeWebdavSync(state);
-          }
-          if (state.git?.enabled && state.git?.autoSync) {
-            console.log('[MyTab Background] Running periodic Git sync...');
-            await executeGitSync(state);
-          }
-        } catch (err) {
-          console.error('[MyTab Background] Periodic sync error:', err);
-        }
-      }
-    });
-  }
 
   // Helper to convert blob to base64
   const blobToBase64 = (blob: Blob): Promise<string> => {

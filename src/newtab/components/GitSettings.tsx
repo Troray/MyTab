@@ -314,7 +314,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     setConnectResult(null);
 
     try {
-      const res = await autoSetupGist(config.provider, config.token.trim(), config.gistId);
+      const res = await autoSetupGist(config.provider, config.token.trim());
       if (res.success) {
         handleChange({
           enabled: true,

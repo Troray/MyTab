@@ -148,7 +148,8 @@ export const ko: Translation = {
   gitRepoTip: 'URL 또는 소유자/저장소명을 입력하세요. 비워두고 연결하면 자동으로 생성됩니다.',
   gitBranch: '대상 브랜치',
   gitPath: '백업 파일 경로',
-  gitAutoSync: '데이터 변경 시 클라우드 자동 동기화',
+  gitAutoSync: '변경 시 클라우드에 자동 동기화',
+  edit: '편집',
   // Unsplash
   unsplashSettings: 'Unsplash 배경화면 설정',
   unsplashAccessKey: 'Access Key (API 키)',

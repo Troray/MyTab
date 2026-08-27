@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import { Settings as SettingsIcon, Plus } from 'lucide-react';
 import { AppState, Category, GitSyncConfig, SiteItem, ThemeSettings, WebdavConfig } from '../types';
 import {
@@ -11,21 +11,21 @@ import {
   saveActiveCategory,
   setFirstLaunchComplete,
 } from '../services/storage';
-import { executeWebdavSync } from '../services/webdav';
-import { executeGitSync } from '../services/git';
 import { ClockHeader } from './components/ClockHeader';
 import { SearchBar } from './components/SearchBar';
 import { CategoryTabs } from './components/CategoryTabs';
 import { SiteGrid } from './components/SiteGrid';
-import { SiteModal } from './components/SiteModal';
-import { SettingsDrawer } from './components/SettingsDrawer';
-import { OnboardingModal } from './components/OnboardingModal';
-import { ConfirmModal } from './components/ConfirmModal';
 import { urlToBase64Icon } from '../services/metadata';
 import { DEFAULT_SETTINGS } from '../utils/constants';
 
-export const App: React.FC = () => {
-  const [appState, setAppState] = useState<AppState | null>(null);
+// Lazy-load heavy modal/drawer components to reduce initial bundle size
+const SiteModal = lazy(() => import('./components/SiteModal').then(m => ({ default: m.SiteModal })));
+const SettingsDrawer = lazy(() => import('./components/SettingsDrawer').then(m => ({ default: m.SettingsDrawer })));
+const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
+import { ConfirmModal } from './components/ConfirmModal';
+
+export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => {
+  const [appState, setAppState] = useState<AppState | null>(initialState || null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<SiteItem | null>(null);
@@ -38,8 +38,8 @@ export const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    reloadState();
-  }, [reloadState]);
+    if (!initialState) reloadState();
+  }, [reloadState, initialState]);
 
   // 2. Background Cache Warmer: Convert any remaining remote icon URLs to Base64
   useEffect(() => {
@@ -76,26 +76,7 @@ export const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, [appState?.sites]);
 
-  // 3. Handle Auto-Sync (WebDAV & Git) with smart debounce
-  const autoSyncTimerRef = useRef<any>(null);
-  const triggerAutoSync = useCallback((currentState: AppState) => {
-    if (autoSyncTimerRef.current) {
-      clearTimeout(autoSyncTimerRef.current);
-    }
 
-    autoSyncTimerRef.current = setTimeout(async () => {
-      try {
-        if (currentState.webdav?.enabled && currentState.webdav?.autoSync) {
-          await executeWebdavSync(currentState);
-        }
-        if (currentState.git?.enabled && currentState.git?.autoSync) {
-          await executeGitSync(currentState);
-        }
-      } catch (e) {
-        console.error('[AutoSync Error]', e);
-      }
-    }, 1500);
-  }, []);
 
   // 3. Theme mode class on document
   useEffect(() => {
@@ -135,43 +116,59 @@ export const App: React.FC = () => {
     return { background: currentSettings.backgroundValue };
   }, [currentSettings.backgroundType, currentSettings.backgroundValue]);
 
+  // Cache background for zero-delay startup on next launch (eliminates any flash)
+  useEffect(() => {
+    try {
+      let css = '';
+      const style = backgroundStyle as any;
+      if (style.backgroundColor) {
+        css += `background-color: ${style.backgroundColor};`;
+      }
+      if (style.backgroundImage) {
+        css += `background-image: ${style.backgroundImage};`;
+      }
+      // Add gradient support
+      if (style.background) {
+        css += `background: ${style.background};`;
+      }
+      localStorage.setItem('mytab_bg_cache', css);
+      const isLightMode = currentSettings.mode === 'light';
+      localStorage.setItem('mytab_theme_mode', isLightMode ? 'light' : 'dark');
+    } catch(e) {}
+  }, [backgroundStyle, currentSettings.mode]);
+
   if (!appState) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white/70">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-        <div className="text-sm font-medium tracking-wide">Loading MyTab...</div>
-      </div>
-    );
+    return null; // Return null instead of a jarring spinner to avoid white/black flashes on startup
   }
 
   const { sites, categories, settings, activeCategoryId, isFirstLaunch } = appState;
 
-  // Filter sites based on active category and showInAll flag
-  const hiddenInAllCatIds = new Set(
-    categories.filter((c) => c.showInAll === false).map((c) => c.id)
-  );
-
-  const filteredSites =
-    activeCategoryId === 'all'
+  // Memoized: Filter sites based on active category and showInAll flag
+  const filteredSites = useMemo(() => {
+    const hiddenInAllCatIds = new Set(
+      categories.filter((c) => c.showInAll === false).map((c) => c.id)
+    );
+    return activeCategoryId === 'all'
       ? sites.filter((s) => !hiddenInAllCatIds.has(s.categoryId))
       : sites.filter((s) => s.categoryId === activeCategoryId);
+  }, [sites, categories, activeCategoryId]);
 
-  // Compute count of sites per category
-  const allVisibleCount = sites.filter((s) => !hiddenInAllCatIds.has(s.categoryId)).length;
+  // Memoized: Compute count of sites per category
+  const siteCounts = useMemo(() => {
+    const hiddenInAllCatIds = new Set(
+      categories.filter((c) => c.showInAll === false).map((c) => c.id)
+    );
+    const allVisibleCount = sites.filter((s) => !hiddenInAllCatIds.has(s.categoryId)).length;
+    const counts: Record<string, number> = { all: allVisibleCount };
+    categories.forEach((cat) => {
+      counts[cat.id] = cat.id === 'all'
+        ? allVisibleCount
+        : sites.filter((s) => s.categoryId === cat.id).length;
+    });
+    return counts;
+  }, [sites, categories]);
 
-  const siteCounts: Record<string, number> = {
-    ...categories.reduce((acc, cat) => {
-      acc[cat.id] =
-        cat.id === 'all'
-          ? allVisibleCount
-          : sites.filter((s) => s.categoryId === cat.id).length;
-      return acc;
-    }, {} as Record<string, number>),
-    all: allVisibleCount,
-  };
-
-  // Handlers for Sites
-  const handleSaveSite = async (siteData: Partial<SiteItem>) => {
+  const handleSaveSite = useCallback(async (siteData: Partial<SiteItem>) => {
     let updatedSites: SiteItem[];
     const now = Date.now();
 
@@ -200,17 +197,17 @@ export const App: React.FC = () => {
     setAppState(nextState);
     setIsSiteModalOpen(false);
     setEditingSite(null);
-    triggerAutoSync(nextState);
-  };
 
-  const handleDeleteSite = (siteId: string) => {
+  }, [appState, sites, editingSite]);
+
+  const handleDeleteSite = useCallback((siteId: string) => {
     const site = sites.find((s) => s.id === siteId);
     if (site) {
       setDeletingSite(site);
     }
-  };
+  }, [sites]);
 
-  const confirmDeleteSite = async () => {
+  const confirmDeleteSite = useCallback(async () => {
     if (!deletingSite) return;
     const siteId = deletingSite.id;
     const updatedSites = sites.filter((s) => s.id !== siteId);
@@ -218,10 +215,9 @@ export const App: React.FC = () => {
     const nextState = { ...appState, sites: updatedSites };
     setAppState(nextState);
     setDeletingSite(null);
-    triggerAutoSync(nextState);
-  };
+  }, [appState, sites, deletingSite]);
 
-  const handleReorderSites = async (reordered: SiteItem[]) => {
+  const handleReorderSites = useCallback(async (reordered: SiteItem[]) => {
     let finalSites: SiteItem[];
     if (activeCategoryId === 'all') {
       finalSites = reordered;
@@ -233,8 +229,7 @@ export const App: React.FC = () => {
     await saveSites(finalSites);
     const nextState = { ...appState, sites: finalSites };
     setAppState(nextState);
-    triggerAutoSync(nextState);
-  };
+  }, [appState, sites, activeCategoryId]);
 
   // Handlers for Categories
   const handleAddCategory = async (data: { name: string; showInAll: boolean }) => {
@@ -248,7 +243,6 @@ export const App: React.FC = () => {
     await saveCategories(updatedCats);
     const nextState = { ...appState, categories: updatedCats };
     setAppState(nextState);
-    triggerAutoSync(nextState);
   };
 
   const handleUpdateCategory = async (catId: string, updates: Partial<Category>) => {
@@ -258,7 +252,6 @@ export const App: React.FC = () => {
     await saveCategories(updatedCats);
     const nextState = { ...appState, categories: updatedCats };
     setAppState(nextState);
-    triggerAutoSync(nextState);
   };
 
   const handleDeleteCategory = async (catId: string) => {
@@ -281,7 +274,6 @@ export const App: React.FC = () => {
       activeCategoryId: activeCategoryId === catId ? 'all' : activeCategoryId,
     };
     setAppState(nextState);
-    triggerAutoSync(nextState);
   };
 
   const handleSelectCategory = async (catId: string) => {
@@ -295,7 +287,6 @@ export const App: React.FC = () => {
     await saveSettings(stampedSettings);
     const nextState = { ...appState, settings: stampedSettings };
     setAppState(nextState);
-    triggerAutoSync(nextState);
   };
 
   const handleUpdateWebdav = async (newWebdav: WebdavConfig) => {
@@ -406,15 +397,15 @@ export const App: React.FC = () => {
         <SiteGrid
           sites={filteredSites}
           settings={settings}
-          onEditSite={(site) => {
+          onEditSite={useCallback((site) => {
             setEditingSite(site);
             setIsSiteModalOpen(true);
-          }}
+          }, [])}
           onDeleteSite={handleDeleteSite}
-          onAddSite={() => {
+          onAddSite={useCallback(() => {
             setEditingSite(null);
             setIsSiteModalOpen(true);
-          }}
+          }, [])}
           onReorderSites={handleReorderSites}
         />
       </main>
@@ -482,55 +473,65 @@ export const App: React.FC = () => {
         <div className="w-1/3 text-right"></div>
       </footer>
 
-      {/* Modals & Drawers */}
-      <SiteModal
-        isOpen={isSiteModalOpen}
-        editingSite={editingSite}
-        categories={categories}
-        activeCategoryId={activeCategoryId}
-        settings={settings}
-        onClose={() => {
-          setIsSiteModalOpen(false);
-          setEditingSite(null);
-        }}
-        onSave={handleSaveSite}
-      />
+      {/* Modals & Drawers (lazy-loaded) */}
+      <Suspense fallback={null}>
+        {isSiteModalOpen && (
+          <SiteModal
+            isOpen={isSiteModalOpen}
+            editingSite={editingSite}
+            categories={categories}
+            activeCategoryId={activeCategoryId}
+            settings={settings}
+            onClose={() => {
+              setIsSiteModalOpen(false);
+              setEditingSite(null);
+            }}
+            onSave={handleSaveSite}
+          />
+        )}
 
-      <SettingsDrawer
-        isOpen={isSettingsOpen}
-        appState={appState}
-        onClose={() => setIsSettingsOpen(false)}
-        onUpdateSettings={handleUpdateSettings}
-        onUpdateWebdav={handleUpdateWebdav}
-        onUpdateGit={handleUpdateGit}
-        onStateReload={reloadState}
-      />
+        {isSettingsOpen && (
+          <SettingsDrawer
+            isOpen={isSettingsOpen}
+            appState={appState}
+            onClose={() => setIsSettingsOpen(false)}
+            onUpdateSettings={handleUpdateSettings}
+            onUpdateWebdav={handleUpdateWebdav}
+            onUpdateGit={handleUpdateGit}
+            onStateReload={reloadState}
+          />
+        )}
 
-      <OnboardingModal
-        isOpen={isFirstLaunch}
-        settings={settings}
-        onFinish={handleFinishOnboarding}
-        onOpenSettings={() => {
-          handleFinishOnboarding();
-          setIsSettingsOpen(true);
-        }}
-      />
+        {isFirstLaunch && (
+          <OnboardingModal
+            isOpen={isFirstLaunch}
+            settings={settings}
+            onFinish={handleFinishOnboarding}
+            onOpenSettings={() => {
+              handleFinishOnboarding();
+              setIsSettingsOpen(true);
+            }}
+          />
+        )}
 
-      {/* Delete Site Shortcut Confirmation Modal */}
-      <ConfirmModal
-        isOpen={Boolean(deletingSite)}
-        type="danger"
-        title={settings.language === 'zh-CN' ? `删除「${deletingSite?.title}」快捷方式` : `Delete "${deletingSite?.title}"`}
-        message={
-          settings.language === 'zh-CN'
-            ? `确定要删除「${deletingSite?.title}」(${deletingSite?.url}) 吗？`
-            : `Are you sure you want to delete "${deletingSite?.title}" (${deletingSite?.url})?`
-        }
-        confirmText={settings.language === 'zh-CN' ? '确定删除' : 'Delete'}
-        language={settings.language}
-        onConfirm={confirmDeleteSite}
-        onCancel={() => setDeletingSite(null)}
-      />
+        {/* Delete Site Shortcut Confirmation Modal */}
+        {deletingSite && (
+          <ConfirmModal
+            isOpen={Boolean(deletingSite)}
+            type="danger"
+            title={settings.language === 'zh-CN' ? `删除「${deletingSite?.title}」快捷方式` : `Delete "${deletingSite?.title}"`}
+            message={
+              settings.language === 'zh-CN'
+                ? `确定要删除「${deletingSite?.title}」(${deletingSite?.url}) 吗？`
+                : `Are you sure you want to delete "${deletingSite?.title}" (${deletingSite?.url})?`
+            }
+            confirmText={settings.language === 'zh-CN' ? '确定删除' : 'Delete'}
+            language={settings.language}
+            onConfirm={confirmDeleteSite}
+            onCancel={() => setDeletingSite(null)}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };
