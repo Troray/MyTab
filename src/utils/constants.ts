@@ -117,6 +117,8 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   maxCardsPerRow: 8, // 默认每行最多 8 个卡片
   activeEngineId: 'google',
   openInNewTab: true,
+  timeFormat: '24h',
+  showSearch: true,
   showClock: true,
   showGreeting: true,
   showDate: true,

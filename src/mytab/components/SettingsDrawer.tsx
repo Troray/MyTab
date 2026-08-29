@@ -20,7 +20,8 @@ import {
   RotateCcw,
   FileDown,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Search
 } from 'lucide-react';
 import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ThemeSettings, WebdavConfig } from '../../types';
 import { PRESET_GRADIENTS } from '../../utils/constants';
@@ -880,15 +881,22 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <ExternalLink className="w-4 h-4 opacity-70" />
                     <span className="text-xs font-medium">{t('openInNewTab', settings.language)}</span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={settings.openInNewTab}
-                    onChange={(e) => handleSettingsChange({ openInNewTab: e.target.checked })}
-                    className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSettingsChange({ openInNewTab: !settings.openInNewTab })}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
+                      settings.openInNewTab ? 'bg-amber-500' : isLight ? 'bg-black/15' : 'bg-white/20'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                        settings.openInNewTab ? 'translate-x-[18px]' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
                 </div>
 
-                {/* Show Clock */}
+                {/* Show Search */}
                 <div
                   className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
                     isLight
@@ -897,15 +905,83 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Clock className="w-4 h-4 opacity-70" />
-                    <span className="text-xs font-medium">{t('showClockOnly', settings.language)}</span>
+                    <Search className="w-4 h-4 opacity-70" />
+                    <span className="text-xs font-medium">{t('showSearchOnly', settings.language)}</span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={settings.showClock}
-                    onChange={(e) => handleSettingsChange({ showClock: e.target.checked })}
-                    className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSettingsChange({ showSearch: !(settings.showSearch ?? true) })}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
+                      (settings.showSearch ?? true) ? 'bg-amber-500' : isLight ? 'bg-black/15' : 'bg-white/20'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                        (settings.showSearch ?? true) ? 'translate-x-[18px]' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Show Clock & Time Format */}
+                <div
+                  className={`p-3.5 rounded-2xl border transition-colors space-y-3 ${
+                    isLight
+                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                      : 'bg-white/[0.05] border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <Clock className="w-4 h-4 opacity-70" />
+                      <span className="text-xs font-medium">{t('showClockOnly', settings.language)}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSettingsChange({ showClock: !settings.showClock })}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
+                        settings.showClock ? 'bg-amber-500' : isLight ? 'bg-black/15' : 'bg-white/20'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                          settings.showClock ? 'translate-x-[18px]' : 'translate-x-0.5'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {settings.showClock && (
+                    <div className={`pt-3 border-t flex items-center justify-between ${isLight ? 'border-black/8' : 'border-white/10'}`}>
+                      <span className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                        {t('timeFormat', settings.language)}
+                      </span>
+                      <div className={`flex p-0.5 rounded-lg border ${isLight ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/15'}`}>
+                        <button
+                          type="button"
+                          onClick={() => handleSettingsChange({ timeFormat: '12h' })}
+                          className={`px-3 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
+                            settings.timeFormat === '12h'
+                              ? isLight ? 'bg-white text-slate-900 shadow-sm' : 'bg-white/20 text-white shadow-sm'
+                              : isLight ? 'text-slate-500 hover:text-slate-800' : 'text-white/50 hover:text-white'
+                          }`}
+                        >
+                          {t('timeFormat12h', settings.language)}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSettingsChange({ timeFormat: '24h' })}
+                          className={`px-3 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
+                            (settings.timeFormat || '24h') === '24h'
+                              ? isLight ? 'bg-white text-slate-900 shadow-sm' : 'bg-white/20 text-white shadow-sm'
+                              : isLight ? 'text-slate-500 hover:text-slate-800' : 'text-white/50 hover:text-white'
+                          }`}
+                        >
+                          {t('timeFormat24h', settings.language)}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Show Date */}
@@ -920,12 +996,19 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <Calendar className="w-4 h-4 opacity-70" />
                     <span className="text-xs font-medium">{t('showDateOnly', settings.language)}</span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={settings.showDate}
-                    onChange={(e) => handleSettingsChange({ showDate: e.target.checked })}
-                    className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSettingsChange({ showDate: !settings.showDate })}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
+                      settings.showDate ? 'bg-amber-500' : isLight ? 'bg-black/15' : 'bg-white/20'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                        settings.showDate ? 'translate-x-[18px]' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
                 </div>
 
                 {/* Show Greeting & Custom Greetings Section */}
@@ -941,12 +1024,19 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <MessageSquareQuote className="w-4 h-4 opacity-70" />
                       <span className="text-xs font-medium">{t('showGreetingOnly', settings.language)}</span>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.showGreeting}
-                      onChange={(e) => handleSettingsChange({ showGreeting: e.target.checked })}
-                      className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSettingsChange({ showGreeting: !settings.showGreeting })}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
+                        settings.showGreeting ? 'bg-amber-500' : isLight ? 'bg-black/15' : 'bg-white/20'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                          settings.showGreeting ? 'translate-x-[18px]' : 'translate-x-0.5'
+                        }`}
+                      />
+                    </button>
                   </div>
 
                   {/* Greeting customization panel when showGreeting is enabled */}

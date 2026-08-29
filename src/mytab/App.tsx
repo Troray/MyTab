@@ -374,12 +374,14 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         <ClockHeader settings={settings} />
 
         {/* Search Bar */}
-        <SearchBar
-          settings={settings}
-          onEngineChange={(engineId) =>
-            handleUpdateSettings({ ...settings, activeEngineId: engineId })
-          }
-        />
+        {(settings.showSearch ?? true) && (
+          <SearchBar
+            settings={settings}
+            onEngineChange={(engineId) =>
+              handleUpdateSettings({ ...settings, activeEngineId: engineId })
+            }
+          />
+        )}
 
         {/* Category Tabs */}
         <CategoryTabs
