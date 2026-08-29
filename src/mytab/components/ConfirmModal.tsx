@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { AlertTriangle, Trash2, DownloadCloud, AlertCircle, X } from 'lucide-react';
+import { AlertTriangle, Trash2, AlertCircle, X } from 'lucide-react';
 import { t } from '../../utils/i18n';
 import { Locale } from '../../utils/i18n';
 
@@ -13,6 +13,7 @@ interface ConfirmModalProps {
   confirmText?: string;
   cancelText?: string;
   language?: Locale;
+  isLight?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -25,6 +26,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   confirmText,
   cancelText,
   language = 'zh-CN',
+  isLight: propsIsLight,
   onConfirm,
   onCancel,
 }) => {
@@ -59,7 +61,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       case 'warning':
         return (
           <div className="p-3 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/25 shadow-sm">
-            <DownloadCloud className="w-5 h-5" />
+            <AlertTriangle className="w-5 h-5" />
           </div>
         );
       default:
@@ -71,7 +73,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     }
   };
 
-  const isLight = typeof document !== 'undefined' && document.documentElement.classList.contains('light');
+  const isLight = propsIsLight ?? (typeof document !== 'undefined' && document.documentElement.classList.contains('light'));
 
   const confirmBtnClass =
     type === 'danger'
@@ -129,7 +131,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className={`px-4 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+            className={`px-4 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${
               isLight
                 ? 'bg-black/5 hover:bg-black/10 text-slate-700'
                 : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white'
@@ -140,7 +142,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             type="button"
             onClick={onConfirm}
-            className={`px-5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer active:scale-95 ${confirmBtnClass}`}
+            className={`px-5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+              isLight ? 'focus-visible:ring-offset-white focus-visible:ring-slate-900' : 'focus-visible:ring-offset-[#1E1E1E] focus-visible:ring-white/50'
+            } ${confirmBtnClass}`}
           >
             {confirmText || t('confirm', language)}
           </button>

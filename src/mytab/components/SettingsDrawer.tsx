@@ -20,17 +20,19 @@ import {
   RotateCcw,
   FileDown,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Search
 } from 'lucide-react';
 import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ThemeSettings, WebdavConfig } from '../../types';
 import { PRESET_GRADIENTS } from '../../utils/constants';
 import { WebdavSettings } from './WebdavSettings';
 import { GitSettings } from './GitSettings';
 import { exportAllData, importData } from '../../services/storage';
-import { t, supportedLocales } from '../../utils/i18n';
+import { t, supportedLocales, Translation, Locale } from '../../utils/i18n';
 import { CustomSelect } from './CustomSelect';
 import { UNSPLASH_CATEGORIES } from '../../utils/unsplashTopics';
 import { UnsplashTopicModal } from './UnsplashTopicModal';
+import { ToggleSwitch } from './ToggleSwitch';
 import { fetchUnsplashRandomPhoto, preloadImage } from '../../services/unsplash';
 
 interface SettingsDrawerProps {
@@ -603,7 +605,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${
                             isLight ? 'bg-slate-900 text-white' : 'bg-white text-slate-950'
                           }`}>
-                            {t((UNSPLASH_CATEGORIES.find(c => c.id === (settings.unsplashActiveTab || 'nature'))?.nameKey || 'topicNature') as any, settings.language)}
+                            {t((UNSPLASH_CATEGORIES.find(c => c.id === (settings.unsplashActiveTab || 'nature'))?.nameKey || 'topicNature') as keyof Translation, settings.language)}
                           </span>
                           {(settings.unsplashKeywords && settings.unsplashKeywords.length > 0
                             ? settings.unsplashKeywords
@@ -858,7 +860,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   </div>
                   <CustomSelect
                     value={settings.language}
-                    onChange={(val) => handleSettingsChange({ language: val as any })}
+                    onChange={(val) => handleSettingsChange({ language: val as Locale })}
                     isLight={isLight}
                     className="w-36"
                     options={supportedLocales.map((loc) => ({
@@ -880,15 +882,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <ExternalLink className="w-4 h-4 opacity-70" />
                     <span className="text-xs font-medium">{t('openInNewTab', settings.language)}</span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={settings.openInNewTab}
-                    onChange={(e) => handleSettingsChange({ openInNewTab: e.target.checked })}
-                    className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
+                  <ToggleSwitch
+                    checked={settings.openInNewTab || false}
+                    onChange={(checked) => handleSettingsChange({ openInNewTab: checked })}
+                    isLight={isLight}
                   />
                 </div>
 
-                {/* Show Clock */}
+                {/* Show Search */}
                 <div
                   className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
                     isLight
@@ -897,15 +898,67 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Clock className="w-4 h-4 opacity-70" />
-                    <span className="text-xs font-medium">{t('showClockOnly', settings.language)}</span>
+                    <Search className="w-4 h-4 opacity-70" />
+                    <span className="text-xs font-medium">{t('showSearchOnly', settings.language)}</span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={settings.showClock}
-                    onChange={(e) => handleSettingsChange({ showClock: e.target.checked })}
-                    className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
+                  <ToggleSwitch
+                    checked={settings.showSearch ?? true}
+                    onChange={(checked) => handleSettingsChange({ showSearch: checked })}
+                    isLight={isLight}
                   />
+                </div>
+
+                {/* Show Clock & Time Format */}
+                <div
+                  className={`p-3.5 rounded-2xl border transition-colors space-y-3 ${
+                    isLight
+                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                      : 'bg-white/[0.05] border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <Clock className="w-4 h-4 opacity-70" />
+                      <span className="text-xs font-medium">{t('showClockOnly', settings.language)}</span>
+                    </div>
+                    <ToggleSwitch
+                      checked={settings.showClock || false}
+                      onChange={(checked) => handleSettingsChange({ showClock: checked })}
+                      isLight={isLight}
+                    />
+                  </div>
+
+                  {settings.showClock && (
+                    <div className={`pt-3 border-t flex items-center justify-between ${isLight ? 'border-black/8' : 'border-white/10'}`}>
+                      <span className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+                        {t('timeFormat', settings.language)}
+                      </span>
+                      <div className={`flex p-0.5 rounded-lg border ${isLight ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/15'}`}>
+                        <button
+                          type="button"
+                          onClick={() => handleSettingsChange({ timeFormat: '12h' })}
+                          className={`px-3 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
+                            settings.timeFormat === '12h'
+                              ? isLight ? 'bg-white text-slate-900 shadow-sm' : 'bg-white/20 text-white shadow-sm'
+                              : isLight ? 'text-slate-500 hover:text-slate-800' : 'text-white/50 hover:text-white'
+                          }`}
+                        >
+                          {t('timeFormat12h', settings.language)}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSettingsChange({ timeFormat: '24h' })}
+                          className={`px-3 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
+                            (settings.timeFormat || '24h') === '24h'
+                              ? isLight ? 'bg-white text-slate-900 shadow-sm' : 'bg-white/20 text-white shadow-sm'
+                              : isLight ? 'text-slate-500 hover:text-slate-800' : 'text-white/50 hover:text-white'
+                          }`}
+                        >
+                          {t('timeFormat24h', settings.language)}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Show Date */}
@@ -920,11 +973,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <Calendar className="w-4 h-4 opacity-70" />
                     <span className="text-xs font-medium">{t('showDateOnly', settings.language)}</span>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={settings.showDate}
-                    onChange={(e) => handleSettingsChange({ showDate: e.target.checked })}
-                    className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
+                  <ToggleSwitch
+                    checked={settings.showDate || false}
+                    onChange={(checked) => handleSettingsChange({ showDate: checked })}
+                    isLight={isLight}
                   />
                 </div>
 
@@ -941,11 +993,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <MessageSquareQuote className="w-4 h-4 opacity-70" />
                       <span className="text-xs font-medium">{t('showGreetingOnly', settings.language)}</span>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={settings.showGreeting}
-                      onChange={(e) => handleSettingsChange({ showGreeting: e.target.checked })}
-                      className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
+                    <ToggleSwitch
+                      checked={settings.showGreeting || false}
+                      onChange={(checked) => handleSettingsChange({ showGreeting: checked })}
+                      isLight={isLight}
                     />
                   </div>
 

@@ -48,6 +48,8 @@ export interface ThemeSettings {
   maxCardsPerRow?: number; // e.g. 4 ~ 12 (default 8)
   activeEngineId: string;
   openInNewTab: boolean;
+  timeFormat?: '12h' | '24h';
+  showSearch: boolean;
   showClock: boolean;
   showGreeting: boolean;
   showDate: boolean;

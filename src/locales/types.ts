@@ -70,6 +70,10 @@ export interface Translation {
   openInNewTab: string;
   showClock: string;
   showClockOnly: string;
+  showSearchOnly: string;
+  timeFormat: string;
+  timeFormat12h: string;
+  timeFormat24h: string;
   showGreetingOnly: string;
   showDateOnly: string;
   customGreetings: string;

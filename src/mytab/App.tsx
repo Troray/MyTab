@@ -17,12 +17,14 @@ import { CategoryTabs } from './components/CategoryTabs';
 import { SiteGrid } from './components/SiteGrid';
 import { urlToBase64Icon } from '../services/metadata';
 import { DEFAULT_SETTINGS } from '../utils/constants';
+import { ConfirmModal } from './components/ConfirmModal';
+
+const CACHE_WARMER_DELAY = 1200; // Delay to avoid blocking initial render
 
 // Lazy-load heavy modal/drawer components to reduce initial bundle size
 const SiteModal = lazy(() => import('./components/SiteModal').then(m => ({ default: m.SiteModal })));
 const SettingsDrawer = lazy(() => import('./components/SettingsDrawer').then(m => ({ default: m.SettingsDrawer })));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
-import { ConfirmModal } from './components/ConfirmModal';
 
 export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => {
   const [appState, setAppState] = useState<AppState | null>(initialState || null);
@@ -60,8 +62,8 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                 changed = true;
                 return { ...s, icon: base64 };
               }
-            } catch {
-              // ignore
+            } catch (err) {
+              console.warn('[MyTab] Cache warmer failed to convert icon:', err);
             }
           }
           return s;
@@ -71,7 +73,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         await saveSites(updated);
         setAppState((prev) => (prev ? { ...prev, sites: updated } : null));
       }
-    }, 1200);
+    }, CACHE_WARMER_DELAY);
 
     return () => clearTimeout(timer);
   }, [appState?.sites]);
@@ -120,7 +122,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   useEffect(() => {
     try {
       let css = '';
-      const style = backgroundStyle as any;
+      const style = backgroundStyle as React.CSSProperties;
       if (style.backgroundColor) {
         css += `background-color: ${style.backgroundColor};`;
       }
@@ -134,7 +136,9 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       localStorage.setItem('mytab_bg_cache', css);
       const isLightMode = currentSettings.mode === 'light';
       localStorage.setItem('mytab_theme_mode', isLightMode ? 'light' : 'dark');
-    } catch(e) {}
+    } catch (e) {
+      console.warn('[MyTab] Failed to cache background to localStorage:', e);
+    }
   }, [backgroundStyle, currentSettings.mode]);
 
   if (!appState) {
@@ -343,7 +347,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               setEditingSite(null);
               setIsSiteModalOpen(true);
             }}
-            className={`p-2.5 rounded-xl backdrop-blur-md border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 ${
+            className={`p-2.5 rounded-xl backdrop-blur-md border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${
               isLight
                 ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
                 : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
@@ -356,7 +360,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           {/* Settings Button */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className={`p-2.5 rounded-xl backdrop-blur-md border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 ${
+            className={`p-2.5 rounded-xl backdrop-blur-md border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${
               isLight
                 ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
                 : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
@@ -374,12 +378,14 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         <ClockHeader settings={settings} />
 
         {/* Search Bar */}
-        <SearchBar
-          settings={settings}
-          onEngineChange={(engineId) =>
-            handleUpdateSettings({ ...settings, activeEngineId: engineId })
-          }
-        />
+        {(settings.showSearch ?? true) && (
+          <SearchBar
+            settings={settings}
+            onEngineChange={(engineId) =>
+              handleUpdateSettings({ ...settings, activeEngineId: engineId })
+            }
+          />
+        )}
 
         {/* Category Tabs */}
         <CategoryTabs
@@ -527,6 +533,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             }
             confirmText={settings.language === 'zh-CN' ? '确定删除' : 'Delete'}
             language={settings.language}
+            isLight={isLight}
             onConfirm={confirmDeleteSite}
             onCancel={() => setDeletingSite(null)}
           />

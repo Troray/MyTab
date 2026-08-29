@@ -4,6 +4,7 @@ import { AppState, WebdavConfig } from '../../types';
 import { uploadToWebdav, restoreFromWebdav, WebdavClient } from '../../services/webdav';
 import { ConfirmModal } from './ConfirmModal';
 import { CustomSelect } from './CustomSelect';
+import { ToggleSwitch } from './ToggleSwitch';
 import { t } from '../../utils/i18n';
 
 interface WebdavSettingsProps {
@@ -120,19 +121,11 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
             </div>
           </div>
         </div>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            checked={config.enabled}
-            onChange={(e) => handleChange({ enabled: e.target.checked })}
-            className="sr-only peer"
-          />
-          <div className={`w-11 h-6 rounded-full transition-colors peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
-            isLight
-              ? 'bg-slate-300 peer-checked:bg-slate-900'
-              : 'bg-white/20 peer-checked:bg-white after:peer-checked:bg-slate-900'
-          }`}></div>
-        </label>
+        <ToggleSwitch
+          checked={config.enabled}
+          onChange={(checked) => handleChange({ enabled: checked })}
+          isLight={isLight}
+        />
       </div>
 
       {config.enabled && (
@@ -229,7 +222,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
             </label>
             <CustomSelect
               value={config.conflictStrategy}
-              onChange={(val) => handleChange({ conflictStrategy: val as any })}
+              onChange={(val) => handleChange({ conflictStrategy: val as WebdavConfig['conflictStrategy'] })}
               isLight={isLight}
               options={[
                 { value: 'merge', label: t('strategyMerge', settings.language) },
@@ -244,11 +237,10 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
             <span className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
               {t('webdavAutoSync', settings.language)}
             </span>
-            <input
-              type="checkbox"
+            <ToggleSwitch
               checked={config.autoSync}
-              onChange={(e) => handleChange({ autoSync: e.target.checked })}
-              className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
+              onChange={(checked) => handleChange({ autoSync: checked })}
+              isLight={isLight}
             />
           </div>
 
@@ -358,6 +350,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
             message={t('confirmPull', settings.language)}
             confirmText={t('confirm', settings.language)}
             language={settings.language}
+            isLight={isLight}
             onConfirm={handlePullExecute}
             onCancel={() => setShowPullConfirm(false)}
           />

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, FolderPlus, FolderEdit, Check, Trash2 } from 'lucide-react';
 import { Category, ThemeSettings } from '../../types';
 import { ConfirmModal } from './ConfirmModal';
+import { ToggleSwitch } from './ToggleSwitch';
 import { t } from '../../utils/i18n';
 
 interface CategoryModalProps {
@@ -140,12 +141,13 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   {t('showInAllDesc', settings.language)}
                 </span>
               </div>
-              <input
-                type="checkbox"
-                checked={showInAll}
-                onChange={(e) => setShowInAll(e.target.checked)}
-                className={`mt-1 w-4 h-4 rounded border cursor-pointer shrink-0 accent-amber-500`}
-              />
+              <div className="mt-1 flex-shrink-0">
+                <ToggleSwitch
+                  checked={showInAll}
+                  onChange={setShowInAll}
+                  isLight={isLight}
+                />
+              </div>
             </div>
 
             {/* Bottom Actions */}

@@ -58,7 +58,16 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings })
   const hasAnyDisplay = settings.showClock || settings.showDate || settings.showGreeting;
   if (!hasAnyDisplay) return null;
 
-  const displayHours = String(time.getHours()).padStart(2, '0');
+  const is12h = settings.timeFormat === '12h';
+  let displayHours = String(time.getHours()).padStart(2, '0');
+  let ampm = '';
+
+  if (is12h) {
+    const h = time.getHours();
+    ampm = h >= 12 ? 'PM' : 'AM';
+    displayHours = String(h % 12 || 12).padStart(2, '0');
+  }
+
   const minutes = String(time.getMinutes()).padStart(2, '0');
 
   const formatDate = () => {
@@ -75,13 +84,14 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings })
     <div className="flex flex-col items-center justify-center text-center select-none pt-6 pb-3 transition-colors">
       {settings.showClock && (
         <div
-          className={`text-6xl sm:text-7xl md:text-8xl font-extralight tracking-tight tabular-nums transition-colors ${
+          className={`flex items-baseline justify-center text-6xl sm:text-7xl md:text-8xl font-extralight tracking-tight tabular-nums transition-colors ${
             isLight
               ? 'text-slate-900 drop-shadow-sm'
               : 'text-white drop-shadow-md'
           }`}
         >
-          {displayHours}<span className="opacity-75 animate-pulse">:</span>{minutes}
+          <span>{displayHours}<span className="opacity-75 animate-pulse">:</span>{minutes}</span>
+          {is12h && <span className="text-xl sm:text-2xl md:text-3xl ml-3 font-medium opacity-80">{ampm}</span>}
         </div>
       )}
 
