@@ -36,5 +36,6 @@ export const supportedLocales = [
  */
 export function t(key: TranslationKey, lang: Locale = 'zh-CN'): string {
   const dict = translations[lang] || translations['zh-CN'];
-  return dict?.[key] || translations['zh-CN']?.[key] || (key as string);
+  const val = dict?.[key] || translations['zh-CN']?.[key] || (key as string);
+  return typeof val === 'string' ? val : (key as string);
 }

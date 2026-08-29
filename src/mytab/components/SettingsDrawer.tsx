@@ -589,7 +589,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                 : 'bg-white/10 hover:bg-white/15 border-white/10 text-white/80'
                             }`}
                           >
-                            {t('edit', settings.language) || '更改'}
+                            {t('edit', settings.language)}
                           </button>
                         </div>
                         <div
