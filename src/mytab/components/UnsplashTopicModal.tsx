@@ -12,7 +12,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { UNSPLASH_CATEGORIES } from '../../utils/unsplashTopics';
-import { t } from '../../utils/i18n';
+import { t, Translation } from '../../utils/i18n';
 
 interface UnsplashTopicModalProps {
   isOpen: boolean;
@@ -174,7 +174,7 @@ export const UnsplashTopicModal: React.FC<UnsplashTopicModalProps> = ({
                 }`}
               >
                 {renderCategoryIcon(cat.icon, 'w-3.5 h-3.5 shrink-0')}
-                <span className="whitespace-nowrap leading-none">{t(cat.nameKey as any, language)}</span>
+                <span className="whitespace-nowrap leading-none">{t(cat.nameKey as keyof Translation, language)}</span>
                 {count > 0 && (
                   <span
                     className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
@@ -200,7 +200,7 @@ export const UnsplashTopicModal: React.FC<UnsplashTopicModalProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs">
               <span className={isLight ? 'text-slate-600 font-medium' : 'text-white/60 font-medium'}>
-                {t(currentCategory.nameKey as any, language)} · {t('unsplashSelectedTags', language)}:{' '}
+                {t(currentCategory.nameKey as keyof Translation, language)} · {t('unsplashSelectedTags', language)}:{' '}
                 <span className="font-semibold">{currentSelectedTags.length} / {currentCategory.tags.length}</span>
               </span>
             </div>
@@ -252,7 +252,7 @@ export const UnsplashTopicModal: React.FC<UnsplashTopicModalProps> = ({
                   <div className="flex items-start justify-between gap-2 mb-1.5">
                     <div>
                       <div className="font-semibold text-xs flex items-center gap-1.5">
-                        <span>{t(tagItem.labelKey as any, language)}</span>
+                        <span>{t(tagItem.labelKey as keyof Translation, language)}</span>
                         <span className="text-[10px] font-normal opacity-50">({tagItem.tag})</span>
                       </div>
                     </div>
@@ -271,7 +271,7 @@ export const UnsplashTopicModal: React.FC<UnsplashTopicModalProps> = ({
                     </div>
                   </div>
                   <div className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                    {t(tagItem.descKey as any, language)}
+                    {t(tagItem.descKey as keyof Translation, language)}
                   </div>
                 </div>
               );
@@ -290,7 +290,7 @@ export const UnsplashTopicModal: React.FC<UnsplashTopicModalProps> = ({
               {t('unsplashActiveCategory', language)}:{' '}
             </span>
             <span className="font-semibold">
-              {t(currentCategory.nameKey as any, language)}
+              {t(currentCategory.nameKey as keyof Translation, language)}
             </span>
           </div>
 

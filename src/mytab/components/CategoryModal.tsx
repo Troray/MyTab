@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, FolderPlus, FolderEdit, Check, Trash2 } from 'lucide-react';
 import { Category, ThemeSettings } from '../../types';
 import { ConfirmModal } from './ConfirmModal';
+import { ToggleSwitch } from './ToggleSwitch';
 import { t } from '../../utils/i18n';
 
 interface CategoryModalProps {
@@ -140,19 +141,13 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   {t('showInAllDesc', settings.language)}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowInAll(!showInAll)}
-                className={`mt-1 relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
-                  showInAll ? 'bg-amber-500' : isLight ? 'bg-black/15' : 'bg-white/20'
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                    showInAll ? 'translate-x-[18px]' : 'translate-x-0.5'
-                  }`}
+              <div className="mt-1 flex-shrink-0">
+                <ToggleSwitch
+                  checked={showInAll}
+                  onChange={setShowInAll}
+                  isLight={isLight}
                 />
-              </button>
+              </div>
             </div>
 
             {/* Bottom Actions */}

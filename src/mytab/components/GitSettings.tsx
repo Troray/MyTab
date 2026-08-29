@@ -19,6 +19,7 @@ import {
 import { AppState, GitSyncConfig, GitPlatformConfig, GitProvider } from '../../types';
 import { uploadToGit, restoreFromGit, GitClient, autoSetupGist, autoSetupRepo, isTokenLike } from '../../services/git';
 import { ConfirmModal } from './ConfirmModal';
+import { ToggleSwitch } from './ToggleSwitch';
 import { t } from '../../utils/i18n';
 
 interface GitSettingsProps {
@@ -451,19 +452,11 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
             </div>
           </div>
         </div>
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            checked={config.enabled}
-            onChange={(e) => handleChange({ enabled: e.target.checked })}
-            className="sr-only peer"
-          />
-          <div className={`w-11 h-6 rounded-full transition-colors peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${
-            isLight
-              ? 'bg-slate-300 peer-checked:bg-slate-900'
-              : 'bg-white/20 peer-checked:bg-white after:peer-checked:bg-slate-900'
-          }`}></div>
-        </label>
+        <ToggleSwitch
+          checked={config.enabled}
+          onChange={(checked) => handleChange({ enabled: checked })}
+          isLight={isLight}
+        />
       </div>
 
       {config.enabled && (
@@ -820,11 +813,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
             <span className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
               {t('gitAutoSync', settings.language)}
             </span>
-            <input
-              type="checkbox"
+            <ToggleSwitch
               checked={config.autoSync}
-              onChange={(e) => handleChange({ autoSync: e.target.checked })}
-              className="w-4 h-4 rounded border cursor-pointer accent-amber-500"
+              onChange={(checked) => handleChange({ autoSync: checked })}
+              isLight={isLight}
             />
           </div>
 
@@ -898,6 +890,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
             message={t('confirmPull', settings.language)}
             confirmText={t('confirm', settings.language)}
             language={settings.language}
+            isLight={isLight}
             onConfirm={handlePullExecute}
             onCancel={() => setShowPullConfirm(false)}
           />

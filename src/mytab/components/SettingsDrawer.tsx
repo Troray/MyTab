@@ -28,10 +28,11 @@ import { PRESET_GRADIENTS } from '../../utils/constants';
 import { WebdavSettings } from './WebdavSettings';
 import { GitSettings } from './GitSettings';
 import { exportAllData, importData } from '../../services/storage';
-import { t, supportedLocales } from '../../utils/i18n';
+import { t, supportedLocales, Translation, Locale } from '../../utils/i18n';
 import { CustomSelect } from './CustomSelect';
 import { UNSPLASH_CATEGORIES } from '../../utils/unsplashTopics';
 import { UnsplashTopicModal } from './UnsplashTopicModal';
+import { ToggleSwitch } from './ToggleSwitch';
 import { fetchUnsplashRandomPhoto, preloadImage } from '../../services/unsplash';
 
 interface SettingsDrawerProps {
@@ -604,7 +605,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${
                             isLight ? 'bg-slate-900 text-white' : 'bg-white text-slate-950'
                           }`}>
-                            {t((UNSPLASH_CATEGORIES.find(c => c.id === (settings.unsplashActiveTab || 'nature'))?.nameKey || 'topicNature') as any, settings.language)}
+                            {t((UNSPLASH_CATEGORIES.find(c => c.id === (settings.unsplashActiveTab || 'nature'))?.nameKey || 'topicNature') as keyof Translation, settings.language)}
                           </span>
                           {(settings.unsplashKeywords && settings.unsplashKeywords.length > 0
                             ? settings.unsplashKeywords
@@ -859,7 +860,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   </div>
                   <CustomSelect
                     value={settings.language}
-                    onChange={(val) => handleSettingsChange({ language: val as any })}
+                    onChange={(val) => handleSettingsChange({ language: val as Locale })}
                     isLight={isLight}
                     className="w-36"
                     options={supportedLocales.map((loc) => ({
@@ -881,19 +882,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <ExternalLink className="w-4 h-4 opacity-70" />
                     <span className="text-xs font-medium">{t('openInNewTab', settings.language)}</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSettingsChange({ openInNewTab: !settings.openInNewTab })}
-                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
-                      settings.openInNewTab ? 'bg-amber-500' : isLight ? 'bg-black/15' : 'bg-white/20'
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                        settings.openInNewTab ? 'translate-x-[18px]' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
+                  <ToggleSwitch
+                    checked={settings.openInNewTab || false}
+                    onChange={(checked) => handleSettingsChange({ openInNewTab: checked })}
+                    isLight={isLight}
+                  />
                 </div>
 
                 {/* Show Search */}
@@ -908,19 +901,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <Search className="w-4 h-4 opacity-70" />
                     <span className="text-xs font-medium">{t('showSearchOnly', settings.language)}</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSettingsChange({ showSearch: !(settings.showSearch ?? true) })}
-                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
-                      (settings.showSearch ?? true) ? 'bg-amber-500' : isLight ? 'bg-black/15' : 'bg-white/20'
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                        (settings.showSearch ?? true) ? 'translate-x-[18px]' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
+                  <ToggleSwitch
+                    checked={settings.showSearch ?? true}
+                    onChange={(checked) => handleSettingsChange({ showSearch: checked })}
+                    isLight={isLight}
+                  />
                 </div>
 
                 {/* Show Clock & Time Format */}
@@ -936,19 +921,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <Clock className="w-4 h-4 opacity-70" />
                       <span className="text-xs font-medium">{t('showClockOnly', settings.language)}</span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleSettingsChange({ showClock: !settings.showClock })}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
-                        settings.showClock ? 'bg-amber-500' : isLight ? 'bg-black/15' : 'bg-white/20'
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                          settings.showClock ? 'translate-x-[18px]' : 'translate-x-0.5'
-                        }`}
-                      />
-                    </button>
+                    <ToggleSwitch
+                      checked={settings.showClock || false}
+                      onChange={(checked) => handleSettingsChange({ showClock: checked })}
+                      isLight={isLight}
+                    />
                   </div>
 
                   {settings.showClock && (
@@ -996,19 +973,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <Calendar className="w-4 h-4 opacity-70" />
                     <span className="text-xs font-medium">{t('showDateOnly', settings.language)}</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSettingsChange({ showDate: !settings.showDate })}
-                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
-                      settings.showDate ? 'bg-amber-500' : isLight ? 'bg-black/15' : 'bg-white/20'
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                        settings.showDate ? 'translate-x-[18px]' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
+                  <ToggleSwitch
+                    checked={settings.showDate || false}
+                    onChange={(checked) => handleSettingsChange({ showDate: checked })}
+                    isLight={isLight}
+                  />
                 </div>
 
                 {/* Show Greeting & Custom Greetings Section */}
@@ -1024,19 +993,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <MessageSquareQuote className="w-4 h-4 opacity-70" />
                       <span className="text-xs font-medium">{t('showGreetingOnly', settings.language)}</span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleSettingsChange({ showGreeting: !settings.showGreeting })}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
-                        settings.showGreeting ? 'bg-amber-500' : isLight ? 'bg-black/15' : 'bg-white/20'
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                          settings.showGreeting ? 'translate-x-[18px]' : 'translate-x-0.5'
-                        }`}
-                      />
-                    </button>
+                    <ToggleSwitch
+                      checked={settings.showGreeting || false}
+                      onChange={(checked) => handleSettingsChange({ showGreeting: checked })}
+                      isLight={isLight}
+                    />
                   </div>
 
                   {/* Greeting customization panel when showGreeting is enabled */}
