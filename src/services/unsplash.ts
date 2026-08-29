@@ -149,7 +149,7 @@ export async function fetchUnsplashRandomPhoto(settings: ThemeSettings): Promise
 
       if (!response.ok) {
         const errJson = await response.json().catch(() => ({}));
-        const msg = (errJson as any)?.errors?.[0] || `HTTP ${response.status}`;
+        const msg = (errJson as { errors?: string[] })?.errors?.[0] || `HTTP ${response.status}`;
         throw new Error(msg);
       }
 
