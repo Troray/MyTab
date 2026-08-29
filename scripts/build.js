@@ -60,11 +60,15 @@ async function buildExtension() {
       await fs.copy(localesSrc, localesDest);
     }
 
-    // Rename index.html to newtab.html if needed
+    // Rename index.html or mytab.html to newtab.html if needed
     const indexHtml = path.resolve(targetDir, 'index.html');
+    const mytabHtml = path.resolve(targetDir, 'mytab.html');
     const newtabHtml = path.resolve(targetDir, 'newtab.html');
     if (fs.existsSync(indexHtml)) {
       await fs.move(indexHtml, newtabHtml, { overwrite: true });
+    }
+    if (fs.existsSync(mytabHtml)) {
+      await fs.move(mytabHtml, newtabHtml, { overwrite: true });
     }
 
     // Clean up any remaining src folder
