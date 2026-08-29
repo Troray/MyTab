@@ -94,12 +94,16 @@ export const DEFAULT_SITES: SiteItem[] = [
 ];
 
 export const PRESET_GRADIENTS = [
-  { name: '极光暮色 (默认)', value: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%)' },
-  { name: '赛博深蓝', value: 'linear-gradient(135deg, #090d16 0%, #101f3c 60%, #0d2847 100%)' },
+  { name: '极光暮色', value: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%)' },
+  { name: '黑耀星环', value: 'conic-gradient(from 90deg, #05050a 0.000deg, #090a0e 30.000deg, #0d0e12 60.000deg, #121316 90.000deg, #16171a 120.000deg, #1a1b1e 150.000deg, #1e1f22 180.000deg, #222326 210.000deg, #26272a 240.000deg, #292a2d 270.000deg, #2c2d30 300.000deg, #2e2f33 330.000deg, #303135 360.000deg)' },
+  { name: '深空灰烬', value: 'linear-gradient(135deg, #292832 0.000%, #272530 8.333%, #24222e 16.667%, #201f2b 25.000%, #1c1b27 33.333%, #181624 41.667%, #141220 50.000%, #100e1c 58.333%, #0c0a18 66.667%, #080614 75.000%, #050311 83.333%, #02000e 91.667%, #00000b 100.000%)' },
+  { name: '赛博幻梦', value: 'linear-gradient(135deg, #ff00cc, #333399)' },
+  { name: '霓虹都市', value: 'linear-gradient(135deg, #3a1c71, #d76d77, #ffaf7b)' },
+  { name: '静谧深渊', value: 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)' },
+  { name: '月见琉璃', value: 'linear-gradient(135deg, #1e3c72, #2a5298)' },
+  { name: '星云紫霭', value: 'linear-gradient(135deg, #4b1248, #f0c27b)' },
   { name: '暗影森野', value: 'linear-gradient(135deg, #061712 0%, #0d281e 60%, #16382b 100%)' },
-  { name: '薄暮落日', value: 'linear-gradient(135deg, #2b1055 0%, #591a75 50%, #b0445d 100%)' },
-  { name: '晨曦暖光 (明亮)', value: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)' },
-  { name: '春樱柔粉 (明亮)', value: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #fbcfe8 100%)' },
+  { name: '晨曦暖光', value: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)' },
 ];
 
 export const DEFAULT_SETTINGS: ThemeSettings = {
