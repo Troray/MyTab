@@ -55,6 +55,11 @@ jobs:
           prerelease: false
           make_latest: "true"
           body: |
+            ### 🚀 更新说明 (Release Notes)
+            ${{ github.event.head_commit.message }}
+            
+            ---
+            
             ### 📖 如何安装
 
             - **Chrome 浏览器用户**：
