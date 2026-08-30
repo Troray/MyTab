@@ -633,6 +633,13 @@ function buildUpdatedGitConfig(
 
   const updatedPlatform: GitPlatformConfig = {
     ...currentPlatform,
+    mode: git.mode || currentPlatform.mode,
+    gistId: git.gistId || currentPlatform.gistId,
+    owner: git.owner || currentPlatform.owner,
+    repo: git.repo || currentPlatform.repo,
+    branch: git.branch || currentPlatform.branch,
+    path: git.path || currentPlatform.path,
+    token: git.token || currentPlatform.token,
     lastSyncTime: timestamp !== undefined ? timestamp : currentPlatform.lastSyncTime,
     lastSyncStatus: status,
     lastSyncError: error,
