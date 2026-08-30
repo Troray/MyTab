@@ -520,7 +520,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                 }`}
               >
                 <Code2 className="w-3.5 h-3.5" />
-                <span>{t('gitModeGist', settings.language)}</span>
+                <span>{config.provider === 'github' ? 'GitHub Gist' : t('gitModeGist', settings.language)}</span>
               </button>
               <button
                 type="button"
@@ -554,7 +554,11 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs font-semibold">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>{t('gitGistSmartTitle', settings.language)}</span>
+                  <span>
+                    {config.provider === 'github'
+                      ? t('gitGistSmartTitle', settings.language).replace(/代码片段|程式碼片段|Secret Gist|Gist|Code Snippet/gi, 'GitHub Gist')
+                      : t('gitGistSmartTitle', settings.language).replace(/Secret Gist|Gist/gi, t('gitModeGist', settings.language))}
+                  </span>
                 </div>
                 <a
                   href={tokenGeneratorUrl}
