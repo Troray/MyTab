@@ -520,7 +520,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                 }`}
               >
                 <Code2 className="w-3.5 h-3.5" />
-                <span>{t('gitModeGist', settings.language)}</span>
+                <span>{config.provider === 'github' ? 'GitHub Gist' : t('gitModeGist', settings.language)}</span>
               </button>
               <button
                 type="button"

@@ -41,6 +41,16 @@ function getHeaders(token: string, provider: 'github' | 'gitee'): Record<string,
 }
 
 /**
+ * Escapes 4-byte unicode characters (like emojis) to their \uXXXX\uXXXX representation
+ * to prevent MySQL string value errors when saving to Gitee Gist.
+ */
+function escapeUnicodeEmojis(str: string): string {
+  return str.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, (match) => {
+    return `\\u${match.charCodeAt(0).toString(16).padStart(4, '0')}\\u${match.charCodeAt(1).toString(16).padStart(4, '0')}`;
+  });
+}
+
+/**
  * Auto-detect user identity and auto create/find private Gist
  */
 export async function autoSetupGist(provider: 'github' | 'gitee', token: string): Promise<GitTestResult> {
@@ -108,7 +118,7 @@ export async function autoSetupGist(provider: 'github' | 'gitee', token: string)
         public: false,
         files: {
           [GIST_FILENAME]: {
-            content: JSON.stringify(initialPayload, null, 2),
+            content: escapeUnicodeEmojis(JSON.stringify(initialPayload, null, 2)),
           },
         },
       };
@@ -473,7 +483,7 @@ export class GitClient {
     const baseUrl = getApiBaseUrl(provider);
     const url = `${baseUrl}/gists/${targetGistId}`;
 
-    const jsonString = JSON.stringify(payload, null, 2);
+    const jsonString = escapeUnicodeEmojis(JSON.stringify(payload, null, 2));
     const bodyData: any = {
       description: GIST_DESCRIPTION,
       files: {
