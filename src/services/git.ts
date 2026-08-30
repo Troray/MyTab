@@ -53,6 +53,34 @@ function escapeUnicodeEmojis(str: string): string {
 /**
  * Auto-detect user identity and auto create/find private Gist
  */
+async function findExistingGist(provider: 'github' | 'gitee', token: string): Promise<string | undefined> {
+  const baseUrl = getApiBaseUrl(provider);
+  const headers = getHeaders(token, provider);
+  let gistsUrl = `${baseUrl}/gists?_t=${Date.now()}&per_page=100`;
+  if (provider === 'gitee') {
+    gistsUrl += `&access_token=${token}`;
+  }
+
+  try {
+    const gistsRes = await fetch(gistsUrl, { method: 'GET', headers, cache: 'no-store' });
+    if (gistsRes.ok) {
+      const gists = await gistsRes.json();
+      if (Array.isArray(gists)) {
+        const found = gists.find((g: any) =>
+          (g.files && g.files[GIST_FILENAME]) ||
+          (g.description && g.description.includes('MyTab'))
+        );
+        if (found) {
+          return found.id;
+        }
+      }
+    }
+  } catch {
+    // Ignore errors during silent discovery
+  }
+  return undefined;
+}
+
 export async function autoSetupGist(provider: 'github' | 'gitee', token: string): Promise<GitTestResult> {
   if (!token.trim()) {
     return { success: false, message: '请先填写 Personal Access Token (令牌)' };
@@ -81,26 +109,7 @@ export async function autoSetupGist(provider: 'github' | 'gitee', token: string)
     const avatarUrl = userData.avatar_url;
 
     // 2. Search for existing MyTab Gist
-    let gistsUrl = `${baseUrl}/gists?_t=${Date.now()}&per_page=100`;
-    if (provider === 'gitee') {
-      gistsUrl += `&access_token=${token}`;
-    }
-
-    const gistsRes = await fetch(gistsUrl, { method: 'GET', headers, cache: 'no-store' });
-    let existingGistId: string | undefined;
-
-    if (gistsRes.ok) {
-      const gists = await gistsRes.json();
-      if (Array.isArray(gists)) {
-        const found = gists.find((g: any) =>
-          (g.files && g.files[GIST_FILENAME]) ||
-          (g.description && g.description.includes('MyTab'))
-        );
-        if (found) {
-          existingGistId = found.id;
-        }
-      }
-    }
+    let existingGistId = await findExistingGist(provider, token);
 
     // 3. If no Gist found -> Create a new private Gist
     if (!existingGistId) {
@@ -429,8 +438,13 @@ export class GitClient {
    * Gist: Read payload from Gist
    */
   private async getGistData(): Promise<{ payload: SyncPayload | null; sha?: string }> {
-    const { provider, gistId, token } = this.config;
-    if (!gistId) return { payload: null };
+    let { provider, gistId, token } = this.config;
+    if (!gistId) {
+      if (!token) return { payload: null };
+      gistId = await findExistingGist(provider, token);
+      if (!gistId) return { payload: null };
+      this.config.gistId = gistId;
+    }
 
     const baseUrl = getApiBaseUrl(provider);
     let url = `${baseUrl}/gists/${gistId}?_t=${Date.now()}`;
