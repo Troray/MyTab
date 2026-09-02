@@ -20,9 +20,11 @@ export const App: React.FC = () => {
     if (isDark) {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
+      document.documentElement.style.colorScheme = 'dark';
     } else {
       document.documentElement.classList.add('light');
       document.documentElement.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
     }
   }, []);
 
@@ -110,13 +112,13 @@ export const App: React.FC = () => {
   }, [applyTheme]);
 
   return (
-    <div className="w-full h-full min-h-[320px] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col p-4 rounded-2xl overflow-hidden border border-slate-200/80 dark:border-white/10 shadow-lg select-none">
+    <div className="glass-drawer w-full h-full min-h-[320px] text-slate-800 dark:text-white flex flex-col p-4 select-none">
       {/* Header */}
       <div className="flex items-center gap-2 mb-3.5">
-        <div className="w-6 h-6 rounded-lg bg-indigo-500 flex items-center justify-center text-white font-bold text-xs shadow-sm">
+        <div className="w-6 h-6 rounded-lg bg-indigo-500/90 flex items-center justify-center text-white font-bold text-xs shadow-sm">
           M
         </div>
-        <h1 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+        <h1 className="text-sm font-semibold text-slate-900 dark:text-white">
           {t('popupAddTitle', language)}
         </h1>
       </div>
@@ -130,10 +132,10 @@ export const App: React.FC = () => {
       {status === 'unsupported' && (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
           <div className="text-3xl mb-2">🚫</div>
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+          <p className="text-sm font-medium text-slate-800 dark:text-white/90">
             {t('popupUnsupportedTitle', language)}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-white/60 mt-1">
             {t('popupUnsupportedDesc', language)}
           </p>
         </div>
@@ -143,7 +145,7 @@ export const App: React.FC = () => {
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
           <div className="text-3xl mb-2">⚠️</div>
           <p className="text-sm font-medium text-red-500">{t('popupErrorTitle', language)}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-white/60 mt-1">
             {t('popupErrorDesc', language)}
           </p>
         </div>
@@ -151,19 +153,19 @@ export const App: React.FC = () => {
 
       {status === 'success' && (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4 animate-fade-in">
-          <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-3">
+          <div className="w-12 h-12 bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-3">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{t('popupSuccess', language)}</p>
+          <p className="text-sm font-medium text-slate-900 dark:text-white">{t('popupSuccess', language)}</p>
         </div>
       )}
 
       {(status === 'ready' || status === 'saving') && (
         <>
           {isDuplicate && (
-            <div className="mb-3 px-3 py-2 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 rounded-xl text-xs flex items-start gap-2">
+            <div className="mb-3 px-3 py-2 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-xl text-xs flex items-start gap-2">
               <span className="text-sm shrink-0">👀</span>
               <p className="leading-relaxed">{t('popupDuplicateWarning', language)}</p>
             </div>
