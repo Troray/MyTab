@@ -436,7 +436,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               bg.id === 'bing'
                                 ? 'https://bing.biturl.top/?resolution=1920&format=image&index=0&mkt=zh-CN'
                                 : bg.id === 'custom'
-                                  ? settings.customBackgroundUrl || (settings.backgroundType === 'custom' ? settings.backgroundValue : './wallpapers/default-wallpaper.jpg')
+                                  ? settings.customBackgroundUrl || './wallpapers/default-wallpaper.jpg'
                                   : PRESET_GRADIENTS[0].value,
                           });
                         }}
