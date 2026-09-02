@@ -34,6 +34,7 @@ export const zhCN: Translation = {
   appearance: '外观',
   themeMode: '色彩模式',
   themeDark: '深色模式',
+  themeSystem: '跟随系统',
   themeLight: '浅色模式',
   background: '背景壁纸',
   bgGradient: '高级渐变',

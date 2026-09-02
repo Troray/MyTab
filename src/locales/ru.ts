@@ -34,6 +34,7 @@ export const ru: Translation = {
   appearance: 'Внешний вид',
   themeMode: 'Цветовая схема',
   themeDark: 'Темная',
+  themeSystem: 'Системная',
   themeLight: 'Светлая',
   background: 'Фоновые обои',
   bgGradient: 'Градиент',

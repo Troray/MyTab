@@ -34,6 +34,7 @@ export const ko: Translation = {
   appearance: '디자인',
   themeMode: '컬러 모드',
   themeDark: '다크',
+  themeSystem: '시스템',
   themeLight: '라이트',
   background: '배경화면',
   bgGradient: '그라데이션',

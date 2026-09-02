@@ -34,6 +34,7 @@ export const ja: Translation = {
   appearance: '外観',
   themeMode: 'カラーテーマ',
   themeDark: 'ダーク',
+  themeSystem: 'システム',
   themeLight: 'ライト',
   background: '背景壁紙',
   bgGradient: 'グラデーション',

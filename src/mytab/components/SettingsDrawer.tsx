@@ -365,7 +365,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         }`}
                     >
                       <Monitor className="w-4 h-4" />
-                      <span>{t('themeSystem', settings.language) || '跟随系统'}</span>
+                      <span>{t('themeSystem', settings.language)}</span>
                     </button>
                     <button
                       type="button"

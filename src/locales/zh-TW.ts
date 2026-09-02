@@ -34,6 +34,7 @@ export const zhTW: Translation = {
   appearance: '外觀',
   themeMode: '色彩模式',
   themeDark: '深色模式',
+  themeSystem: '跟隨系統',
   themeLight: '淺色模式',
   background: '背景桌布',
   bgGradient: '質感漸層',

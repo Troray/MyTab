@@ -34,6 +34,7 @@ export const en: Translation = {
   appearance: 'Appearance',
   themeMode: 'Color Theme',
   themeDark: 'Dark',
+  themeSystem: 'System',
   themeLight: 'Light',
   background: 'Wallpaper Background',
   bgGradient: 'Gradient',

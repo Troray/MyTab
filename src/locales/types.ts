@@ -32,6 +32,7 @@ export interface Translation {
   appearance: string;
   themeMode: string;
   themeDark: string;
+  themeSystem: string;
   themeLight: string;
   background: string;
   bgGradient: string;
