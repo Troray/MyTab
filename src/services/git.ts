@@ -1,3 +1,4 @@
+import { t, Locale } from '../locales';
 import { AppState, Category, GitSyncConfig, GitPlatformConfig, SiteItem, SyncPayload, ThemeSettings } from '../types';
 import { loadAppState, saveCategories, saveGitConfig, saveSettings, saveSites } from './storage';
 import { DEFAULT_SETTINGS } from '../utils/constants';
@@ -81,9 +82,9 @@ async function findExistingGist(provider: 'github' | 'gitee', token: string): Pr
   return undefined;
 }
 
-export async function autoSetupGist(provider: 'github' | 'gitee', token: string): Promise<GitTestResult> {
+export async function autoSetupGist(provider: 'github' | 'gitee', token: string, lang: Locale = 'zh-CN'): Promise<GitTestResult> {
   if (!token.trim()) {
-    return { success: false, message: '请先填写 Personal Access Token (令牌)' };
+    return { success: false, message: t('gitTokenEmpty', typeof state !== 'undefined' ? state.settings?.language : typeof lang !== 'undefined' ? lang : 'zh-CN') };
   }
 
   const baseUrl = getApiBaseUrl(provider);
@@ -99,9 +100,9 @@ export async function autoSetupGist(provider: 'github' | 'gitee', token: string)
     const userRes = await fetch(userUrl, { method: 'GET', headers, cache: 'no-store' });
     if (!userRes.ok) {
       if (userRes.status === 401 || userRes.status === 403) {
-        return { success: false, message: 'Token 无效或已过期，请检查令牌权限' };
+        return { success: false, message: t('gitTokenInvalid', typeof lang !== 'undefined' ? lang : 'zh-CN') };
       }
-      return { success: false, message: `获取用户信息失败 (HTTP ${userRes.status})` };
+      return { success: false, message: `${t('gitUserInfoFailed', typeof lang !== 'undefined' ? lang : 'zh-CN')} (HTTP ${userRes.status})` };
     }
 
     const userData = await userRes.json();
@@ -146,7 +147,7 @@ export async function autoSetupGist(provider: 'github' | 'gitee', token: string)
         const err = await createRes.json().catch(() => ({}));
         return {
           success: false,
-          message: `创建私密代码片段失败: ${err.message || '请确认 Token 已勾选 gist/gists 权限'}`,
+          message: `${t('gitGistFailed', typeof lang !== 'undefined' ? lang : 'zh-CN')}${err.message || ''}`,
         };
       }
 
@@ -159,10 +160,10 @@ export async function autoSetupGist(provider: 'github' | 'gitee', token: string)
       owner,
       avatarUrl,
       gistId: existingGistId,
-      message: `成功连接 @${owner}！私密代码片段已就绪。`,
+      message: `${t('gitConnected', typeof lang !== 'undefined' ? lang : 'zh-CN')} @${owner}`,
     };
   } catch (err: any) {
-    return { success: false, message: err.message || '网络连接超时' };
+    return { success: false, message: err.message || t('gitNetworkError', typeof lang !== 'undefined' ? lang : 'zh-CN') };
   }
 }
 
@@ -193,10 +194,11 @@ export async function autoSetupRepo(
   provider: 'github' | 'gitee',
   token: string,
   targetRepoName = 'MyTab-Backup',
-  specifiedOwner?: string
+  specifiedOwner?: string,
+  lang: Locale = 'zh-CN'
 ): Promise<GitTestResult & { repo?: string; branch?: string; owner?: string }> {
   if (!token.trim()) {
-    return { success: false, message: '请先填写 Personal Access Token (令牌)' };
+    return { success: false, message: t('gitTokenEmpty', typeof state !== 'undefined' ? state.settings?.language : typeof lang !== 'undefined' ? lang : 'zh-CN') };
   }
 
   const baseUrl = getApiBaseUrl(provider);
@@ -212,9 +214,9 @@ export async function autoSetupRepo(
     const userRes = await fetch(userUrl, { method: 'GET', headers, cache: 'no-store' });
     if (!userRes.ok) {
       if (userRes.status === 401 || userRes.status === 403) {
-        return { success: false, message: 'Token 无效或已过期，请检查令牌权限 (需勾选 repo 权限)' };
+        return { success: false, message: t('gitRepoTokenInvalid', typeof lang !== 'undefined' ? lang : 'zh-CN') };
       }
-      return { success: false, message: `获取用户信息失败 (HTTP ${userRes.status})` };
+      return { success: false, message: `${t('gitUserInfoFailed', typeof lang !== 'undefined' ? lang : 'zh-CN')} (HTTP ${userRes.status})` };
     }
 
     const userData = await userRes.json();
@@ -263,7 +265,7 @@ export async function autoSetupRepo(
               owner: matched.owner?.login || userLogin,
               repo: matched.name,
               branch,
-              message: `连接成功！已找到 ${isPrivate} [${matched.full_name || `${matched.owner?.login}/${matched.name}`}]`,
+              message: `${t('gitRepoFound', typeof lang !== 'undefined' ? lang : 'zh-CN')} ${isPrivate} [${matched.full_name || `${matched.owner?.login}/${matched.name}`}]`,
             };
           }
         }
@@ -281,7 +283,7 @@ export async function autoSetupRepo(
         owner: repoData.owner?.login || owner,
         repo: repoData.name || cleanRepo,
         branch,
-        message: `连接成功！已找到 ${isPrivate} [${repoData.full_name || `${owner}/${cleanRepo}`}]`,
+        message: `${t('gitRepoFound', typeof lang !== 'undefined' ? lang : 'zh-CN')} ${isPrivate} [${repoData.full_name || `${owner}/${cleanRepo}`}]`,
       };
     }
 
@@ -314,7 +316,7 @@ export async function autoSetupRepo(
           owner: userLogin,
           repo: cleanRepo,
           branch,
-          message: `已全自动为您创建并连接私有仓库 [${userLogin}/${cleanRepo}]！`,
+          message: `${t('gitAutoCreateSuccess', typeof lang !== 'undefined' ? lang : 'zh-CN')} [${userLogin}/${cleanRepo}]`,
         };
       } else {
         const err = await createRes.json().catch(() => ({}));
@@ -322,14 +324,14 @@ export async function autoSetupRepo(
           success: false,
           owner: userLogin,
           repo: cleanRepo,
-          message: `自动创建仓库失败: ${err.message || '请确认 Token 已勾选 repo 读写权限'}`,
+          message: `${t('gitAutoCreateFailed', typeof lang !== 'undefined' ? lang : 'zh-CN')}${err.message || ''}`,
         };
       }
     }
 
-    return { success: false, message: `访问仓库返回状态码 HTTP ${checkRes.status}` };
+    return { success: false, message: `${t('gitStatusError', typeof lang !== 'undefined' ? lang : 'zh-CN')} HTTP ${checkRes.status}` };
   } catch (err: any) {
-    return { success: false, message: err.message || '网络连接超时' };
+    return { success: false, message: err.message || t('gitNetworkError', typeof lang !== 'undefined' ? lang : 'zh-CN') };
   }
 }
 
@@ -373,7 +375,7 @@ export class GitClient {
   async testConnection(): Promise<GitTestResult> {
     const { provider, token, owner, repo } = this.config;
     if (!token) {
-      return { success: false, message: '请填写 Personal Access Token (令牌)' };
+      return { success: false, message: t('gitTokenEmpty', typeof lang !== 'undefined' ? lang : 'zh-CN') };
     }
 
     if (this.isGistMode()) {
@@ -382,7 +384,7 @@ export class GitClient {
 
     // Repo Mode
     if (!owner || !repo) {
-      return { success: false, message: '请填写仓库所有者 (Owner) 与 仓库名 (Repo)' };
+      return { success: false, message: t('gitOwnerRepoEmpty', typeof lang !== 'undefined' ? lang : 'zh-CN') };
     }
 
     try {
@@ -401,16 +403,16 @@ export class GitClient {
       if (res.status === 200) {
         const data = await res.json();
         const isPrivate = data.private ? '私有仓库' : '公开仓库';
-        return { success: true, message: `连接成功！已找到 ${isPrivate} [${data.full_name || repo}]` };
+        return { success: true, message: `${t('gitRepoFound', typeof lang !== 'undefined' ? lang : 'zh-CN')} ${isPrivate} [${data.full_name || repo}]` };
       } else if (res.status === 401 || res.status === 403) {
-        return { success: false, message: `Token 无效或权限不足 (HTTP ${res.status})` };
+        return { success: false, message: `${t('gitRepoTokenInvalid', typeof lang !== 'undefined' ? lang : 'zh-CN')} (HTTP ${res.status})` };
       } else if (res.status === 404) {
-        return { success: false, message: `仓库不存在或 Token 无权访问此私有仓库 (HTTP 404)` };
+        return { success: false, message: `${t('gitRepoNotFound', typeof lang !== 'undefined' ? lang : 'zh-CN')} (HTTP 404)` };
       } else {
-        return { success: false, message: `服务器返回状态码 HTTP ${res.status}` };
+        return { success: false, message: `${t('gitStatusError', typeof lang !== 'undefined' ? lang : 'zh-CN')} HTTP ${res.status}` };
       }
     } catch (err: any) {
-      return { success: false, message: err.message || '网络请求失败' };
+      return { success: false, message: err.message || t('gitNetworkError', typeof lang !== 'undefined' ? lang : 'zh-CN') };
     }
   }
 
@@ -677,7 +679,7 @@ function buildUpdatedGitConfig(
 export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
   const { git } = state;
   if (!git.enabled || !git.token) {
-    return { success: false, message: 'Git 同步未配置或已禁用' };
+    return { success: false, message: t('gitNotConfigured', state.settings?.language) };
   }
 
   const client = new GitClient(git);
@@ -698,7 +700,7 @@ export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
       await client.putData(payload);
 
       await saveGitConfig(buildUpdatedGitConfig(git, 'success', now, undefined));
-      return { success: true, action: 'uploaded', message: '已成功创建并同步至云端！' };
+      return { success: true, action: 'uploaded', message: t('gitSyncUploaded', state.settings?.language) };
     }
 
     // 2. Merge sites & categories based on timestamp
@@ -746,9 +748,9 @@ export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
     await client.putData(newPayload, remoteSha);
 
     await saveGitConfig(buildUpdatedGitConfig(git, 'success', now, undefined));
-    return { success: true, action: 'merged', message: 'Git 同步与双向合并完成' };
+    return { success: true, action: 'merged', message: t('gitSyncMerged', state.settings?.language) };
   } catch (err: any) {
-    const errMsg = err.message || 'Git 同步失败';
+    const errMsg = err.message || t('gitSyncFailed', state.settings?.language);
     await saveGitConfig(buildUpdatedGitConfig(git, 'failed', undefined, errMsg));
     return { success: false, message: errMsg };
   }
@@ -760,7 +762,7 @@ export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
 export async function uploadToGit(state: AppState): Promise<GitSyncResult> {
   const { git } = state;
   if (!git.enabled || !git.token) {
-    return { success: false, message: 'Git 同步未配置或已禁用' };
+    return { success: false, message: t('gitNotConfigured', state.settings?.language) };
   }
 
   const client = new GitClient(git);
@@ -776,9 +778,9 @@ export async function uploadToGit(state: AppState): Promise<GitSyncResult> {
     };
     await client.putData(payload, remoteSha);
     await saveGitConfig(buildUpdatedGitConfig(git, 'success', now, undefined));
-    return { success: true, action: 'uploaded', message: '已成功将本地数据备份至云端！' };
+    return { success: true, action: 'uploaded', message: t('gitBackupSuccess', state.settings?.language) };
   } catch (err: any) {
-    const errMsg = err.message || '上传备份失败';
+    const errMsg = err.message || t('gitBackupFailed', state.settings?.language);
     await saveGitConfig(buildUpdatedGitConfig(git, 'failed', undefined, errMsg));
     return { success: false, message: errMsg };
   }
@@ -790,14 +792,14 @@ export async function uploadToGit(state: AppState): Promise<GitSyncResult> {
 export async function restoreFromGit(state: AppState): Promise<GitSyncResult> {
   const { git } = state;
   if (!git.enabled || !git.token) {
-    return { success: false, message: 'Git 同步未配置或已禁用' };
+    return { success: false, message: t('gitNotConfigured', state.settings?.language) };
   }
 
   const client = new GitClient(git);
   try {
     const { payload: remotePayload } = await client.getData();
     if (!remotePayload) {
-      return { success: false, message: '云端未找到备份数据，请先点击上传备份' };
+      return { success: false, message: t('gitNoRemote', state.settings?.language) };
     }
     if (remotePayload.categories && Array.isArray(remotePayload.categories)) {
       await saveCategories(remotePayload.categories);
@@ -810,9 +812,9 @@ export async function restoreFromGit(state: AppState): Promise<GitSyncResult> {
     }
     const now = Date.now();
     await saveGitConfig(buildUpdatedGitConfig(git, 'success', now, undefined));
-    return { success: true, action: 'downloaded', message: '已成功拉取并恢复云端备份数据！' };
+    return { success: true, action: 'downloaded', message: t('gitRestoreSuccess', state.settings?.language) };
   } catch (err: any) {
-    const errMsg = err.message || '拉取恢复失败';
+    const errMsg = err.message || t('gitRestoreFailed', state.settings?.language);
     await saveGitConfig(buildUpdatedGitConfig(git, 'failed', undefined, errMsg));
     return { success: false, message: errMsg };
   }
