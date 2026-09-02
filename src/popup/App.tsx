@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import browser from 'webextension-polyfill';
 import { BookmarkForm } from './components/BookmarkForm';
 import { t, Locale } from '../locales';
@@ -14,23 +14,28 @@ export const App: React.FC = () => {
     url: '',
   });
 
+  const applyTheme = useCallback((mode: string = 'dark') => {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = mode === 'dark' || (mode === 'system' && prefersDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   useEffect(() => {
     async function init() {
       try {
-        // Load theme from storage
-        const { mytab_state } = await browser.storage.local.get('mytab_state');
-        if (mytab_state?.settings?.language) {
-          setLanguage(mytab_state.settings.language);
+        // Load settings from storage
+        const { mytab_settings } = await browser.storage.local.get('mytab_settings');
+        if (mytab_settings?.language) {
+          setLanguage(mytab_settings.language);
         }
-        if (mytab_state?.settings?.mode) {
-          const mode = mytab_state.settings.mode;
-          const isDark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          if (isDark) {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
-        }
+        const mode = mytab_settings?.mode || localStorage.getItem('mytab_theme_mode') || 'dark';
+        applyTheme(mode);
 
         const tabs = await browser.tabs.query({ active: true, currentWindow: true });
         const currentTab = tabs[0];
@@ -41,7 +46,13 @@ export const App: React.FC = () => {
         }
 
         const url = currentTab.url;
-        if (url.startsWith('chrome://') || url.startsWith('edge://') || url.startsWith('about:') || url.startsWith('moz-extension://') || url.startsWith('chrome-extension://')) {
+        if (
+          url.startsWith('chrome://') ||
+          url.startsWith('edge://') ||
+          url.startsWith('about:') ||
+          url.startsWith('moz-extension://') ||
+          url.startsWith('chrome-extension://')
+        ) {
           setStatus('unsupported');
           return;
         }
@@ -54,7 +65,7 @@ export const App: React.FC = () => {
 
         // Check if URL already exists
         const res = await browser.runtime.sendMessage({ type: 'CHECK_BOOKMARK_EXISTS', url });
-        if (res.success && res.exists) {
+        if (res && res.success && res.exists) {
           setIsDuplicate(true);
         }
         setStatus('ready');
@@ -65,17 +76,53 @@ export const App: React.FC = () => {
     }
 
     init();
-  }, []);
+
+    // Listen to storage changes (e.g. if user updates theme/language in settings)
+    const onStorageChange = (changes: Record<string, browser.Storage.StorageChange>, areaName: string) => {
+      if (areaName === 'local' && changes.mytab_settings?.newValue) {
+        const newSettings = changes.mytab_settings.newValue;
+        if (newSettings.language) {
+          setLanguage(newSettings.language);
+        }
+        if (newSettings.mode) {
+          applyTheme(newSettings.mode);
+        }
+      }
+    };
+    browser.storage.onChanged.addListener(onStorageChange);
+
+    // Listen to system theme change if mode is 'system'
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const onSystemThemeChange = () => {
+      browser.storage.local.get('mytab_settings').then(({ mytab_settings }) => {
+        const mode = mytab_settings?.mode || 'dark';
+        if (mode === 'system') {
+          applyTheme('system');
+        }
+      });
+    };
+    mediaQuery.addEventListener('change', onSystemThemeChange);
+
+    return () => {
+      browser.storage.onChanged.removeListener(onStorageChange);
+      mediaQuery.removeEventListener('change', onSystemThemeChange);
+    };
+  }, [applyTheme]);
 
   return (
-    <div className="w-full h-full min-h-[300px] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 flex flex-col p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-6 h-6 rounded-lg bg-indigo-500 flex items-center justify-center text-white font-bold text-xs">M</div>
-        <h1 className="text-sm font-semibold">{t('popupAddTitle', language)}</h1>
+    <div className="w-full h-full min-h-[320px] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col p-4 rounded-2xl overflow-hidden border border-slate-200/80 dark:border-white/10 shadow-lg select-none">
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-3.5">
+        <div className="w-6 h-6 rounded-lg bg-indigo-500 flex items-center justify-center text-white font-bold text-xs shadow-sm">
+          M
+        </div>
+        <h1 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {t('popupAddTitle', language)}
+        </h1>
       </div>
 
       {status === 'loading' && (
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center py-8">
           <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
@@ -83,8 +130,12 @@ export const App: React.FC = () => {
       {status === 'unsupported' && (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
           <div className="text-3xl mb-2">🚫</div>
-          <p className="text-sm font-medium">{t('popupUnsupportedTitle', language)}</p>
-          <p className="text-xs text-slate-500 mt-1">{t('popupUnsupportedDesc', language)}</p>
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+            {t('popupUnsupportedTitle', language)}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {t('popupUnsupportedDesc', language)}
+          </p>
         </div>
       )}
 
@@ -92,7 +143,9 @@ export const App: React.FC = () => {
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
           <div className="text-3xl mb-2">⚠️</div>
           <p className="text-sm font-medium text-red-500">{t('popupErrorTitle', language)}</p>
-          <p className="text-xs text-slate-500 mt-1">{t('popupErrorDesc', language)}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {t('popupErrorDesc', language)}
+          </p>
         </div>
       )}
 
@@ -103,16 +156,16 @@ export const App: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <p className="text-sm font-medium">{t('popupSuccess', language)}</p>
+          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{t('popupSuccess', language)}</p>
         </div>
       )}
 
       {(status === 'ready' || status === 'saving') && (
         <>
           {isDuplicate && (
-            <div className="mb-3 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700/30 rounded-xl text-xs flex items-start gap-2">
-              <span className="text-sm">👀</span>
-              <p>{t('popupDuplicateWarning', language)}</p>
+            <div className="mb-3 px-3 py-2 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 rounded-xl text-xs flex items-start gap-2">
+              <span className="text-sm shrink-0">👀</span>
+              <p className="leading-relaxed">{t('popupDuplicateWarning', language)}</p>
             </div>
           )}
           <BookmarkForm
@@ -129,9 +182,9 @@ export const App: React.FC = () => {
                     url: data.url,
                     icon: data.favicon,
                     categoryId: data.categoryId,
-                  }
+                  },
                 });
-                if (res.success) {
+                if (res && res.success) {
                   setStatus('success');
                   setTimeout(() => window.close(), 1000); // auto close
                 } else {
