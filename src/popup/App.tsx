@@ -35,7 +35,7 @@ export const App: React.FC = () => {
         }
 
         const url = currentTab.url;
-        if (url.startsWith('chrome://') || url.startsWith('edge://') || url.startsWith('about:')) {
+        if (url.startsWith('chrome://') || url.startsWith('edge://') || url.startsWith('about:') || url.startsWith('moz-extension://') || url.startsWith('chrome-extension://')) {
           setStatus('unsupported');
           return;
         }
