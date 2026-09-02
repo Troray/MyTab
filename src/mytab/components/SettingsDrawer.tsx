@@ -249,17 +249,15 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
       {/* Drawer Container */}
       <div className="absolute inset-y-0 right-0 max-w-full flex pointer-events-none">
         <div
-          className={`glass-drawer w-screen max-w-md shadow-2xl flex flex-col pointer-events-auto transition-all duration-200 ${
-            isLight
-              ? 'border-l border-black/10 text-slate-900'
-              : 'border-l border-white/10 text-white'
-          }`}
+          className={`glass-drawer w-screen max-w-md shadow-2xl flex flex-col pointer-events-auto duration-0 duration-200 ${isLight
+            ? 'border-l border-black/10 text-slate-900'
+            : 'border-l border-white/10 text-white'
+            }`}
         >
           {/* Header */}
           <div
-            className={`flex items-center justify-between px-6 py-4.5 border-b ${
-              isLight ? 'border-black/8' : 'border-white/10'
-            }`}
+            className={`flex items-center justify-between px-6 py-4.5 border-b ${isLight ? 'border-black/8' : 'border-white/10'
+              }`}
           >
             <h2 className="text-base font-semibold tracking-tight flex items-center gap-2">
               <Sliders className="w-4.5 h-4.5 opacity-70" />
@@ -267,11 +265,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             </h2>
             <button
               onClick={onClose}
-              className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
-                isLight
-                  ? 'text-slate-500 hover:text-black hover:bg-black/5'
-                  : 'text-white/60 hover:text-white hover:bg-white/10'
-              }`}
+              className={`p-1.5 rounded-xl duration-0 cursor-pointer ${isLight
+                ? 'text-slate-500 hover:text-black hover:bg-black/5'
+                : 'text-white/60 hover:text-white hover:bg-white/10'
+                }`}
             >
               <X className="w-4.5 h-4.5" />
             </button>
@@ -279,66 +276,61 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
           {/* Navigation Tabs (外观, 偏好, 同步, 备份与迁移) */}
           <div
-            className={`flex px-6 pt-2 border-b gap-5 overflow-x-auto text-xs font-medium scrollbar-none ${
-              isLight ? 'border-black/8' : 'border-white/10'
-            }`}
+            className={`flex px-6 pt-2 border-b gap-5 overflow-x-auto text-xs font-medium scrollbar-none ${isLight ? 'border-black/8' : 'border-white/10'
+              }`}
           >
             <button
               onClick={() => setActiveTab('appearance')}
-              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'appearance'
-                  ? isLight
-                    ? 'border-slate-900 text-slate-900 font-semibold'
-                    : 'border-white text-white font-semibold'
-                  : isLight
+              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap duration-0 cursor-pointer ${activeTab === 'appearance'
+                ? isLight
+                  ? 'border-slate-900 text-slate-900 font-semibold'
+                  : 'border-white text-white font-semibold'
+                : isLight
                   ? 'border-transparent text-slate-500 hover:text-slate-900'
                   : 'border-transparent text-white/50 hover:text-white'
-              }`}
+                }`}
             >
               <Palette className="w-3.5 h-3.5" />
               <span>{t('appearance', settings.language)}</span>
             </button>
             <button
               onClick={() => setActiveTab('behavior')}
-              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'behavior'
-                  ? isLight
-                    ? 'border-slate-900 text-slate-900 font-semibold'
-                    : 'border-white text-white font-semibold'
-                  : isLight
+              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap duration-0 cursor-pointer ${activeTab === 'behavior'
+                ? isLight
+                  ? 'border-slate-900 text-slate-900 font-semibold'
+                  : 'border-white text-white font-semibold'
+                : isLight
                   ? 'border-transparent text-slate-500 hover:text-slate-900'
                   : 'border-transparent text-white/50 hover:text-white'
-              }`}
+                }`}
             >
               <Sliders className="w-3.5 h-3.5" />
               <span>{t('behavior', settings.language)}</span>
             </button>
             <button
               onClick={() => setActiveTab('sync')}
-              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'sync'
-                  ? isLight
-                    ? 'border-slate-900 text-slate-900 font-semibold'
-                    : 'border-white text-white font-semibold'
-                  : isLight
+              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap duration-0 cursor-pointer ${activeTab === 'sync'
+                ? isLight
+                  ? 'border-slate-900 text-slate-900 font-semibold'
+                  : 'border-white text-white font-semibold'
+                : isLight
                   ? 'border-transparent text-slate-500 hover:text-slate-900'
                   : 'border-transparent text-white/50 hover:text-white'
-              }`}
+                }`}
             >
               <Cloud className="w-3.5 h-3.5" />
               <span>{t('sync', settings.language)}</span>
             </button>
             <button
               onClick={() => setActiveTab('backup')}
-              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap transition-all cursor-pointer ${
-                activeTab === 'backup'
-                  ? isLight
-                    ? 'border-slate-900 text-slate-900 font-semibold'
-                    : 'border-white text-white font-semibold'
-                  : isLight
+              className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap duration-0 cursor-pointer ${activeTab === 'backup'
+                ? isLight
+                  ? 'border-slate-900 text-slate-900 font-semibold'
+                  : 'border-white text-white font-semibold'
+                : isLight
                   ? 'border-transparent text-slate-500 hover:text-slate-900'
                   : 'border-transparent text-white/50 hover:text-white'
-              }`}
+                }`}
             >
               <FileJson className="w-3.5 h-3.5" />
               <span>{t('dataBackup', settings.language)}</span>
@@ -353,9 +345,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 {/* Theme Mode */}
                 <div>
                   <label
-                    className={`block text-xs font-medium mb-2 ${
-                      isLight ? 'text-slate-800' : 'text-white/80'
-                    }`}
+                    className={`block text-xs font-medium mb-2 ${isLight ? 'text-slate-800' : 'text-white/80'
+                      }`}
                   >
                     {t('themeMode', settings.language)}
                   </label>
@@ -363,15 +354,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <button
                       type="button"
                       onClick={() => handleSettingsChange({ mode: 'dark' })}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer active:scale-95 ${
-                        settings.mode === 'dark'
-                          ? isLight
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
-                            : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
-                          : isLight
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.mode === 'dark'
+                        ? isLight
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                          : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
+                        : isLight
                           ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
                           : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
-                      }`}
+                        }`}
                     >
                       <Moon className="w-4 h-4" />
                       <span>{t('themeDark', settings.language)}</span>
@@ -379,15 +369,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <button
                       type="button"
                       onClick={() => handleSettingsChange({ mode: 'light' })}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer active:scale-95 ${
-                        settings.mode === 'light'
-                          ? isLight
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
-                            : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
-                          : isLight
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.mode === 'light'
+                        ? isLight
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                          : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
+                        : isLight
                           ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
                           : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
-                      }`}
+                        }`}
                     >
                       <Sun className="w-4 h-4" />
                       <span>{t('themeLight', settings.language)}</span>
@@ -398,9 +387,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 {/* Wallpaper Source */}
                 <div>
                   <label
-                    className={`block text-xs font-medium mb-2 ${
-                      isLight ? 'text-slate-800' : 'text-white/80'
-                    }`}
+                    className={`block text-xs font-medium mb-2 ${isLight ? 'text-slate-800' : 'text-white/80'
+                      }`}
                   >
                     {t('background', settings.language)}
                   </label>
@@ -432,21 +420,18 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               bg.id === 'bing'
                                 ? 'https://bing.biturl.top/?resolution=1920&format=image&index=0&mkt=zh-CN'
                                 : bg.id === 'custom'
-                                ? settings.backgroundValue.startsWith('http') || settings.backgroundValue.startsWith('data:') || settings.backgroundValue.includes('wallpaper')
-                                  ? settings.backgroundValue
-                                  : './wallpapers/default-wallpaper.jpg'
-                                : PRESET_GRADIENTS[0].value,
+                                  ? settings.customBackgroundUrl || (settings.backgroundType === 'custom' ? settings.backgroundValue : './wallpapers/default-wallpaper.jpg')
+                                  : PRESET_GRADIENTS[0].value,
                           });
                         }}
-                        className={`py-2 px-3 rounded-xl border text-xs font-medium transition-all cursor-pointer active:scale-95 ${
-                          settings.backgroundType === bg.id
-                            ? isLight
-                              ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
-                              : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
-                            : isLight
+                        className={`py-2 px-3 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.backgroundType === bg.id
+                          ? isLight
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                            : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
+                          : isLight
                             ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
                             : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
-                        }`}
+                          }`}
                       >
                         {bg.label}
                       </button>
@@ -461,13 +446,12 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           key={idx}
                           onClick={() => handleSettingsChange({ backgroundValue: p.value })}
                           style={{ background: p.value }}
-                          className={`h-16 rounded-xl border cursor-pointer relative flex items-end p-2 transition-transform hover:scale-[1.02] ${
-                            settings.backgroundValue === p.value
-                              ? 'border-amber-500 ring-2 ring-amber-500/50 shadow-md'
-                              : isLight
+                          className={`h-16 rounded-xl border cursor-pointer relative flex items-end p-2 duration-0 hover:scale-[1.02] ${settings.backgroundValue === p.value
+                            ? 'border-amber-500 ring-2 ring-amber-500/50 shadow-md'
+                            : isLight
                               ? 'border-black/15 shadow-sm'
                               : 'border-white/20'
-                          }`}
+                            }`}
                         >
                           <span className="text-[10px] font-medium text-white/90 drop-shadow">
                             {p.name}
@@ -487,20 +471,18 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         <input
                           type="text"
                           value={settings.backgroundValue}
-                          onChange={(e) => handleSettingsChange({ backgroundValue: e.target.value })}
+                          onChange={(e) => handleSettingsChange({ backgroundValue: e.target.value, customBackgroundUrl: e.target.value })}
                           placeholder={t('bgCustomPlaceholder', settings.language)}
-                          className={`flex-1 px-3 py-2 rounded-xl border outline-none text-xs ${
-                            isLight
-                              ? 'bg-black/5 border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
-                              : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
-                          }`}
+                          className={`flex-1 px-3 py-2 rounded-xl border outline-none text-xs ${isLight
+                            ? 'bg-black/5 border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
+                            : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
+                            }`}
                         />
                         <label
-                          className={`px-3 py-2 rounded-xl border cursor-pointer transition-colors flex items-center gap-1.5 text-xs shrink-0 ${
-                            isLight
-                              ? 'bg-black/5 hover:bg-black/10 border-black/15 text-slate-700 hover:text-slate-900'
-                              : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80 hover:text-white'
-                          }`}
+                          className={`px-3 py-2 rounded-xl border cursor-pointer duration-0 flex items-center gap-1.5 text-xs shrink-0 ${isLight
+                            ? 'bg-black/5 hover:bg-black/10 border-black/15 text-slate-700 hover:text-slate-900'
+                            : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80 hover:text-white'
+                            }`}
                           title={t('bgLocal', settings.language)}
                         >
                           <Upload className="w-3.5 h-3.5" />
@@ -514,7 +496,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               const reader = new FileReader();
                               reader.onload = () => {
                                 if (typeof reader.result === 'string') {
-                                  handleSettingsChange({ backgroundValue: reader.result });
+                                  handleSettingsChange({ backgroundValue: reader.result, customBackgroundUrl: reader.result });
                                 }
                               };
                               reader.readAsDataURL(file);
@@ -525,10 +507,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleSettingsChange({ backgroundValue: './wallpapers/default-wallpaper.jpg' })}
-                        className={`text-[11px] underline cursor-pointer ${
-                          isLight ? 'text-slate-600 hover:text-black' : 'text-white/60 hover:text-white'
-                        }`}
+                        onClick={() => handleSettingsChange({ backgroundValue: './wallpapers/default-wallpaper.jpg', customBackgroundUrl: './wallpapers/default-wallpaper.jpg' })}
+                        className={`text-[11px] underline cursor-pointer ${isLight ? 'text-slate-600 hover:text-black' : 'text-white/60 hover:text-white'
+                          }`}
                       >
                         {t('resetDefaultWallpaper', settings.language)}
                       </button>
@@ -538,9 +519,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   {/* Unsplash Custom Configuration Panel */}
                   {settings.backgroundType === 'unsplash' && (
                     <div
-                      className={`mt-2 p-3.5 rounded-2xl border space-y-3 animate-fade-in ${
-                        isLight ? 'bg-black/[0.02] border-black/10' : 'bg-white/[0.04] border-white/10'
-                      }`}
+                      className={`mt-2 p-3.5 rounded-2xl border space-y-3 animate-fade-in ${isLight ? 'bg-black/[0.02] border-black/10' : 'bg-white/[0.04] border-white/10'
+                        }`}
                     >
                       {/* Access Key */}
                       <div>
@@ -552,9 +532,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             href="https://unsplash.com/developers"
                             target="_blank"
                             rel="noreferrer"
-                            className={`text-[11px] font-medium flex items-center gap-1 cursor-pointer transition-colors ${
-                              isLight ? 'text-slate-600 hover:text-black underline' : 'text-white/60 hover:text-white underline'
-                            }`}
+                            className={`text-[11px] font-medium flex items-center gap-1 cursor-pointer duration-0 ${isLight ? 'text-slate-600 hover:text-black underline' : 'text-white/60 hover:text-white underline'
+                              }`}
                           >
                             <span>{t('unsplashGetAccessKey', settings.language)}</span>
                             <ExternalLink className="w-3 h-3" />
@@ -565,11 +544,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           value={settings.unsplashAccessKey || ''}
                           onChange={(e) => handleSettingsChange({ unsplashAccessKey: e.target.value })}
                           placeholder={t('unsplashAccessKeyPlaceholder', settings.language)}
-                          className={`w-full px-3.5 py-2.5 rounded-xl border outline-none text-xs transition-all ${
-                            isLight
-                              ? 'bg-black/5 border-black/10 text-slate-900 placeholder-slate-400 focus:border-black/30'
-                              : 'bg-white/10 border-white/10 text-white placeholder-white/40 focus:border-white/30'
-                          }`}
+                          className={`w-full px-3.5 py-2.5 rounded-xl border outline-none text-xs duration-0 ${isLight
+                            ? 'bg-black/5 border-black/10 text-slate-900 placeholder-slate-400 focus:border-black/30'
+                            : 'bg-white/10 border-white/10 text-white placeholder-white/40 focus:border-white/30'
+                            }`}
                         />
                         <p className={`text-[10px] mt-1.5 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
                           {t('unsplashAccessKeyTip', settings.language)}
@@ -585,26 +563,23 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           <button
                             type="button"
                             onClick={() => setIsUnsplashTopicModalOpen(true)}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer active:scale-95 ${
-                              isLight
-                                ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700'
-                                : 'bg-white/10 hover:bg-white/15 border-white/10 text-white/80'
-                            }`}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-medium border duration-0 cursor-pointer active:scale-95 ${isLight
+                              ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700'
+                              : 'bg-white/10 hover:bg-white/15 border-white/10 text-white/80'
+                              }`}
                           >
                             {t('edit', settings.language)}
                           </button>
                         </div>
                         <div
                           onClick={() => setIsUnsplashTopicModalOpen(true)}
-                          className={`p-2.5 rounded-xl border cursor-pointer flex flex-wrap items-center gap-1.5 transition-all ${
-                            isLight
-                              ? 'bg-black/[0.03] border-black/10 hover:bg-black/[0.06]'
-                              : 'bg-white/[0.05] border-white/10 hover:bg-white/[0.08]'
-                          }`}
+                          className={`p-2.5 rounded-xl border cursor-pointer flex flex-wrap items-center gap-1.5 duration-0 ${isLight
+                            ? 'bg-black/[0.03] border-black/10 hover:bg-black/[0.06]'
+                            : 'bg-white/[0.05] border-white/10 hover:bg-white/[0.08]'
+                            }`}
                         >
-                          <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${
-                            isLight ? 'bg-slate-900 text-white' : 'bg-white text-slate-950'
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${isLight ? 'bg-slate-900 text-white' : 'bg-white text-slate-950'
+                            }`}>
                             {t((UNSPLASH_CATEGORIES.find(c => c.id === (settings.unsplashActiveTab || 'nature'))?.nameKey || 'topicNature') as keyof Translation, settings.language)}
                           </span>
                           {(settings.unsplashKeywords && settings.unsplashKeywords.length > 0
@@ -613,11 +588,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           ).slice(0, 4).map((kw, i) => (
                             <span
                               key={i}
-                              className={`px-2 py-0.5 rounded-md text-[11px] border ${
-                                isLight
-                                  ? 'bg-white/80 border-black/10 text-slate-700'
-                                  : 'bg-white/10 border-white/10 text-white/80'
-                              }`}
+                              className={`px-2 py-0.5 rounded-md text-[11px] border ${isLight
+                                ? 'bg-white/80 border-black/10 text-slate-700'
+                                : 'bg-white/10 border-white/10 text-white/80'
+                                }`}
                             >
                               #{kw}
                             </span>
@@ -636,11 +610,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           type="button"
                           onClick={() => handleRefreshUnsplash()}
                           disabled={isFetchingUnsplash}
-                          className={`flex-1 py-2.5 px-3 rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 ${
-                            isLight
-                              ? 'bg-slate-900 hover:bg-black text-white font-semibold shadow-sm'
-                              : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm'
-                          }`}
+                          className={`flex-1 py-2.5 px-3 rounded-xl text-xs duration-0 cursor-pointer flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 ${isLight
+                            ? 'bg-slate-900 hover:bg-black text-white font-semibold shadow-sm'
+                            : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm'
+                            }`}
                         >
                           <RefreshCw className={`w-3.5 h-3.5 ${isFetchingUnsplash ? 'animate-spin' : ''}`} />
                           <span>{isFetchingUnsplash ? t('unsplashFetching', settings.language) : t('unsplashRefresh', settings.language)}</span>
@@ -655,9 +628,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                       {/* Author Credit */}
                       {settings.unsplashAuthorName && (
-                        <div className={`text-[10px] pt-1.5 border-t flex items-center justify-between ${
-                          isLight ? 'border-black/8 text-slate-500' : 'border-white/8 text-white/50'
-                        }`}>
+                        <div className={`text-[10px] pt-1.5 border-t flex items-center justify-between ${isLight ? 'border-black/8 text-slate-500' : 'border-white/8 text-white/50'
+                          }`}>
                           <span>
                             {t('unsplashCredit', settings.language)}:{' '}
                             <a
@@ -685,24 +657,21 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                 {/* Collapsible Card & Layout Sliders Accordion */}
                 <div
-                  className={`rounded-2xl border transition-all overflow-hidden ${
-                    isLight ? 'bg-black/[0.02] border-black/10' : 'bg-white/[0.04] border-white/10'
-                  }`}
+                  className={`rounded-2xl border duration-0 overflow-hidden ${isLight ? 'bg-black/[0.02] border-black/10' : 'bg-white/[0.04] border-white/10'
+                    }`}
                 >
                   <button
                     type="button"
                     onClick={() => setIsCardLayoutExpanded(!isCardLayoutExpanded)}
-                    className={`w-full flex items-center justify-between p-3.5 transition-colors cursor-pointer text-left ${
-                      isLight ? 'hover:bg-black/[0.03]' : 'hover:bg-white/[0.04]'
-                    }`}
+                    className={`w-full flex items-center justify-between p-3.5 duration-0 cursor-pointer text-left ${isLight ? 'hover:bg-black/[0.03]' : 'hover:bg-white/[0.04]'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className={`p-2 rounded-xl border ${
-                          isLight
-                            ? 'bg-black/[0.04] border-black/5 text-slate-800'
-                            : 'bg-white/10 border-white/10 text-white'
-                        }`}
+                        className={`p-2 rounded-xl border ${isLight
+                          ? 'bg-black/[0.04] border-black/5 text-slate-800'
+                          : 'bg-white/10 border-white/10 text-white'
+                          }`}
                       >
                         <Sliders className="w-4 h-4" />
                       </div>
@@ -716,17 +685,15 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       </div>
                     </div>
                     <ChevronDown
-                      className={`w-4 h-4 transition-transform duration-200 shrink-0 opacity-60 ${
-                        isCardLayoutExpanded ? 'rotate-180' : ''
-                      }`}
+                      className={`w-4 h-4 transition-transform duration-200 shrink-0 opacity-60 ${isCardLayoutExpanded ? 'rotate-180' : ''
+                        }`}
                     />
                   </button>
 
                   {isCardLayoutExpanded && (
                     <div
-                      className={`p-4 pt-3 space-y-5 border-t animate-fade-in ${
-                        isLight ? 'border-black/5 bg-white/40' : 'border-white/5 bg-black/20'
-                      }`}
+                      className={`p-4 pt-3 space-y-5 border-t animate-fade-in ${isLight ? 'border-black/5 bg-white/40' : 'border-white/5 bg-black/20'
+                        }`}
                     >
                       {/* Card Size Slider */}
                       <div>
@@ -848,11 +815,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               <div className="space-y-3">
                 {/* Language */}
                 <div
-                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
-                    isLight
-                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
-                      : 'bg-white/[0.05] border-white/10 text-white'
-                  }`}
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                    }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <Globe className="w-4 h-4 opacity-70" />
@@ -872,11 +838,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                 {/* Open in New Tab */}
                 <div
-                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
-                    isLight
-                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
-                      : 'bg-white/[0.05] border-white/10 text-white'
-                  }`}
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                    }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <ExternalLink className="w-4 h-4 opacity-70" />
@@ -889,32 +854,12 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   />
                 </div>
 
-                {/* Show Search */}
-                <div
-                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
-                    isLight
-                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
-                      : 'bg-white/[0.05] border-white/10 text-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Search className="w-4 h-4 opacity-70" />
-                    <span className="text-xs font-medium">{t('showSearchOnly', settings.language)}</span>
-                  </div>
-                  <ToggleSwitch
-                    checked={settings.showSearch ?? true}
-                    onChange={(checked) => handleSettingsChange({ showSearch: checked })}
-                    isLight={isLight}
-                  />
-                </div>
-
                 {/* Show Clock & Time Format */}
                 <div
-                  className={`p-3.5 rounded-2xl border transition-colors space-y-3 ${
-                    isLight
-                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
-                      : 'bg-white/[0.05] border-white/10 text-white'
-                  }`}
+                  className={`p-3.5 rounded-2xl border duration-0 space-y-3 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
@@ -937,22 +882,20 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         <button
                           type="button"
                           onClick={() => handleSettingsChange({ timeFormat: '12h' })}
-                          className={`px-3 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
-                            settings.timeFormat === '12h'
-                              ? isLight ? 'bg-white text-slate-900 shadow-sm' : 'bg-white/20 text-white shadow-sm'
-                              : isLight ? 'text-slate-500 hover:text-slate-800' : 'text-white/50 hover:text-white'
-                          }`}
+                          className={`px-3 py-1 rounded-md text-[11px] font-medium duration-0 cursor-pointer ${settings.timeFormat === '12h'
+                            ? isLight ? 'bg-white text-slate-900 shadow-sm' : 'bg-white/20 text-white shadow-sm'
+                            : isLight ? 'text-slate-500 hover:text-slate-800' : 'text-white/50 hover:text-white'
+                            }`}
                         >
                           {t('timeFormat12h', settings.language)}
                         </button>
                         <button
                           type="button"
                           onClick={() => handleSettingsChange({ timeFormat: '24h' })}
-                          className={`px-3 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
-                            (settings.timeFormat || '24h') === '24h'
-                              ? isLight ? 'bg-white text-slate-900 shadow-sm' : 'bg-white/20 text-white shadow-sm'
-                              : isLight ? 'text-slate-500 hover:text-slate-800' : 'text-white/50 hover:text-white'
-                          }`}
+                          className={`px-3 py-1 rounded-md text-[11px] font-medium duration-0 cursor-pointer ${(settings.timeFormat || '24h') === '24h'
+                            ? isLight ? 'bg-white text-slate-900 shadow-sm' : 'bg-white/20 text-white shadow-sm'
+                            : isLight ? 'text-slate-500 hover:text-slate-800' : 'text-white/50 hover:text-white'
+                            }`}
                         >
                           {t('timeFormat24h', settings.language)}
                         </button>
@@ -963,11 +906,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                 {/* Show Date */}
                 <div
-                  className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
-                    isLight
-                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
-                      : 'bg-white/[0.05] border-white/10 text-white'
-                  }`}
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                    }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <Calendar className="w-4 h-4 opacity-70" />
@@ -980,13 +922,30 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   />
                 </div>
 
+                {/* Show Search */}
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                    }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Search className="w-4 h-4 opacity-70" />
+                    <span className="text-xs font-medium">{t('showSearchOnly', settings.language)}</span>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.showSearch ?? true}
+                    onChange={(checked) => handleSettingsChange({ showSearch: checked })}
+                    isLight={isLight}
+                  />
+                </div>
+
                 {/* Show Greeting & Custom Greetings Section */}
                 <div
-                  className={`p-3.5 rounded-2xl border transition-colors space-y-3 ${
-                    isLight
-                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
-                      : 'bg-white/[0.05] border-white/10 text-white'
-                  }`}
+                  className={`p-3.5 rounded-2xl border duration-0 space-y-3 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
@@ -1003,9 +962,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   {/* Greeting customization panel when showGreeting is enabled */}
                   {settings.showGreeting && (
                     <div
-                      className={`pt-3 border-t space-y-2.5 ${
-                        isLight ? 'border-black/8' : 'border-white/10'
-                      }`}
+                      className={`pt-3 border-t space-y-2.5 ${isLight ? 'border-black/8' : 'border-white/10'
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <span className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
@@ -1026,11 +984,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <div className="flex flex-wrap gap-2 pt-1">
                         {/* Import Greetings Button */}
                         <label
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-colors ${
-                            isLight
-                              ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'
-                              : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
-                          }`}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer duration-0 ${isLight
+                            ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'
+                            : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
+                            }`}
                         >
                           <Upload className="w-3.5 h-3.5" />
                           <span>{t('importGreetings', settings.language)}</span>
@@ -1046,11 +1003,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         <button
                           type="button"
                           onClick={handleDownloadGreetingTemplate}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
-                            isLight
-                              ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'
-                              : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
-                          }`}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer ${isLight
+                            ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'
+                            : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
+                            }`}
                         >
                           <FileDown className="w-3.5 h-3.5" />
                           <span>{t('downloadGreetingTemplate', settings.language)}</span>
@@ -1061,7 +1017,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           <button
                             type="button"
                             onClick={handleResetGreetings}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors text-red-500 bg-red-500/10 hover:bg-red-500/20 border-red-500/20 cursor-pointer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium duration-0 text-red-500 bg-red-500/10 hover:bg-red-500/20 border-red-500/20 cursor-pointer"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
                             <span>{t('resetGreetings', settings.language)}</span>
@@ -1072,11 +1028,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       {/* Import Status Message */}
                       {greetingStatus && (
                         <div
-                          className={`text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 animate-fade-in ${
-                            greetingStatus.success
-                              ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                              : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                          }`}
+                          className={`text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 animate-fade-in ${greetingStatus.success
+                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                            : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                            }`}
                         >
                           <span>{greetingStatus.text}</span>
                         </div>
@@ -1092,22 +1047,20 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               <div className="space-y-4">
                 {/* Sub-selector for Sync Method */}
                 <div
-                  className={`flex p-1 rounded-2xl border gap-1 ${
-                    isLight ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/15'
-                  }`}
+                  className={`flex p-1 rounded-2xl border gap-1 ${isLight ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/15'
+                    }`}
                 >
                   <button
                     type="button"
                     onClick={() => setSyncProvider('webdav')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer active:scale-95 ${
-                      syncProvider === 'webdav'
-                        ? isLight
-                          ? 'bg-slate-900 text-white shadow-sm font-semibold'
-                          : 'bg-white text-slate-950 shadow-sm font-semibold'
-                        : isLight
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${syncProvider === 'webdav'
+                      ? isLight
+                        ? 'bg-slate-900 text-white shadow-sm font-semibold'
+                        : 'bg-white text-slate-950 shadow-sm font-semibold'
+                      : isLight
                         ? 'text-slate-600 hover:text-slate-900'
                         : 'text-white/70 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <Cloud className="w-3.5 h-3.5" />
                     <span>{t('webdavSync', settings.language)}</span>
@@ -1115,15 +1068,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   <button
                     type="button"
                     onClick={() => setSyncProvider('git')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer active:scale-95 ${
-                      syncProvider === 'git'
-                        ? isLight
-                          ? 'bg-slate-900 text-white shadow-sm font-semibold'
-                          : 'bg-white text-slate-950 shadow-sm font-semibold'
-                        : isLight
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${syncProvider === 'git'
+                      ? isLight
+                        ? 'bg-slate-900 text-white shadow-sm font-semibold'
+                        : 'bg-white text-slate-950 shadow-sm font-semibold'
+                      : isLight
                         ? 'text-slate-600 hover:text-slate-900'
                         : 'text-white/70 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <GitBranch className="w-3.5 h-3.5" />
                     <span>{t('gitBackup', settings.language)}</span>
@@ -1151,11 +1103,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             {activeTab === 'backup' && (
               <div className="space-y-4">
                 <div
-                  className={`p-4 rounded-2xl border space-y-3 ${
-                    isLight
-                      ? 'bg-black/[0.03] border-black/8 text-slate-700'
-                      : 'bg-white/[0.05] border-white/10 text-white/70'
-                  }`}
+                  className={`p-4 rounded-2xl border space-y-3 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-700'
+                    : 'bg-white/[0.05] border-white/10 text-white/70'
+                    }`}
                 >
                   <div className="text-xs leading-relaxed">
                     {t('backupDescription', settings.language)}
@@ -1165,22 +1116,20 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <button
                       type="button"
                       onClick={handleExport}
-                      className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer active:scale-95 ${
-                        isLight
-                          ? 'bg-slate-900 hover:bg-black text-white'
-                          : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
-                      }`}
+                      className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${isLight
+                        ? 'bg-slate-900 hover:bg-black text-white'
+                        : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
+                        }`}
                     >
                       <Download className="w-4 h-4" />
                       <span>{t('exportData', settings.language)}</span>
                     </button>
 
                     <label
-                      className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
-                        isLight
-                          ? 'bg-white hover:bg-slate-50 border-black/10 text-slate-800 shadow-sm'
-                          : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
-                      }`}
+                      className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer ${isLight
+                        ? 'bg-white hover:bg-slate-50 border-black/10 text-slate-800 shadow-sm'
+                        : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
+                        }`}
                     >
                       <Upload className="w-4 h-4" />
                       <span>{t('importData', settings.language)}</span>
@@ -1195,11 +1144,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                   {importStatus && (
                     <div
-                      className={`p-2.5 rounded-xl text-xs text-center ${
-                        isLight
-                          ? 'bg-black/5 text-slate-800 border border-black/10'
-                          : 'bg-white/10 text-white'
-                      }`}
+                      className={`p-2.5 rounded-xl text-xs text-center ${isLight
+                        ? 'bg-black/5 text-slate-800 border border-black/10'
+                        : 'bg-white/10 text-white'
+                        }`}
                     >
                       {importStatus}
                     </div>
