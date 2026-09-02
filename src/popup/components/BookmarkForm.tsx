@@ -45,54 +45,54 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language 
   return (
     <div className="flex-1 flex flex-col gap-3">
       <div className="space-y-1">
-        <label className="text-[11px] font-medium text-slate-500">{t('siteTitle', language)}</label>
+        <label className="text-[11px] font-medium text-slate-600 dark:text-slate-300">{t('siteTitle', language)}</label>
         <input 
           type="text" 
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-transparent focus:border-indigo-500 outline-none"
+          className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-colors"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="text-[11px] font-medium text-slate-500">{t('siteUrl', language)}</label>
+        <label className="text-[11px] font-medium text-slate-600 dark:text-slate-300">{t('siteUrl', language)}</label>
         <input 
           type="text" 
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-transparent focus:border-indigo-500 outline-none"
+          className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-colors"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="text-[11px] font-medium text-slate-500">{t('siteIcon', language)}</label>
+        <label className="text-[11px] font-medium text-slate-600 dark:text-slate-300">{t('siteIcon', language)}</label>
         <div className="flex gap-2 items-center">
           {favicon ? (
-            <img src={favicon} alt="" className="w-8 h-8 rounded shrink-0 object-cover" />
+            <img src={favicon} alt="" className="w-8 h-8 rounded-lg shrink-0 object-cover border border-black/5 dark:border-white/10 bg-white/5" />
           ) : (
-            <div className="w-8 h-8 rounded bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs shrink-0">🌐</div>
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs shrink-0">🌐</div>
           )}
           <input 
             type="text" 
             value={favicon}
             placeholder={t('popupIconPlaceholder', language)}
             onChange={(e) => setFavicon(e.target.value)}
-            className="flex-1 min-w-0 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-transparent focus:border-indigo-500 outline-none"
+            className="flex-1 min-w-0 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-colors"
           />
         </div>
       </div>
 
       {categories.length > 0 && (
         <div className="space-y-1">
-          <label className="text-[11px] font-medium text-slate-500">{t('siteCategory', language)}</label>
+          <label className="text-[11px] font-medium text-slate-600 dark:text-slate-300">{t('siteCategory', language)}</label>
           <div className="relative">
             <select 
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-transparent appearance-none focus:border-indigo-500 outline-none"
+              className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 text-slate-800 dark:text-slate-100 appearance-none focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-colors cursor-pointer"
             >
               {categories.map((c) => (
-                <option key={c.id} value={c.id} className="text-slate-800 dark:text-slate-800">{c.name}</option>
+                <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">{c.name}</option>
               ))}
             </select>
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -108,7 +108,7 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language 
         <button 
           onClick={() => onSave({ title, url, favicon, categoryId: categoryId || 'all' })}
           disabled={isSaving || !title.trim() || !url.trim() || (categories.length > 0 && !categoryId)}
-          className="w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98"
         >
           {isSaving ? t('popupSaving', language) : t('popupAddTitle', language)}
         </button>
