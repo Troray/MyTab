@@ -67,7 +67,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         />
       </button>
 
-      {/* Frosted Glass Dropdown Menu */}
+      {/* Dropdown Menu */}
       {isOpen && (
         <div
           className={`absolute left-0 right-0 top-[calc(100%+6px)] max-h-56 overflow-y-auto rounded-2xl border shadow-2xl z-50 animate-scale-in p-1.5 scrollbar-thin ${
@@ -75,10 +75,6 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
               ? 'border-black/10 shadow-black/15 bg-white/95 text-slate-900'
               : 'border-white/15 shadow-black/80 bg-slate-900/95 text-white'
           }`}
-          style={{
-            backdropFilter: 'blur(32px)',
-            WebkitBackdropFilter: 'blur(32px)',
-          }}
         >
           {options.map((option) => {
             const isSelected = option.value === value;

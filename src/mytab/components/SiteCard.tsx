@@ -112,8 +112,8 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
         width: `${cardSize}px`,
         minHeight: `${cardSize}px`,
       }}
-      className={`relative shrink-0 select-none cursor-grab active:cursor-grabbing will-change-transform ${
-        isDragging ? 'opacity-30 scale-95' : ''
+      className={`relative shrink-0 select-none cursor-grab active:cursor-grabbing ${
+        isDragging ? 'opacity-30 scale-95 will-change-transform' : isJustDropped ? 'will-change-transform' : ''
       }`}
     >
       {/* Inner Animated Visual Card Layer */}
@@ -132,10 +132,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
             : isLight
             ? `rgba(255, 255, 255, ${Math.max(0.82, settings.cardOpacity)})`
             : `rgba(255, 255, 255, ${settings.cardOpacity})`,
-          backdropFilter: `blur(${blurPx}px)`,
-          WebkitBackdropFilter: `blur(${blurPx}px)`,
           padding: `${paddingPx}px`,
-          transform: 'translateZ(0)',
         }}
         className={`group relative flex flex-col items-center justify-center rounded-2xl border duration-0 h-full w-full ${jiggleClass} ${
           isDragging
@@ -213,12 +210,8 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
               className={`absolute right-0 top-6 w-28 py-1 rounded-xl border shadow-2xl z-40 animate-scale-in text-xs font-medium overflow-hidden ${
                 isLight
                   ? 'border-black/10 shadow-black/10 bg-white/95 text-slate-800'
-                  : 'border-white/15 shadow-black/60 bg-slate-900/90 text-white'
+                  : 'border-white/15 shadow-black/60 bg-slate-900/95 text-white'
               }`}
-              style={{
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-              }}
             >
               <button
                 onClick={() => {
