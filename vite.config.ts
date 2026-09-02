@@ -16,6 +16,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         mytab: path.resolve(__dirname, 'index.html'),
+        popup: path.resolve(__dirname, 'popup.html'),
         background: path.resolve(__dirname, 'src/background/index.ts'),
       },
       output: {
