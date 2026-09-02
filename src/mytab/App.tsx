@@ -83,13 +83,15 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   // 3. Theme mode class on document
   useEffect(() => {
     if (!appState) return;
-    const isLight = appState.settings.mode === 'light';
-    if (isLight) {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-    } else {
+    const mode = appState.settings.mode;
+    const isDark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    if (isDark) {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
     }
   }, [appState?.settings?.mode]);
 
