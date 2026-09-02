@@ -50,7 +50,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-medium transition-all cursor-pointer ${
+        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-medium duration-0 cursor-pointer ${
           isLight
             ? `bg-black/5 hover:bg-black/10 text-slate-900 ${isOpen ? 'border-black/30 ring-2 ring-black/10' : 'border-black/10'}`
             : `bg-white/10 hover:bg-white/15 text-white ${isOpen ? 'border-white/30 ring-2 ring-white/20' : 'border-white/15'}`
@@ -61,7 +61,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown
-          className={`w-4 h-4 opacity-60 transition-transform duration-200 shrink-0 ml-2 ${
+          className={`w-4 h-4 opacity-60 duration-0 shrink-0 ml-2 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -90,7 +90,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                   onChange(option.value);
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs sm:text-sm transition-colors cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs sm:text-sm duration-0 cursor-pointer ${
                   isSelected
                     ? isLight
                       ? 'bg-black/5 text-black font-semibold'
