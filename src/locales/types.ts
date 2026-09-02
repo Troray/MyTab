@@ -270,6 +270,14 @@ export interface Translation {
   descRoadTrip: string;
   tagCamping: string;
   descCamping: string;
+  popupAddTitle: string;
+  popupUnsupportedTitle: string;
+  popupUnsupportedDesc: string;
+  popupErrorTitle: string;
+  popupErrorDesc: string;
+  popupSuccess: string;
+  popupDuplicateWarning: string;
+  popupSaving: string;
 }
 
 export type TranslationKey = keyof Translation;

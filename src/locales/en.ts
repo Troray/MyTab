@@ -272,4 +272,12 @@ export const en: Translation = {
   descRoadTrip: 'Endless open highways',
   tagCamping: 'Camping Life',
   descCamping: 'Wild outdoor campsite',
+  popupAddTitle: 'Add to MyTab',
+  popupUnsupportedTitle: 'Cannot Add Page',
+  popupUnsupportedDesc: 'Please open a standard web page and try again.',
+  popupErrorTitle: 'An error occurred',
+  popupErrorDesc: 'Please try again',
+  popupSuccess: 'Added to MyTab',
+  popupDuplicateWarning: 'This URL already exists in MyTab. You can still add it.',
+  popupSaving: 'Saving...',
 };

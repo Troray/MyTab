@@ -272,4 +272,12 @@ export const zhCN: Translation = {
   descRoadTrip: '无尽延绵公路',
   tagCamping: '户外露营',
   descCamping: '旷野帐篷野趣',
+  popupAddTitle: '添加到 MyTab',
+  popupUnsupportedTitle: '当前页面无法添加',
+  popupUnsupportedDesc: '请打开一个普通的网页后再试。',
+  popupErrorTitle: '发生错误',
+  popupErrorDesc: '请重试',
+  popupSuccess: '已添加到 MyTab',
+  popupDuplicateWarning: '该网址已存在于 MyTab。您可以继续添加。',
+  popupSaving: '正在保存...',
 };

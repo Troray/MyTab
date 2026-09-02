@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import browser from 'webextension-polyfill';
+import { t, Locale } from '../../locales';
 
 interface Props {
   initialData: { title: string; url: string; favicon?: string };
   isSaving: boolean;
+  language?: Locale;
   onSave: (data: { title: string; url: string; favicon?: string; categoryId: string }) => void;
 }
 
-export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, onSave }) => {
+export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language = 'zh-CN', onSave }) => {
   const [title, setTitle] = useState(initialData.title);
   const [url, setUrl] = useState(initialData.url);
   const [favicon, setFavicon] = useState(initialData.favicon || '');
@@ -43,7 +45,7 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, onSave })
   return (
     <div className="flex-1 flex flex-col gap-3">
       <div className="space-y-1">
-        <label className="text-[11px] font-medium text-slate-500">标题</label>
+        <label className="text-[11px] font-medium text-slate-500">{t('siteTitle', language)}</label>
         <input 
           type="text" 
           value={title}
@@ -53,7 +55,7 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, onSave })
       </div>
 
       <div className="space-y-1">
-        <label className="text-[11px] font-medium text-slate-500">网址</label>
+        <label className="text-[11px] font-medium text-slate-500">{t('siteUrl', language)}</label>
         <input 
           type="text" 
           value={url}
@@ -63,7 +65,7 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, onSave })
       </div>
 
       <div className="space-y-1">
-        <label className="text-[11px] font-medium text-slate-500">图标</label>
+        <label className="text-[11px] font-medium text-slate-500">{t('siteIcon', language)}</label>
         <div className="flex gap-2 items-center">
           {favicon ? (
             <img src={favicon} alt="" className="w-8 h-8 rounded shrink-0 object-cover" />
@@ -73,7 +75,7 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, onSave })
           <input 
             type="text" 
             value={favicon}
-            placeholder="图标链接 (支持 Base64 / URL)"
+            placeholder={t('popupIconPlaceholder', language)}
             onChange={(e) => setFavicon(e.target.value)}
             className="flex-1 min-w-0 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-transparent focus:border-indigo-500 outline-none"
           />
@@ -82,7 +84,7 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, onSave })
 
       {categories.length > 0 && (
         <div className="space-y-1">
-          <label className="text-[11px] font-medium text-slate-500">分组</label>
+          <label className="text-[11px] font-medium text-slate-500">{t('siteCategory', language)}</label>
           <div className="relative">
             <select 
               value={categoryId}
@@ -108,7 +110,7 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, onSave })
           disabled={isSaving || !title.trim() || !url.trim() || (categories.length > 0 && !categoryId)}
           className="w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {isSaving ? '正在保存...' : '添加到 MyTab'}
+          {isSaving ? t('popupSaving', language) : t('popupAddTitle', language)}
         </button>
       </div>
     </div>

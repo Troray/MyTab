@@ -272,4 +272,12 @@ export const fr: Translation = {
   descRoadTrip: 'Routes infinies vers l\'horizon',
   tagCamping: 'Camping',
   descCamping: 'Nuits en tente en pleine nature',
+  popupAddTitle: 'Ajouter à MyTab',
+  popupUnsupportedTitle: 'Impossible d\'ajouter cette page',
+  popupUnsupportedDesc: 'Veuillez ouvrir une page web standard et réessayer.',
+  popupErrorTitle: 'Une erreur s\'est produite',
+  popupErrorDesc: 'Veuillez réessayer',
+  popupSuccess: 'Ajouté à MyTab',
+  popupDuplicateWarning: 'Cette URL existe déjà dans MyTab. Vous pouvez toujours l\'ajouter.',
+  popupSaving: 'Enregistrement...',
 };

@@ -272,4 +272,12 @@ export const ko: Translation = {
   descRoadTrip: '끝없이 펼쳐진 도로',
   tagCamping: '캠핑 & 아웃도어',
   descCamping: '대자연 속 텐트 풍경',
+  popupAddTitle: 'MyTab에 추가',
+  popupUnsupportedTitle: '이 페이지는 추가할 수 없습니다',
+  popupUnsupportedDesc: '일반 웹 페이지를 열고 다시 시도하세요.',
+  popupErrorTitle: '오류가 발생했습니다',
+  popupErrorDesc: '다시 시도하세요',
+  popupSuccess: 'MyTab에 추가되었습니다',
+  popupDuplicateWarning: '이 URL은 이미 MyTab에 존재합니다. 계속 추가할 수 있습니다.',
+  popupSaving: '저장 중...',
 };

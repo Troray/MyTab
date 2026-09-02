@@ -272,4 +272,12 @@ export const zhTW: Translation = {
   descRoadTrip: '無盡延綿公路',
   tagCamping: '戶外露營',
   descCamping: '曠野帳篷野趣',
+  popupAddTitle: '添加到 MyTab',
+  popupUnsupportedTitle: '當前頁面無法添加',
+  popupUnsupportedDesc: '請打開一個普通的網頁後再試。',
+  popupErrorTitle: '發生錯誤',
+  popupErrorDesc: '請重試',
+  popupSuccess: '已添加到 MyTab',
+  popupDuplicateWarning: '該網址已存在於 MyTab。您可以繼續添加。',
+  popupSaving: '正在保存...',
 };

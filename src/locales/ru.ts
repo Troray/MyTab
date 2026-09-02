@@ -272,4 +272,12 @@ export const ru: Translation = {
   descRoadTrip: 'Дороги, уходящие за горизонт',
   tagCamping: 'Кемпинг',
   descCamping: 'Палатки на лоне дикой природы',
+  popupAddTitle: 'Добавить в MyTab',
+  popupUnsupportedTitle: 'Невозможно добавить страницу',
+  popupUnsupportedDesc: 'Пожалуйста, откройте обычную веб-страницу и попробуйте снова.',
+  popupErrorTitle: 'Произошла ошибка',
+  popupErrorDesc: 'Пожалуйста, попробуйте снова',
+  popupSuccess: 'Добавлено в MyTab',
+  popupDuplicateWarning: 'Этот URL уже существует в MyTab. Вы все равно можете добавить его.',
+  popupSaving: 'Сохранение...',
 };

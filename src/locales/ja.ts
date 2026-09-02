@@ -272,4 +272,12 @@ export const ja: Translation = {
   descRoadTrip: 'どこまでも続くハイウェイ',
   tagCamping: 'キャンプ・野営',
   descCamping: '大自然に広がるテントの風景',
+  popupAddTitle: 'MyTab に追加',
+  popupUnsupportedTitle: 'このページは追加できません',
+  popupUnsupportedDesc: '通常のWebページを開いてもう一度お試しください。',
+  popupErrorTitle: 'エラーが発生しました',
+  popupErrorDesc: 'もう一度お試しください',
+  popupSuccess: 'MyTab に追加しました',
+  popupDuplicateWarning: 'このURLは既にMyTabに存在します。追加を続行できます。',
+  popupSaving: '保存中...',
 };
