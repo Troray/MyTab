@@ -117,6 +117,7 @@ async function buildExtension() {
     } else if (target === 'firefox') {
       manifest.background = {
         scripts: ['background.js'],
+        type: 'module',
       };
       manifest.chrome_settings_overrides = {
         homepage: 'newtab.html',
