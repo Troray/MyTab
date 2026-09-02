@@ -63,7 +63,6 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
   };
 
   const isLight = settings.mode === 'light';
-  const blurPx = Math.round(((settings.cardBlur ?? 50) / 100) * 32);
 
   return (
     <div className="relative z-30 w-full max-w-2xl mx-auto my-6 px-4">
@@ -80,11 +79,8 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
         }`}
         style={{
           background: isLight
-            ? `rgba(255, 255, 255, ${Math.max(0.88, settings.cardOpacity)})`
-            : `rgba(255, 255, 255, ${Math.max(0.08, settings.cardOpacity)})`,
-          backdropFilter: `blur(${blurPx}px)`,
-          WebkitBackdropFilter: `blur(${blurPx}px)`,
-          transform: 'translateZ(0)',
+            ? 'rgba(255, 255, 255, 0.88)'
+            : 'rgba(255, 255, 255, 0.05)',
         }}
       >
         {/* Engine Selector */}
@@ -108,12 +104,8 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
               className={`absolute left-2 top-[calc(100%+8px)] w-48 py-1.5 rounded-2xl border shadow-2xl z-50 overflow-hidden transition-all ${
                 isLight
                   ? 'border-black/10 shadow-black/10 bg-white/95'
-                  : 'border-white/15 shadow-black/60 bg-slate-900/90'
+                  : 'border-white/15 shadow-black/60 bg-slate-900/95 text-white'
               }`}
-              style={{
-                backdropFilter: 'blur(28px)',
-                WebkitBackdropFilter: 'blur(28px)',
-              }}
             >
               <div
                 className={`px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider ${
