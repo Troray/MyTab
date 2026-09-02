@@ -315,7 +315,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     setConnectResult(null);
 
     try {
-      const res = await autoSetupGist(config.provider, config.token.trim());
+      const res = await autoSetupGist(config.provider, config.token.trim(), settings.language);
       if (res.success) {
         handleChange({
           enabled: true,
@@ -352,7 +352,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
       const targetOwner = isTokenLike(parsed?.owner) ? undefined : (parsed?.owner || (isTokenLike(config.owner) ? undefined : config.owner));
 
-      const res = await autoSetupRepo(config.provider, config.token.trim(), targetRepo, targetOwner);
+      const res = await autoSetupRepo(config.provider, config.token.trim(), targetRepo, targetOwner, settings.language);
       if (res.success) {
         const finalOwner = res.owner || targetOwner || config.owner || 'User';
         const finalRepo = res.repo || targetRepo;
