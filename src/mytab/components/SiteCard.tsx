@@ -137,7 +137,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
           padding: `${paddingPx}px`,
           transform: 'translateZ(0)',
         }}
-        className={`group relative flex flex-col items-center justify-center rounded-2xl border transition-all duration-200 ease-out h-full w-full ${jiggleClass} ${
+        className={`group relative flex flex-col items-center justify-center rounded-2xl border duration-0 h-full w-full ${jiggleClass} ${
           isDragging
             ? 'ios-dragged border-amber-500/60 ring-2 ring-amber-500/30'
             : isJustDropped
@@ -150,7 +150,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
         {/* Icon Inset Container */}
         <div
           style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px` }}
-          className={`rounded-xl flex items-center justify-center shadow-inner overflow-hidden mb-2 transition-transform duration-150 group-hover:scale-105 shrink-0 pointer-events-none ${
+          className={`rounded-xl flex items-center justify-center shadow-inner overflow-hidden mb-2 duration-0 group-hover:scale-105 shrink-0 pointer-events-none ${
             isLight
               ? 'bg-black/[0.03] border border-black/5'
               : 'bg-white/[0.08] border border-white/10'
@@ -174,7 +174,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
           style={{
             fontSize: cardSize < 95 ? '11px' : cardSize > 130 ? '14px' : '12px',
           }}
-          className={`font-medium truncate max-w-full text-center tracking-wide px-1 select-none pointer-events-none transition-colors ${
+          className={`font-medium truncate max-w-full text-center tracking-wide px-1 select-none pointer-events-none duration-0 ${
             isLight
               ? 'text-slate-800 group-hover:text-black'
               : 'text-white/90 group-hover:text-white drop-shadow'
