@@ -28,17 +28,21 @@ async function getItem<T>(key: string, defaultValue: T): Promise<T> {
         return res[key] as T;
       }
     } catch (e) {
-      console.warn(`[Storage] Failed to read ${key} from extension storage, falling back to localStorage`, e);
+      console.warn(`[Storage] Failed to read ${key} from extension storage`, e);
     }
   }
 
-  const raw = localStorage.getItem(key);
-  if (raw === null) return defaultValue;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return defaultValue;
+  if (typeof localStorage !== 'undefined') {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return defaultValue;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return defaultValue;
+    }
   }
+
+  return defaultValue;
 }
 
 async function setItem<T>(key: string, value: T): Promise<void> {
@@ -47,11 +51,13 @@ async function setItem<T>(key: string, value: T): Promise<void> {
       await chrome.storage.local.set({ [key]: value });
       return;
     } catch (e) {
-      console.warn(`[Storage] Failed to write ${key} to extension storage, saving to localStorage`, e);
+      console.warn(`[Storage] Failed to write ${key} to extension storage`, e);
     }
   }
 
-  localStorage.setItem(key, JSON.stringify(value));
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
 }
 
 export async function loadAppState(): Promise<AppState> {
@@ -156,6 +162,16 @@ export async function setFirstLaunchComplete(): Promise<void> {
 
 export async function saveActiveCategory(catId: string): Promise<void> {
   await setItem(STORAGE_KEYS.ACTIVE_CATEGORY, catId);
+}
+
+const POPUP_PREFS_KEY = 'mytab_popup_prefs';
+export async function getPopupLastUsedGroupId(): Promise<string | undefined> {
+  const prefs = await getItem<{ lastUsedGroupId?: string }>(POPUP_PREFS_KEY, {});
+  return prefs.lastUsedGroupId;
+}
+
+export async function savePopupLastUsedGroupId(groupId: string): Promise<void> {
+  await setItem(POPUP_PREFS_KEY, { lastUsedGroupId: groupId });
 }
 
 export async function exportAllData(): Promise<string> {
