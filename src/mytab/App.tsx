@@ -286,11 +286,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   };
 
   // Handlers for Settings & WebDAV
-  const handleUpdateSettings = async (newSettings: ThemeSettings) => {
+  const handleUpdateSettings = (newSettings: ThemeSettings) => {
     const stampedSettings = { ...newSettings, updatedAt: Date.now() };
-    await saveSettings(stampedSettings);
     const nextState = { ...appState, settings: stampedSettings };
-    setAppState(nextState);
+    setAppState(nextState as AppState);
+    saveSettings(stampedSettings).catch(e => console.error('[MyTab] Failed to save settings:', e));
   };
 
   const handleUpdateWebdav = async (newWebdav: WebdavConfig) => {
