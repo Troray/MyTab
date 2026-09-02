@@ -236,6 +236,10 @@ body {
    Firefox struggles with heavy backdrop-filters on multiple elements (like the Site Grid),
    causing significant scroll lag and unresponsiveness. We disable it here for smooth performance. */
 @-moz-document url-prefix() {
+  * {
+    backdrop-filter: none !important;
+  }
+
   .glass-panel, .glass-drawer, .glass-modal {
     backdrop-filter: none !important;
   }
