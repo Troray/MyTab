@@ -118,7 +118,12 @@ export const App: React.FC = () => {
             try {
               const res = await browser.runtime.sendMessage({
                 type: 'ADD_BOOKMARK',
-                payload: data
+                payload: {
+                  title: data.title,
+                  url: data.url,
+                  icon: data.favicon,
+                  categoryId: data.categoryId,
+                }
               });
               if (res.success) {
                 setStatus('success');
