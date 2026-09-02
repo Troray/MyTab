@@ -101,10 +101,10 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
           {/* Engine Dropdown Popover */}
           {isDropdownOpen && (
             <div
-              className={`absolute left-2 top-[calc(100%+8px)] w-48 py-1.5 rounded-2xl border shadow-2xl z-50 overflow-hidden transition-all ${
+              className={`glass-dropdown absolute left-2 top-[calc(100%+8px)] w-48 py-1.5 rounded-2xl border shadow-2xl z-50 overflow-hidden transition-all ${
                 isLight
-                  ? 'border-black/10 shadow-black/10 bg-white/95'
-                  : 'border-white/15 shadow-black/60 bg-slate-900/95 text-white'
+                  ? 'border-black/10 shadow-black/10 text-slate-800'
+                  : 'border-white/15 shadow-black/40 text-white'
               }`}
             >
               <div

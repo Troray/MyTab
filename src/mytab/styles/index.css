@@ -78,6 +78,14 @@ body {
   background: rgba(255, 255, 255, 0.82) !important;
 }
 
+.glass-dropdown {
+  background: #4e525abf !important;
+}
+
+.light .glass-dropdown {
+  background: rgba(255, 255, 255, 0.92) !important;
+}
+
 /* Custom Refined Scrollbar */
 ::-webkit-scrollbar {
   width: 5px;

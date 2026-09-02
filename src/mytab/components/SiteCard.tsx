@@ -207,10 +207,10 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
           {showMenu && (
             <div
               onClick={(e) => e.stopPropagation()}
-              className={`absolute right-0 top-6 w-28 py-1 rounded-xl border shadow-2xl z-40 animate-scale-in text-xs font-medium overflow-hidden ${
+              className={`glass-dropdown absolute right-0 top-6 w-28 py-1 rounded-xl border shadow-2xl z-40 animate-scale-in text-xs font-medium overflow-hidden ${
                 isLight
-                  ? 'border-black/10 shadow-black/10 bg-white/95 text-slate-800'
-                  : 'border-white/15 shadow-black/60 bg-slate-900/95 text-white'
+                  ? 'border-black/10 shadow-black/10 text-slate-800'
+                  : 'border-white/15 shadow-black/40 text-white'
               }`}
             >
               <button
