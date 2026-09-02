@@ -62,6 +62,7 @@ export interface ThemeSettings {
   unsplashAuthorName?: string;
   unsplashAuthorUrl?: string;
   unsplashLastUrl?: string;
+  customBackgroundUrl?: string;
   updatedAt?: number;
 }
 
