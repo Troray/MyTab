@@ -9,6 +9,7 @@ import {
   Globe,
   Sun,
   Moon,
+  Monitor,
   Check,
   FileJson,
   GitBranch,
@@ -236,7 +237,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
     reader.readAsText(file);
   };
 
-  const isLight = settings.mode === 'light';
+  const isLight = settings.mode === 'light' || (settings.mode === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">
@@ -350,11 +351,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   >
                     {t('themeMode', settings.language)}
                   </label>
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-3 gap-2.5">
                     <button
                       type="button"
-                      onClick={() => handleSettingsChange({ mode: 'dark' })}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.mode === 'dark'
+                      onClick={() => handleSettingsChange({ mode: 'system' })}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.mode === 'system'
                         ? isLight
                           ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
                           : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
@@ -363,8 +364,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
                         }`}
                     >
-                      <Moon className="w-4 h-4" />
-                      <span>{t('themeDark', settings.language)}</span>
+                      <Monitor className="w-4 h-4" />
+                      <span>{t('themeSystem', settings.language) || '跟随系统'}</span>
                     </button>
                     <button
                       type="button"
@@ -380,6 +381,21 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     >
                       <Sun className="w-4 h-4" />
                       <span>{t('themeLight', settings.language)}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSettingsChange({ mode: 'dark' })}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.mode === 'dark'
+                        ? isLight
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                          : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
+                        : isLight
+                          ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
+                          : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+                        }`}
+                    >
+                      <Moon className="w-4 h-4" />
+                      <span>{t('themeDark', settings.language)}</span>
                     </button>
                   </div>
                 </div>
