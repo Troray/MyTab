@@ -95,6 +95,7 @@ async function buildExtension() {
       },
       action: {
         default_title: '__MSG_extensionName__',
+        default_popup: 'popup.html',
         default_icon: {
           '16': 'icons/icon-16.png',
           '32': 'icons/icon-32.png',
