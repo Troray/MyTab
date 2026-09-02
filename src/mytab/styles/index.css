@@ -52,8 +52,6 @@ body {
 /* Tactile Glassmorphism Classes */
 .glass-panel {
   background: var(--bg-card);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--border-color);
   transition: all 180ms var(--ease-out-expo);
 }
@@ -66,26 +64,18 @@ body {
 /* Frosted Glass Sheet & Modal (Enhanced semi-transparent blur) */
 .glass-drawer {
   background: #4e525abf !important;
-  backdrop-filter: blur(28px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
 }
 
 .light .glass-drawer {
   background: rgba(255, 255, 255, 0.78) !important;
-  backdrop-filter: blur(28px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
 }
 
 .glass-modal {
   background: #4e525abf !important;
-  backdrop-filter: blur(32px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
 }
 
 .light .glass-modal {
   background: rgba(255, 255, 255, 0.82) !important;
-  backdrop-filter: blur(32px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
 }
 
 /* Custom Refined Scrollbar */
@@ -232,29 +222,3 @@ body {
   z-index: 30 !important;
 }
 
-/* Firefox-specific Performance Overrides
-   Firefox struggles with heavy backdrop-filters on multiple elements (like the Site Grid),
-   causing significant scroll lag and unresponsiveness. We disable it here for smooth performance. */
-@-moz-document url-prefix() {
-  * {
-    backdrop-filter: none !important;
-  }
-
-  .glass-panel, .glass-drawer, .glass-modal {
-    backdrop-filter: none !important;
-  }
-  
-  .glass-panel {
-    background: rgba(255, 255, 255, 0.1) !important;
-  }
-  .light .glass-panel {
-    background: rgba(255, 255, 255, 0.9) !important;
-  }
-  
-  .glass-drawer, .glass-modal {
-    background: rgba(30, 32, 35, 0.96) !important;
-  }
-  .light .glass-drawer, .light .glass-modal {
-    background: rgba(255, 255, 255, 0.96) !important;
-  }
-}
