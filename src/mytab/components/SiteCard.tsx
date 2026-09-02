@@ -143,8 +143,8 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
             : isJustDropped
             ? 'ios-drop-spring border-amber-500/80 ring-2 ring-amber-500/40'
             : isLight
-            ? 'border-black/10 hover:border-black/30 hover:bg-black/5 hover:scale-[1.01]'
-            : 'border-white/10 hover:border-white/30 hover:bg-white/10 hover:scale-[1.01]'
+            ? 'border-black/10 hover:border-black/30 hover:bg-black/5 hover:shadow-md hover:shadow-black/5 hover:scale-[1.01]'
+            : 'border-white/10 hover:border-white/30 hover:bg-white/10 hover:shadow-lg hover:shadow-black/40 hover:scale-[1.01]'
         }`}
       >
         {/* Icon Inset Container */}
