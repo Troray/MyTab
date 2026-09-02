@@ -41,7 +41,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
     setTestResult(null);
     try {
       const client = new WebdavClient(config);
-      const res = await client.testConnection();
+      const res = await client.testConnection(settings.language);
       setTestResult(res);
     } catch (err: any) {
       setTestResult({ success: false, message: err.message || 'Connection failed' });
