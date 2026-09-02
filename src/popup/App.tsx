@@ -6,6 +6,7 @@ export type PopupStatus = 'loading' | 'ready' | 'saving' | 'success' | 'duplicat
 
 export const App: React.FC = () => {
   const [status, setStatus] = useState<PopupStatus>('loading');
+  const [isDuplicate, setIsDuplicate] = useState(false);
   const [tabData, setTabData] = useState<{ title: string; url: string; favicon?: string }>({
     title: '',
     url: '',
@@ -49,10 +50,9 @@ export const App: React.FC = () => {
         // Check if URL already exists
         const res = await browser.runtime.sendMessage({ type: 'CHECK_BOOKMARK_EXISTS', url });
         if (res.success && res.exists) {
-          setStatus('duplicate');
-        } else {
-          setStatus('ready');
+          setIsDuplicate(true);
         }
+        setStatus('ready');
       } catch (err) {
         console.error('Failed to init popup:', err);
         setStatus('error');
@@ -83,13 +83,6 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {status === 'duplicate' && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-          <div className="text-3xl mb-2">👀</div>
-          <p className="text-sm font-medium">该网址已经存在于 MyTab</p>
-        </div>
-      )}
-
       {status === 'error' && (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
           <div className="text-3xl mb-2">⚠️</div>
@@ -110,7 +103,14 @@ export const App: React.FC = () => {
       )}
 
       {(status === 'ready' || status === 'saving') && (
-        <BookmarkForm 
+        <>
+          {isDuplicate && (
+            <div className="mb-3 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700/30 rounded-xl text-xs flex items-start gap-2">
+              <span className="text-sm">👀</span>
+              <p>该网址已存在于 MyTab。您可以继续添加，或者修改路径以便区分。</p>
+            </div>
+          )}
+          <BookmarkForm 
           initialData={tabData} 
           isSaving={status === 'saving'}
           onSave={async (data) => {
@@ -136,6 +136,7 @@ export const App: React.FC = () => {
             }
           }} 
         />
+        </>
       )}
     </div>
   );

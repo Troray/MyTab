@@ -31,10 +31,7 @@ export async function addBookmark(input: AddBookmarkInput): Promise<AddBookmarkR
   try {
     const state = await loadAppState();
     
-    // 1. Check for exact duplicate
-    if (state.sites.some((site) => site.url === input.url)) {
-      return { success: false, duplicate: true, error: 'URL already exists' };
-    }
+    // (Removed strict duplicate block. The popup now warns users instead of blocking.)
 
     // 2. Determine sort order (append to end)
     const sortOrder = state.sites.length;
