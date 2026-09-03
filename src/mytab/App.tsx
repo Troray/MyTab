@@ -145,10 +145,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     currentSettings.mode === 'light'
       ? 'light'
       : currentSettings.mode === 'dark'
-      ? 'dark'
-      : systemIsDark
-      ? 'dark'
-      : 'light';
+        ? 'dark'
+        : systemIsDark
+          ? 'dark'
+          : 'light';
 
   const resolvedColors = useMemo(() => {
     return resolveTextColors(currentSettings, wallpaperLuminance, activeThemeMode);
@@ -164,8 +164,8 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         rawVal.startsWith('http') || rawVal.startsWith('data:')
           ? rawVal
           : typeof chrome !== 'undefined' && chrome.runtime?.getURL
-          ? chrome.runtime.getURL(rawVal.replace(/^\.?\//, ''))
-          : rawVal;
+            ? chrome.runtime.getURL(rawVal.replace(/^\.?\//, ''))
+            : rawVal;
 
       return {
         backgroundImage: `url("${bgUrl}")`,
@@ -414,11 +414,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setAppState((prev) =>
       prev
         ? {
-            ...prev,
-            categories: updatedCategories,
-            sites: updatedSites,
-            activeCategoryId: prev.activeCategoryId === catId ? 'all' : prev.activeCategoryId,
-          }
+          ...prev,
+          categories: updatedCategories,
+          sites: updatedSites,
+          activeCategoryId: prev.activeCategoryId === catId ? 'all' : prev.activeCategoryId,
+        }
         : null
     );
   };
@@ -484,18 +484,16 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         {incomingBg && (
           <div
             style={incomingBg}
-            className={`absolute inset-0 w-full h-full transition-opacity duration-400 ease-out ${
-              isCrossFading ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`absolute inset-0 w-full h-full transition-opacity duration-400 ease-out ${isCrossFading ? 'opacity-100' : 'opacity-0'
+              }`}
           />
         )}
 
         {/* Dynamic tint overlay for non-gradient wallpapers */}
         {settings.backgroundType !== 'gradient' && (
           <div
-            className={`absolute inset-0 transition-colors duration-300 ${
-              isLight ? 'bg-white/20' : 'bg-black/40'
-            }`}
+            className={`absolute inset-0 transition-colors duration-300 ${isLight ? 'bg-white/20' : 'bg-black/40'
+              }`}
           />
         )}
       </div>
@@ -504,11 +502,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       <header className="relative z-10 w-full flex items-center justify-between p-5 md:px-8">
         <div className="flex items-center gap-2">
           <span
-            className={`text-sm font-semibold tracking-wider px-3 py-1 rounded-full border transition-colors ${
-              isLight
+            className={`text-sm font-semibold tracking-wider px-3 py-1 rounded-full border transition-colors ${isLight
                 ? 'text-slate-800 bg-white/70 border-black/10 shadow-sm'
                 : 'text-white/80 bg-white/10 border-white/10'
-            }`}
+              }`}
           >
             MyTab
           </span>
@@ -521,11 +518,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               setEditingSite(null);
               setIsSiteModalOpen(true);
             }}
-            className={`p-2.5 rounded-xl border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${
-              isLight
+            className={`p-2.5 rounded-xl border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${isLight
                 ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
                 : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
-            }`}
+              }`}
             title="Add shortcut"
           >
             <Plus className="w-4.5 h-4.5" />
@@ -534,11 +530,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           {/* Settings Drawer Trigger */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className={`p-2.5 rounded-xl border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${
-              isLight
+            className={`p-2.5 rounded-xl border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${isLight
                 ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
                 : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
-            }`}
+              }`}
             title="Settings"
           >
             <SettingsIcon className="w-4.5 h-4.5" />
@@ -601,9 +596,8 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               href={`${settings.unsplashAuthorUrl}?utm_source=MyTab&utm_medium=referral`}
               target="_blank"
               rel="noreferrer"
-              className={`inline-flex items-center gap-1 transition-colors ${
-                isLight ? 'text-slate-600 hover:text-black' : 'text-white/50 hover:text-white'
-              }`}
+              className={`inline-flex items-center gap-1 transition-colors ${isLight ? 'text-slate-600 hover:text-black' : 'text-white/50 hover:text-white'
+                }`}
             >
               <span>Photo by</span>
               <span className="underline decoration-dotted underline-offset-2">
@@ -617,14 +611,13 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         <div className="w-1/3 text-center">
           Crafted with passion by{' '}
           <a
-            href="https://github.com/Troray"
+            href="https://github.com/Troray/MyTab"
             target="_blank"
             rel="noreferrer"
-            className={`transition-colors underline decoration-dotted underline-offset-2 ${
-              isLight
+            className={`transition-colors underline decoration-dotted underline-offset-2 ${isLight
                 ? 'hover:text-black decoration-slate-400'
                 : 'hover:text-white decoration-white/30'
-            }`}
+              }`}
           >
             Troray
           </a>
