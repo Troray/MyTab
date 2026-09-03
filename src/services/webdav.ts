@@ -1,6 +1,7 @@
 import { t, Locale } from '../locales';
 import { AppState, Category, SiteItem, SyncPayload, ThemeSettings, WebdavConfig } from '../types';
 import { loadAppState, saveCategories, saveSettings, saveSites, saveWebdavConfig } from './storage';
+import { DEFAULT_SETTINGS } from '../utils/constants';
 
 export interface WebdavTestResult {
   success: boolean;
@@ -241,12 +242,15 @@ export async function executeWebdavSync(state: AppState): Promise<SyncResult> {
 
       let finalSettings: ThemeSettings;
       if (remoteData.settings && remoteSettingsTime > localSettingsTime) {
-        // Remote settings are strictly newer -> apply remote
-        finalSettings = { ...state.settings, ...remoteData.settings };
+        // Remote settings are strictly newer -> apply remote merged with defaults
+        const clean = Object.fromEntries(
+          Object.entries(remoteData.settings).filter(([_, v]) => v !== undefined && v !== null)
+        );
+        finalSettings = { ...DEFAULT_SETTINGS, ...state.settings, ...clean };
         await saveSettings(finalSettings);
       } else {
         // Local settings are newer or equal -> keep local
-        finalSettings = { ...state.settings };
+        finalSettings = { ...DEFAULT_SETTINGS, ...state.settings };
         await saveSettings(finalSettings);
       }
 
@@ -338,8 +342,11 @@ export async function restoreFromWebdav(state: AppState): Promise<SyncResult> {
     if (remoteData.sites && Array.isArray(remoteData.sites)) {
       await saveSites(remoteData.sites);
     }
-    if (remoteData.settings) {
-      await saveSettings(remoteData.settings);
+    if (remoteData.settings && typeof remoteData.settings === 'object') {
+      const clean = Object.fromEntries(
+        Object.entries(remoteData.settings).filter(([_, v]) => v !== undefined && v !== null)
+      );
+      await saveSettings({ ...DEFAULT_SETTINGS, ...clean });
     }
     const now = Date.now();
     await saveWebdavConfig({

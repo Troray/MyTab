@@ -119,8 +119,11 @@ export async function loadAppState(): Promise<AppState> {
     },
   };
 
-  // Normalize settings cardBlur (migrate from old 0-32px scale to 0-100% percentage scale)
-  const normalizedSettings = { ...DEFAULT_SETTINGS, ...settings };
+  // Normalize settings with default values, filtering out any undefined/null values
+  const cleanSettings = Object.fromEntries(
+    Object.entries(settings || {}).filter(([_, v]) => v !== undefined && v !== null)
+  );
+  const normalizedSettings: ThemeSettings = { ...DEFAULT_SETTINGS, ...cleanSettings };
   if (settings && typeof settings.cardBlur === 'number' && settings.cardBlur <= 32 && settings.cardBlur > 0) {
     normalizedSettings.cardBlur = Math.round((settings.cardBlur / 32) * 100);
   }
@@ -201,7 +204,10 @@ export async function importData(jsonString: string): Promise<{ success: boolean
       await saveSites(data.sites);
     }
     if (data.settings && typeof data.settings === 'object') {
-      await saveSettings({ ...DEFAULT_SETTINGS, ...data.settings });
+      const clean = Object.fromEntries(
+        Object.entries(data.settings).filter(([_, v]) => v !== undefined && v !== null)
+      );
+      await saveSettings({ ...DEFAULT_SETTINGS, ...clean });
     }
     return { success: true };
   } catch (err: any) {
