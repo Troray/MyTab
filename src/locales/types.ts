@@ -313,6 +313,37 @@ export interface Translation {
   gitNoRemote: string;
   gitRestoreSuccess: string;
   gitRestoreFailed: string;
+  reset: string;
+  done: string;
+  textColorCustomizerTitle: string;
+  textColorAuto: string;
+  textColorWhite: string;
+  textColorBlack: string;
+  textColorCustom: string;
+  textColorTargetAll: string;
+  textColorTargetClock: string;
+  textColorTargetDate: string;
+  textColorTargetGreeting: string;
+  textColorTargetSearch: string;
+  textColorTargetTabs: string;
+  textColorTargetCards: string;
+  textColorAutoHint: string;
+  textColorWysiwygHint: string;
+  textColorSettingBtn: string;
+  show: string;
+  hide: string;
+  colorWhite: string;
+  colorBlack: string;
+  colorGold: string;
+  colorSkyBlue: string;
+  colorEmerald: string;
+  colorCoral: string;
+  colorLilac: string;
+  colorMoonGray: string;
+  gitPrivateRepo: string;
+  gitPublicRepo: string;
+  gitBackupDescription: string;
+  noSitesInCategory: string;
 }
 
 export type TranslationKey = keyof Translation;
