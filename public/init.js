@@ -5,6 +5,7 @@ try {
   var bg = localStorage.getItem('mytab_bg_cache');
   if (bg) {
     var style = document.createElement('style');
+    style.id = 'mytab-init-bg';
     style.innerHTML = 'body { ' + bg + ' background-size: cover; background-position: center; background-repeat: no-repeat; margin: 0; }';
     document.head.appendChild(style);
   }
