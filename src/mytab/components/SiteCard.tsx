@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import { SiteItem, ThemeSettings } from '../../types';
+import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { generateFallbackIcon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
 
@@ -8,6 +9,7 @@ interface SiteCardProps {
   site: SiteItem;
   index: number;
   settings: ThemeSettings;
+  resolvedColors?: ResolvedTextColors;
   isDragging?: boolean;
   isAnyDragging?: boolean;
   isJustDropped?: boolean;
@@ -23,6 +25,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
   site,
   index,
   settings,
+  resolvedColors,
   isDragging,
   isAnyDragging,
   isJustDropped,
@@ -130,7 +133,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
               ? 'rgba(0, 0, 0, 0.08)'
               : 'rgba(255, 255, 255, 0.18)'
             : isLight
-            ? `rgba(255, 255, 255, ${Math.max(0.82, settings.cardOpacity)})`
+            ? `rgba(255, 255, 255, ${Math.max(0.45, Math.min(0.96, settings.cardOpacity + 0.42))})`
             : `rgba(255, 255, 255, ${settings.cardOpacity})`,
           padding: `${paddingPx}px`,
         }}
@@ -140,7 +143,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
             : isJustDropped
             ? 'ios-drop-spring border-amber-500/80 ring-2 ring-amber-500/40'
             : isLight
-            ? 'border-black/10 hover:border-black/30 hover:bg-black/5 hover:shadow-md hover:shadow-black/5 hover:scale-[1.01]'
+            ? 'border-white/80 hover:border-white shadow-md shadow-black/[0.04] hover:shadow-lg hover:shadow-black/10 hover:bg-white/95 hover:scale-[1.01]'
             : 'border-white/10 hover:border-white/30 hover:bg-white/10 hover:shadow-lg hover:shadow-black/40 hover:scale-[1.01]'
         }`}
       >
@@ -149,7 +152,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
           style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px` }}
           className={`rounded-xl flex items-center justify-center shadow-inner overflow-hidden mb-2 duration-0 group-hover:scale-105 shrink-0 pointer-events-none ${
             isLight
-              ? 'bg-black/[0.03] border border-black/5'
+              ? 'bg-white/80 border border-black/[0.06]'
               : 'bg-white/[0.08] border border-white/10'
           }`}
         >
@@ -170,11 +173,10 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
           draggable={false}
           style={{
             fontSize: cardSize < 95 ? '11px' : cardSize > 130 ? '14px' : '12px',
+            color: resolvedColors?.cards,
           }}
           className={`font-medium truncate max-w-full text-center tracking-wide px-1 select-none pointer-events-none duration-0 ${
-            isLight
-              ? 'text-slate-800 group-hover:text-black'
-              : 'text-white/90 group-hover:text-white drop-shadow'
+            resolvedColors?.cardShadow || (isLight ? 'text-slate-800 group-hover:text-black' : 'text-white/90 group-hover:text-white drop-shadow')
           }`}
         >
           {site.title || 'Untitled'}

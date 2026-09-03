@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
  X,
  Palette,
@@ -25,7 +25,7 @@ import {
  Search
 } from 'lucide-react';
 import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ThemeSettings, WebdavConfig } from '../../types';
-import { PRESET_GRADIENTS } from '../../utils/constants';
+import { PRESET_GRADIENTS, DEFAULT_SETTINGS } from '../../utils/constants';
 import { WebdavSettings } from './WebdavSettings';
 import { GitSettings } from './GitSettings';
 import { exportAllData, importData } from '../../services/storage';
@@ -44,6 +44,7 @@ interface SettingsDrawerProps {
  onUpdateWebdav: (config: WebdavConfig) => void;
  onUpdateGit: (config: GitSyncConfig) => void;
  onStateReload: () => void;
+ onOpenColorCustomizer?: () => void;
 }
 
 export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
@@ -54,8 +55,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  onUpdateWebdav,
  onUpdateGit,
  onStateReload,
+ onOpenColorCustomizer,
 }) => {
- const { settings } = appState;
+  const settings: ThemeSettings = {
+    ...DEFAULT_SETTINGS,
+    ...Object.fromEntries(
+      Object.entries(appState.settings || {}).filter(([_, v]) => v !== undefined && v !== null)
+    ),
+  };
  const [activeTab, setActiveTab] = useState<'appearance' | 'behavior' | 'sync' | 'backup'>('appearance');
  const [syncProvider, setSyncProvider] = useState<'webdav' | 'git'>('webdav');
  const [importStatus, setImportStatus] = useState<string>('');
@@ -64,6 +71,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  const [isUnsplashTopicModalOpen, setIsUnsplashTopicModalOpen] = useState(false);
  const [isFetchingUnsplash, setIsFetchingUnsplash] = useState(false);
  const [unsplashError, setUnsplashError] = useState<string | null>(null);
+  const activeFetchIdRef = useRef<number>(0);
+  const lastRefreshTimeRef = useRef<number>(0);
 
  // Reset transient UI states every time the drawer is opened
  useEffect(() => {
@@ -80,33 +89,53 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  onUpdateSettings({ ...settings, ...fields });
  };
 
- const handleRefreshUnsplash = async (customFields?: Partial<ThemeSettings>) => {
- setIsFetchingUnsplash(true);
- setUnsplashError(null);
- try {
- const mergedSettings = { ...settings, ...(customFields || {}) };
- const res = await fetchUnsplashRandomPhoto(mergedSettings);
- if (res.error) {
- setUnsplashError(res.error);
- }
- // Preload image so button spinner continues until image is loaded in browser (max 2.5s)
- if (res.url) {
- await preloadImage(res.url, 2500);
- }
- handleSettingsChange({
- ...(customFields || {}),
- backgroundType: 'unsplash',
- backgroundValue: res.url,
- unsplashLastUrl: res.url,
- unsplashAuthorName: res.authorName,
- unsplashAuthorUrl: res.authorUrl,
- });
- } catch (err: any) {
- setUnsplashError(err?.message || 'Failed to fetch image');
- } finally {
- setIsFetchingUnsplash(false);
- }
- };
+  const handleRefreshUnsplash = async (customFields?: Partial<ThemeSettings>) => {
+    const now = Date.now();
+    // Throttle rapid clicks (minimum 450ms between trigger executions)
+    if (isFetchingUnsplash || now - lastRefreshTimeRef.current < 450) return;
+    lastRefreshTimeRef.current = now;
+
+    const fetchId = ++activeFetchIdRef.current;
+    setIsFetchingUnsplash(true);
+    setUnsplashError(null);
+    try {
+      const mergedSettings = { ...settings, ...(customFields || {}) };
+      const res = await fetchUnsplashRandomPhoto(mergedSettings);
+      if (fetchId !== activeFetchIdRef.current) return;
+      if (res.error) {
+        setUnsplashError(res.error);
+      }
+      // Preload and decode image before committing to avoid any blank or flash
+      if (res.url) {
+        await preloadImage(res.url, 6000);
+      }
+      if (fetchId !== activeFetchIdRef.current) return;
+
+      // Ensure minimum 350ms spinner so user sees a smooth feedback pulse instead of micro-flicker
+      const elapsed = Date.now() - now;
+      if (elapsed < 350) {
+        await new Promise((resolve) => setTimeout(resolve, 350 - elapsed));
+      }
+      if (fetchId !== activeFetchIdRef.current) return;
+
+      handleSettingsChange({
+        ...(customFields || {}),
+        backgroundType: 'unsplash',
+        backgroundValue: res.url,
+        unsplashLastUrl: res.url,
+        unsplashAuthorName: res.authorName,
+        unsplashAuthorUrl: res.authorUrl,
+      });
+    } catch (err: any) {
+      if (fetchId === activeFetchIdRef.current) {
+        setUnsplashError(err?.message || 'Failed to fetch image');
+      }
+    } finally {
+      if (fetchId === activeFetchIdRef.current) {
+        setIsFetchingUnsplash(false);
+      }
+    }
+  };
 
  const handleImportGreetingsFile = (e: React.ChangeEvent<HTMLInputElement>) => {
  const file = e.target.files?.[0];
@@ -243,15 +272,15 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">
  {/* Backdrop */}
  <div
- className="absolute inset-0 bg-black/60 transition-opacity"
+ className={`absolute inset-0 transition-opacity ${isLight ? 'bg-black/20' : 'bg-black/60'}`}
  onClick={onClose}
  />
 
  {/* Drawer Container */}
  <div className="absolute inset-y-0 right-0 max-w-full flex pointer-events-none">
  <div
- className={`glass-drawer w-screen max-w-md shadow-2xl flex flex-col pointer-events-auto duration-0 duration-200 ${isLight
- ? 'border-l border-black/10 text-slate-900'
+ className={`glass-drawer w-screen max-w-md shadow-2xl flex flex-col pointer-events-auto duration-200 ${isLight
+ ? 'border-l border-black/10 text-slate-900 shadow-black/10'
  : 'border-l border-white/10 text-white'
  }`}
  >
@@ -357,11 +386,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  onClick={() => handleSettingsChange({ mode: 'system' })}
  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.mode === 'system'
  ? isLight
- ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+ ? 'bg-white text-slate-900 border-black/15 shadow-sm font-semibold'
  : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
- : isLight
- ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
- : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+ : isLight ? 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 text-slate-700' : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
  }`}
  >
  <Monitor className="w-4 h-4" />
@@ -372,11 +399,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  onClick={() => handleSettingsChange({ mode: 'light' })}
  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.mode === 'light'
  ? isLight
- ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+ ? 'bg-white text-slate-900 border-black/15 shadow-sm font-semibold'
  : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
- : isLight
- ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
- : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+ : isLight ? 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 text-slate-700' : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
  }`}
  >
  <Sun className="w-4 h-4" />
@@ -387,11 +412,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  onClick={() => handleSettingsChange({ mode: 'dark' })}
  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.mode === 'dark'
  ? isLight
- ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+ ? 'bg-white text-slate-900 border-black/15 shadow-sm font-semibold'
  : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
- : isLight
- ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
- : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+ : isLight ? 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 text-slate-700' : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
  }`}
  >
  <Moon className="w-4 h-4" />
@@ -420,13 +443,19 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  type="button"
  onClick={() => {
  if (bg.id === 'unsplash') {
+ if (settings.backgroundType === 'unsplash') {
+ return;
+ }
  if (settings.unsplashLastUrl) {
  handleSettingsChange({
  backgroundType: 'unsplash',
  backgroundValue: settings.unsplashLastUrl,
  });
  } else {
- handleRefreshUnsplash();
+ handleSettingsChange({
+ backgroundType: 'unsplash',
+ });
+ handleRefreshUnsplash({ backgroundType: 'unsplash' });
  }
  return;
  }
@@ -442,11 +471,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  }}
  className={`py-2 px-3 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.backgroundType === bg.id
  ? isLight
- ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+ ? 'bg-white text-slate-900 border-black/15 shadow-sm font-semibold'
  : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
- : isLight
- ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
- : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+ : isLight ? 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 text-slate-700' : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
  }`}
  >
  {bg.label}
@@ -670,6 +697,58 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  </div>
  )}
  </div>
+
+        {/* Text & Colors Customization Card */}
+        <div
+          className={`p-3.5 rounded-2xl border flex items-center justify-between duration-0 ${
+            isLight ? 'bg-slate-50 border-slate-200/90 shadow-xs' : 'bg-white/[0.04] border-white/10'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`p-2 rounded-xl border ${
+                isLight
+                  ? 'bg-white border-slate-200 text-amber-500 shadow-xs'
+                  : 'bg-white/10 border-white/10 text-amber-400'
+              }`}
+            >
+              <Palette className="w-4 h-4" />
+            </div>
+            <div>
+              <div className={`text-xs font-semibold ${isLight ? 'text-slate-800' : 'text-white'}`}>
+                {t('textColorCustomizerTitle', settings.language)}
+              </div>
+              <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                {(() => {
+                  const currentMode = (isLight
+                    ? settings.textColorModeLight ?? settings.textColorMode
+                    : settings.textColorModeDark ?? settings.textColorMode) || 'auto';
+                  const modeText = currentMode === 'auto'
+                    ? t('textColorAuto', settings.language)
+                    : currentMode === 'light'
+                    ? t('textColorWhite', settings.language)
+                    : currentMode === 'dark'
+                    ? t('textColorBlack', settings.language)
+                    : t('textColorCustom', settings.language);
+                  const themeLabel = isLight ? t('themeLight', settings.language) : t('themeDark', settings.language);
+                  return `${themeLabel} · ${modeText}`;
+                })()}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onOpenColorCustomizer}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm duration-0 cursor-pointer active:scale-95 ${
+              isLight
+                ? 'bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 hover:border-slate-400'
+                : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
+            }`}
+          >
+            {t('textColorSettingBtn', settings.language)}
+          </button>
+        </div>
 
  {/* Collapsible Card & Layout Sliders Accordion */}
  <div
@@ -1063,15 +1142,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <div className="space-y-4">
  {/* Sub-selector for Sync Method */}
  <div
- className={`flex p-1 rounded-2xl border gap-1 ${isLight ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/15'
- }`}
+ className={`flex p-1 rounded-2xl border gap-1 ${isLight ? 'bg-slate-100 border-slate-200/60' : 'bg-white/10 border-white/15'}`}
  >
  <button
  type="button"
  onClick={() => setSyncProvider('webdav')}
  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${syncProvider === 'webdav'
  ? isLight
- ? 'bg-slate-900 text-white shadow-sm font-semibold'
+ ? 'bg-white text-slate-900 border border-black/15 shadow-sm font-semibold'
  : 'bg-white text-slate-950 shadow-sm font-semibold'
  : isLight
  ? 'text-slate-600 hover:text-slate-900'
@@ -1086,7 +1164,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  onClick={() => setSyncProvider('git')}
  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${syncProvider === 'git'
  ? isLight
- ? 'bg-slate-900 text-white shadow-sm font-semibold'
+ ? 'bg-white text-slate-900 border border-black/15 shadow-sm font-semibold'
  : 'bg-white text-slate-950 shadow-sm font-semibold'
  : isLight
  ? 'text-slate-600 hover:text-slate-900'
@@ -1119,8 +1197,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  {activeTab === 'backup' && (
  <div className="space-y-4">
  <div
- className={`p-4 rounded-2xl border space-y-3 ${isLight
- ? 'bg-black/[0.03] border-black/8 text-slate-700'
+ className={`p-4 rounded-2xl border space-y-3 ${isLight ? 'bg-slate-50 border-slate-200/80 text-slate-700'
  : 'bg-white/[0.05] border-white/10 text-white/70'
  }`}
  >
@@ -1133,8 +1210,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  type="button"
  onClick={handleExport}
  className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${isLight
- ? 'bg-slate-900 hover:bg-black text-white'
- : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
+                    ? 'bg-white hover:bg-slate-50 text-slate-800 hover:text-black border border-slate-200/90 shadow-sm font-semibold'
+                    : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
  }`}
  >
  <Download className="w-4 h-4" />

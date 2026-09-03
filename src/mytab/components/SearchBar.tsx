@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, ChevronDown, Check } from 'lucide-react';
 import { SearchEngine, ThemeSettings } from '../../types';
+import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { DEFAULT_SEARCH_ENGINES } from '../../utils/constants';
 import { t } from '../../utils/i18n';
 
 interface SearchBarProps {
   settings: ThemeSettings;
+  resolvedColors?: ResolvedTextColors;
   onEngineChange: (engineId: string) => void;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEngineChange }) => {
+export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, resolvedColors, onEngineChange }) => {
   const [query, setQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -78,9 +80,7 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
             : 'border border-white/10 shadow-xl shadow-black/20 hover:border-white/20'
         }`}
         style={{
-          background: isLight
-            ? 'rgba(255, 255, 255, 0.88)'
-            : 'rgba(255, 255, 255, 0.05)',
+          background: 'rgba(255, 255, 255, 0.05)',
         }}
       >
         {/* Engine Selector */}
@@ -88,10 +88,9 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
           <button
             type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            style={resolvedColors ? { color: resolvedColors.search } : undefined}
             className={`flex items-center gap-1.5 pl-4 pr-3 h-full text-xs md:text-sm font-medium transition-colors cursor-pointer select-none ${
-              isLight
-                ? 'text-slate-800 hover:text-black'
-                : 'text-white/90 hover:text-white'
+              !resolvedColors ? (isLight ? 'text-slate-800 hover:text-black' : 'text-white/90 hover:text-white') : ''
             }`}
           >
             <span>{activeEngine.name}</span>
@@ -157,21 +156,24 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
           onBlur={() => setIsFocused(false)}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('searchPlaceholder', settings.language)}
-          className={`flex-1 bg-transparent border-none outline-none px-2 text-sm md:text-base ${
+          style={{
+            ...(resolvedColors ? { color: resolvedColors.search } : {}),
+            ['--search-placeholder-color' as any]: resolvedColors?.search,
+          }}
+          className={`search-input-field flex-1 bg-transparent border-none outline-none px-2 text-sm md:text-base ${
             isLight
-              ? 'text-slate-900 placeholder-slate-400 selection:bg-slate-300'
-              : 'text-white placeholder-white/40 selection:bg-white/20'
-          }`}
+              ? 'selection:bg-slate-300'
+              : 'selection:bg-white/20'
+          } ${!resolvedColors ? (isLight ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-white/40') : ''}`}
         />
 
         {/* Keyboard shortcut badge (only when empty and not focused) */}
         {!query && !isFocused && (
           <kbd
             onClick={() => inputRef.current?.focus()}
+            style={resolvedColors ? { color: resolvedColors.search, opacity: 0.6 } : undefined}
             className={`hidden sm:inline-flex items-center justify-center mr-2 px-1.5 py-0.5 text-[10px] font-mono rounded border cursor-pointer select-none transition-colors ${
-              isLight
-                ? 'text-slate-400 border-black/10 bg-black/[0.02]'
-                : 'text-white/40 border-white/10 bg-white/[0.04]'
+              !resolvedColors ? (isLight ? 'text-slate-400 border-black/10 bg-black/[0.02]' : 'text-white/40 border-white/10 bg-white/[0.04]') : 'border-black/10 dark:border-white/10'
             }`}
           >
             /
@@ -181,11 +183,12 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, onEng
         {/* Search Action Button */}
         <button
           type="submit"
+          style={resolvedColors ? { color: resolvedColors.search } : undefined}
           className={`p-2.5 mr-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
             isLight
-              ? 'text-slate-600 hover:text-black hover:bg-black/5'
-              : 'text-white/70 hover:text-white hover:bg-white/10'
-          }`}
+              ? 'hover:text-black hover:bg-black/5'
+              : 'hover:text-white hover:bg-white/10'
+          } ${!resolvedColors ? (isLight ? 'text-slate-600' : 'text-white/70') : ''}`}
           title="Search"
         >
           <Search className="w-4.5 h-4.5" />
