@@ -1,5 +1,7 @@
+import { t, Locale } from '../locales';
 import { AppState, Category, SiteItem, SyncPayload, ThemeSettings, WebdavConfig } from '../types';
 import { loadAppState, saveCategories, saveSettings, saveSites, saveWebdavConfig } from './storage';
+import { DEFAULT_SETTINGS } from '../utils/constants';
 
 export interface WebdavTestResult {
   success: boolean;
@@ -211,7 +213,7 @@ export async function executeWebdavSync(state: AppState): Promise<SyncResult> {
         lastSyncError: undefined,
       });
 
-      return { success: true, action: 'uploaded', message: 'First sync: uploaded local data to WebDAV' };
+      return { success: true, action: 'uploaded', message: t('webdavFirstSync', state.settings?.language) };
     }
 
     // 2. Resolve based on conflict strategy
@@ -240,12 +242,15 @@ export async function executeWebdavSync(state: AppState): Promise<SyncResult> {
 
       let finalSettings: ThemeSettings;
       if (remoteData.settings && remoteSettingsTime > localSettingsTime) {
-        // Remote settings are strictly newer -> apply remote
-        finalSettings = { ...state.settings, ...remoteData.settings };
+        // Remote settings are strictly newer -> apply remote merged with defaults
+        const clean = Object.fromEntries(
+          Object.entries(remoteData.settings).filter(([_, v]) => v !== undefined && v !== null)
+        );
+        finalSettings = { ...DEFAULT_SETTINGS, ...state.settings, ...clean };
         await saveSettings(finalSettings);
       } else {
         // Local settings are newer or equal -> keep local
-        finalSettings = { ...state.settings };
+        finalSettings = { ...DEFAULT_SETTINGS, ...state.settings };
         await saveSettings(finalSettings);
       }
 
@@ -270,15 +275,15 @@ export async function executeWebdavSync(state: AppState): Promise<SyncResult> {
       lastSyncError: undefined,
     });
 
-    return { success: true, action: 'merged', message: 'Sync completed successfully' };
+    return { success: true, action: 'merged', message: t('webdavMerged', state.settings?.language) };
   } catch (err: any) {
-    const errMsg = err.message || 'Sync failed';
+    const errMsg = err.message || t('webdavSyncFailed', state.settings?.language);
     await saveWebdavConfig({
       ...webdav,
       lastSyncStatus: 'failed',
       lastSyncError: errMsg,
     });
-    return { success: false, message: errMsg };
+    return { success: false, message: err.message };
   }
 }
 
@@ -288,7 +293,7 @@ export async function executeWebdavSync(state: AppState): Promise<SyncResult> {
 export async function uploadToWebdav(state: AppState): Promise<SyncResult> {
   const { webdav } = state;
   if (!webdav.enabled || !webdav.url) {
-    return { success: false, message: 'WebDAV 未配置或已禁用' };
+    return { success: false, message: t('webdavNotConfigured', state.settings?.language) };
   }
 
   const client = new WebdavClient(webdav);
@@ -308,11 +313,11 @@ export async function uploadToWebdav(state: AppState): Promise<SyncResult> {
       lastSyncStatus: 'success',
       lastSyncError: undefined,
     });
-    return { success: true, action: 'uploaded', message: '已成功将本地数据上传备份至 WebDAV 云端！' };
+    return { success: true, action: 'uploaded', message: t('webdavBackupSuccess', state.settings?.language) };
   } catch (err: any) {
-    const errMsg = err.message || '上传备份失败';
+    const errMsg = err.message || t('webdavBackupFailed', state.settings?.language);
     await saveWebdavConfig({ ...webdav, lastSyncStatus: 'failed', lastSyncError: errMsg });
-    return { success: false, message: errMsg };
+    return { success: false, message: err.message };
   }
 }
 
@@ -322,14 +327,14 @@ export async function uploadToWebdav(state: AppState): Promise<SyncResult> {
 export async function restoreFromWebdav(state: AppState): Promise<SyncResult> {
   const { webdav } = state;
   if (!webdav.enabled || !webdav.url) {
-    return { success: false, message: 'WebDAV 未配置或已禁用' };
+    return { success: false, message: t('webdavNotConfigured', state.settings?.language) };
   }
 
   const client = new WebdavClient(webdav);
   try {
     const remoteData = await client.download();
     if (!remoteData) {
-      return { success: false, message: 'WebDAV 远端未找到备份文件，请先上传备份' };
+      return { success: false, message: t('webdavNoRemote', state.settings?.language) };
     }
     if (remoteData.categories && Array.isArray(remoteData.categories)) {
       await saveCategories(remoteData.categories);
@@ -337,8 +342,11 @@ export async function restoreFromWebdav(state: AppState): Promise<SyncResult> {
     if (remoteData.sites && Array.isArray(remoteData.sites)) {
       await saveSites(remoteData.sites);
     }
-    if (remoteData.settings) {
-      await saveSettings(remoteData.settings);
+    if (remoteData.settings && typeof remoteData.settings === 'object') {
+      const clean = Object.fromEntries(
+        Object.entries(remoteData.settings).filter(([_, v]) => v !== undefined && v !== null)
+      );
+      await saveSettings({ ...DEFAULT_SETTINGS, ...clean });
     }
     const now = Date.now();
     await saveWebdavConfig({
@@ -347,10 +355,10 @@ export async function restoreFromWebdav(state: AppState): Promise<SyncResult> {
       lastSyncStatus: 'success',
       lastSyncError: undefined,
     });
-    return { success: true, action: 'downloaded', message: '已成功从 WebDAV 云端拉取并恢复数据！' };
+    return { success: true, action: 'downloaded', message: t('webdavRestoreSuccess', state.settings?.language) };
   } catch (err: any) {
-    const errMsg = err.message || '拉取恢复失败';
+    const errMsg = err.message || t('webdavRestoreFailed', state.settings?.language);
     await saveWebdavConfig({ ...webdav, lastSyncStatus: 'failed', lastSyncError: errMsg });
-    return { success: false, message: errMsg };
+    return { success: false, message: err.message };
   }
 }

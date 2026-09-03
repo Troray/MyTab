@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ThemeSettings } from '../../types';
+import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { t } from '../../utils/i18n';
 
 interface ClockHeaderProps {
   settings: ThemeSettings;
+  resolvedColors?: ResolvedTextColors;
 }
 
-export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings }) => {
+export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, resolvedColors }) => {
   const [time, setTime] = useState(new Date());
   const [hours, setHours] = useState(new Date().getHours());
 
@@ -80,15 +82,33 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings })
 
   const isLight = settings.mode === 'light';
 
+  // Determine clock color & shadow
+  const clockColorStyle = resolvedColors ? { color: resolvedColors.clock } : undefined;
+  const clockShadowClass = resolvedColors
+    ? resolvedColors.clockShadow
+    : isLight
+    ? settings.backgroundType === 'gradient'
+      ? 'text-slate-800 drop-shadow-sm'
+      : 'text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)]'
+    : 'text-white drop-shadow-md';
+
+  // Determine date & greeting colors & shadow
+  const dateColorStyle = resolvedColors ? { color: resolvedColors.date } : undefined;
+  const greetingColorStyle = resolvedColors ? { color: resolvedColors.greeting } : undefined;
+  const dateShadowClass = resolvedColors
+    ? resolvedColors.dateShadow
+    : isLight
+    ? settings.backgroundType === 'gradient'
+      ? 'text-slate-700 drop-shadow-sm'
+      : 'text-white/95 drop-shadow-[0_1px_8px_rgba(0,0,0,0.4)]'
+    : 'text-white/90 drop-shadow';
+
   return (
     <div className="flex flex-col items-center justify-center text-center select-none pt-6 pb-3 transition-colors">
       {settings.showClock && (
         <div
-          className={`flex items-baseline justify-center text-6xl sm:text-7xl md:text-8xl font-extralight tracking-tight tabular-nums transition-colors ${
-            isLight
-              ? 'text-slate-900 drop-shadow-sm'
-              : 'text-white drop-shadow-md'
-          }`}
+          style={clockColorStyle}
+          className={`flex items-baseline justify-center text-6xl sm:text-7xl md:text-8xl font-extralight tracking-tight tabular-nums transition-colors ${clockShadowClass}`}
         >
           <span>{displayHours}<span className="opacity-75 animate-pulse">:</span>{minutes}</span>
           {is12h && <span className="text-xl sm:text-2xl md:text-3xl ml-3 font-medium opacity-80">{ampm}</span>}
@@ -97,16 +117,14 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings })
 
       {(settings.showDate || settings.showGreeting) && (
         <div
-          className={`flex items-center gap-2.5 ${settings.showClock ? 'mt-2.5' : 'mt-1'} text-xs md:text-sm font-normal transition-colors ${
-            isLight
-              ? 'text-slate-700 drop-shadow-sm'
-              : 'text-white/90 drop-shadow'
-          }`}
+          className={`flex items-center gap-2.5 ${settings.showClock ? 'mt-2.5' : 'mt-1'} text-xs md:text-sm font-normal transition-colors ${dateShadowClass}`}
         >
-          {settings.showDate && <span>{formatDate()}</span>}
-          {settings.showDate && settings.showGreeting && <span className="opacity-60">•</span>}
+          {settings.showDate && <span style={dateColorStyle}>{formatDate()}</span>}
+          {settings.showDate && settings.showGreeting && (
+            <span style={dateColorStyle} className="opacity-60">•</span>
+          )}
           {settings.showGreeting && (
-            <span className="font-light tracking-wide">{greeting}</span>
+            <span style={greetingColorStyle} className="font-light tracking-wide">{greeting}</span>
           )}
         </div>
       )}

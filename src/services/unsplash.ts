@@ -11,112 +11,133 @@ export interface UnsplashPhotoResult {
 const CURATED_WALLPAPERS: Record<string, { url: string; author: string; authorUrl: string }[]> = {
   nature: [
     {
-      url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=75',
       author: 'Bailey Zindel',
       authorUrl: 'https://unsplash.com/@baileyzindel',
     },
     {
-      url: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1920&q=75',
       author: 'David Marcu',
       authorUrl: 'https://unsplash.com/@davidmarcu',
     },
     {
-      url: 'https://images.unsplash.com/photo-1511884642898-4c92249e20b6?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1511884642898-4c92249e20b6?auto=format&fit=crop&w=1920&q=75',
       author: 'Luca Bravo',
       authorUrl: 'https://unsplash.com/@lucabravo',
     },
     {
-      url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1920&q=75',
       author: 'Vadim Sherbakov',
       authorUrl: 'https://unsplash.com/@vadimsherbakov',
     },
     {
-      url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1920&q=75',
       author: 'Benjamin Davies',
       authorUrl: 'https://unsplash.com/@bendavisual',
     },
   ],
   city: [
     {
-      url: 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=1920&q=75',
       author: 'Pedro Lastra',
       authorUrl: 'https://unsplash.com/@peterlaster',
     },
     {
-      url: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1920&q=75',
       author: 'Aleksandar Pasaric',
       authorUrl: 'https://unsplash.com/@apasaric',
     },
     {
-      url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1920&q=75',
       author: 'Sean Pollock',
       authorUrl: 'https://unsplash.com/@seanpollock',
     },
     {
-      url: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1920&q=75',
       author: 'Ryo Yoshitake',
       authorUrl: 'https://unsplash.com/@ryoyoshitake',
     },
   ],
   abstract: [
     {
-      url: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1920&q=75',
       author: 'Geordanna Cordero',
       authorUrl: 'https://unsplash.com/@geordannacordero',
     },
     {
-      url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1920&q=75',
       author: 'Paweł Czerwiński',
       authorUrl: 'https://unsplash.com/@pawel_czerwinski',
     },
     {
-      url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=75',
       author: 'Milad Fakurian',
       authorUrl: 'https://unsplash.com/@fakurian',
     },
   ],
   space: [
     {
-      url: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1920&q=75',
       author: 'NASA',
       authorUrl: 'https://unsplash.com/@nasa',
     },
     {
-      url: 'https://images.unsplash.com/photo-1538370965046-79c0d6907d47?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1538370965046-79c0d6907d47?auto=format&fit=crop&w=1920&q=75',
       author: 'Guillermo Ferla',
       authorUrl: 'https://unsplash.com/@gferla',
     },
     {
-      url: 'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1502134249126-9f3755a50d78?auto=format&fit=crop&w=1920&q=75',
       author: 'Bryan Goff',
       authorUrl: 'https://unsplash.com/@bryangoffphotography',
     },
   ],
   cozy: [
     {
-      url: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1920&q=75',
       author: 'Daiga Ellaby',
       authorUrl: 'https://unsplash.com/@daiga_ellaby',
     },
     {
-      url: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=1920&q=75',
       author: 'Federico Respini',
       authorUrl: 'https://unsplash.com/@federicorespini',
     },
   ],
   travel: [
     {
-      url: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1920&q=75',
       author: 'Francesca Tirico',
       authorUrl: 'https://unsplash.com/@francescatirico',
     },
     {
-      url: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=2560&q=85',
+      url: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1920&q=75',
       author: 'Jezael Melgoza',
       authorUrl: 'https://unsplash.com/@jezael',
     },
   ],
 };
+
+
+// Track recent URLs to cycle smoothly without ping-pong repetition on rapid clicks
+const recentUnsplashUrls: string[] = [];
+
+function pickFromCuratedList(list: { url: string; author: string; authorUrl: string }[], currentUrl?: string) {
+  const excluded = new Set([currentUrl, ...recentUnsplashUrls]);
+  let pool = list.filter((item) => !excluded.has(item.url));
+  if (pool.length === 0) {
+    pool = list.filter((item) => item.url !== currentUrl);
+  }
+  if (pool.length === 0) {
+    pool = list;
+  }
+  const picked = pool[Math.floor(Math.random() * pool.length)];
+  recentUnsplashUrls.push(picked.url);
+  if (recentUnsplashUrls.length > 4) {
+    recentUnsplashUrls.shift();
+  }
+  return picked;
+}
 
 export async function fetchUnsplashRandomPhoto(settings: ThemeSettings): Promise<UnsplashPhotoResult> {
   const activeTab = settings.unsplashActiveTab || 'nature';
@@ -181,7 +202,7 @@ export async function fetchUnsplashRandomPhoto(settings: ThemeSettings): Promise
       console.warn('[Unsplash] API request failed, falling back to curated pool:', e);
       // Fallback to curated pool if API fails
       const fallbackList = CURATED_WALLPAPERS[activeTab] || CURATED_WALLPAPERS.nature;
-      const picked = fallbackList[Math.floor(Math.random() * fallbackList.length)];
+      const picked = pickFromCuratedList(fallbackList, settings.backgroundValue || settings.unsplashLastUrl);
       return {
         url: picked.url,
         authorName: picked.author,
@@ -193,7 +214,7 @@ export async function fetchUnsplashRandomPhoto(settings: ThemeSettings): Promise
 
   // Without Access Key: Pick randomly from high-res curated pool for the selected category
   const fallbackList = CURATED_WALLPAPERS[activeTab] || CURATED_WALLPAPERS.nature;
-  const picked = fallbackList[Math.floor(Math.random() * fallbackList.length)];
+  const picked = pickFromCuratedList(fallbackList, settings.backgroundValue || settings.unsplashLastUrl);
 
   return {
     url: picked.url,
@@ -206,7 +227,7 @@ export async function fetchUnsplashRandomPhoto(settings: ThemeSettings): Promise
  * Preloads an image into browser memory with a strict short timeout (2.5s)
  * so UI never hangs even if the CDN connection is throttled.
  */
-export function preloadImage(url: string, timeoutMs = 2500): Promise<void> {
+export function preloadImage(url: string, timeoutMs = 6000): Promise<void> {
   return new Promise((resolve) => {
     if (!url) {
       resolve();
@@ -218,18 +239,24 @@ export function preloadImage(url: string, timeoutMs = 2500): Promise<void> {
     const timer = setTimeout(() => {
       if (!isSettled) {
         isSettled = true;
-        resolve(); // Ensure UI always unlocks quickly
+        resolve(); // Ensure UI always unlocks even if connection is throttled
       }
     }, timeoutMs);
 
-    img.onload = () => {
+    const onFinish = () => {
       if (!isSettled) {
         isSettled = true;
         clearTimeout(timer);
-        resolve();
+        // Ensure image bitmap is decoded in GPU memory before resolving
+        if ('decode' in img && typeof (img as any).decode === 'function') {
+          (img as any).decode().then(resolve).catch(resolve);
+        } else {
+          resolve();
+        }
       }
     };
 
+    img.onload = onFinish;
     img.onerror = () => {
       if (!isSettled) {
         isSettled = true;

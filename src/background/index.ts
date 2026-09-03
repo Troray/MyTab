@@ -1,6 +1,7 @@
-import { loadAppState } from '../services/storage';
+import { loadAppState, savePopupLastUsedGroupId } from '../services/storage';
 import { executeWebdavSync } from '../services/webdav';
 import { executeGitSync } from '../services/git';
+import { checkBookmarkExists, addBookmark } from '../services/bookmark';
 
 console.log('[MyTab Background] Service Worker initialized.');
 
@@ -80,6 +81,33 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
             return res.text();
           })
           .then((html) => sendResponse({ success: true, data: html }))
+          .catch((err) => sendResponse({ success: false, error: err.message }));
+        return true;
+      }
+
+      if (message.type === 'GET_GROUPS') {
+        loadAppState()
+          .then((state) => sendResponse({ success: true, data: state.categories }))
+          .catch((err) => sendResponse({ success: false, error: err.message }));
+        return true;
+      }
+
+      if (message.type === 'CHECK_BOOKMARK_EXISTS' && message.url) {
+        checkBookmarkExists(message.url)
+          .then((exists) => sendResponse({ success: true, exists }))
+          .catch((err) => sendResponse({ success: false, error: err.message }));
+        return true;
+      }
+
+      if (message.type === 'ADD_BOOKMARK' && message.payload) {
+        addBookmark(message.payload)
+          .then(async (result) => {
+            if (result.success) {
+              // Save last used group ID
+              await savePopupLastUsedGroupId(message.payload.categoryId);
+            }
+            sendResponse(result);
+          })
           .catch((err) => sendResponse({ success: false, error: err.message }));
         return true;
       }

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import { SiteItem, ThemeSettings } from '../../types';
+import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { generateFallbackIcon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
 
@@ -8,6 +9,7 @@ interface SiteCardProps {
   site: SiteItem;
   index: number;
   settings: ThemeSettings;
+  resolvedColors?: ResolvedTextColors;
   isDragging?: boolean;
   isAnyDragging?: boolean;
   isJustDropped?: boolean;
@@ -23,6 +25,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
   site,
   index,
   settings,
+  resolvedColors,
   isDragging,
   isAnyDragging,
   isJustDropped,
@@ -112,8 +115,8 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
         width: `${cardSize}px`,
         minHeight: `${cardSize}px`,
       }}
-      className={`relative shrink-0 select-none cursor-grab active:cursor-grabbing will-change-transform ${
-        isDragging ? 'opacity-30 scale-95' : ''
+      className={`relative shrink-0 select-none cursor-grab active:cursor-grabbing ${
+        isDragging ? 'opacity-30 scale-95 will-change-transform' : isJustDropped ? 'will-change-transform' : ''
       }`}
     >
       {/* Inner Animated Visual Card Layer */}
@@ -130,29 +133,26 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
               ? 'rgba(0, 0, 0, 0.08)'
               : 'rgba(255, 255, 255, 0.18)'
             : isLight
-            ? `rgba(255, 255, 255, ${Math.max(0.82, settings.cardOpacity)})`
+            ? `rgba(255, 255, 255, ${Math.max(0.45, Math.min(0.96, settings.cardOpacity + 0.42))})`
             : `rgba(255, 255, 255, ${settings.cardOpacity})`,
-          backdropFilter: `blur(${blurPx}px)`,
-          WebkitBackdropFilter: `blur(${blurPx}px)`,
           padding: `${paddingPx}px`,
-          transform: 'translateZ(0)',
         }}
-        className={`group relative flex flex-col items-center justify-center rounded-2xl border transition-all duration-200 ease-out h-full w-full ${jiggleClass} ${
+        className={`group relative flex flex-col items-center justify-center rounded-2xl border duration-0 h-full w-full ${jiggleClass} ${
           isDragging
             ? 'ios-dragged border-amber-500/60 ring-2 ring-amber-500/30'
             : isJustDropped
             ? 'ios-drop-spring border-amber-500/80 ring-2 ring-amber-500/40'
             : isLight
-            ? 'border-black/10 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/5 hover:border-black/20 hover:scale-[1.02]'
-            : 'border-white/10 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40 hover:border-white/25 hover:scale-[1.02]'
+            ? 'border-white/80 hover:border-white shadow-md shadow-black/[0.04] hover:shadow-lg hover:shadow-black/10 hover:bg-white/95 hover:scale-[1.01]'
+            : 'border-white/10 hover:border-white/30 hover:bg-white/10 hover:shadow-lg hover:shadow-black/40 hover:scale-[1.01]'
         }`}
       >
         {/* Icon Inset Container */}
         <div
           style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px` }}
-          className={`rounded-xl flex items-center justify-center shadow-inner overflow-hidden mb-2 transition-transform duration-150 group-hover:scale-105 shrink-0 pointer-events-none ${
+          className={`rounded-xl flex items-center justify-center shadow-inner overflow-hidden mb-2 duration-0 group-hover:scale-105 shrink-0 pointer-events-none ${
             isLight
-              ? 'bg-black/[0.03] border border-black/5'
+              ? 'bg-white/80 border border-black/[0.06]'
               : 'bg-white/[0.08] border border-white/10'
           }`}
         >
@@ -173,11 +173,10 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
           draggable={false}
           style={{
             fontSize: cardSize < 95 ? '11px' : cardSize > 130 ? '14px' : '12px',
+            color: resolvedColors?.cards,
           }}
-          className={`font-medium truncate max-w-full text-center tracking-wide px-1 select-none pointer-events-none transition-colors ${
-            isLight
-              ? 'text-slate-800 group-hover:text-black'
-              : 'text-white/90 group-hover:text-white drop-shadow'
+          className={`font-medium truncate max-w-full text-center tracking-wide px-1 select-none pointer-events-none duration-0 ${
+            resolvedColors?.cardShadow || (isLight ? 'text-slate-800 group-hover:text-black' : 'text-white/90 group-hover:text-white drop-shadow')
           }`}
         >
           {site.title || 'Untitled'}
@@ -210,15 +209,11 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
           {showMenu && (
             <div
               onClick={(e) => e.stopPropagation()}
-              className={`absolute right-0 top-6 w-28 py-1 rounded-xl border shadow-2xl z-40 animate-scale-in text-xs font-medium overflow-hidden ${
+              className={`glass-dropdown absolute right-0 top-6 w-28 py-1 rounded-xl border shadow-2xl z-40 animate-scale-in text-xs font-medium overflow-hidden ${
                 isLight
-                  ? 'border-black/10 shadow-black/10 bg-white/95 text-slate-800'
-                  : 'border-white/15 shadow-black/60 bg-slate-900/90 text-white'
+                  ? 'border-black/10 shadow-black/10 text-slate-800'
+                  : 'border-white/15 shadow-black/40 text-white'
               }`}
-              style={{
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-              }}
             >
               <button
                 onClick={() => {
