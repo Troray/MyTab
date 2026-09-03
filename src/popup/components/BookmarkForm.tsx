@@ -50,7 +50,7 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language 
           type="text" 
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-3 py-2 text-xs rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.04] dark:bg-white/[0.08] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-colors"
+          className="w-full px-3 py-2 text-xs rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.04] dark:bg-white/[0.08] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:border-slate-500 dark:focus:border-white/40 focus:ring-1 focus:ring-slate-500/20 outline-none transition-colors"
         />
       </div>
 
@@ -60,7 +60,7 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language 
           type="text" 
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          className="w-full px-3 py-2 text-xs rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.04] dark:bg-white/[0.08] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-colors"
+          className="w-full px-3 py-2 text-xs rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.04] dark:bg-white/[0.08] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:border-slate-500 dark:focus:border-white/40 focus:ring-1 focus:ring-slate-500/20 outline-none transition-colors"
         />
       </div>
 
@@ -75,9 +75,9 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language 
           <input 
             type="text" 
             value={favicon}
-            placeholder={t('popupIconPlaceholder', language)}
+            placeholder={t('siteIconPlaceholder', language)}
             onChange={(e) => setFavicon(e.target.value)}
-            className="flex-1 min-w-0 px-3 py-2 text-xs rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.04] dark:bg-white/[0.08] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-colors"
+            className="flex-1 min-w-0 px-3 py-2 text-xs rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.04] dark:bg-white/[0.08] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:border-slate-500 dark:focus:border-white/40 focus:ring-1 focus:ring-slate-500/20 outline-none transition-colors"
           />
         </div>
       </div>
@@ -89,7 +89,7 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language 
             <select 
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.04] dark:bg-white/[0.08] text-slate-800 dark:text-white appearance-none focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-colors cursor-pointer"
+              className="w-full px-3 py-2 text-xs rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.04] dark:bg-white/[0.08] text-slate-800 dark:text-white appearance-none focus:border-slate-500 dark:focus:border-white/40 focus:ring-1 focus:ring-slate-500/20 outline-none transition-colors cursor-pointer"
             >
               {categories.map((c) => (
                 <option key={c.id} value={c.id} className="bg-white dark:bg-[#40434b] text-slate-800 dark:text-white">{c.name}</option>
@@ -108,7 +108,7 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language 
         <button 
           onClick={() => onSave({ title, url, favicon, categoryId: categoryId || 'all' })}
           disabled={isSaving || !title.trim() || !url.trim() || (categories.length > 0 && !categoryId)}
-          className="w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white text-xs font-semibold shadow-md active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-black active:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:active:bg-slate-200 text-white dark:text-slate-950 text-xs font-semibold shadow-md active:scale-98 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
         >
           {isSaving ? t('popupSaving', language) : t('popupAddTitle', language)}
         </button>

@@ -88,7 +88,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
  {/* Frosted Glass Backdrop */}
  <div
- className="absolute inset-0 bg-black/60 transition-opacity animate-fade-in"
+ className={`absolute inset-0 transition-opacity animate-fade-in ${isLight ? 'bg-black/25' : 'bg-black/60'}`}
  onClick={onCancel}
  />
 

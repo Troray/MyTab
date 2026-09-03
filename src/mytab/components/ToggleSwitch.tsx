@@ -28,7 +28,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
           isLight ? 'peer-focus-visible:ring-slate-900 peer-focus-visible:ring-offset-white' : 'peer-focus-visible:ring-white peer-focus-visible:ring-offset-slate-900'
         } peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:duration-0 ${
           isLight
-            ? 'bg-slate-300 peer-checked:bg-slate-900'
+            ? 'bg-slate-200 peer-checked:bg-slate-800'
             : 'bg-white/20 peer-checked:bg-white after:peer-checked:bg-slate-900'
         }`}
       />

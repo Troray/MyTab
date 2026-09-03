@@ -67,7 +67,7 @@ body {
 }
 
 .light .glass-drawer {
-  background: rgba(255, 255, 255, 0.78) !important;
+  background: #ffffff !important;
 }
 
 .glass-modal {
@@ -75,7 +75,7 @@ body {
 }
 
 .light .glass-modal {
-  background: rgba(255, 255, 255, 0.82) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
 }
 
 .glass-dropdown {
@@ -83,7 +83,7 @@ body {
 }
 
 .light .glass-dropdown {
-  background: rgba(255, 255, 255, 0.92) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
 }
 
 /* Custom Refined Scrollbar */
@@ -229,4 +229,10 @@ body {
   animation: tactileSettleDrop 0.35s var(--ease-out-expo) forwards !important;
   z-index: 30 !important;
 }
+
+.search-input-field::placeholder {
+  color: var(--search-placeholder-color, currentColor);
+  opacity: 0.6;
+}
+
 

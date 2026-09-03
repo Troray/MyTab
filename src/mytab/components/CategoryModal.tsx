@@ -66,7 +66,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
  {/* Backdrop */}
  <div
- className="fixed inset-0 bg-black/60 transition-opacity animate-fade-in"
+ className={`fixed inset-0 transition-opacity animate-fade-in ${isLight ? 'bg-black/25' : 'bg-black/60'}`}
  onClick={onClose}
  />
 

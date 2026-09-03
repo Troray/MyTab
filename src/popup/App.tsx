@@ -115,7 +115,7 @@ export const App: React.FC = () => {
     <div className="glass-drawer w-full h-full min-h-[320px] text-slate-800 dark:text-white flex flex-col p-4 select-none">
       {/* Header */}
       <div className="flex items-center gap-2 mb-3.5">
-        <div className="w-6 h-6 rounded-lg bg-indigo-500/90 flex items-center justify-center text-white font-bold text-xs shadow-sm">
+        <div className="w-6 h-6 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-950 flex items-center justify-center font-bold text-xs shadow-sm">
           M
         </div>
         <h1 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -125,7 +125,7 @@ export const App: React.FC = () => {
 
       {status === 'loading' && (
         <div className="flex-1 flex items-center justify-center py-8">
-          <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-5 h-5 border-2 border-slate-700 dark:border-white/70 border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
 

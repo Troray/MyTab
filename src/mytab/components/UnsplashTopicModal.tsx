@@ -110,7 +110,7 @@ export const UnsplashTopicModal: React.FC<UnsplashTopicModalProps> = ({
  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
  {/* Frosted Glass Backdrop */}
  <div
- className="fixed inset-0 bg-black/60 transition-opacity"
+ className={`fixed inset-0 transition-opacity ${isLight ? 'bg-black/25' : 'bg-black/60'}`}
  onClick={onClose}
  />
 
@@ -166,7 +166,7 @@ export const UnsplashTopicModal: React.FC<UnsplashTopicModalProps> = ({
  className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer active:scale-95 select-none ${
  isTabActive
  ? isLight
- ? 'bg-slate-900 text-white shadow-sm font-semibold'
+ ? 'bg-white text-slate-900 shadow-sm font-semibold border border-black/10'
  : 'bg-white text-slate-950 shadow-sm font-semibold'
  : isLight
  ? 'bg-black/[0.03] hover:bg-black/[0.06] text-slate-700 border border-black/5'
