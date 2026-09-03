@@ -50,7 +50,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-medium transition-all cursor-pointer ${
+        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-medium duration-0 cursor-pointer ${
           isLight
             ? `bg-black/5 hover:bg-black/10 text-slate-900 ${isOpen ? 'border-black/30 ring-2 ring-black/10' : 'border-black/10'}`
             : `bg-white/10 hover:bg-white/15 text-white ${isOpen ? 'border-white/30 ring-2 ring-white/20' : 'border-white/15'}`
@@ -61,24 +61,20 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown
-          className={`w-4 h-4 opacity-60 transition-transform duration-200 shrink-0 ml-2 ${
+          className={`w-4 h-4 opacity-60 duration-0 shrink-0 ml-2 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
       </button>
 
-      {/* Frosted Glass Dropdown Menu */}
+      {/* Dropdown Menu */}
       {isOpen && (
         <div
-          className={`absolute left-0 right-0 top-[calc(100%+6px)] max-h-56 overflow-y-auto rounded-2xl border shadow-2xl z-50 animate-scale-in p-1.5 scrollbar-thin ${
+          className={`glass-dropdown absolute left-0 right-0 top-[calc(100%+6px)] max-h-56 overflow-y-auto rounded-2xl border shadow-2xl z-50 animate-scale-in p-1.5 scrollbar-thin ${
             isLight
-              ? 'border-black/10 shadow-black/15 bg-white/95 text-slate-900'
-              : 'border-white/15 shadow-black/80 bg-slate-900/95 text-white'
+              ? 'border-black/10 shadow-black/15 text-slate-900'
+              : 'border-white/15 shadow-black/40 text-white'
           }`}
-          style={{
-            backdropFilter: 'blur(32px)',
-            WebkitBackdropFilter: 'blur(32px)',
-          }}
         >
           {options.map((option) => {
             const isSelected = option.value === value;
@@ -90,7 +86,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                   onChange(option.value);
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs sm:text-sm transition-colors cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs sm:text-sm duration-0 cursor-pointer ${
                   isSelected
                     ? isLight
                       ? 'bg-black/5 text-black font-semibold'

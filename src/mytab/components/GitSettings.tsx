@@ -315,7 +315,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     setConnectResult(null);
 
     try {
-      const res = await autoSetupGist(config.provider, config.token.trim());
+      const res = await autoSetupGist(config.provider, config.token.trim(), settings.language);
       if (res.success) {
         handleChange({
           enabled: true,
@@ -352,7 +352,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
       const targetOwner = isTokenLike(parsed?.owner) ? undefined : (parsed?.owner || (isTokenLike(config.owner) ? undefined : config.owner));
 
-      const res = await autoSetupRepo(config.provider, config.token.trim(), targetRepo, targetOwner);
+      const res = await autoSetupRepo(config.provider, config.token.trim(), targetRepo, targetOwner, settings.language);
       if (res.success) {
         const finalOwner = res.owner || targetOwner || config.owner || 'User';
         const finalRepo = res.repo || targetRepo;
@@ -429,7 +429,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     <div className="space-y-3.5">
       {/* 1. Enable Switch */}
       <div
-        className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
+        className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${
           isLight
             ? 'bg-black/[0.03] border-black/8 text-slate-900'
             : 'bg-white/[0.05] border-white/10 text-white'
@@ -466,17 +466,17 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
             <label className={`block text-xs font-medium mb-1.5 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
               {t('gitProvider', settings.language)}
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid grid-cols-2 gap-1.5 ${isLight ? 'bg-slate-100 p-1 rounded-2xl border border-black/5' : ''}`}>
               <button
                 type="button"
                 onClick={() => handleProviderChange('github')}
-                className={`py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer active:scale-95 ${
+                className={`py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
                   config.provider === 'github'
                     ? isLight
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                      ? 'bg-white text-slate-900 shadow-sm border border-black/5 font-semibold'
                       : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
                     : isLight
-                    ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
+                    ? 'bg-transparent text-slate-600 hover:text-slate-900'
                     : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
                 }`}
               >
@@ -485,13 +485,13 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => handleProviderChange('gitee')}
-                className={`py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer active:scale-95 ${
+                className={`py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
                   config.provider === 'gitee'
                     ? isLight
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                      ? 'bg-white text-slate-900 shadow-sm border border-black/5 font-semibold'
                       : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
                     : isLight
-                    ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
+                    ? 'bg-transparent text-slate-600 hover:text-slate-900'
                     : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
                 }`}
               >
@@ -505,17 +505,17 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
             <label className={`block text-xs font-medium mb-1.5 ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
               {t('gitSyncMode', settings.language)}
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid grid-cols-2 gap-1.5 ${isLight ? 'bg-slate-100 p-1 rounded-2xl border border-black/5' : ''}`}>
               <button
                 type="button"
                 onClick={() => handleChange({ mode: 'gist' })}
-                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer active:scale-95 ${
+                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
                   config.mode === 'gist'
                     ? isLight
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                      ? 'bg-white text-slate-900 shadow-sm border border-black/5 font-semibold'
                       : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
                     : isLight
-                    ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
+                    ? 'bg-transparent text-slate-600 hover:text-slate-900'
                     : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
                 }`}
               >
@@ -525,13 +525,13 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => handleChange({ mode: 'repo' })}
-                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer active:scale-95 ${
+                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
                   config.mode === 'repo'
                     ? isLight
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm font-semibold'
+                      ? 'bg-white text-slate-900 shadow-sm border border-black/5 font-semibold'
                       : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
                     : isLight
-                    ? 'bg-black/[0.03] border-black/8 text-slate-700 hover:bg-black/5'
+                    ? 'bg-transparent text-slate-600 hover:text-slate-900'
                     : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
                 }`}
               >
@@ -590,7 +590,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                           ? t('gitTokenPlaceholderGithub', settings.language)
                           : t('gitTokenPlaceholderGitee', settings.language)
                       }
-                      className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
+                      className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none duration-0 ${
                         isLight
                           ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
                           : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
@@ -600,12 +600,12 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                       <button
                         type="button"
                         onClick={() => setShowToken(!showToken)}
-                        className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors cursor-pointer ${
+                        className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg duration-0 cursor-pointer ${
                           isLight
                             ? 'text-slate-400 hover:text-slate-700 hover:bg-black/5'
                             : 'text-white/40 hover:text-white hover:bg-white/10'
                         }`}
-                        title={showToken ? '隐藏' : '显示'}
+                        title={showToken ? t('hide', settings.language) : t('show', settings.language)}
                       >
                         {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
@@ -615,10 +615,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     type="button"
                     onClick={handleSmartConnect}
                     disabled={isConnecting || !config.token.trim()}
-                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium shadow-sm transition-all cursor-pointer shrink-0 disabled:opacity-40 active:scale-95 ${
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer shrink-0 active:scale-95 ${
                       isLight
-                        ? 'bg-slate-900 hover:bg-black text-white'
-                        : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
+                        ? 'bg-white hover:bg-slate-50 text-slate-800 hover:text-black border border-slate-300 hover:border-slate-400 shadow-sm font-semibold disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
+                        : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm disabled:opacity-40'
                     }`}
                   >
                     {isConnecting ? (
@@ -687,7 +687,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                         ? t('gitTokenPlaceholderRepo', settings.language)
                         : t('gitTokenPlaceholderGitee', settings.language)
                     }
-                    className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
+                    className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none duration-0 ${
                       isLight
                         ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
                         : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
@@ -697,12 +697,12 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowToken(!showToken)}
-                      className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors cursor-pointer ${
+                      className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg duration-0 cursor-pointer ${
                         isLight
                           ? 'text-slate-400 hover:text-slate-700 hover:bg-black/5'
                           : 'text-white/40 hover:text-white hover:bg-white/10'
                       }`}
-                      title={showToken ? '隐藏' : '显示'}
+                      title={showToken ? t('hide', settings.language) : t('show', settings.language)}
                     >
                       {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </button>
@@ -727,7 +727,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     spellCheck={false}
                     data-lpignore="true"
                     data-1p-ignore="true"
-                    className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
+                    className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs outline-none duration-0 ${
                       isLight
                         ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
                         : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
@@ -737,10 +737,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     type="button"
                     onClick={handleTestRepo}
                     disabled={isTestingRepo || !config.token.trim()}
-                    className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-medium shadow-sm transition-all cursor-pointer shrink-0 disabled:opacity-40 active:scale-95 ${
+                    className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer shrink-0 active:scale-95 ${
                       isLight
-                        ? 'bg-slate-900 hover:bg-black text-white'
-                        : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
+                        ? 'bg-white hover:bg-slate-50 text-slate-800 hover:text-black border border-slate-300 hover:border-slate-400 shadow-sm font-semibold disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
+                        : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm disabled:opacity-40'
                     }`}
                   >
                     {isTestingRepo ? (
@@ -771,7 +771,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     value={config.branch || 'main'}
                     onChange={(e) => handleChange({ branch: e.target.value })}
                     className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${
-                      isLight ? 'bg-white border-black/15 text-slate-900' : 'bg-white/10 border-white/15 text-white'
+                      isLight ? 'bg-white border-slate-200/90 text-slate-900 focus:border-slate-400 focus:ring-1 focus:ring-black/5' : 'bg-white/10 border-white/15 text-white'
                     }`}
                   />
                 </div>
@@ -782,7 +782,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     value={config.path || 'mytab-backup.json'}
                     onChange={(e) => handleChange({ path: e.target.value })}
                     className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${
-                      isLight ? 'bg-white border-black/15 text-slate-900' : 'bg-white/10 border-white/15 text-white'
+                      isLight ? 'bg-white border-slate-200/90 text-slate-900 focus:border-slate-400 focus:ring-1 focus:ring-black/5' : 'bg-white/10 border-white/15 text-white'
                     }`}
                   />
                 </div>
@@ -831,10 +831,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                 type="button"
                 onClick={handleUpload}
                 disabled={isUploading || isPulling || !config.token}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-40 active:scale-95 ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
                   isLight
-                    ? 'bg-slate-900 hover:bg-black text-white shadow-sm'
-                    : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm'
+                    ? 'bg-white hover:bg-slate-50 text-slate-800 hover:text-black border border-slate-200/90 hover:border-slate-300 shadow-sm font-semibold disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
+                    : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm disabled:opacity-40'
                 }`}
                 title={t('uploadBackup', settings.language)}
               >
@@ -850,10 +850,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                 type="button"
                 onClick={() => setShowPullConfirm(true)}
                 disabled={isUploading || isPulling || !config.token}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer disabled:opacity-40 active:scale-95 ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
                   isLight
-                    ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'
-                    : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
+                    ? 'bg-white hover:bg-slate-50 text-slate-700 hover:text-black border-slate-200/90 hover:border-slate-300 shadow-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
+                    : 'bg-white/10 hover:bg-white/20 border-white/15 text-white disabled:opacity-40'
                 }`}
                 title={t('pullRestore', settings.language)}
               >

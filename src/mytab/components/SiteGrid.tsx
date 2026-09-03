@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react';
 import { Plus } from 'lucide-react';
 import { SiteItem, ThemeSettings } from '../../types';
+import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { SiteCard } from './SiteCard';
 import { t } from '../../utils/i18n';
 
 interface SiteGridProps {
   sites: SiteItem[];
   settings: ThemeSettings;
+  resolvedColors?: ResolvedTextColors;
   onEditSite: (site: SiteItem) => void;
   onDeleteSite: (siteId: string) => void;
   onAddSite: () => void;
@@ -16,6 +18,7 @@ interface SiteGridProps {
 export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
   sites,
   settings,
+  resolvedColors,
   onEditSite,
   onDeleteSite,
   onAddSite,
@@ -209,6 +212,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
             site={site}
             index={index}
             settings={settings}
+            resolvedColors={resolvedColors}
             isDragging={draggingSiteId === site.id}
             isAnyDragging={Boolean(draggingSiteId)}
             isJustDropped={justDroppedSiteId === site.id}
@@ -223,7 +227,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
 
         {displaySites.length === 0 && (
           <div className="flex flex-col items-center justify-center py-10 text-white/50 space-y-3">
-            <p className="text-xs">{settings.language === 'zh-CN' ? '当前分类下暂无快捷方式' : 'No shortcuts in this category'}</p>
+            <p className="text-xs">{t('noSitesInCategory', settings.language)}</p>
             <button
               type="button"
               onClick={onAddSite}

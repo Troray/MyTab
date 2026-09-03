@@ -15,6 +15,8 @@ export interface Category {
   sortOrder: number;
   isDefault?: boolean;
   showInAll?: boolean;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface SearchEngine {
@@ -26,6 +28,16 @@ export interface SearchEngine {
 
 export type ThemeMode = 'system' | 'dark' | 'light';
 export type BackgroundType = 'gradient' | 'bing' | 'unsplash' | 'custom' | 'color';
+export type TextColorMode = 'auto' | 'light' | 'dark' | 'custom';
+
+export interface CustomTextColors {
+  clock?: string;
+  date?: string;
+  greeting?: string;
+  search?: string;
+  tabs?: string;
+  cards?: string;
+}
 
 import { Locale } from '../locales';
 
@@ -54,6 +66,12 @@ export interface ThemeSettings {
   showGreeting: boolean;
   showDate: boolean;
   language: Locale;
+  textColorMode?: TextColorMode;
+  customTextColors?: CustomTextColors;
+  textColorModeLight?: TextColorMode;
+  customTextColorsLight?: CustomTextColors;
+  textColorModeDark?: TextColorMode;
+  customTextColorsDark?: CustomTextColors;
   customGreetings?: CustomGreetings;
   unsplashAccessKey?: string;
   unsplashActiveTab?: string;
@@ -62,6 +80,7 @@ export interface ThemeSettings {
   unsplashAuthorName?: string;
   unsplashAuthorUrl?: string;
   unsplashLastUrl?: string;
+  customBackgroundUrl?: string;
   updatedAt?: number;
 }
 

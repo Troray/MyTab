@@ -28,17 +28,21 @@ async function getItem<T>(key: string, defaultValue: T): Promise<T> {
         return res[key] as T;
       }
     } catch (e) {
-      console.warn(`[Storage] Failed to read ${key} from extension storage, falling back to localStorage`, e);
+      console.warn(`[Storage] Failed to read ${key} from extension storage`, e);
     }
   }
 
-  const raw = localStorage.getItem(key);
-  if (raw === null) return defaultValue;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return defaultValue;
+  if (typeof localStorage !== 'undefined') {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return defaultValue;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return defaultValue;
+    }
   }
+
+  return defaultValue;
 }
 
 async function setItem<T>(key: string, value: T): Promise<void> {
@@ -47,11 +51,13 @@ async function setItem<T>(key: string, value: T): Promise<void> {
       await chrome.storage.local.set({ [key]: value });
       return;
     } catch (e) {
-      console.warn(`[Storage] Failed to write ${key} to extension storage, saving to localStorage`, e);
+      console.warn(`[Storage] Failed to write ${key} to extension storage`, e);
     }
   }
 
-  localStorage.setItem(key, JSON.stringify(value));
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
 }
 
 export async function loadAppState(): Promise<AppState> {
@@ -113,8 +119,11 @@ export async function loadAppState(): Promise<AppState> {
     },
   };
 
-  // Normalize settings cardBlur (migrate from old 0-32px scale to 0-100% percentage scale)
-  const normalizedSettings = { ...DEFAULT_SETTINGS, ...settings };
+  // Normalize settings with default values, filtering out any undefined/null values
+  const cleanSettings = Object.fromEntries(
+    Object.entries(settings || {}).filter(([_, v]) => v !== undefined && v !== null)
+  );
+  const normalizedSettings: ThemeSettings = { ...DEFAULT_SETTINGS, ...cleanSettings };
   if (settings && typeof settings.cardBlur === 'number' && settings.cardBlur <= 32 && settings.cardBlur > 0) {
     normalizedSettings.cardBlur = Math.round((settings.cardBlur / 32) * 100);
   }
@@ -158,6 +167,16 @@ export async function saveActiveCategory(catId: string): Promise<void> {
   await setItem(STORAGE_KEYS.ACTIVE_CATEGORY, catId);
 }
 
+const POPUP_PREFS_KEY = 'mytab_popup_prefs';
+export async function getPopupLastUsedGroupId(): Promise<string | undefined> {
+  const prefs = await getItem<{ lastUsedGroupId?: string }>(POPUP_PREFS_KEY, {});
+  return prefs.lastUsedGroupId;
+}
+
+export async function savePopupLastUsedGroupId(groupId: string): Promise<void> {
+  await setItem(POPUP_PREFS_KEY, { lastUsedGroupId: groupId });
+}
+
 export async function exportAllData(): Promise<string> {
   const state = await loadAppState();
   const exportPayload = {
@@ -185,7 +204,10 @@ export async function importData(jsonString: string): Promise<{ success: boolean
       await saveSites(data.sites);
     }
     if (data.settings && typeof data.settings === 'object') {
-      await saveSettings({ ...DEFAULT_SETTINGS, ...data.settings });
+      const clean = Object.fromEntries(
+        Object.entries(data.settings).filter(([_, v]) => v !== undefined && v !== null)
+      );
+      await saveSettings({ ...DEFAULT_SETTINGS, ...clean });
     }
     return { success: true };
   } catch (err: any) {

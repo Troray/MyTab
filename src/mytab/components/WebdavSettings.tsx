@@ -98,7 +98,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
     <div className="space-y-3.5">
       {/* Enable Switch */}
       <div
-        className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
+        className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${
           isLight
             ? 'bg-black/[0.03] border-black/8 text-slate-900'
             : 'bg-white/[0.05] border-white/10 text-white'
@@ -140,9 +140,8 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
               value={config.url}
               onChange={(e) => handleChange({ url: e.target.value })}
               placeholder={t('webdavUrlPlaceholder', settings.language)}
-              className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
-                isLight
-                  ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900 placeholder-slate-400'
+              className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none duration-0 ${
+                isLight ? 'bg-white border-slate-200/90 focus:border-slate-400 focus:ring-1 focus:ring-black/5 text-slate-900 placeholder-slate-400'
                   : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white placeholder-white/40'
               }`}
             />
@@ -159,9 +158,8 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                 value={config.username}
                 onChange={(e) => handleChange({ username: e.target.value })}
                 placeholder={t('webdavUserPlaceholder', settings.language)}
-                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
-                  isLight
-                    ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900 placeholder-slate-400'
+                className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none duration-0 ${
+                  isLight ? 'bg-white border-slate-200/90 focus:border-slate-400 focus:ring-1 focus:ring-black/5 text-slate-900 placeholder-slate-400'
                     : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white placeholder-white/40'
                 }`}
               />
@@ -176,9 +174,8 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                   value={config.password || ''}
                   onChange={(e) => handleChange({ password: e.target.value })}
                   placeholder={t('webdavPassPlaceholder', settings.language)}
-                  className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
-                    isLight
-                      ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900 placeholder-slate-400'
+                  className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none duration-0 ${
+                    isLight ? 'bg-white border-slate-200/90 focus:border-slate-400 focus:ring-1 focus:ring-black/5 text-slate-900 placeholder-slate-400'
                       : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white placeholder-white/40'
                   }`}
                 />
@@ -186,10 +183,10 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors cursor-pointer ${
+                    className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg duration-0 cursor-pointer ${
                       isLight ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5' : 'text-white/40 hover:text-white hover:bg-white/10'
                     }`}
-                    title={showPassword ? '隐藏' : '显示'}
+                    title={showPassword ? t('hide', settings.language) : t('show', settings.language)}
                   >
                     {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
@@ -207,9 +204,8 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
               type="text"
               value={config.syncPath}
               onChange={(e) => handleChange({ syncPath: e.target.value })}
-              className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none transition-colors ${
-                isLight
-                  ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900'
+              className={`w-full px-3.5 py-2.5 rounded-xl border text-xs outline-none duration-0 ${
+                isLight ? 'bg-white border-slate-200/90 focus:border-slate-400 focus:ring-1 focus:ring-black/5 text-slate-900'
                   : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white'
               }`}
             />
@@ -251,10 +247,10 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                 type="button"
                 onClick={handleUpload}
                 disabled={isUploading || isPulling || !config.url}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-40 active:scale-95 ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
                   isLight
-                    ? 'bg-slate-900 hover:bg-black text-white shadow-sm'
-                    : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm'
+                    ? 'bg-white hover:bg-slate-50 text-slate-800 hover:text-black border border-slate-200/90 hover:border-slate-300 shadow-sm font-semibold disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
+                    : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm disabled:opacity-40'
                 }`}
                 title={t('uploadBackup', settings.language)}
               >
@@ -270,10 +266,10 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                 type="button"
                 onClick={() => setShowPullConfirm(true)}
                 disabled={isUploading || isPulling || !config.url}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer disabled:opacity-40 active:scale-95 ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
                   isLight
-                    ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'
-                    : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
+                    ? 'bg-white hover:bg-slate-50 text-slate-700 hover:text-black border-slate-200/90 hover:border-slate-300 shadow-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
+                    : 'bg-white/10 hover:bg-white/20 border-white/15 text-white disabled:opacity-40'
                 }`}
                 title={t('pullRestore', settings.language)}
               >
@@ -290,7 +286,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
               type="button"
               onClick={handleTest}
               disabled={isTesting || !config.url}
-              className={`w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium transition-all cursor-pointer disabled:opacity-40 active:scale-95 ${
+              className={`w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer disabled:opacity-40 active:scale-95 ${
                 isLight
                   ? 'bg-black/[0.03] hover:bg-black/[0.08] border-black/8 text-slate-700'
                   : 'bg-white/[0.05] hover:bg-white/10 border-white/10 text-white/80'

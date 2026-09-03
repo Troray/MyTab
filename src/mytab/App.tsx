@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
 import { Settings as SettingsIcon, Plus } from 'lucide-react';
 import { AppState, Category, GitSyncConfig, SiteItem, ThemeSettings, WebdavConfig } from '../types';
 import {
@@ -18,6 +18,8 @@ import { SiteGrid } from './components/SiteGrid';
 import { urlToBase64Icon } from '../services/metadata';
 import { DEFAULT_SETTINGS } from '../utils/constants';
 import { ConfirmModal } from './components/ConfirmModal';
+import { analyzeWallpaperLuminance, resolveTextColors, WallpaperLuminance } from '../utils/wallpaperAnalyzer';
+import { TextColorCustomizer } from './components/TextColorCustomizer';
 
 const CACHE_WARMER_DELAY = 1200; // Delay to avoid blocking initial render
 
@@ -32,6 +34,26 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<SiteItem | null>(null);
   const [deletingSite, setDeletingSite] = useState<SiteItem | null>(null);
+  const [isCustomizingColors, setIsCustomizingColors] = useState(false);
+  const [wallpaperLuminance, setWallpaperLuminance] = useState<WallpaperLuminance>({
+    topIsDark: true,
+    centerIsDark: true,
+    bottomIsDark: true,
+    overallIsDark: true,
+  });
+
+  // Track OS system theme dynamic changes
+  const [systemIsDark, setSystemIsDark] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)').matches : false
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setSystemIsDark(e.matches);
+    media.addEventListener('change', handler);
+    return () => media.removeEventListener('change', handler);
+  }, []);
 
   // 1. Load state on mount
   const reloadState = useCallback(async () => {
@@ -78,23 +100,60 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     return () => clearTimeout(timer);
   }, [appState?.sites]);
 
-
-
   // 3. Theme mode class on document
   useEffect(() => {
     if (!appState) return;
-    const isLight = appState.settings.mode === 'light';
-    if (isLight) {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-    } else {
+    const mode = appState.settings.mode;
+    const isDark = mode === 'dark' || (mode === 'system' && systemIsDark);
+
+    if (isDark) {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
     }
-  }, [appState?.settings?.mode]);
+  }, [appState?.settings?.mode, systemIsDark]);
 
   // 4. Background style computation (All hooks must be at top level unconditionally)
-  const currentSettings = appState?.settings || DEFAULT_SETTINGS;
+  const currentSettings: ThemeSettings = useMemo(() => {
+    const raw = appState?.settings || {};
+    const clean = Object.fromEntries(
+      Object.entries(raw).filter(([_, v]) => v !== undefined && v !== null)
+    );
+    return { ...DEFAULT_SETTINGS, ...clean };
+  }, [appState?.settings]);
+
+  // Luminance analysis for wallpaper contrast
+  useEffect(() => {
+    let isCancelled = false;
+    analyzeWallpaperLuminance(
+      currentSettings.backgroundType,
+      currentSettings.backgroundValue,
+      (lum) => {
+        if (!isCancelled) {
+          setWallpaperLuminance(lum);
+        }
+      }
+    );
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentSettings.backgroundType, currentSettings.backgroundValue]);
+
+  const activeThemeMode: 'light' | 'dark' =
+    currentSettings.mode === 'light'
+      ? 'light'
+      : currentSettings.mode === 'dark'
+        ? 'dark'
+        : systemIsDark
+          ? 'dark'
+          : 'light';
+
+  const resolvedColors = useMemo(() => {
+    return resolveTextColors(currentSettings, wallpaperLuminance, activeThemeMode);
+  }, [currentSettings, wallpaperLuminance, activeThemeMode]);
+
   const backgroundStyle = useMemo(() => {
     if (currentSettings.backgroundType === 'gradient') {
       return { background: currentSettings.backgroundValue };
@@ -105,8 +164,8 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         rawVal.startsWith('http') || rawVal.startsWith('data:')
           ? rawVal
           : typeof chrome !== 'undefined' && chrome.runtime?.getURL
-          ? chrome.runtime.getURL(rawVal.replace(/^\.?\//, ''))
-          : rawVal;
+            ? chrome.runtime.getURL(rawVal.replace(/^\.?\//, ''))
+            : rawVal;
 
       return {
         backgroundImage: `url("${bgUrl}")`,
@@ -117,6 +176,77 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     }
     return { background: currentSettings.backgroundValue };
   }, [currentSettings.backgroundType, currentSettings.backgroundValue]);
+
+  // Double-buffering state for seamless zero-flash cross-fade wallpaper transitions
+  const visibleBgRef = useRef<React.CSSProperties>(backgroundStyle);
+  const [activeBg, setActiveBg] = useState<React.CSSProperties>(backgroundStyle);
+  const [incomingBg, setIncomingBg] = useState<React.CSSProperties | null>(null);
+  const [isCrossFading, setIsCrossFading] = useState(false);
+
+  useEffect(() => {
+    const currentCss = JSON.stringify(visibleBgRef.current);
+    const nextCss = JSON.stringify(backgroundStyle);
+    if (currentCss === nextCss) return;
+
+    const bgUrlMatch = (backgroundStyle as any).backgroundImage?.match(/url\(["']?([^"']+)["']?\)/);
+    const targetUrl = bgUrlMatch ? bgUrlMatch[1] : null;
+
+    let isCancelled = false;
+
+    const startTransition = () => {
+      if (isCancelled) return;
+      // Promote the currently visible background to the base layer so rapid clicks NEVER snap back
+      setActiveBg(visibleBgRef.current);
+      setIncomingBg(backgroundStyle as React.CSSProperties);
+      setIsCrossFading(false);
+
+      requestAnimationFrame(() => {
+        if (!isCancelled) {
+          setIsCrossFading(true);
+          visibleBgRef.current = backgroundStyle as React.CSSProperties;
+        }
+      });
+    };
+
+    if (targetUrl) {
+      const img = new Image();
+      img.src = targetUrl;
+      const onDone = () => {
+        if (!isCancelled) {
+          if ('decode' in img && typeof (img as any).decode === 'function') {
+            (img as any).decode().then(startTransition).catch(startTransition);
+          } else {
+            startTransition();
+          }
+        }
+      };
+      if (img.complete) {
+        onDone();
+      } else {
+        img.onload = onDone;
+        img.onerror = onDone;
+      }
+    } else {
+      startTransition();
+    }
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [backgroundStyle]);
+
+  useEffect(() => {
+    if (!isCrossFading) return;
+    const timer = setTimeout(() => {
+      if (incomingBg) {
+        setActiveBg(incomingBg);
+        visibleBgRef.current = incomingBg;
+        setIncomingBg(null);
+        setIsCrossFading(false);
+      }
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [isCrossFading, incomingBg]);
 
   // Cache background for zero-delay startup on next launch (eliminates any flash)
   useEffect(() => {
@@ -136,6 +266,20 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       localStorage.setItem('mytab_bg_cache', css);
       const isLightMode = currentSettings.mode === 'light';
       localStorage.setItem('mytab_theme_mode', isLightMode ? 'light' : 'dark');
+
+      // Keep document.body in sync with current background and remove stale init style
+      const initStyleEl = document.getElementById('mytab-init-bg');
+      if (initStyleEl) {
+        initStyleEl.remove();
+      }
+      if (style.backgroundImage) {
+        document.body.style.backgroundImage = style.backgroundImage;
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundPosition = 'center';
+        document.body.style.backgroundRepeat = 'no-repeat';
+      } else if (style.background) {
+        document.body.style.background = style.background as string;
+      }
     } catch (e) {
       console.warn('[MyTab] Failed to cache background to localStorage:', e);
     }
@@ -145,7 +289,8 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     return null; // Return null instead of a jarring spinner to avoid white/black flashes on startup
   }
 
-  const { sites, categories, settings, activeCategoryId, isFirstLaunch } = appState;
+  const { sites, categories, activeCategoryId, isFirstLaunch } = appState;
+  const settings = currentSettings;
 
   // Memoized: Filter sites based on active category and showInAll flag
   const filteredSites = useMemo(() => {
@@ -178,17 +323,15 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
 
     if (editingSite) {
       updatedSites = sites.map((s) =>
-        s.id === editingSite.id
-          ? ({ ...s, ...siteData, updatedAt: now } as SiteItem)
-          : s
+        s.id === editingSite.id ? ({ ...s, ...siteData, updatedAt: now } as SiteItem) : s
       );
     } else {
       const newSite: SiteItem = {
-        id: `site-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        title: siteData.title || 'Untitled',
-        url: siteData.url || 'https://',
-        icon: siteData.icon,
-        categoryId: siteData.categoryId || 'tools',
+        id: `site-${now}`,
+        title: siteData.title || '',
+        url: siteData.url || '',
+        icon: siteData.icon || '',
+        categoryId: siteData.categoryId || activeCategoryId,
         sortOrder: sites.length,
         createdAt: now,
         updatedAt: now,
@@ -197,12 +340,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     }
 
     await saveSites(updatedSites);
-    const nextState = { ...appState, sites: updatedSites };
-    setAppState(nextState);
+    setAppState((prev) => (prev ? { ...prev, sites: updatedSites } : null));
     setIsSiteModalOpen(false);
     setEditingSite(null);
-
-  }, [appState, sites, editingSite]);
+  }, [sites, editingSite, activeCategoryId]);
 
   const handleDeleteSite = useCallback((siteId: string) => {
     const site = sites.find((s) => s.id === siteId);
@@ -213,128 +354,158 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
 
   const confirmDeleteSite = useCallback(async () => {
     if (!deletingSite) return;
-    const siteId = deletingSite.id;
-    const updatedSites = sites.filter((s) => s.id !== siteId);
-    await saveSites(updatedSites);
-    const nextState = { ...appState, sites: updatedSites };
-    setAppState(nextState);
+    const updated = sites.filter((s) => s.id !== deletingSite.id);
+    await saveSites(updated);
+    setAppState((prev) => (prev ? { ...prev, sites: updated } : null));
     setDeletingSite(null);
-  }, [appState, sites, deletingSite]);
+  }, [sites, deletingSite]);
 
-  const handleReorderSites = useCallback(async (reordered: SiteItem[]) => {
-    let finalSites: SiteItem[];
-    if (activeCategoryId === 'all') {
-      finalSites = reordered;
-    } else {
-      const others = sites.filter((s) => s.categoryId !== activeCategoryId);
-      finalSites = [...others, ...reordered];
-    }
+  const handleReorderSites = useCallback(async (reorderedSites: SiteItem[]) => {
+    const updated = sites.map((site) => {
+      const foundIndex = reorderedSites.findIndex((s) => s.id === site.id);
+      return foundIndex !== -1 ? { ...site, sortOrder: foundIndex } : site;
+    });
+    await saveSites(updated);
+    setAppState((prev) => (prev ? { ...prev, sites: updated } : null));
+  }, [sites]);
 
-    await saveSites(finalSites);
-    const nextState = { ...appState, sites: finalSites };
-    setAppState(nextState);
-  }, [appState, sites, activeCategoryId]);
-
-  // Handlers for Categories
   const handleAddCategory = async (data: { name: string; showInAll: boolean }) => {
+    const now = Date.now();
     const newCat: Category = {
-      id: `cat-${Date.now()}`,
-      name: data.name,
+      id: `cat-${now}`,
+      name: data.name || '',
+      isDefault: false,
+      showInAll: data.showInAll ?? true,
       sortOrder: categories.length,
-      showInAll: data.showInAll,
+      createdAt: now,
+      updatedAt: now,
     };
-    const updatedCats = [...categories, newCat];
-    await saveCategories(updatedCats);
-    const nextState = { ...appState, categories: updatedCats };
-    setAppState(nextState);
+    const updated = [...categories, newCat];
+    await saveCategories(updated);
+    setAppState((prev) => (prev ? { ...prev, categories: updated } : null));
   };
 
-  const handleUpdateCategory = async (catId: string, updates: Partial<Category>) => {
-    const updatedCats = categories.map((c) =>
-      c.id === catId ? { ...c, ...updates } : c
+  const handleUpdateCategory = async (id: string, updates: Partial<Category>) => {
+    const now = Date.now();
+    const updated = categories.map((c) =>
+      c.id === id ? { ...c, ...updates, updatedAt: now } : c
     );
-    await saveCategories(updatedCats);
-    const nextState = { ...appState, categories: updatedCats };
-    setAppState(nextState);
+    await saveCategories(updated);
+    setAppState((prev) => (prev ? { ...prev, categories: updated } : null));
   };
 
   const handleDeleteCategory = async (catId: string) => {
-    const updatedCats = categories.filter((c) => c.id !== catId);
-    const fallbackCat = categories[1]?.id || 'tools';
+    // Cannot delete default categories
+    const target = categories.find((c) => c.id === catId);
+    if (!target || target.isDefault) return;
+
+    // Remove category
+    const updatedCategories = categories.filter((c) => c.id !== catId);
+
+    // Reassign sites from deleted category to 'tools' default category
     const updatedSites = sites.map((s) =>
-      s.categoryId === catId ? { ...s, categoryId: fallbackCat } : s
+      s.categoryId === catId ? { ...s, categoryId: 'tools', updatedAt: Date.now() } : s
     );
 
-    await saveCategories(updatedCats);
+    await saveCategories(updatedCategories);
     await saveSites(updatedSites);
-    if (activeCategoryId === catId) {
-      await saveActiveCategory('all');
-    }
 
-    const nextState = {
-      ...appState,
-      categories: updatedCats,
-      sites: updatedSites,
-      activeCategoryId: activeCategoryId === catId ? 'all' : activeCategoryId,
-    };
-    setAppState(nextState);
+    // If active category was deleted, switch back to 'all'
+    setAppState((prev) =>
+      prev
+        ? {
+          ...prev,
+          categories: updatedCategories,
+          sites: updatedSites,
+          activeCategoryId: prev.activeCategoryId === catId ? 'all' : prev.activeCategoryId,
+        }
+        : null
+    );
   };
 
   const handleSelectCategory = async (catId: string) => {
     await saveActiveCategory(catId);
-    setAppState({ ...appState, activeCategoryId: catId });
+    setAppState((prev) => (prev ? { ...prev, activeCategoryId: catId } : null));
   };
 
   // Handlers for Settings & WebDAV
-  const handleUpdateSettings = async (newSettings: ThemeSettings) => {
-    const stampedSettings = { ...newSettings, updatedAt: Date.now() };
-    await saveSettings(stampedSettings);
-    const nextState = { ...appState, settings: stampedSettings };
-    setAppState(nextState);
+  const handleUpdateSettings = (newSettings: Partial<ThemeSettings>) => {
+    setAppState((prev) => {
+      if (!prev) return prev;
+      const cleanPrev = Object.fromEntries(
+        Object.entries(prev.settings || {}).filter(([_, v]) => v !== undefined && v !== null)
+      );
+      const cleanNew = Object.fromEntries(
+        Object.entries(newSettings || {}).filter(([_, v]) => v !== undefined && v !== null)
+      );
+      const stampedSettings: ThemeSettings = {
+        ...DEFAULT_SETTINGS,
+        ...cleanPrev,
+        ...cleanNew,
+        updatedAt: Date.now(),
+      };
+      saveSettings(stampedSettings).catch((e) =>
+        console.error('[MyTab] Failed to save settings:', e)
+      );
+      return { ...prev, settings: stampedSettings };
+    });
   };
 
   const handleUpdateWebdav = async (newWebdav: WebdavConfig) => {
     await saveWebdavConfig(newWebdav);
-    setAppState({ ...appState, webdav: newWebdav });
+    setAppState((prev) => (prev ? { ...prev, webdav: newWebdav } : null));
   };
 
   const handleUpdateGit = async (newGit: GitSyncConfig) => {
     await saveGitConfig(newGit);
-    setAppState({ ...appState, git: newGit });
+    setAppState((prev) => (prev ? { ...prev, git: newGit } : null));
   };
 
   const handleFinishOnboarding = async () => {
     await setFirstLaunchComplete();
-    setAppState({ ...appState, isFirstLaunch: false });
+    setAppState((prev) => (prev ? { ...prev, isFirstLaunch: false } : prev));
   };
 
   const isLight = settings.mode === 'light';
 
   return (
     <div
-      style={backgroundStyle}
-      className="relative min-h-screen w-full flex flex-col justify-between overflow-x-hidden selection:bg-indigo-500 selection:text-white"
+      className="relative min-h-screen w-full flex flex-col justify-between overflow-x-hidden selection:bg-slate-700 dark:selection:bg-slate-300 dark:selection:text-slate-900 selection:text-white"
     >
-      {/* Dynamic tint overlay for non-gradient wallpapers */}
-      {settings.backgroundType !== 'gradient' && (
+      {/* Double-buffered Seamless Background Container */}
+      <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden select-none">
+        {/* Active Base Wallpaper Layer */}
         <div
-          className={`absolute inset-0 pointer-events-none z-0 transition-colors duration-300 ${
-            isLight
-              ? 'bg-white/20 backdrop-blur-[1px]'
-              : 'bg-black/40 backdrop-blur-[2px]'
-          }`}
+          style={activeBg}
+          className="absolute inset-0 w-full h-full"
         />
-      )}
+
+        {/* Incoming Wallpaper Layer for seamless cross-fade */}
+        {incomingBg && (
+          <div
+            style={incomingBg}
+            className={`absolute inset-0 w-full h-full transition-opacity duration-400 ease-out ${isCrossFading ? 'opacity-100' : 'opacity-0'
+              }`}
+          />
+        )}
+
+        {/* Dynamic tint overlay for non-gradient wallpapers */}
+        {settings.backgroundType !== 'gradient' && (
+          <div
+            className={`absolute inset-0 transition-colors duration-300 ${isLight ? 'bg-white/20' : 'bg-black/40'
+              }`}
+          />
+        )}
+      </div>
 
       {/* Top Floating Actions Bar */}
       <header className="relative z-10 w-full flex items-center justify-between p-5 md:px-8">
         <div className="flex items-center gap-2">
           <span
-            className={`text-sm font-semibold tracking-wider px-3 py-1 rounded-full border backdrop-blur-md transition-colors ${
-              isLight
+            className={`text-sm font-semibold tracking-wider px-3 py-1 rounded-full border transition-colors ${isLight
                 ? 'text-slate-800 bg-white/70 border-black/10 shadow-sm'
                 : 'text-white/80 bg-white/10 border-white/10'
-            }`}
+              }`}
           >
             MyTab
           </span>
@@ -347,24 +518,22 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               setEditingSite(null);
               setIsSiteModalOpen(true);
             }}
-            className={`p-2.5 rounded-xl backdrop-blur-md border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${
-              isLight
+            className={`p-2.5 rounded-xl border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${isLight
                 ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
                 : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
-            }`}
+              }`}
             title="Add shortcut"
           >
             <Plus className="w-4.5 h-4.5" />
           </button>
 
-          {/* Settings Button */}
+          {/* Settings Drawer Trigger */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className={`p-2.5 rounded-xl backdrop-blur-md border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${
-              isLight
+            className={`p-2.5 rounded-xl border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${isLight
                 ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
                 : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
-            }`}
+              }`}
             title="Settings"
           >
             <SettingsIcon className="w-4.5 h-4.5" />
@@ -375,12 +544,13 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       {/* Center Main Section */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-start max-w-7xl mx-auto w-full pb-12">
         {/* Clock & Greetings */}
-        <ClockHeader settings={settings} />
+        <ClockHeader settings={settings} resolvedColors={resolvedColors} />
 
         {/* Search Bar */}
         {(settings.showSearch ?? true) && (
           <SearchBar
             settings={settings}
+            resolvedColors={resolvedColors}
             onEngineChange={(engineId) =>
               handleUpdateSettings({ ...settings, activeEngineId: engineId })
             }
@@ -390,6 +560,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         {/* Category Tabs */}
         <CategoryTabs
           categories={categories}
+          resolvedColors={resolvedColors}
           activeCategoryId={activeCategoryId}
           settings={settings}
           siteCounts={siteCounts}
@@ -399,10 +570,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           onDeleteCategory={handleDeleteCategory}
         />
 
-        {/* Sites Grid */}
+        {/* Shortcuts Grid */}
         <SiteGrid
           sites={filteredSites}
           settings={settings}
+          resolvedColors={resolvedColors}
           onEditSite={useCallback((site) => {
             setEditingSite(site);
             setIsSiteModalOpen(true);
@@ -416,61 +588,36 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         />
       </main>
 
-      {/* Footer & Photo Attribution */}
-      <footer
-        className={`relative z-10 flex items-center justify-between px-6 py-3 text-[11px] select-none transition-colors ${
-          isLight ? 'text-slate-600' : 'text-white/45'
-        }`}
-      >
-        <div className="w-1/3 text-left">
+      {/* Footer Minimalist Credit */}
+      <footer className="relative z-10 w-full flex items-center justify-between p-4 px-6 text-xs text-white/40">
+        <div className="w-1/3">
           {settings.backgroundType === 'unsplash' && settings.unsplashAuthorName && (
-            <span className="inline-flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+            <a
+              href={`${settings.unsplashAuthorUrl}?utm_source=MyTab&utm_medium=referral`}
+              target="_blank"
+              rel="noreferrer"
+              className={`inline-flex items-center gap-1 transition-colors ${isLight ? 'text-slate-600 hover:text-black' : 'text-white/50 hover:text-white'
+                }`}
+            >
               <span>Photo by</span>
-              <a
-                href={settings.unsplashAuthorUrl || 'https://unsplash.com'}
-                target="_blank"
-                rel="noreferrer"
-                className={`underline decoration-dotted underline-offset-2 ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
-              >
+              <span className="underline decoration-dotted underline-offset-2">
                 {settings.unsplashAuthorName}
-              </a>
-              <span>on</span>
-              <a
-                href="https://unsplash.com/?utm_source=mytab&utm_medium=referral"
-                target="_blank"
-                rel="noreferrer"
-                className={`underline decoration-dotted underline-offset-2 ${isLight ? 'hover:text-black' : 'hover:text-white'}`}
-              >
-                Unsplash
-              </a>
-            </span>
+              </span>
+              <span>on Unsplash</span>
+            </a>
           )}
         </div>
 
         <div className="w-1/3 text-center">
-          Powered by{' '}
+          Crafted with passion by{' '}
           <a
             href="https://github.com/Troray/MyTab"
             target="_blank"
             rel="noreferrer"
-            className={`transition-colors underline decoration-dotted underline-offset-2 ${
-              isLight
+            className={`transition-colors underline decoration-dotted underline-offset-2 ${isLight
                 ? 'hover:text-black decoration-slate-400'
                 : 'hover:text-white decoration-white/30'
-            }`}
-          >
-            MyTab
-          </a>{' '}
-          • Made with ❤️ by{' '}
-          <a
-            href="https://github.com/Troray"
-            target="_blank"
-            rel="noreferrer"
-            className={`transition-colors underline decoration-dotted underline-offset-2 ${
-              isLight
-                ? 'hover:text-black decoration-slate-400'
-                : 'hover:text-white decoration-white/30'
-            }`}
+              }`}
           >
             Troray
           </a>
@@ -496,6 +643,17 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           />
         )}
 
+        {isCustomizingColors && (
+          <TextColorCustomizer
+            settings={settings}
+            onUpdateSettings={handleUpdateSettings}
+            onClose={() => {
+              setIsCustomizingColors(false);
+              setIsSettingsOpen(true);
+            }}
+          />
+        )}
+
         {isSettingsOpen && (
           <SettingsDrawer
             isOpen={isSettingsOpen}
@@ -505,6 +663,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             onUpdateWebdav={handleUpdateWebdav}
             onUpdateGit={handleUpdateGit}
             onStateReload={reloadState}
+            onOpenColorCustomizer={() => {
+              setIsSettingsOpen(false);
+              setIsCustomizingColors(true);
+            }}
           />
         )}
 
