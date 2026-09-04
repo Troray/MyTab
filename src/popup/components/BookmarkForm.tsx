@@ -6,10 +6,11 @@ interface Props {
   initialData: { title: string; url: string; favicon?: string };
   isSaving: boolean;
   language?: Locale;
+  sameDomainSite?: { title: string; categoryId: string } | null;
   onSave: (data: { title: string; url: string; favicon?: string; categoryId: string }) => void;
 }
 
-export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language = 'zh-CN', onSave }) => {
+export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language = 'zh-CN', sameDomainSite, onSave }) => {
   const [title, setTitle] = useState(initialData.title);
   const [url, setUrl] = useState(initialData.url);
   const [favicon, setFavicon] = useState(initialData.favicon || '');
@@ -28,19 +29,25 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language 
         
         setCategories(groups);
 
-        // 2. Get last used group from local storage
-        const { mytab_popup_prefs } = await browser.storage.local.get('mytab_popup_prefs');
-        if (mytab_popup_prefs?.lastUsedGroupId) {
-          setCategoryId(mytab_popup_prefs.lastUsedGroupId);
-        } else if (groups.length > 0) {
-          setCategoryId(groups[0].id);
+        // 2. Pre-select category:
+        // Priority 1: Match same-domain bookmark's category if valid
+        if (sameDomainSite?.categoryId && groups.some((g: any) => g.id === sameDomainSite.categoryId)) {
+          setCategoryId(sameDomainSite.categoryId);
+        } else {
+          // Priority 2: Get last used group from local storage
+          const { mytab_popup_prefs } = await browser.storage.local.get('mytab_popup_prefs');
+          if (mytab_popup_prefs?.lastUsedGroupId && groups.some((g: any) => g.id === mytab_popup_prefs.lastUsedGroupId)) {
+            setCategoryId(mytab_popup_prefs.lastUsedGroupId);
+          } else if (groups.length > 0) {
+            setCategoryId(groups[0].id);
+          }
         }
       } catch (err) {
         console.error('Failed to load popup form data:', err);
       }
     }
     loadData();
-  }, []);
+  }, [sameDomainSite]);
 
   return (
     <div className="flex-1 flex flex-col gap-3">
@@ -84,7 +91,15 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language 
 
       {categories.length > 0 && (
         <div className="space-y-1">
-          <label className="text-[11px] font-medium text-slate-600 dark:text-white/70">{t('siteCategory', language)}</label>
+          <div className="flex items-center justify-between">
+            <label className="text-[11px] font-medium text-slate-600 dark:text-white/70">{t('siteCategory', language)}</label>
+            {sameDomainSite?.categoryId && categoryId === sameDomainSite.categoryId && (
+              <span className="text-[10px] text-sky-600 dark:text-sky-400 font-medium flex items-center gap-0.5">
+                <span>✨</span>
+                <span>{t('popupSameDomainCategoryHint', language)}</span>
+              </span>
+            )}
+          </div>
           <div className="relative">
             <select 
               value={categoryId}
