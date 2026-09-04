@@ -31,7 +31,9 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
  // modalCategory: undefined -> closed; null -> add mode; Category -> edit mode
  const [modalCategory, setModalCategory] = useState<Category | null | undefined>(undefined);
  const isLight = settings.mode === 'light';
- const isDarkWallpaper = resolvedColors ? resolvedColors.bottomIsDark : !isLight;
+ const isDarkWallpaper = resolvedColors
+   ? (resolvedColors.tabs === '#ffffff' || resolvedColors.tabs.startsWith('rgba(255') || resolvedColors.centerIsDark)
+   : !isLight;
 
  const handleSaveCategory = (catId: string | null, data: { name: string; showInAll: boolean }) => {
  if (catId) {
@@ -73,7 +75,10 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
  : 'hover:brightness-110 shadow-xs'
  }`}
  >
- <span style={!isActive && resolvedColors?.tabs ? { color: resolvedColors.tabs } : undefined}>
+ <span
+ style={!isActive && resolvedColors?.tabs ? { color: resolvedColors.tabs } : undefined}
+ className={!isActive && resolvedColors?.tabsShadow ? resolvedColors.tabsShadow : ''}
+ >
  {cat.name}
  </span>
  <span

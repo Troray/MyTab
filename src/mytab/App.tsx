@@ -18,7 +18,7 @@ import { SiteGrid } from './components/SiteGrid';
 import { urlToBase64Icon } from '../services/metadata';
 import { DEFAULT_SETTINGS } from '../utils/constants';
 import { ConfirmModal } from './components/ConfirmModal';
-import { analyzeWallpaperLuminance, resolveTextColors, WallpaperLuminance } from '../utils/wallpaperAnalyzer';
+import { analyzeWallpaperLuminance, resolveTextColors, WallpaperLuminance, DEFAULT_LUMINANCE } from '../utils/wallpaperAnalyzer';
 import { TextColorCustomizer } from './components/TextColorCustomizer';
 
 const CACHE_WARMER_DELAY = 1200; // Delay to avoid blocking initial render
@@ -35,12 +35,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const [editingSite, setEditingSite] = useState<SiteItem | null>(null);
   const [deletingSite, setDeletingSite] = useState<SiteItem | null>(null);
   const [isCustomizingColors, setIsCustomizingColors] = useState(false);
-  const [wallpaperLuminance, setWallpaperLuminance] = useState<WallpaperLuminance>({
-    topIsDark: true,
-    centerIsDark: true,
-    bottomIsDark: true,
-    overallIsDark: true,
-  });
+  const [wallpaperLuminance, setWallpaperLuminance] = useState<WallpaperLuminance>(DEFAULT_LUMINANCE);
 
   // Track OS system theme dynamic changes
   const [systemIsDark, setSystemIsDark] = useState(() =>
