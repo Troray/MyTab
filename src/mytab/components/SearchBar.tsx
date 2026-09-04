@@ -67,7 +67,7 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, resol
   const isLight = settings.mode === 'light';
 
   return (
-    <div className="relative z-30 w-full max-w-2xl mx-auto my-6 px-4">
+    <div id="mytab-search" className="relative z-30 w-full max-w-2xl mx-auto my-6 px-4">
       <form
         onSubmit={handleSearch}
         className={`relative flex items-center w-full h-14 rounded-2xl transition-all duration-200 ${

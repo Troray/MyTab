@@ -119,22 +119,45 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     return { ...DEFAULT_SETTINGS, ...clean };
   }, [appState?.settings]);
 
-  // Luminance analysis for wallpaper contrast
+  // Luminance analysis for wallpaper contrast with DOM rect calibration
   useEffect(() => {
     let isCancelled = false;
-    analyzeWallpaperLuminance(
-      currentSettings.backgroundType,
-      currentSettings.backgroundValue,
-      (lum) => {
-        if (!isCancelled) {
-          setWallpaperLuminance(lum);
+    const runAnalysis = () => {
+      analyzeWallpaperLuminance(
+        currentSettings.backgroundType,
+        currentSettings.backgroundValue,
+        (lum) => {
+          if (!isCancelled) {
+            setWallpaperLuminance(lum);
+          }
         }
-      }
-    );
+      );
+    };
+
+    // 立即分析
+    runAnalysis();
+
+    // DOM 布局渲染就绪后进行物理坐标精确校准
+    const timer = setTimeout(runAnalysis, 50);
+
+    const handleResize = () => {
+      runAnalysis();
+    };
+    window.addEventListener('resize', handleResize);
+
     return () => {
       isCancelled = true;
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
     };
-  }, [currentSettings.backgroundType, currentSettings.backgroundValue]);
+  }, [
+    currentSettings.backgroundType,
+    currentSettings.backgroundValue,
+    currentSettings.showClock,
+    currentSettings.showDate,
+    currentSettings.showGreeting,
+    currentSettings.showSearch,
+  ]);
 
   const activeThemeMode: 'light' | 'dark' =
     currentSettings.mode === 'light'
