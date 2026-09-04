@@ -124,9 +124,6 @@ export async function loadAppState(): Promise<AppState> {
     Object.entries(settings || {}).filter(([_, v]) => v !== undefined && v !== null)
   );
   const normalizedSettings: ThemeSettings = { ...DEFAULT_SETTINGS, ...cleanSettings };
-  if (settings && typeof settings.cardBlur === 'number' && settings.cardBlur <= 32 && settings.cardBlur > 0) {
-    normalizedSettings.cardBlur = Math.round((settings.cardBlur / 32) * 100);
-  }
 
   return {
     sites,

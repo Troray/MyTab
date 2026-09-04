@@ -775,7 +775,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  {t('cardLayoutAdvanced', settings.language)}
  </div>
  <div className={`text-[10px] mt-0.5 font-tabular ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
- {settings.cardSize || 110}px · {Math.round(settings.cardOpacity * 100)}% · {settings.cardBlur ?? 50}% · {settings.maxCardsPerRow || 8}{t('cardsPerRowUnit', settings.language)}
+ {settings.cardSize || 110}px · {Math.round(settings.cardOpacity * 100)}% · {settings.maxCardsPerRow || 8}{t('cardsPerRowUnit', settings.language)}
  </div>
  </div>
  </div>
@@ -831,28 +831,6 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <span>{t('cardOpacityLow', settings.language)}</span>
  <span>{t('cardOpacityMed', settings.language)}</span>
  <span>{t('cardOpacityHigh', settings.language)}</span>
- </div>
- </div>
-
- {/* Card Blur Slider */}
- <div>
- <div className="flex justify-between text-xs font-medium mb-1.5">
- <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardBlur', settings.language)}</span>
- <span className="font-tabular font-semibold">{settings.cardBlur ?? 50}%</span>
- </div>
- <input
- type="range"
- min="0"
- max="100"
- step="1"
- value={settings.cardBlur ?? 50}
- onChange={(e) => handleSettingsChange({ cardBlur: parseInt(e.target.value, 10) })}
- className="range-slider"
- />
- <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
- <span>{t('cardBlurLow', settings.language)}</span>
- <span>{t('cardBlurMed', settings.language)}</span>
- <span>{t('cardBlurHigh', settings.language)}</span>
  </div>
  </div>
 
