@@ -64,7 +64,6 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
   const iconBoxSize = Math.max(24, Math.round(cardSize * iconRatio));
   const iconImgSize = Math.max(16, Math.round(iconBoxSize * 0.70));
   const paddingPx = Math.max(6, Math.round(cardSize * 0.10));
-  const blurPx = Math.round(((settings.cardBlur ?? 50) / 100) * 32);
 
   const handleClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.site-card-action')) {

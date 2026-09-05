@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Palette, Check, RotateCcw, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Palette, Check, RotateCcw, Sparkles, X } from 'lucide-react';
 import { ThemeSettings, TextColorMode, CustomTextColors } from '../../types';
 import { TranslationKey } from '../../locales/types';
 import { t } from '../../utils/i18n';
@@ -46,6 +46,10 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
 
   const defaultColor = isLight ? '#0f172a' : '#ffffff';
 
+  // Snapshot initial settings on mount to allow abandoning all changes on close
+  const initialMode = useRef<TextColorMode>(currentMode);
+  const initialColors = useRef<CustomTextColors>({ ...customColors });
+
   const [activeTarget, setActiveTarget] = useState<ElementTarget>('all');
 
   const applyColorUpdate = (newMode: TextColorMode, newColors?: CustomTextColors) => {
@@ -61,6 +65,31 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
       });
     }
   };
+
+  const handleCancel = () => {
+    if (isLight) {
+      onUpdateSettings({
+        textColorModeLight: initialMode.current,
+        customTextColorsLight: initialColors.current,
+      });
+    } else {
+      onUpdateSettings({
+        textColorModeDark: initialMode.current,
+        customTextColorsDark: initialColors.current,
+      });
+    }
+    onClose();
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleCancel();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleModeSelect = (mode: TextColorMode) => {
     applyColorUpdate(mode);
@@ -103,7 +132,7 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
   };
 
   const handleReset = () => {
-    applyColorUpdate('auto', {});
+    applyColorUpdate(isLight ? 'auto' : 'light', {});
   };
 
   const targets: { id: ElementTarget; labelKey: TranslationKey }[] = [
@@ -143,15 +172,15 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
 
           <button
             type="button"
-            onClick={onClose}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm duration-0 cursor-pointer active:scale-95 ${
+            onClick={handleCancel}
+            aria-label={t('cancel', settings.language)}
+            className={`p-1.5 rounded-xl transition-colors cursor-pointer duration-0 ${
               isLight
-                ? 'bg-slate-900 hover:bg-black text-white'
-                : 'bg-white hover:bg-slate-100 text-slate-950'
+                ? 'hover:bg-black/5 text-slate-400 hover:text-slate-800'
+                : 'hover:bg-white/10 text-white/50 hover:text-white'
             }`}
           >
-            <Check className="w-3.5 h-3.5" />
-            <span>{t('done', settings.language)}</span>
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -309,22 +338,41 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
           </div>
         )}
 
-        {/* Footer Reset & Tip */}
-        <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-black/5 dark:border-white/10 text-[11px]">
-          <span className="text-slate-600 dark:text-white/60">
+        {/* Footer: Tip & Action Buttons */}
+        <div className="flex items-center justify-between gap-2 pt-2.5 mt-2.5 border-t border-black/5 dark:border-white/10 text-[11px]">
+          <span className="text-slate-500 dark:text-white/50 truncate max-w-[180px] sm:max-w-[240px]">
             {currentMode === 'auto'
               ? t('textColorAutoHint', settings.language)
               : t('textColorWysiwygHint', settings.language)}
           </span>
 
-          <button
-            type="button"
-            onClick={handleReset}
-            className="flex items-center gap-1 text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white cursor-pointer duration-0"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span>{t('reset', settings.language)}</span>
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleReset}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium cursor-pointer transition-colors duration-0 active:scale-95 ${
+                isLight
+                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  : 'bg-white/10 hover:bg-white/15 text-white/80 hover:text-white'
+              }`}
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>{t('reset', settings.language)}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className={`flex items-center gap-1 px-3.5 py-1.5 rounded-xl text-xs font-semibold shadow-sm cursor-pointer active:scale-95 duration-0 ${
+                isLight
+                  ? 'bg-slate-900 hover:bg-black text-white'
+                  : 'bg-white hover:bg-slate-100 text-slate-950'
+              }`}
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>{t('done', settings.language)}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

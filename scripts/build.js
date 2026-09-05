@@ -83,7 +83,7 @@ async function buildExtension() {
       name: '__MSG_extensionName__',
       description: '__MSG_extensionDescription__',
       default_locale: 'zh_CN',
-      version: pkgJson.version || '1.0.1',
+      version: pkgJson.version || '1.1.0',
       author: 'Troray',
       homepage_url: 'https://github.com/Troray/MyTab',
       icons: {

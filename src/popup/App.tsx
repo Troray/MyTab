@@ -5,9 +5,25 @@ import { t, Locale } from '../locales';
 
 export type PopupStatus = 'loading' | 'ready' | 'saving' | 'success' | 'error' | 'unsupported';
 
+/**
+ * Formats a URL for clean display:
+ * Strips protocol (https/http), leading www., and trailing slash
+ */
+function formatDisplayUrl(rawUrl: string): string {
+  try {
+    const parsed = new URL(rawUrl.trim());
+    const host = parsed.host.replace(/^www\./i, '');
+    const pathname = parsed.pathname.replace(/\/+$/, '');
+    return `${host}${pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return rawUrl.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
+  }
+}
+
 export const App: React.FC = () => {
   const [status, setStatus] = useState<PopupStatus>('loading');
   const [isDuplicate, setIsDuplicate] = useState(false);
+  const [sameDomainSite, setSameDomainSite] = useState<{ title: string; categoryId: string; url: string } | null>(null);
   const [language, setLanguage] = useState<Locale>('zh-CN');
   const [tabData, setTabData] = useState<{ title: string; url: string; favicon?: string }>({
     title: '',
@@ -65,10 +81,14 @@ export const App: React.FC = () => {
           favicon: currentTab.favIconUrl,
         });
 
-        // Check if URL already exists
+        // Check if URL already exists or related same-domain bookmark exists
         const res = await browser.runtime.sendMessage({ type: 'CHECK_BOOKMARK_EXISTS', url });
-        if (res && res.success && res.exists) {
-          setIsDuplicate(true);
+        if (res && res.success) {
+          if (res.exists) {
+            setIsDuplicate(true);
+          } else if (res.sameDomainSite) {
+            setSameDomainSite(res.sameDomainSite);
+          }
         }
         setStatus('ready');
       } catch (err) {
@@ -164,16 +184,29 @@ export const App: React.FC = () => {
 
       {(status === 'ready' || status === 'saving') && (
         <>
-          {isDuplicate && (
+          {isDuplicate ? (
             <div className="mb-3 px-3 py-2 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-xl text-xs flex items-start gap-2">
               <span className="text-sm shrink-0">👀</span>
               <p className="leading-relaxed">{t('popupDuplicateWarning', language)}</p>
             </div>
-          )}
+          ) : sameDomainSite ? (
+            <div className="mb-3 px-3 py-2 bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 rounded-xl text-xs flex items-start gap-2">
+              <span className="text-sm shrink-0">💡</span>
+              <div className="min-w-0 flex-1">
+                <p className="leading-relaxed truncate" title={sameDomainSite.url}>
+                  {t('popupSameDomainNotice', language)}:{' '}
+                  <span className="font-semibold text-slate-900 dark:text-white font-mono text-[11px]">
+                    {formatDisplayUrl(sameDomainSite.url)}
+                  </span>
+                </p>
+              </div>
+            </div>
+          ) : null}
           <BookmarkForm
             initialData={tabData}
             isSaving={status === 'saving'}
             language={language}
+            sameDomainSite={sameDomainSite}
             onSave={async (data) => {
               setStatus('saving');
               try {

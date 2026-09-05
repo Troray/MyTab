@@ -45,10 +45,6 @@ export interface Translation {
   cardOpacityLow: string;
   cardOpacityMed: string;
   cardOpacityHigh: string;
-  cardBlur: string;
-  cardBlurLow: string;
-  cardBlurMed: string;
-  cardBlurHigh: string;
   cardSizeTitle: string;
   cardSizeCompact: string;
   cardSizeDefault: string;
@@ -277,6 +273,8 @@ export interface Translation {
   popupErrorDesc: string;
   popupSuccess: string;
   popupDuplicateWarning: string;
+  popupSameDomainNotice: string;
+  popupSameDomainCategoryHint: string;
   popupSaving: string;
   webdavNotConfigured: string;
   webdavFirstSync: string;

@@ -67,7 +67,7 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, resol
   const isLight = settings.mode === 'light';
 
   return (
-    <div className="relative z-30 w-full max-w-2xl mx-auto my-6 px-4">
+    <div id="mytab-search" className="relative z-30 w-full max-w-2xl mx-auto my-6 px-4">
       <form
         onSubmit={handleSearch}
         className={`relative flex items-center w-full h-14 rounded-2xl transition-all duration-200 ${
@@ -90,6 +90,8 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, resol
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             style={resolvedColors ? { color: resolvedColors.search } : undefined}
             className={`flex items-center gap-1.5 pl-4 pr-3 h-full text-xs md:text-sm font-medium transition-colors cursor-pointer select-none ${
+              resolvedColors?.searchShadow || ''
+            } ${
               !resolvedColors ? (isLight ? 'text-slate-800 hover:text-black' : 'text-white/90 hover:text-white') : ''
             }`}
           >
@@ -181,16 +183,18 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, resol
         )}
 
         {/* Search Action Button */}
-        <button
-          type="submit"
-          style={resolvedColors ? { color: resolvedColors.search } : undefined}
-          className={`p-2.5 mr-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
-            isLight
-              ? 'hover:text-black hover:bg-black/5'
-              : 'hover:text-white hover:bg-white/10'
-          } ${!resolvedColors ? (isLight ? 'text-slate-600' : 'text-white/70') : ''}`}
-          title="Search"
-        >
+          <button
+            type="submit"
+            style={resolvedColors ? { color: resolvedColors.search } : undefined}
+            className={`p-2.5 mr-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
+              resolvedColors?.searchShadow || ''
+            } ${
+              isLight
+                ? 'hover:text-black hover:bg-black/5'
+                : 'hover:text-white hover:bg-white/10'
+            } ${!resolvedColors ? (isLight ? 'text-slate-600' : 'text-white/70') : ''}`}
+            title="Search"
+          >
           <Search className="w-4.5 h-4.5" />
         </button>
       </form>
