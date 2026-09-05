@@ -18,7 +18,7 @@ import { SiteGrid } from './components/SiteGrid';
 import { urlToBase64Icon } from '../services/metadata';
 import { DEFAULT_SETTINGS } from '../utils/constants';
 import { ConfirmModal } from './components/ConfirmModal';
-import { analyzeWallpaperLuminance, resolveTextColors, WallpaperLuminance } from '../utils/wallpaperAnalyzer';
+import { analyzeWallpaperLuminance, resolveTextColors, WallpaperLuminance, DEFAULT_LUMINANCE } from '../utils/wallpaperAnalyzer';
 import { TextColorCustomizer } from './components/TextColorCustomizer';
 
 const CACHE_WARMER_DELAY = 1200; // Delay to avoid blocking initial render
@@ -35,12 +35,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const [editingSite, setEditingSite] = useState<SiteItem | null>(null);
   const [deletingSite, setDeletingSite] = useState<SiteItem | null>(null);
   const [isCustomizingColors, setIsCustomizingColors] = useState(false);
-  const [wallpaperLuminance, setWallpaperLuminance] = useState<WallpaperLuminance>({
-    topIsDark: true,
-    centerIsDark: true,
-    bottomIsDark: true,
-    overallIsDark: true,
-  });
+  const [wallpaperLuminance, setWallpaperLuminance] = useState<WallpaperLuminance>(DEFAULT_LUMINANCE);
 
   // Track OS system theme dynamic changes
   const [systemIsDark, setSystemIsDark] = useState(() =>
@@ -124,22 +119,45 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     return { ...DEFAULT_SETTINGS, ...clean };
   }, [appState?.settings]);
 
-  // Luminance analysis for wallpaper contrast
+  // Luminance analysis for wallpaper contrast with DOM rect calibration
   useEffect(() => {
     let isCancelled = false;
-    analyzeWallpaperLuminance(
-      currentSettings.backgroundType,
-      currentSettings.backgroundValue,
-      (lum) => {
-        if (!isCancelled) {
-          setWallpaperLuminance(lum);
+    const runAnalysis = () => {
+      analyzeWallpaperLuminance(
+        currentSettings.backgroundType,
+        currentSettings.backgroundValue,
+        (lum) => {
+          if (!isCancelled) {
+            setWallpaperLuminance(lum);
+          }
         }
-      }
-    );
+      );
+    };
+
+    // 立即分析
+    runAnalysis();
+
+    // DOM 布局渲染就绪后进行物理坐标精确校准
+    const timer = setTimeout(runAnalysis, 50);
+
+    const handleResize = () => {
+      runAnalysis();
+    };
+    window.addEventListener('resize', handleResize);
+
     return () => {
       isCancelled = true;
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
     };
-  }, [currentSettings.backgroundType, currentSettings.backgroundValue]);
+  }, [
+    currentSettings.backgroundType,
+    currentSettings.backgroundValue,
+    currentSettings.showClock,
+    currentSettings.showDate,
+    currentSettings.showGreeting,
+    currentSettings.showSearch,
+  ]);
 
   const activeThemeMode: 'light' | 'dark' =
     currentSettings.mode === 'light'

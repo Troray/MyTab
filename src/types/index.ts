@@ -53,7 +53,7 @@ export interface ThemeSettings {
   mode: ThemeMode;
   backgroundType: BackgroundType;
   backgroundValue: string;
-  cardBlur: number; // 0 ~ 100% (default 50)
+  cardBlur?: number; // 废弃：保留可选兼容旧版存储
   cardOpacity: number; // 0.1 ~ 1.0 (default 0.3)
   cardSize: number; // in px or scale: e.g. 90 ~ 160 (default 110)
   iconSizeRatio?: number; // 0.28 ~ 0.68, default 0.42

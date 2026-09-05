@@ -21,6 +21,7 @@ import { uploadToGit, restoreFromGit, GitClient, autoSetupGist, autoSetupRepo, i
 import { ConfirmModal } from './ConfirmModal';
 import { ToggleSwitch } from './ToggleSwitch';
 import { t } from '../../utils/i18n';
+import { resolveBestGitPlatform, resolveBestGitMode } from '../../utils/syncHelper';
 
 interface GitSettingsProps {
   appState: AppState;
@@ -84,28 +85,31 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
   const { git, settings } = appState;
   const isLight = settings.mode === 'light';
 
-  // Initialize with platform isolation map
-  const activeProvider = git?.provider || 'github';
+  // Initialize with platform isolation map & smart provider/mode auto-location
+  const activeProvider = resolveBestGitPlatform(git);
   const existingProviders = git?.providers || {};
   const rawOwner = git?.owner || '';
   const rawRepo = git?.repo || '';
   const safeOwner = isTokenLike(rawOwner) ? '' : rawOwner;
   const safeRepo = isTokenLike(rawRepo) ? 'MyTab-Backup' : rawRepo;
 
-  const currentActivePlatform: GitPlatformConfig = existingProviders[activeProvider] || {
-    mode: git?.mode || 'repo',
-    gistId: git?.gistId || '',
-    owner: safeOwner,
-    repo: safeRepo,
-    branch: git?.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
-    path: git?.path || 'mytab-backup.json',
-    token: git?.token || '',
-    lastSyncTime: git?.lastSyncTime,
-    lastSyncStatus: git?.lastSyncStatus,
-    lastSyncError: git?.lastSyncError,
+  const platformData = existingProviders[activeProvider];
+  const isPlatformActive = (git?.provider || 'github') === activeProvider;
+
+  const currentActivePlatform: GitPlatformConfig = {
+    mode: resolveBestGitMode(platformData, git),
+    gistId: platformData?.gistId || (isPlatformActive ? git?.gistId : '') || '',
+    owner: platformData?.owner || (isPlatformActive ? safeOwner : '') || '',
+    repo: platformData?.repo || (isPlatformActive ? safeRepo : '') || 'MyTab-Backup',
+    branch: platformData?.branch || (isPlatformActive ? git?.branch : '') || (activeProvider === 'gitee' ? 'master' : 'main'),
+    path: platformData?.path || (isPlatformActive ? git?.path : '') || 'mytab-backup.json',
+    token: platformData?.token || (isPlatformActive ? git?.token : '') || '',
+    lastSyncTime: platformData?.lastSyncTime || (isPlatformActive ? git?.lastSyncTime : undefined),
+    lastSyncStatus: platformData?.lastSyncStatus || (isPlatformActive ? git?.lastSyncStatus : undefined),
+    lastSyncError: platformData?.lastSyncError || (isPlatformActive ? git?.lastSyncError : undefined),
   };
 
-  const initialRepo = isTokenLike(currentActivePlatform.repo) ? 'MyTab-Backup' : (currentActivePlatform.repo || '');
+  const initialRepo = isTokenLike(currentActivePlatform.repo) ? 'MyTab-Backup' : (currentActivePlatform.repo || 'MyTab-Backup');
   const initialOwner = isTokenLike(currentActivePlatform.owner) ? '' : (currentActivePlatform.owner || '');
 
   const [config, setConfig] = useState<GitSyncConfig>(() => ({
@@ -150,20 +154,26 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
   // Sync external appState to local state if updated
   useEffect(() => {
     if (git) {
-      const activeProvider = git.provider || config.provider || 'github';
+      const activeProvider = resolveBestGitPlatform(git);
       const existingProviders = git.providers || config.providers || {};
-      const currentActivePlatform = existingProviders[activeProvider] || {
-        mode: git.mode || 'repo',
-        gistId: git.gistId || '',
-        owner: git.owner || '',
-        repo: git.repo || '',
-        branch: git.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
-        path: git.path || 'mytab-backup.json',
-        token: git.token || '',
-        lastSyncTime: git.lastSyncTime,
-        lastSyncStatus: git.lastSyncStatus,
-        lastSyncError: git.lastSyncError,
+      const platformData = existingProviders[activeProvider];
+      const isPlatformActive = (git.provider || 'github') === activeProvider;
+
+      const currentActivePlatform: GitPlatformConfig = {
+        mode: resolveBestGitMode(platformData, git),
+        gistId: platformData?.gistId || (isPlatformActive ? git.gistId : '') || '',
+        owner: platformData?.owner || (isPlatformActive ? git.owner : '') || '',
+        repo: platformData?.repo || (isPlatformActive ? git.repo : '') || 'MyTab-Backup',
+        branch: platformData?.branch || (isPlatformActive ? git.branch : '') || (activeProvider === 'gitee' ? 'master' : 'main'),
+        path: platformData?.path || (isPlatformActive ? git.path : '') || 'mytab-backup.json',
+        token: platformData?.token || (isPlatformActive ? git.token : '') || '',
+        lastSyncTime: platformData?.lastSyncTime || (isPlatformActive ? git.lastSyncTime : undefined),
+        lastSyncStatus: platformData?.lastSyncStatus || (isPlatformActive ? git.lastSyncStatus : undefined),
+        lastSyncError: platformData?.lastSyncError || (isPlatformActive ? git.lastSyncError : undefined),
       };
+
+      const finalRepo = isTokenLike(currentActivePlatform.repo) ? 'MyTab-Backup' : (currentActivePlatform.repo || 'MyTab-Backup');
+      const finalOwner = isTokenLike(currentActivePlatform.owner) ? '' : (currentActivePlatform.owner || '');
 
       setConfig((prev) => ({
         ...prev,
@@ -171,23 +181,29 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
         provider: activeProvider,
         mode: currentActivePlatform.mode || 'repo',
         gistId: currentActivePlatform.gistId || '',
-        owner: currentActivePlatform.owner || '',
-        repo: currentActivePlatform.repo || '',
-        branch: currentActivePlatform.branch || (activeProvider === 'gitee' ? 'master' : 'main'),
-        path: currentActivePlatform.path || 'mytab-backup.json',
-        token: currentActivePlatform.token || '',
+        owner: finalOwner,
+        repo: finalRepo,
+        branch: currentActivePlatform.branch,
+        path: currentActivePlatform.path,
+        token: currentActivePlatform.token,
         lastSyncTime: currentActivePlatform.lastSyncTime,
         lastSyncStatus: currentActivePlatform.lastSyncStatus,
         lastSyncError: currentActivePlatform.lastSyncError,
         providers: {
           ...prev.providers,
           ...existingProviders,
-          [activeProvider]: currentActivePlatform,
+          [activeProvider]: {
+            ...currentActivePlatform,
+            owner: finalOwner,
+            repo: finalRepo,
+          },
         },
       }));
 
-      if (currentActivePlatform.owner && currentActivePlatform.repo) {
-        setRepoInput(`${currentActivePlatform.owner}/${currentActivePlatform.repo}`);
+      if (finalOwner && finalRepo) {
+        setRepoInput(`${finalOwner}/${finalRepo}`);
+      } else {
+        setRepoInput(finalRepo);
       }
     }
   }, [git]);

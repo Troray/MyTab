@@ -31,7 +31,8 @@ import { GitSettings } from './GitSettings';
 import { exportAllData, importData } from '../../services/storage';
 import { t, supportedLocales, Translation, Locale } from '../../utils/i18n';
 import { CustomSelect } from './CustomSelect';
-import { UNSPLASH_CATEGORIES } from '../../utils/unsplashTopics';
+import { UNSPLASH_CATEGORIES, getUnsplashTagDisplay, getUnsplashTagFull } from '../../utils/unsplashTopics';
+import { resolveBestSyncProvider } from '../../utils/syncHelper';
 import { UnsplashTopicModal } from './UnsplashTopicModal';
 import { ToggleSwitch } from './ToggleSwitch';
 import { fetchUnsplashRandomPhoto, preloadImage } from '../../services/unsplash';
@@ -64,7 +65,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
     ),
   };
  const [activeTab, setActiveTab] = useState<'appearance' | 'behavior' | 'sync' | 'backup'>('appearance');
- const [syncProvider, setSyncProvider] = useState<'webdav' | 'git'>('webdav');
+ const [syncProvider, setSyncProvider] = useState<'webdav' | 'git'>(() => resolveBestSyncProvider(appState.webdav, appState.git));
  const [importStatus, setImportStatus] = useState<string>('');
  const [greetingStatus, setGreetingStatus] = useState<{ success?: boolean; text: string } | null>(null);
  const [isCardLayoutExpanded, setIsCardLayoutExpanded] = useState(false);
@@ -80,6 +81,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  setImportStatus('');
  setGreetingStatus(null);
  setUnsplashError(null);
+      setSyncProvider(resolveBestSyncProvider(appState.webdav, appState.git));
  }
  }, [isOpen]);
 
@@ -338,7 +340,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <span>{t('behavior', settings.language)}</span>
  </button>
  <button
- onClick={() => setActiveTab('sync')}
+          onClick={() => {
+            setActiveTab('sync');
+            setSyncProvider(resolveBestSyncProvider(appState.webdav, appState.git));
+          }}
  className={`pb-2.5 flex items-center gap-1.5 border-b-2 whitespace-nowrap duration-0 cursor-pointer ${activeTab === 'sync'
  ? isLight
  ? 'border-slate-900 text-slate-900 font-semibold'
@@ -625,20 +630,25 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  }`}>
  {t((UNSPLASH_CATEGORIES.find(c => c.id === (settings.unsplashActiveTab || 'nature'))?.nameKey || 'topicNature') as keyof Translation, settings.language)}
  </span>
- {(settings.unsplashKeywords && settings.unsplashKeywords.length > 0
- ? settings.unsplashKeywords
- : ['nature', 'landscape']
- ).slice(0, 4).map((kw, i) => (
- <span
- key={i}
- className={`px-2 py-0.5 rounded-md text-[11px] border ${isLight
- ? 'bg-white/80 border-black/10 text-slate-700'
- : 'bg-white/10 border-white/10 text-white/80'
- }`}
- >
- #{kw}
- </span>
- ))}
+                {(settings.unsplashKeywords && settings.unsplashKeywords.length > 0
+                  ? settings.unsplashKeywords
+                  : ['nature', 'landscape']
+                ).slice(0, 4).map((kw, i) => {
+                  const display = getUnsplashTagDisplay(kw, settings.language, 12);
+                  const full = getUnsplashTagFull(kw, settings.language);
+                  return (
+                    <span
+                      key={i}
+                      title={full}
+                      className={`px-2 py-0.5 rounded-md text-[11px] border max-w-[120px] truncate select-none ${isLight
+                          ? 'bg-white/80 border-black/10 text-slate-700'
+                          : 'bg-white/10 border-white/10 text-white/80'
+                        }`}
+                    >
+                      #{display}
+                    </span>
+                  );
+                })}
  {(settings.unsplashKeywords?.length || 0) > 4 && (
  <span className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
  +{(settings.unsplashKeywords?.length || 0) - 4}
@@ -775,7 +785,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  {t('cardLayoutAdvanced', settings.language)}
  </div>
  <div className={`text-[10px] mt-0.5 font-tabular ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
- {settings.cardSize || 110}px · {Math.round(settings.cardOpacity * 100)}% · {settings.cardBlur ?? 50}% · {settings.maxCardsPerRow || 8}{t('cardsPerRowUnit', settings.language)}
+ {settings.cardSize || 110}px · {Math.round(settings.cardOpacity * 100)}% · {settings.maxCardsPerRow || 8}{t('cardsPerRowUnit', settings.language)}
  </div>
  </div>
  </div>
@@ -831,28 +841,6 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <span>{t('cardOpacityLow', settings.language)}</span>
  <span>{t('cardOpacityMed', settings.language)}</span>
  <span>{t('cardOpacityHigh', settings.language)}</span>
- </div>
- </div>
-
- {/* Card Blur Slider */}
- <div>
- <div className="flex justify-between text-xs font-medium mb-1.5">
- <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardBlur', settings.language)}</span>
- <span className="font-tabular font-semibold">{settings.cardBlur ?? 50}%</span>
- </div>
- <input
- type="range"
- min="0"
- max="100"
- step="1"
- value={settings.cardBlur ?? 50}
- onChange={(e) => handleSettingsChange({ cardBlur: parseInt(e.target.value, 10) })}
- className="range-slider"
- />
- <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
- <span>{t('cardBlurLow', settings.language)}</span>
- <span>{t('cardBlurMed', settings.language)}</span>
- <span>{t('cardBlurHigh', settings.language)}</span>
  </div>
  </div>
 

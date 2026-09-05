@@ -94,7 +94,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
 
       if (message.type === 'CHECK_BOOKMARK_EXISTS' && message.url) {
         checkBookmarkExists(message.url)
-          .then((exists) => sendResponse({ success: true, exists }))
+          .then((result) => sendResponse({ success: true, exists: result.exists, sameDomainSite: result.sameDomainSite }))
           .catch((err) => sendResponse({ success: false, error: err.message }));
         return true;
       }

@@ -103,10 +103,15 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
       : 'text-white/95 drop-shadow-[0_1px_8px_rgba(0,0,0,0.4)]'
     : 'text-white/90 drop-shadow';
 
+  const greetingShadowClass = resolvedColors
+    ? resolvedColors.greetingShadow
+    : dateShadowClass;
+
   return (
     <div className="flex flex-col items-center justify-center text-center select-none pt-6 pb-3 transition-colors">
       {settings.showClock && (
         <div
+          id="mytab-clock"
           style={clockColorStyle}
           className={`flex items-baseline justify-center text-6xl sm:text-7xl md:text-8xl font-extralight tracking-tight tabular-nums transition-colors ${clockShadowClass}`}
         >
@@ -117,14 +122,20 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
 
       {(settings.showDate || settings.showGreeting) && (
         <div
-          className={`flex items-center gap-2.5 ${settings.showClock ? 'mt-2.5' : 'mt-1'} text-xs md:text-sm font-normal transition-colors ${dateShadowClass}`}
+          className={`flex items-center gap-2.5 ${settings.showClock ? 'mt-2.5' : 'mt-1'} text-xs md:text-sm font-normal transition-colors`}
         >
-          {settings.showDate && <span style={dateColorStyle}>{formatDate()}</span>}
+          {settings.showDate && (
+            <span id="mytab-date" style={dateColorStyle} className={dateShadowClass}>
+              {formatDate()}
+            </span>
+          )}
           {settings.showDate && settings.showGreeting && (
-            <span style={dateColorStyle} className="opacity-60">•</span>
+            <span style={dateColorStyle} className={`opacity-60 ${dateShadowClass}`}>•</span>
           )}
           {settings.showGreeting && (
-            <span style={greetingColorStyle} className="font-light tracking-wide">{greeting}</span>
+            <span id="mytab-greeting" style={greetingColorStyle} className={`font-light tracking-wide ${greetingShadowClass}`}>
+              {greeting}
+            </span>
           )}
         </div>
       )}
