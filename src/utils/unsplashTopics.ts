@@ -1,3 +1,5 @@
+import { t, Translation } from './i18n';
+
 export interface UnsplashTag {
   id: string;
   tag: string; // Query sent to Unsplash API
@@ -101,3 +103,44 @@ export const UNSPLASH_CATEGORIES: UnsplashCategory[] = [
     ],
   },
 ];
+
+/**
+ * 根据 Unsplash 标签 query 或 id 获取跟随项目语言的本地化友好显示名称。
+ * 支持超长时自动截断简写（默认超过 14 字符简写为 ...）
+ */
+export function getUnsplashTagDisplay(
+  queryOrId: string,
+  language?: string,
+  maxLength = 14
+): string {
+  if (!queryOrId) return '';
+  const full = getUnsplashTagFull(queryOrId, language);
+  if (!full || full.length <= maxLength) return full;
+  return `${full.slice(0, maxLength - 1)}…`;
+}
+
+/**
+ * 获取完整的多语言标签名称（不截断，供 tooltip 或完整视图使用）
+ */
+export function getUnsplashTagFull(queryOrId: string, language?: string): string {
+  if (!queryOrId) return '';
+  const q = queryOrId.toLowerCase().trim();
+
+  // 1. 匹配已有标签
+  for (const cat of UNSPLASH_CATEGORIES) {
+    for (const tag of cat.tags) {
+      if (tag.tag.toLowerCase() === q || tag.id.toLowerCase() === q) {
+        return t(tag.labelKey as keyof Translation, language);
+      }
+    }
+  }
+
+  // 2. 匹配已有分类
+  const cat = UNSPLASH_CATEGORIES.find((c) => c.id.toLowerCase() === q);
+  if (cat) {
+    return t(cat.nameKey as keyof Translation, language);
+  }
+
+  // 3. 用户可能输入的自定义英文关键词，直接返回
+  return queryOrId;
+}
