@@ -193,7 +193,7 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, resol
                 ? 'hover:text-black hover:bg-black/5'
                 : 'hover:text-white hover:bg-white/10'
             } ${!resolvedColors ? (isLight ? 'text-slate-600' : 'text-white/70') : ''}`}
-            title="Search"
+            title={t('searchAction', settings.language)}
           >
           <Search className="w-4.5 h-4.5" />
         </button>
