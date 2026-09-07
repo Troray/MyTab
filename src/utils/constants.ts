@@ -106,6 +106,9 @@ export const PRESET_GRADIENTS = [
   { name: '深空灰烬', value: 'linear-gradient(135deg, #292832 0.000%, #272530 8.333%, #24222e 16.667%, #201f2b 25.000%, #1c1b27 33.333%, #181624 41.667%, #141220 50.000%, #100e1c 58.333%, #0c0a18 66.667%, #080614 75.000%, #050311 83.333%, #02000e 91.667%, #00000b 100.000%)' },
 ];
 
+export const DEFAULT_PRIVATE_BACKGROUND_VALUE =
+  'linear-gradient(135deg, #292832 0.000%, #272530 8.333%, #24222e 16.667%, #201f2b 25.000%, #1c1b27 33.333%, #181624 41.667%, #141220 50.000%, #100e1c 58.333%, #0c0a18 66.667%, #080614 75.000%, #050311 83.333%, #02000e 91.667%, #00000b 100.000%)';
+
 export const DEFAULT_SETTINGS: ThemeSettings = {
   mode: 'dark',
   backgroundType: 'custom',
@@ -121,6 +124,7 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   showClock: true,
   showGreeting: true,
   showDate: true,
+  showLunar: true,
   language: 'zh-CN',
   textColorMode: 'light',
   customTextColors: {},
@@ -130,6 +134,7 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   customTextColorsDark: {},
   unsplashActiveTab: 'nature',
   unsplashKeywords: ['nature', 'landscape'],
+  gradientLastValue: PRESET_GRADIENTS[0].value,
   updatedAt: 0,
 };
 
