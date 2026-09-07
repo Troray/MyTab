@@ -1,100 +1,226 @@
-import React, { useState } from 'react';
-import { Sparkles, ArrowRight, Check, Compass, Cloud, Globe } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Bookmark,
+  Palette,
+  Sliders,
+  Clock,
+  ShieldCheck,
+  Cloud,
+  DownloadCloud,
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  X,
+} from 'lucide-react';
 import { ThemeSettings } from '../../types';
 import { t } from '../../utils/i18n';
 
 interface OnboardingModalProps {
- isOpen: boolean;
- settings: ThemeSettings;
- onFinish: () => void;
- onOpenSettings: () => void;
+  isOpen: boolean;
+  settings: ThemeSettings;
+  onFinish: () => void;
 }
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({
- isOpen,
- settings,
- onFinish,
- onOpenSettings,
+  isOpen,
+  settings,
+  onFinish,
 }) => {
- const [step, setStep] = useState(0);
+  const [step, setStep] = useState(0);
 
- if (!isOpen) return null;
+  const steps = [
+    {
+      id: 'bookmarks',
+      icon: <Bookmark className="w-6 h-6 text-amber-400" />,
+      iconBg: 'bg-amber-400/10 border-amber-400/25 text-amber-400',
+      titleKey: 'onboardingStep1Title',
+      descKey: 'onboardingStep1',
+      tagsKey: 'onboardingStep1Tags',
+    },
+    {
+      id: 'wallpapers',
+      icon: <Palette className="w-6 h-6 text-sky-400" />,
+      iconBg: 'bg-sky-400/10 border-sky-400/25 text-sky-400',
+      titleKey: 'onboardingStep2Title',
+      descKey: 'onboardingStep2',
+      tagsKey: 'onboardingStep2Tags',
+    },
+    {
+      id: 'customization',
+      icon: <Sliders className="w-6 h-6 text-emerald-400" />,
+      iconBg: 'bg-emerald-400/10 border-emerald-400/25 text-emerald-400',
+      titleKey: 'onboardingStep3Title',
+      descKey: 'onboardingStep3',
+      tagsKey: 'onboardingStep3Tags',
+    },
+    {
+      id: 'preferences',
+      icon: <Clock className="w-6 h-6 text-indigo-400" />,
+      iconBg: 'bg-indigo-400/10 border-indigo-400/25 text-indigo-400',
+      titleKey: 'onboardingStep4Title',
+      descKey: 'onboardingStep4',
+      tagsKey: 'onboardingStep4Tags',
+    },
+    {
+      id: 'private',
+      icon: <ShieldCheck className="w-6 h-6 text-amber-400" />,
+      iconBg: 'bg-amber-400/10 border-amber-400/25 text-amber-400',
+      titleKey: 'onboardingStep5Title',
+      descKey: 'onboardingStep5',
+      tagsKey: 'onboardingStep5Tags',
+    },
+    {
+      id: 'sync',
+      icon: <Cloud className="w-6 h-6 text-blue-400" />,
+      iconBg: 'bg-blue-400/10 border-blue-400/25 text-blue-400',
+      titleKey: 'onboardingStep6Title',
+      descKey: 'onboardingStep6',
+      tagsKey: 'onboardingStep6Tags',
+    },
+    {
+      id: 'backup',
+      icon: <DownloadCloud className="w-6 h-6 text-emerald-400" />,
+      iconBg: 'bg-emerald-400/10 border-emerald-400/25 text-emerald-400',
+      titleKey: 'onboardingStep7Title',
+      descKey: 'onboardingStep7',
+      tagsKey: 'onboardingStep7Tags',
+    },
+  ];
 
- const steps = [
- {
- icon: <Compass className="w-7 h-7 text-amber-400" />,
- title: '极简 · 高效 · 定制',
- desc: t('onboardingStep1', settings.language),
- },
- {
- icon: <Sparkles className="w-7 h-7 text-amber-400" />,
- title: '智能图标与标题匹配',
- desc: t('onboardingStep2', settings.language),
- },
- {
- icon: <Cloud className="w-7 h-7 text-amber-400" />,
- title: '私有安全 · WebDAV & Git 云同步',
- desc: t('onboardingStep3', settings.language),
- },
- ];
+  const totalSteps = steps.length;
+  const current = steps[step];
+  const tags = (t(current.tagsKey as any, settings.language) || '').split('|').filter(Boolean);
 
- const current = steps[step];
+  const handleNext = useCallback(() => {
+    if (step < totalSteps - 1) {
+      setStep((prev) => prev + 1);
+    } else {
+      onFinish();
+    }
+  }, [step, totalSteps, onFinish]);
 
- const handleNext = () => {
- if (step < steps.length - 1) {
- setStep(step + 1);
- } else {
- onFinish();
- }
- };
+  const handlePrev = useCallback(() => {
+    if (step > 0) {
+      setStep((prev) => prev - 1);
+    }
+  }, [step]);
 
- return (
- <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 animate-fade-in">
- <div
- className="glass-modal relative w-full max-w-md p-8 rounded-3xl border border-white/15 shadow-2xl text-white text-center animate-scale-in"
- >
- {/* Step Icon */}
- <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-white/[0.08] flex items-center justify-center border border-white/10 shadow-inner">
- {current.icon}
- </div>
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isOpen) return;
 
- {/* Step Indicator */}
- <div className="flex justify-center gap-1.5 mb-4">
- {steps.map((_, idx) => (
- <div
- key={idx}
- className={`h-1.5 rounded-full transition-all duration-300 ${
- idx === step ? 'w-6 bg-white' : 'w-2 bg-white/20'
- }`}
- />
- ))}
- </div>
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        handleNext();
+      } else if (e.key === 'ArrowLeft') {
+        handlePrev();
+      } else if (e.key === 'Escape') {
+        onFinish();
+      }
+    };
 
- {/* Content */}
- <h3 className="text-xl font-bold mb-2 tracking-tight">{current.title}</h3>
- <p className="text-sm text-white/70 leading-relaxed mb-8 px-2">{current.desc}</p>
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, handleNext, handlePrev, onFinish]);
 
- {/* Action Button */}
- <div className="flex items-center justify-center gap-3">
- {step === steps.length - 1 ? (
- <button
- onClick={handleNext}
- className="w-full py-3 rounded-2xl bg-white hover:bg-slate-100 font-semibold text-sm text-slate-950 shadow-lg shadow-black/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
- >
- <span>{t('onboardingStart', settings.language)}</span>
- <Check className="w-4 h-4" />
- </button>
- ) : (
- <button
- onClick={handleNext}
- className="w-full py-3 rounded-2xl bg-white/10 hover:bg-white/20 font-semibold text-sm text-white border border-white/15 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
- >
- <span>{t('onboardingNext', settings.language)}</span>
- <ArrowRight className="w-4 h-4" />
- </button>
- )}
- </div>
- </div>
- </div>
- );
+  if (!isOpen) return null;
+
+  const isLast = step === totalSteps - 1;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-md animate-fade-in select-none">
+      <div className="glass-modal relative w-full max-w-[430px] p-6 sm:p-7 rounded-3xl border border-white/15 shadow-2xl text-white text-center animate-scale-in">
+        {/* Top Header: Step Badge & Skip Button */}
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-[11px] font-mono font-medium tracking-wider px-2.5 py-0.5 rounded-full bg-white/[0.08] border border-white/10 text-white/75">
+            {step + 1} / {totalSteps}
+          </span>
+          <button
+            type="button"
+            onClick={onFinish}
+            className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium text-white/60 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer active:scale-95"
+            title={t('onboardingSkip', settings.language)}
+          >
+            <span>{t('onboardingSkip', settings.language)}</span>
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+
+        {/* Step Icon with Glowing Halo */}
+        <div
+          className={`w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center border shadow-lg transition-transform duration-300 transform hover:scale-105 ${current.iconBg}`}
+        >
+          {current.icon}
+        </div>
+
+        {/* Step Indicators (Clickable) */}
+        <div className="flex justify-center items-center gap-1.5 mb-4">
+          {steps.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setStep(idx)}
+              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                idx === step
+                  ? 'w-6 bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.45)]'
+                  : 'w-1.5 bg-white/20 hover:bg-white/40'
+              }`}
+              title={`${idx + 1} / ${totalSteps}`}
+            />
+          ))}
+        </div>
+
+        {/* Content Title & Description */}
+        <div className="min-h-[145px] flex flex-col items-center justify-start">
+          <h3 className="text-lg font-bold mb-2 tracking-tight text-white drop-shadow-sm">
+            {t(current.titleKey as any, settings.language)}
+          </h3>
+          <p className="text-xs text-white/70 leading-relaxed px-2 mb-3.5">
+            {t(current.descKey as any, settings.language)}
+          </p>
+
+          {/* Structured Feature Tag Chips */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {tags.map((tag, idx) => (
+              <span
+                key={idx}
+                className="px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-white/[0.08] border border-white/12 text-white/90 shadow-sm backdrop-blur-md"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Controls */}
+        <div className="mt-5 flex items-center justify-between gap-2.5 pt-3 border-t border-white/10">
+          {step > 0 ? (
+            <button
+              type="button"
+              onClick={handlePrev}
+              className="flex-1 py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 font-medium text-xs text-white border border-white/15 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>{t('onboardingPrev', settings.language)}</span>
+            </button>
+          ) : (
+            <div className="hidden sm:block flex-1" />
+          )}
+
+          <button
+            type="button"
+            onClick={handleNext}
+            className={`flex-1 py-2.5 px-3 rounded-xl font-semibold text-xs shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+              isLast
+                ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-amber-500/20'
+                : 'bg-white hover:bg-slate-100 text-slate-950 shadow-black/20'
+            }`}
+          >
+            <span>{isLast ? t('onboardingStart', settings.language) : t('onboardingNext', settings.language)}</span>
+            {isLast ? <Check className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
