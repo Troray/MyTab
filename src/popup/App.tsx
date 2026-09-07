@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import browser from 'webextension-polyfill';
 import { BookmarkForm } from './components/BookmarkForm';
 import { t, Locale } from '../locales';
+import { ProfileId } from '../types';
 
 export type PopupStatus = 'loading' | 'ready' | 'saving' | 'success' | 'error' | 'unsupported';
 
@@ -22,6 +23,7 @@ function formatDisplayUrl(rawUrl: string): string {
 
 export const App: React.FC = () => {
   const [status, setStatus] = useState<PopupStatus>('loading');
+  const [profileId, setProfileId] = useState<ProfileId>('normal');
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [sameDomainSite, setSameDomainSite] = useState<{ title: string; categoryId: string; url: string } | null>(null);
   const [language, setLanguage] = useState<Locale>('zh-CN');
@@ -75,6 +77,9 @@ export const App: React.FC = () => {
           return;
         }
 
+        const detectedProfile: ProfileId = currentTab.incognito ? 'private' : 'normal';
+        setProfileId(detectedProfile);
+
         setTabData({
           title: currentTab.title || new URL(url).hostname,
           url: url,
@@ -82,7 +87,11 @@ export const App: React.FC = () => {
         });
 
         // Check if URL already exists or related same-domain bookmark exists
-        const res = await browser.runtime.sendMessage({ type: 'CHECK_BOOKMARK_EXISTS', url });
+        const res = await browser.runtime.sendMessage({
+          type: 'CHECK_BOOKMARK_EXISTS',
+          url,
+          profileId: detectedProfile,
+        });
         if (res && res.success) {
           if (res.exists) {
             setIsDuplicate(true);
@@ -91,6 +100,7 @@ export const App: React.FC = () => {
           }
         }
         setStatus('ready');
+
       } catch (err) {
         console.error('Failed to init popup:', err);
         setStatus('error');
@@ -134,13 +144,28 @@ export const App: React.FC = () => {
   return (
     <div className="glass-drawer w-full h-full min-h-[320px] text-slate-800 dark:text-white flex flex-col p-4 select-none">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-3.5">
-        <div className="w-6 h-6 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-950 flex items-center justify-center font-bold text-xs shadow-sm">
-          M
+      <div className="flex items-center justify-between mb-3.5">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-950 flex items-center justify-center font-bold text-xs shadow-sm">
+            M
+          </div>
+          <h1 className="text-sm font-semibold text-slate-900 dark:text-white">
+            {t('popupAddTitle', language)}
+          </h1>
         </div>
-        <h1 className="text-sm font-semibold text-slate-900 dark:text-white">
-          {t('popupAddTitle', language)}
-        </h1>
+        <button
+          type="button"
+          onClick={() => {
+            const page = profileId === 'private' ? 'private.html' : 'newtab.html';
+            browser.tabs.create({ url: browser.runtime.getURL(page) });
+            window.close();
+          }}
+          className="text-xs text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 cursor-pointer duration-150 px-2 py-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
+          title={profileId === 'private' ? t('popupOpenPrivateSpace', language) : t('popupOpenHome', language)}
+        >
+          <span>{profileId === 'private' ? t('popupPrivateSpace', language) : t('popupHome', language)}</span>
+          <span className="text-[10px]">↗</span>
+        </button>
       </div>
 
       {status === 'loading' && (
@@ -155,9 +180,21 @@ export const App: React.FC = () => {
           <p className="text-sm font-medium text-slate-800 dark:text-white/90">
             {t('popupUnsupportedTitle', language)}
           </p>
-          <p className="text-xs text-slate-500 dark:text-white/60 mt-1">
+          <p className="text-xs text-slate-500 dark:text-white/60 mt-1 mb-4">
             {t('popupUnsupportedDesc', language)}
           </p>
+          <button
+            type="button"
+            onClick={() => {
+              const page = profileId === 'private' ? 'private.html' : 'newtab.html';
+              browser.tabs.create({ url: browser.runtime.getURL(page) });
+              window.close();
+            }}
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm hover:opacity-90 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <span>{profileId === 'private' ? t('popupOpenPrivateSpace', language) : t('popupOpenHome', language)}</span>
+            <span className="text-[10px] opacity-70">↗</span>
+          </button>
         </div>
       )}
 
@@ -207,11 +244,13 @@ export const App: React.FC = () => {
             isSaving={status === 'saving'}
             language={language}
             sameDomainSite={sameDomainSite}
+            profileId={profileId}
             onSave={async (data) => {
               setStatus('saving');
               try {
                 const res = await browser.runtime.sendMessage({
                   type: 'ADD_BOOKMARK',
+                  profileId,
                   payload: {
                     title: data.title,
                     url: data.url,
@@ -230,6 +269,7 @@ export const App: React.FC = () => {
               }
             }}
           />
+
         </>
       )}
     </div>
