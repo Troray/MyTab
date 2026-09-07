@@ -70,6 +70,11 @@ async function buildExtension() {
     if (fs.existsSync(mytabHtml)) {
       await fs.move(mytabHtml, newtabHtml, { overwrite: true });
     }
+    // Also provide private.html (copy of newtab.html) so Chromium does not block it as an overridden newtab page in Incognito!
+    const privateHtml = path.resolve(targetDir, 'private.html');
+    if (fs.existsSync(newtabHtml)) {
+      await fs.copy(newtabHtml, privateHtml, { overwrite: true });
+    }
 
     // Clean up any remaining src folder
     const srcInTarget = path.resolve(targetDir, 'src');
@@ -105,7 +110,18 @@ async function buildExtension() {
       chrome_url_overrides: {
         newtab: 'newtab.html',
       },
-      permissions: ['storage', 'alarms', 'unlimitedStorage'],
+      commands: {
+        open_mytab: {
+          suggested_key: {
+            default: 'Alt+M',
+            mac: 'Alt+M',
+          },
+          description: '__MSG_commandOpenMyTab__',
+        },
+      },
+      permissions: target === 'chrome' 
+        ? ['storage', 'alarms', 'unlimitedStorage', 'tabs', 'favicon'] 
+        : ['storage', 'alarms', 'unlimitedStorage', 'tabs'],
       host_permissions: ['https://*/*', 'http://*/*'],
     };
 
@@ -114,11 +130,19 @@ async function buildExtension() {
         service_worker: 'background.js',
         type: 'module',
       };
+      manifest.incognito = 'split';
+      manifest.web_accessible_resources = [
+        {
+          resources: ['private.html', 'newtab.html', 'icons/*', '_favicon/*'],
+          matches: ['<all_urls>'],
+        },
+      ];
     } else if (target === 'firefox') {
       manifest.background = {
         scripts: ['background.js'],
         type: 'module',
       };
+      manifest.incognito = 'spanning';
       manifest.chrome_settings_overrides = {
         homepage: 'newtab.html',
       };
@@ -128,6 +152,12 @@ async function buildExtension() {
           strict_min_version: '109.0',
         },
       };
+      manifest.web_accessible_resources = [
+        {
+          resources: ['private.html', 'newtab.html', 'icons/*'],
+          matches: ['<all_urls>'],
+        },
+      ];
     }
 
     await fs.writeJson(path.resolve(targetDir, 'manifest.json'), manifest, { spaces: 2 });

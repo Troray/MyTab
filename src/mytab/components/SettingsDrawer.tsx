@@ -22,13 +22,15 @@ import {
  FileDown,
  ExternalLink,
  ChevronDown,
- Search
+ Search,
+  Shield,
+  AlertTriangle
 } from 'lucide-react';
-import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ThemeSettings, WebdavConfig } from '../../types';
-import { PRESET_GRADIENTS, DEFAULT_SETTINGS } from '../../utils/constants';
+import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ProfileId, ProfileSyncSettings, ThemeSettings, WebdavConfig } from '../../types';
+import { PRESET_GRADIENTS, DEFAULT_SETTINGS, DEFAULT_PRIVATE_BACKGROUND_VALUE } from '../../utils/constants';
 import { WebdavSettings } from './WebdavSettings';
 import { GitSettings } from './GitSettings';
-import { exportAllData, importData } from '../../services/storage';
+import { exportAllData, importData, resetProfileSettings } from '../../services/storage';
 import { t, supportedLocales, Translation, Locale } from '../../utils/i18n';
 import { CustomSelect } from './CustomSelect';
 import { UNSPLASH_CATEGORIES, getUnsplashTagDisplay, getUnsplashTagFull } from '../../utils/unsplashTopics';
@@ -38,25 +40,27 @@ import { ToggleSwitch } from './ToggleSwitch';
 import { fetchUnsplashRandomPhoto, preloadImage } from '../../services/unsplash';
 
 interface SettingsDrawerProps {
- isOpen: boolean;
- appState: AppState;
- onClose: () => void;
- onUpdateSettings: (settings: ThemeSettings) => void;
- onUpdateWebdav: (config: WebdavConfig) => void;
- onUpdateGit: (config: GitSyncConfig) => void;
- onStateReload: () => void;
- onOpenColorCustomizer?: () => void;
+  isOpen: boolean;
+  appState: AppState;
+  onClose: () => void;
+  onUpdateSettings: (settings: Partial<ThemeSettings>) => void;
+  onUpdateWebdav: (config: WebdavConfig) => void;
+  onUpdateGit: (config: GitSyncConfig) => void;
+  onUpdateSyncSettings?: (newPolicy: ProfileSyncSettings) => Promise<void> | void;
+  onStateReload: () => void;
+  onOpenColorCustomizer?: () => void;
 }
 
 export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
- isOpen,
- appState,
- onClose,
- onUpdateSettings,
- onUpdateWebdav,
- onUpdateGit,
- onStateReload,
- onOpenColorCustomizer,
+  isOpen,
+  appState,
+  onClose,
+  onUpdateSettings,
+  onUpdateWebdav,
+  onUpdateGit,
+  onUpdateSyncSettings,
+  onStateReload,
+  onOpenColorCustomizer,
 }) => {
   const settings: ThemeSettings = {
     ...DEFAULT_SETTINGS,
@@ -72,6 +76,17 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  const [isUnsplashTopicModalOpen, setIsUnsplashTopicModalOpen] = useState(false);
  const [isFetchingUnsplash, setIsFetchingUnsplash] = useState(false);
  const [unsplashError, setUnsplashError] = useState<string | null>(null);
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [exportNormal, setExportNormal] = useState(true);
+  const [exportPrivate, setExportPrivate] = useState(false);
+  const [exportCredentials, setExportCredentials] = useState(false);
+
+  const handleResetToInherited = async () => {
+    await resetProfileSettings('private');
+    setResetSuccess(true);
+    setTimeout(() => setResetSuccess(false), 2000);
+    onStateReload();
+  };
   const activeFetchIdRef = useRef<number>(0);
   const lastRefreshTimeRef = useRef<number>(0);
 
@@ -88,7 +103,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  if (!isOpen) return null;
 
  const handleSettingsChange = (fields: Partial<ThemeSettings>) => {
- onUpdateSettings({ ...settings, ...fields });
+ onUpdateSettings(fields);
  };
 
   const handleRefreshUnsplash = async (customFields?: Partial<ThemeSettings>) => {
@@ -269,6 +284,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  };
 
  const isLight = settings.mode === 'light' || (settings.mode === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isPrivate = appState.profileId === 'private';
 
  return (
  <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">
@@ -281,10 +297,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  {/* Drawer Container */}
  <div className="absolute inset-y-0 right-0 max-w-full flex pointer-events-none">
  <div
- className={`glass-drawer w-screen max-w-md shadow-2xl flex flex-col pointer-events-auto duration-200 ${isLight
- ? 'border-l border-black/10 text-slate-900 shadow-black/10'
- : 'border-l border-white/10 text-white'
- }`}
+ className={`glass-drawer w-screen max-w-md shadow-2xl flex flex-col pointer-events-auto duration-200 ${
+            isPrivate
+              ? 'border-l border-[#f59e0b] shadow-[-4px_0_25px_rgba(245,158,11,0.15)]'
+              : isLight
+              ? 'border-l border-black/10 shadow-black/10'
+              : 'border-l border-white/10'
+          } ${isLight ? 'text-slate-900' : 'text-white'}`}
  >
  {/* Header */}
  <div
@@ -374,6 +393,43 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
  {/* Content Area */}
  <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Private Space Independent Settings Banner */}
+        {appState.profileId === 'private' && (activeTab === 'appearance' || activeTab === 'behavior') && (
+          <div
+            className={`p-3.5 rounded-2xl border text-xs flex flex-col gap-2.5 duration-0 ${
+              isLight
+                ? 'bg-amber-500/[0.08] border-amber-500/25 text-amber-950'
+                : 'bg-amber-500/[0.12] border-amber-500/30 text-amber-200'
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 font-medium">
+                <Shield className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>{t('privateSettingsNotice', settings.language)}</span>
+              </div>
+              {appState.hasCustomSettings && (
+                <button
+                  type="button"
+                  onClick={handleResetToInherited}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-medium text-[11px] transition-colors cursor-pointer active:scale-95 ${
+                    isLight
+                      ? 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-900'
+                      : 'bg-amber-500/25 hover:bg-amber-500/35 text-amber-100'
+                  }`}
+                  title={t('privateSettingsResetInherit', settings.language)}
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>{resetSuccess ? t('privateSettingsResetSuccess', settings.language) : t('privateSettingsResetInherit', settings.language)}</span>
+                </button>
+              )}
+            </div>
+            <p className={`text-[11px] leading-relaxed ${isLight ? 'text-amber-900/75' : 'text-amber-200/70'}`}>
+              {appState.hasCustomSettings
+                ? t('privateSettingsActiveDesc', settings.language)
+                : t('privateSettingsInheritedDesc', settings.language)}
+            </p>
+          </div>
+        )}
  {/* 1. 外观 Tab */}
  {activeTab === 'appearance' && (
  <div className="space-y-5">
@@ -471,7 +527,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  ? 'https://bing.biturl.top/?resolution=1920&format=image&index=0&mkt=zh-CN'
  : bg.id === 'custom'
  ? settings.customBackgroundUrl || './wallpapers/default-wallpaper.jpg'
- : PRESET_GRADIENTS[0].value,
+ : settings.gradientLastValue || (appState.profileId === 'private' ? DEFAULT_PRIVATE_BACKGROUND_VALUE : PRESET_GRADIENTS[0].value),
  });
  }}
  className={`py-2 px-3 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.backgroundType === bg.id
@@ -492,7 +548,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  {PRESET_GRADIENTS.map((p, idx) => (
  <div
  key={idx}
- onClick={() => handleSettingsChange({ backgroundValue: p.value })}
+ onClick={() => handleSettingsChange({ backgroundValue: p.value, gradientLastValue: p.value })}
  style={{ background: p.value }}
  className={`h-16 rounded-xl border cursor-pointer relative flex items-end p-2 duration-0 hover:scale-[1.02] ${settings.backgroundValue === p.value
  ? 'border-amber-500 ring-2 ring-amber-500/50 shadow-md'
@@ -988,24 +1044,42 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  </div>
 
  {/* Show Date */}
- <div
- className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
- ? 'bg-black/[0.03] border-black/8 text-slate-900'
- : 'bg-white/[0.05] border-white/10 text-white'
- }`}
- >
- <div className="flex items-center gap-2.5">
- <Calendar className="w-4 h-4 opacity-70" />
- <span className="text-xs font-medium">{t('showDateOnly', settings.language)}</span>
- </div>
- <ToggleSwitch
- checked={settings.showDate || false}
- onChange={(checked) => handleSettingsChange({ showDate: checked })}
- isLight={isLight}
- />
- </div>
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Calendar className="w-4 h-4 opacity-70" />
+                    <span className="text-xs font-medium">{t('showDateOnly', settings.language)}</span>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.showDate || false}
+                    onChange={(checked) => handleSettingsChange({ showDate: checked })}
+                    isLight={isLight}
+                  />
+                </div>
 
- {/* Show Search */}
+                {/* Show Lunar */}
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Moon className="w-4 h-4 opacity-70" />
+                    <span className="text-xs font-medium">{t('showLunarOnly', settings.language)}</span>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.showLunar ?? true}
+                    onChange={(checked) => handleSettingsChange({ showLunar: checked })}
+                    isLight={isLight}
+                  />
+                </div>
+
+                {/* Show Search */}
  <div
  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
  ? 'bg-black/[0.03] border-black/8 text-slate-900'
@@ -1169,13 +1243,15 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <WebdavSettings
  appState={appState}
  onUpdateWebdav={onUpdateWebdav}
- onStateReload={onStateReload}
+                onUpdateSyncSettings={onUpdateSyncSettings}
+                onStateReload={onStateReload}
  />
  ) : (
  <GitSettings
  appState={appState}
  onUpdateGit={onUpdateGit}
- onStateReload={onStateReload}
+                onUpdateSyncSettings={onUpdateSyncSettings}
+                onStateReload={onStateReload}
  />
  )}
  </div>
@@ -1192,6 +1268,59 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <div className="text-xs leading-relaxed">
  {t('backupDescription', settings.language)}
  </div>
+
+        {/* Space export selection */}
+        <div className="space-y-2 pt-1 border-t border-black/5 dark:border-white/5">
+          <span className={`text-[11px] font-medium block ${isLight ? 'text-slate-600' : 'text-white/70'}`}>
+            {t('exportSpacesTitle', settings.language)}
+          </span>
+          <div className="flex items-center gap-4 text-xs">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={exportNormal}
+                onChange={(e) => setExportNormal(e.target.checked)}
+                className="rounded accent-slate-900 dark:accent-white cursor-pointer w-3.5 h-3.5"
+              />
+              <span>{t('syncNormalSpace', settings.language)}</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={exportPrivate}
+                onChange={(e) => setExportPrivate(e.target.checked)}
+                className="rounded accent-slate-900 dark:accent-white cursor-pointer w-3.5 h-3.5"
+              />
+              <span>{t('syncPrivateSpace', settings.language)}</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Credentials export option */}
+        <div className="pt-2 border-t border-black/5 dark:border-white/5 space-y-2">
+          <label className="flex items-start gap-2 cursor-pointer text-xs">
+            <input
+              type="checkbox"
+              checked={exportCredentials}
+              onChange={(e) => setExportCredentials(e.target.checked)}
+              className="mt-0.5 rounded accent-slate-900 dark:accent-white cursor-pointer w-3.5 h-3.5 shrink-0"
+            />
+            <span className="font-medium">
+              {t('exportIncludeCredentials', settings.language)}
+            </span>
+          </label>
+
+          {exportCredentials && (
+            <div className={`p-2.5 rounded-xl text-[11px] leading-relaxed border flex items-start gap-2 animate-fade-in ${
+              isLight
+                ? 'bg-amber-500/[0.08] border-amber-500/25 text-amber-950'
+                : 'bg-amber-500/[0.12] border-amber-500/30 text-amber-200'
+            }`}>
+              <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
+              <span>{t('exportCredentialsWarning', settings.language)}</span>
+            </div>
+          )}
+        </div>
 
  <div className="flex flex-col gap-2.5 pt-2">
  <button

@@ -1,5 +1,6 @@
-import { SiteItem } from '../types';
+import { ProfileId, SiteItem } from '../types';
 import { loadAppState, saveSites } from './storage';
+import { generateFallbackIcon } from './metadata';
 
 export interface AddBookmarkInput {
   title: string;
@@ -57,14 +58,15 @@ export interface CheckBookmarkResult {
 
 /**
  * Checks if a bookmark with the equivalent normalized URL already exists,
- * or if there is an existing bookmark from the same website (same domain).
+ * or if there is an existing bookmark from the same website (same domain)
+ * within the specified Profile.
  */
-export async function checkBookmarkExists(url: string): Promise<CheckBookmarkResult> {
+export async function checkBookmarkExists(url: string, profileId?: ProfileId): Promise<CheckBookmarkResult> {
   const target = normalizeUrl(url);
   if (!target) return { exists: false };
 
   const targetHost = extractHostname(url);
-  const state = await loadAppState();
+  const state = await loadAppState(profileId);
 
   let exists = false;
   let sameDomainSite: CheckBookmarkResult['sameDomainSite'];
@@ -96,34 +98,32 @@ export async function checkBookmarkExists(url: string): Promise<CheckBookmarkRes
 }
 
 /**
- * Adds a new bookmark to the storage.
+ * Adds a new bookmark to the storage for the specified Profile.
  * Handles duplicate checking and ID generation.
  */
-export async function addBookmark(input: AddBookmarkInput): Promise<AddBookmarkResult> {
+export async function addBookmark(input: AddBookmarkInput, profileId?: ProfileId): Promise<AddBookmarkResult> {
   try {
-    const state = await loadAppState();
+    const state = await loadAppState(profileId);
     
-    // (Removed strict duplicate block. The popup now warns users instead of blocking.)
-
-    // 2. Determine sort order (append to end)
+    // Determine sort order (append to end)
     const sortOrder = state.sites.length;
     const now = Date.now();
 
-    // 3. Create the new site item
+    // Create the new site item
     const newSite: SiteItem = {
       id: `site-${now}-${Math.random().toString(36).substring(2, 7)}`,
       title: input.title || 'Untitled',
       url: input.url,
-      icon: input.icon,
-      categoryId: input.categoryId || 'tools',
+      icon: input.icon || generateFallbackIcon(input.title || input.url),
+      categoryId: input.categoryId || state.categories.find((c) => c.id !== 'all')?.id || 'all',
       sortOrder,
       createdAt: now,
       updatedAt: now,
     };
 
-    // 4. Save to storage
+    // Save to storage
     const updatedSites = [...state.sites, newSite];
-    await saveSites(updatedSites);
+    await saveSites(updatedSites, profileId || state.profileId);
 
     return { success: true, bookmark: newSite };
   } catch (err: any) {
@@ -131,3 +131,4 @@ export async function addBookmark(input: AddBookmarkInput): Promise<AddBookmarkR
     return { success: false, error: err.message || 'Failed to add bookmark' };
   }
 }
+

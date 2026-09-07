@@ -6,5 +6,9 @@
   "extensionDescription": {
     "message": "Nouvel onglet moderne et minimaliste avec synchronisation WebDAV & Git, gestion des favoris et personnalisation poussée.",
     "description": "Description de l'extension"
+  },
+  "commandOpenMyTab": {
+    "message": "Ouvrir l'onglet MyTab",
+    "description": "Description de la commande de raccourci"
   }
 }
