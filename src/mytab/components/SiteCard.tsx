@@ -199,7 +199,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
                 ? 'text-slate-500 hover:text-slate-900 hover:bg-black/10'
                 : 'text-white/70 hover:text-white hover:bg-white/20'
             }`}
-            title="More actions"
+            title={t('moreActions', settings.language)}
           >
             <MoreVertical className="w-3.5 h-3.5" />
           </button>
