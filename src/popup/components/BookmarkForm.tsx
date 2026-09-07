@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import browser from 'webextension-polyfill';
 import { t, Locale } from '../../locales';
+import { ProfileId } from '../../types';
 
 interface Props {
   initialData: { title: string; url: string; favicon?: string };
   isSaving: boolean;
   language?: Locale;
   sameDomainSite?: { title: string; categoryId: string } | null;
+  profileId?: ProfileId;
   onSave: (data: { title: string; url: string; favicon?: string; categoryId: string }) => void;
 }
 
-export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language = 'zh-CN', sameDomainSite, onSave }) => {
+export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language = 'zh-CN', sameDomainSite, profileId = 'normal', onSave }) => {
   const [title, setTitle] = useState(initialData.title);
   const [url, setUrl] = useState(initialData.url);
   const [favicon, setFavicon] = useState(initialData.favicon || '');
@@ -20,8 +22,8 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language 
   useEffect(() => {
     async function loadData() {
       try {
-        // 1. Get groups
-        const res = await browser.runtime.sendMessage({ type: 'GET_GROUPS' });
+        // 1. Get groups for target profile
+        const res = await browser.runtime.sendMessage({ type: 'GET_GROUPS', profileId });
         let groups = [];
         if (res && res.success && res.data) {
           groups = res.data.filter((c: any) => c.id !== 'all');
@@ -34,10 +36,13 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language 
         if (sameDomainSite?.categoryId && groups.some((g: any) => g.id === sameDomainSite.categoryId)) {
           setCategoryId(sameDomainSite.categoryId);
         } else {
-          // Priority 2: Get last used group from local storage
+          // Priority 2: Get last used group from local storage scoped to profile
           const { mytab_popup_prefs } = await browser.storage.local.get('mytab_popup_prefs');
-          if (mytab_popup_prefs?.lastUsedGroupId && groups.some((g: any) => g.id === mytab_popup_prefs.lastUsedGroupId)) {
-            setCategoryId(mytab_popup_prefs.lastUsedGroupId);
+          const lastUsed = mytab_popup_prefs?.[profileId]?.lastUsedGroupId || 
+            (profileId === 'normal' ? mytab_popup_prefs?.lastUsedGroupId : undefined);
+
+          if (lastUsed && groups.some((g: any) => g.id === lastUsed)) {
+            setCategoryId(lastUsed);
           } else if (groups.length > 0) {
             setCategoryId(groups[0].id);
           }
@@ -47,7 +52,7 @@ export const BookmarkForm: React.FC<Props> = ({ initialData, isSaving, language 
       }
     }
     loadData();
-  }, [sameDomainSite]);
+  }, [sameDomainSite, profileId]);
 
   return (
     <div className="flex-1 flex flex-col gap-3">
