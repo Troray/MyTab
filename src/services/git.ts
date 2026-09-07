@@ -1,6 +1,7 @@
 import { t, Locale } from '../locales';
-import { AppState, Category, GitSyncConfig, GitPlatformConfig, SiteItem, SyncPayload, ThemeSettings } from '../types';
-import { loadAppState, saveCategories, saveGitConfig, saveSettings, saveSites } from './storage';
+import { AppState, GitSyncConfig, GitPlatformConfig, SyncPayload } from '../types';
+import { getProfileSyncSettings, loadProfileContainer, saveGitConfig, saveProfileContainer, saveSettings } from './storage';
+import { applyRemotePayload, buildSyncPayload } from './syncController';
 import { DEFAULT_SETTINGS } from '../utils/constants';
 
 export interface GitTestResult {
@@ -15,6 +16,13 @@ export interface GitSyncResult {
   success: boolean;
   action?: 'uploaded' | 'downloaded' | 'merged' | 'noop';
   message?: string;
+}
+
+export interface GitCommitHistory {
+  sha: string;
+  message: string;
+  date: string;
+  author: string;
 }
 
 const GIST_FILENAME = 'mytab-backup.json';
@@ -33,9 +41,8 @@ function getHeaders(token: string, provider: 'github' | 'gitee'): Record<string,
   if (token) {
     if (provider === 'github') {
       headers['Authorization'] = `Bearer ${token}`;
-    } else {
-      headers['Authorization'] = `token ${token}`;
     }
+    // Gitee access_token is passed via URL or body, so we omit the Authorization header.
   }
 
   return headers;
@@ -116,8 +123,11 @@ export async function autoSetupGist(provider: 'github' | 'gitee', token: string,
     if (!existingGistId) {
       const createGistUrl = `${baseUrl}/gists`;
       const initialPayload: SyncPayload = {
-        version: 1,
+        version: 2,
         timestamp: Date.now(),
+        profiles: {
+          normal: { sites: [], categories: [], activeCategoryId: 'all' },
+        },
         categories: [],
         sites: [],
         settings: { ...DEFAULT_SETTINGS, updatedAt: Date.now() },
@@ -341,8 +351,10 @@ export async function autoSetupRepo(
 function utf8ToBase64(str: string): string {
   const bytes = new TextEncoder().encode(str);
   let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
+  const len = bytes.length;
+  const CHUNK_SIZE = 8192;
+  for (let i = 0; i < len; i += CHUNK_SIZE) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK_SIZE) as any);
   }
   return btoa(binary);
 }
@@ -350,12 +362,16 @@ function utf8ToBase64(str: string): string {
 function base64ToUtf8(base64: string): string {
   const clean = base64.replace(/\s/g, '');
   if (!clean) return '';
-  const binary = atob(clean);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
+  try {
+    const binary = atob(clean);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return '';
   }
-  return new TextDecoder().decode(bytes);
 }
 
 export class GitClient {
@@ -421,11 +437,11 @@ export class GitClient {
   /**
    * Unified Get Data (Dispatches to Gist or Repo)
    */
-  async getData(): Promise<{ payload: SyncPayload | null; sha?: string }> {
+  async getData(customSha?: string): Promise<{ payload: SyncPayload | null; sha?: string }> {
     if (this.isGistMode()) {
       return this.getGistData();
     }
-    return this.getFile();
+    return this.getFile(customSha);
   }
 
   /**
@@ -530,11 +546,11 @@ export class GitClient {
   /**
    * Repo: Get file from repository
    */
-  async getFile(): Promise<{ payload: SyncPayload | null; sha?: string }> {
+  async getFile(customSha?: string): Promise<{ payload: SyncPayload | null; sha?: string }> {
     const { provider, owner, repo, branch, path, token } = this.config;
     const baseUrl = getApiBaseUrl(provider);
     const cleanPath = (path || 'mytab-backup.json').replace(/^\/+/, '');
-    const cleanBranch = branch || (provider === 'gitee' ? 'master' : 'main');
+    const cleanBranch = customSha || branch || (provider === 'gitee' ? 'master' : 'main');
 
     let url = `${baseUrl}/repos/${owner}/${repo}/contents/${cleanPath}?ref=${cleanBranch}&_t=${Date.now()}`;
     if (provider === 'gitee') {
@@ -629,6 +645,47 @@ export class GitClient {
       throw new Error(errorMsg || `${t('gitUploadRepoFailed', this.lang)}: HTTP ${res.status}`);
     }
   }
+
+  /**
+   * Repo: Get commit history for the backup file
+   */
+  async getCommitHistory(limit = 10): Promise<GitCommitHistory[]> {
+    if (this.isGistMode()) {
+      throw new Error(t('gitGistNoCommitHistory', this.lang));
+    }
+
+    const { provider, owner, repo, branch, path, token } = this.config;
+    const baseUrl = getApiBaseUrl(provider);
+    const cleanPath = (path || 'mytab-backup.json').replace(/^\/+/, '');
+    const cleanBranch = branch || (provider === 'gitee' ? 'master' : 'main');
+
+    let url = `${baseUrl}/repos/${owner}/${repo}/commits?path=${cleanPath}&sha=${cleanBranch}&per_page=${limit}&_t=${Date.now()}`;
+    if (provider === 'gitee') {
+      url += `&access_token=${token}`;
+    }
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: getHeaders(token, provider),
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      throw new Error(`${t('gitFetchCommitsFailed', this.lang)}: HTTP ${res.status}`);
+    }
+
+    const data = await res.json().catch(() => []);
+    if (!Array.isArray(data)) {
+      return [];
+    }
+
+    return data.map((item: any) => ({
+      sha: item.sha,
+      message: item.commit?.message || '',
+      date: item.commit?.author?.date || item.commit?.committer?.date || '',
+      author: item.commit?.author?.name || item.author?.login || 'Unknown',
+    }));
+  }
 }
 
 function buildUpdatedGitConfig(
@@ -688,70 +745,35 @@ export async function executeGitSync(state: AppState): Promise<GitSyncResult> {
 
   try {
     const { payload: remotePayload, sha: remoteSha } = await client.getData();
-    const now = Date.now();
+    const container = await loadProfileContainer();
+    const syncPolicy = state.syncSettings || (await getProfileSyncSettings());
 
     // 1. If file does not exist yet -> upload local
     if (!remotePayload) {
-      const payload: SyncPayload = {
-        version: 1,
-        timestamp: now,
-        categories: state.categories,
-        sites: state.sites,
-        settings: state.settings,
-      };
+      const payload = buildSyncPayload(container, state.settings, syncPolicy);
       await client.putData(payload);
 
-      await saveGitConfig(buildUpdatedGitConfig(git, 'success', now, undefined));
+      await saveGitConfig(buildUpdatedGitConfig(git, 'success', payload.timestamp, undefined));
       return { success: true, action: 'uploaded', message: t('gitSyncUploaded', state.settings?.language) };
     }
 
-    // 2. Merge sites & categories based on timestamp
-    const mapSites = new Map<string, SiteItem>();
-    for (const s of state.sites) mapSites.set(s.id, s);
-    for (const s of remotePayload.sites || []) {
-      const existing = mapSites.get(s.id);
-      if (!existing || (s.updatedAt || 0) > (existing.updatedAt || 0)) {
-        mapSites.set(s.id, s);
-      }
-    }
-    const mergedSites = Array.from(mapSites.values()).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    // 2. Merge payload based on conflict strategy
+    const { updatedContainer, updatedSettings } = applyRemotePayload(
+      container,
+      state.settings,
+      remotePayload,
+      syncPolicy,
+      'merge'
+    );
 
-    const mapCats = new Map<string, Category>();
-    for (const c of state.categories) mapCats.set(c.id, c);
-    for (const c of remotePayload.categories || []) {
-      if (!mapCats.has(c.id)) mapCats.set(c.id, c);
-    }
-    const mergedCats = Array.from(mapCats.values()).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-
-    // Merge Settings based on timestamp
-    const localSettingsTime = state.settings?.updatedAt || 0;
-    const remoteSettingsTime = remotePayload.settings?.updatedAt || remotePayload.timestamp || 0;
-
-    let finalSettings: ThemeSettings;
-    if (remotePayload.settings && remoteSettingsTime > localSettingsTime) {
-      const clean = Object.fromEntries(
-        Object.entries(remotePayload.settings).filter(([_, v]) => v !== undefined && v !== null)
-      );
-      finalSettings = { ...DEFAULT_SETTINGS, ...state.settings, ...clean };
-      await saveSettings(finalSettings);
-    } else {
-      finalSettings = { ...DEFAULT_SETTINGS, ...state.settings };
-      await saveSettings(finalSettings);
-    }
-
-    await saveSites(mergedSites);
-    await saveCategories(mergedCats);
+    await saveProfileContainer(updatedContainer);
+    await saveSettings(updatedSettings);
 
     // Upload merged result
-    const newPayload: SyncPayload = {
-      version: 1,
-      timestamp: now,
-      categories: mergedCats,
-      sites: mergedSites,
-      settings: finalSettings,
-    };
+    const newPayload = buildSyncPayload(updatedContainer, updatedSettings, syncPolicy);
     await client.putData(newPayload, remoteSha);
 
+    const now = Date.now();
     await saveGitConfig(buildUpdatedGitConfig(git, 'success', now, undefined));
     return { success: true, action: 'merged', message: t('gitSyncMerged', state.settings?.language) };
   } catch (err: any) {
@@ -773,16 +795,12 @@ export async function uploadToGit(state: AppState): Promise<GitSyncResult> {
   const client = new GitClient(git, state.settings?.language);
   try {
     const { sha: remoteSha } = await client.getData();
-    const now = Date.now();
-    const payload: SyncPayload = {
-      version: 1,
-      timestamp: now,
-      categories: state.categories,
-      sites: state.sites,
-      settings: { ...state.settings, updatedAt: now },
-    };
+    const container = await loadProfileContainer();
+    const syncPolicy = state.syncSettings || (await getProfileSyncSettings());
+    const payload = buildSyncPayload(container, state.settings, syncPolicy);
     await client.putData(payload, remoteSha);
-    await saveGitConfig(buildUpdatedGitConfig(git, 'success', now, undefined));
+
+    await saveGitConfig(buildUpdatedGitConfig(git, 'success', payload.timestamp, undefined));
     return { success: true, action: 'uploaded', message: t('gitBackupSuccess', state.settings?.language) };
   } catch (err: any) {
     const errMsg = err.message || t('gitBackupFailed', state.settings?.language);
@@ -794,7 +812,7 @@ export async function uploadToGit(state: AppState): Promise<GitSyncResult> {
 /**
  * Explicit Pull/Restore from Git to Local
  */
-export async function restoreFromGit(state: AppState): Promise<GitSyncResult> {
+export async function restoreFromGit(state: AppState, customSha?: string): Promise<GitSyncResult> {
   const { git } = state;
   if (!git.enabled || !git.token) {
     return { success: false, message: t('gitNotConfigured', state.settings?.language) };
@@ -802,22 +820,24 @@ export async function restoreFromGit(state: AppState): Promise<GitSyncResult> {
 
   const client = new GitClient(git, state.settings?.language);
   try {
-    const { payload: remotePayload } = await client.getData();
+    const { payload: remotePayload } = await client.getData(customSha);
     if (!remotePayload) {
       return { success: false, message: t('gitNoRemote', state.settings?.language) };
     }
-    if (remotePayload.categories && Array.isArray(remotePayload.categories)) {
-      await saveCategories(remotePayload.categories);
-    }
-    if (remotePayload.sites && Array.isArray(remotePayload.sites)) {
-      await saveSites(remotePayload.sites);
-    }
-    if (remotePayload.settings && typeof remotePayload.settings === 'object') {
-      const clean = Object.fromEntries(
-        Object.entries(remotePayload.settings).filter(([_, v]) => v !== undefined && v !== null)
-      );
-      await saveSettings({ ...DEFAULT_SETTINGS, ...clean });
-    }
+
+    const container = await loadProfileContainer();
+    const syncPolicy = state.syncSettings || (await getProfileSyncSettings());
+    const { updatedContainer, updatedSettings } = applyRemotePayload(
+      container,
+      state.settings,
+      remotePayload,
+      syncPolicy,
+      'remote'
+    );
+
+    await saveProfileContainer(updatedContainer);
+    await saveSettings(updatedSettings);
+
     const now = Date.now();
     await saveGitConfig(buildUpdatedGitConfig(git, 'success', now, undefined));
     return { success: true, action: 'downloaded', message: t('gitRestoreSuccess', state.settings?.language) };
@@ -827,3 +847,4 @@ export async function restoreFromGit(state: AppState): Promise<GitSyncResult> {
     return { success: false, message: errMsg };
   }
 }
+
