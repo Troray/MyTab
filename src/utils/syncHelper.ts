@@ -99,6 +99,14 @@ export function resolveBestGitPlatform(git?: GitSyncConfig): GitProvider {
 
   const isOtherConfigured = isGitPlatformConfigured(otherPlatform);
 
+  // If the user explicitly switched to a provider in the UI, we should respect it
+  // and not forcefully revert back just because the other one is configured.
+  // We only fall back if the current provider is completely empty and the other is fully configured,
+  // but if they actively clicked it, git.provider will be set.
+  if (git.provider && (git.provider === 'github' || git.provider === 'gitee')) {
+    return git.provider;
+  }
+
   if (isDefaultConfigured && !isOtherConfigured) {
     return defaultProvider;
   }

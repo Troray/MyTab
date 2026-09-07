@@ -1,7 +1,7 @@
 import { t, Locale } from '../locales';
-import { AppState, Category, SiteItem, SyncPayload, ThemeSettings, WebdavConfig } from '../types';
-import { loadAppState, saveCategories, saveSettings, saveSites, saveWebdavConfig } from './storage';
-import { DEFAULT_SETTINGS } from '../utils/constants';
+import { AppState, SyncPayload, WebdavConfig } from '../types';
+import { getProfileSyncSettings, loadProfileContainer, saveProfileContainer, saveSettings, saveWebdavConfig } from './storage';
+import { applyRemotePayload, buildSyncPayload } from './syncController';
 
 export interface WebdavTestResult {
   success: boolean;
@@ -32,17 +32,19 @@ function normalizeWebdavUrl(baseUrl: string, syncPath: string): string {
 
 export class WebdavClient {
   private config: WebdavConfig;
+  private lang: Locale;
 
-  constructor(config: WebdavConfig) {
+  constructor(config: WebdavConfig, lang: Locale = 'zh-CN') {
     this.config = config;
+    this.lang = lang;
   }
 
   /**
    * Test connection to WebDAV server
    */
-  async testConnection(): Promise<WebdavTestResult> {
+  async testConnection(lang: Locale = this.lang): Promise<WebdavTestResult> {
     if (!this.config.url) {
-      return { success: false, message: 'WebDAV URL is required' };
+      return { success: false, message: t('webdavUrlRequired', lang) };
     }
 
     try {
@@ -57,14 +59,14 @@ export class WebdavClient {
       });
 
       if (res.status === 207 || res.status === 200 || res.status === 204 || res.status === 404) {
-        return { success: true, message: 'Connection successful (HTTP ' + res.status + ')' };
+        return { success: true, message: `${t('webdavConnectionSuccess', lang)} (HTTP ${res.status})` };
       } else if (res.status === 401 || res.status === 403) {
-        return { success: false, message: 'Authentication failed: Invalid username or password (HTTP ' + res.status + ')' };
+        return { success: false, message: `${t('webdavAuthFailed', lang)} (HTTP ${res.status})` };
       } else {
-        return { success: false, message: `Server returned HTTP status ${res.status} ${res.statusText}` };
+        return { success: false, message: `${t('gitStatusError', lang)} HTTP ${res.status} ${res.statusText}` };
       }
     } catch (err: any) {
-      return { success: false, message: err.message || 'Network request failed' };
+      return { success: false, message: err.message || t('webdavNetworkError', lang) };
     }
   }
 
@@ -138,77 +140,29 @@ export class WebdavClient {
 }
 
 /**
- * Merge two lists of sites based on updatedAt timestamp
- */
-function mergeSites(localSites: SiteItem[], remoteSites: SiteItem[]): SiteItem[] {
-  const map = new Map<string, SiteItem>();
-
-  for (const s of localSites) {
-    map.set(s.id, s);
-  }
-
-  for (const s of remoteSites) {
-    const existing = map.get(s.id);
-    if (!existing) {
-      map.set(s.id, s);
-    } else {
-      if ((s.updatedAt || 0) > (existing.updatedAt || 0)) {
-        map.set(s.id, s);
-      }
-    }
-  }
-
-  return Array.from(map.values()).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-}
-
-/**
- * Merge two lists of categories
- */
-function mergeCategories(localCats: Category[], remoteCats: Category[]): Category[] {
-  const map = new Map<string, Category>();
-
-  for (const c of localCats) {
-    map.set(c.id, c);
-  }
-
-  for (const c of remoteCats) {
-    if (!map.has(c.id)) {
-      map.set(c.id, c);
-    }
-  }
-
-  return Array.from(map.values()).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-}
-
-/**
  * Main WebDAV Sync executor
  */
 export async function executeWebdavSync(state: AppState): Promise<SyncResult> {
   const { webdav } = state;
   if (!webdav.enabled || !webdav.url) {
-    return { success: false, message: 'WebDAV sync is not configured or disabled' };
+    return { success: false, message: t('webdavNotConfigured', state.settings?.language) };
   }
 
-  const client = new WebdavClient(webdav);
+  const client = new WebdavClient(webdav, state.settings?.language);
 
   try {
     const remoteData = await client.download();
-    const now = Date.now();
+    const container = await loadProfileContainer();
+    const syncPolicy = state.syncSettings || (await getProfileSyncSettings());
 
-    // 1. Remote doesn't exist yet -> upload local
+    // 1. Remote doesn't exist yet -> upload local filtered by sync policy
     if (!remoteData) {
-      const payload: SyncPayload = {
-        version: 1,
-        timestamp: now,
-        categories: state.categories,
-        sites: state.sites,
-        settings: state.settings,
-      };
+      const payload = buildSyncPayload(container, state.settings, syncPolicy);
       await client.upload(payload);
 
       await saveWebdavConfig({
         ...webdav,
-        lastSyncTime: now,
+        lastSyncTime: payload.timestamp,
         lastSyncStatus: 'success',
         lastSyncError: undefined,
       });
@@ -218,56 +172,28 @@ export async function executeWebdavSync(state: AppState): Promise<SyncResult> {
 
     // 2. Resolve based on conflict strategy
     if (webdav.conflictStrategy === 'local') {
-      const payload: SyncPayload = {
-        version: 1,
-        timestamp: now,
-        categories: state.categories,
-        sites: state.sites,
-        settings: state.settings,
-      };
+      const payload = buildSyncPayload(container, state.settings, syncPolicy);
       await client.upload(payload);
-    } else if (webdav.conflictStrategy === 'remote') {
-      await saveCategories(remoteData.categories || state.categories);
-      await saveSites(remoteData.sites || state.sites);
-      if (remoteData.settings) {
-        await saveSettings({ ...state.settings, ...remoteData.settings });
-      }
     } else {
-      // 'merge' strategy
-      const mergedSites = mergeSites(state.sites, remoteData.sites || []);
-      const mergedCats = mergeCategories(state.categories, remoteData.categories || []);
-      
-      const localSettingsTime = state.settings?.updatedAt || 0;
-      const remoteSettingsTime = remoteData.settings?.updatedAt || remoteData.timestamp || 0;
+      const { updatedContainer, updatedSettings } = applyRemotePayload(
+        container,
+        state.settings,
+        remoteData,
+        syncPolicy,
+        webdav.conflictStrategy
+      );
 
-      let finalSettings: ThemeSettings;
-      if (remoteData.settings && remoteSettingsTime > localSettingsTime) {
-        // Remote settings are strictly newer -> apply remote merged with defaults
-        const clean = Object.fromEntries(
-          Object.entries(remoteData.settings).filter(([_, v]) => v !== undefined && v !== null)
-        );
-        finalSettings = { ...DEFAULT_SETTINGS, ...state.settings, ...clean };
-        await saveSettings(finalSettings);
-      } else {
-        // Local settings are newer or equal -> keep local
-        finalSettings = { ...DEFAULT_SETTINGS, ...state.settings };
-        await saveSettings(finalSettings);
+      await saveProfileContainer(updatedContainer);
+      await saveSettings(updatedSettings);
+
+      if (webdav.conflictStrategy === 'merge') {
+        // Upload merged state back
+        const mergedPayload = buildSyncPayload(updatedContainer, updatedSettings, syncPolicy);
+        await client.upload(mergedPayload);
       }
-
-      await saveSites(mergedSites);
-      await saveCategories(mergedCats);
-
-      // Upload merged state back
-      const payload: SyncPayload = {
-        version: 1,
-        timestamp: now,
-        categories: mergedCats,
-        sites: mergedSites,
-        settings: finalSettings,
-      };
-      await client.upload(payload);
     }
 
+    const now = Date.now();
     await saveWebdavConfig({
       ...webdav,
       lastSyncTime: now,
@@ -275,7 +201,16 @@ export async function executeWebdavSync(state: AppState): Promise<SyncResult> {
       lastSyncError: undefined,
     });
 
-    return { success: true, action: 'merged', message: t('webdavMerged', state.settings?.language) };
+    const actionKey = webdav.conflictStrategy === 'remote'
+      ? 'webdavRestoreSuccess'
+      : webdav.conflictStrategy === 'local'
+      ? 'webdavBackupSuccess'
+      : 'webdavMerged';
+    return {
+      success: true,
+      action: webdav.conflictStrategy === 'remote' ? 'downloaded' : webdav.conflictStrategy === 'local' ? 'uploaded' : 'merged',
+      message: t(actionKey, state.settings?.language),
+    };
   } catch (err: any) {
     const errMsg = err.message || t('webdavSyncFailed', state.settings?.language);
     await saveWebdavConfig({
@@ -296,20 +231,16 @@ export async function uploadToWebdav(state: AppState): Promise<SyncResult> {
     return { success: false, message: t('webdavNotConfigured', state.settings?.language) };
   }
 
-  const client = new WebdavClient(webdav);
+  const client = new WebdavClient(webdav, state.settings?.language);
   try {
-    const now = Date.now();
-    const payload: SyncPayload = {
-      version: 1,
-      timestamp: now,
-      categories: state.categories,
-      sites: state.sites,
-      settings: { ...state.settings, updatedAt: now },
-    };
+    const container = await loadProfileContainer();
+    const syncPolicy = state.syncSettings || (await getProfileSyncSettings());
+    const payload = buildSyncPayload(container, state.settings, syncPolicy);
     await client.upload(payload);
+
     await saveWebdavConfig({
       ...webdav,
-      lastSyncTime: now,
+      lastSyncTime: payload.timestamp,
       lastSyncStatus: 'success',
       lastSyncError: undefined,
     });
@@ -330,24 +261,26 @@ export async function restoreFromWebdav(state: AppState): Promise<SyncResult> {
     return { success: false, message: t('webdavNotConfigured', state.settings?.language) };
   }
 
-  const client = new WebdavClient(webdav);
+  const client = new WebdavClient(webdav, state.settings?.language);
   try {
     const remoteData = await client.download();
     if (!remoteData) {
       return { success: false, message: t('webdavNoRemote', state.settings?.language) };
     }
-    if (remoteData.categories && Array.isArray(remoteData.categories)) {
-      await saveCategories(remoteData.categories);
-    }
-    if (remoteData.sites && Array.isArray(remoteData.sites)) {
-      await saveSites(remoteData.sites);
-    }
-    if (remoteData.settings && typeof remoteData.settings === 'object') {
-      const clean = Object.fromEntries(
-        Object.entries(remoteData.settings).filter(([_, v]) => v !== undefined && v !== null)
-      );
-      await saveSettings({ ...DEFAULT_SETTINGS, ...clean });
-    }
+
+    const container = await loadProfileContainer();
+    const syncPolicy = state.syncSettings || (await getProfileSyncSettings());
+    const { updatedContainer, updatedSettings } = applyRemotePayload(
+      container,
+      state.settings,
+      remoteData,
+      syncPolicy,
+      'remote'
+    );
+
+    await saveProfileContainer(updatedContainer);
+    await saveSettings(updatedSettings);
+
     const now = Date.now();
     await saveWebdavConfig({
       ...webdav,
@@ -362,3 +295,4 @@ export async function restoreFromWebdav(state: AppState): Promise<SyncResult> {
     return { success: false, message: err.message };
   }
 }
+

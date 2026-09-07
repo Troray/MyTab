@@ -148,6 +148,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
     e.preventDefault();
     const currentDragId = draggingSiteIdRef.current;
     if (!currentDragId) return;
+    draggingSiteIdRef.current = null;
 
     const committedSites = displaySitesRef.current.map((site, index) => ({
       ...site,
@@ -166,20 +167,21 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
 
   const handleDragEnd = useCallback(() => {
     const currentDragId = draggingSiteIdRef.current;
-    if (currentDragId) {
-      const committedSites = displaySitesRef.current.map((site, index) => ({
-        ...site,
-        sortOrder: index,
-        updatedAt: Date.now(),
-      }));
-      onReorderSites(committedSites);
-      setJustDroppedSiteId(currentDragId);
-      setDraggingSiteId(null);
+    if (!currentDragId) return;
+    draggingSiteIdRef.current = null;
 
-      setTimeout(() => {
-        setJustDroppedSiteId(null);
-      }, 550);
-    }
+    const committedSites = displaySitesRef.current.map((site, index) => ({
+      ...site,
+      sortOrder: index,
+      updatedAt: Date.now(),
+    }));
+    onReorderSites(committedSites);
+    setJustDroppedSiteId(currentDragId);
+    setDraggingSiteId(null);
+
+    setTimeout(() => {
+      setJustDroppedSiteId(null);
+    }, 550);
   }, [onReorderSites]);
 
   const gap = Math.max(12, Math.round(cardSize * 0.14));

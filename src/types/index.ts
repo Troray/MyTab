@@ -65,6 +65,7 @@ export interface ThemeSettings {
   showClock: boolean;
   showGreeting: boolean;
   showDate: boolean;
+  showLunar?: boolean;
   language: Locale;
   textColorMode?: TextColorMode;
   customTextColors?: CustomTextColors;
@@ -81,6 +82,7 @@ export interface ThemeSettings {
   unsplashAuthorUrl?: string;
   unsplashLastUrl?: string;
   customBackgroundUrl?: string;
+  gradientLastValue?: string;
   updatedAt?: number;
 }
 
@@ -136,20 +138,66 @@ export interface GitSyncConfig {
   lastSyncError?: string;
 }
 
+export type ProfileId = 'normal' | 'private';
+
+export interface WallpaperSettings {
+  backgroundType?: BackgroundType;
+  backgroundValue?: string;
+  customBackgroundUrl?: string;
+  unsplashAccessKey?: string;
+  unsplashActiveTab?: string;
+  unsplashKeywords?: string[];
+  unsplashCustomQuery?: string;
+  unsplashAuthorName?: string;
+  unsplashAuthorUrl?: string;
+  unsplashLastUrl?: string;
+  textColorMode?: TextColorMode;
+  customTextColors?: CustomTextColors;
+  textColorModeLight?: TextColorMode;
+  customTextColorsLight?: CustomTextColors;
+  textColorModeDark?: TextColorMode;
+  customTextColorsDark?: CustomTextColors;
+}
+
+export interface ProfileData {
+  sites: SiteItem[];
+  categories: Category[];
+  activeCategoryId: string;
+  settings?: Partial<ThemeSettings>;
+  wallpaper?: WallpaperSettings;
+}
+
+export interface ProfileContainer {
+  version: number;
+  profiles: Record<ProfileId, ProfileData>;
+}
+
+export interface ProfileSyncSettings {
+  normal: boolean;
+  private: boolean;
+}
+
 export interface SyncPayload {
   version: number;
   timestamp: number;
-  categories: Category[];
-  sites: SiteItem[];
+  profiles?: Partial<Record<ProfileId, ProfileData>>;
+  categories?: Category[]; // V1 backward compatibility
+  sites?: SiteItem[];      // V1 backward compatibility
   settings: ThemeSettings;
 }
 
 export interface AppState {
+  profileId: ProfileId;
   categories: Category[];
   sites: SiteItem[];
   settings: ThemeSettings;
   webdav: WebdavConfig;
   git: GitSyncConfig;
+  syncSettings: ProfileSyncSettings;
   activeCategoryId: string;
   isFirstLaunch: boolean;
+  hasCustomSettings?: boolean;
+  hasCustomWallpaper?: boolean;
 }
+
+

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
-import { Settings as SettingsIcon, Plus } from 'lucide-react';
-import { AppState, Category, GitSyncConfig, SiteItem, ThemeSettings, WebdavConfig } from '../types';
+import { Settings as SettingsIcon, Plus, Lock } from 'lucide-react';
+import { t } from '../locales';
+import { AppState, Category, GitSyncConfig, ProfileSyncSettings, SiteItem, ThemeSettings, WebdavConfig } from '../types';
 import {
   loadAppState,
   saveSites,
@@ -9,6 +10,8 @@ import {
   saveWebdavConfig,
   saveGitConfig,
   saveActiveCategory,
+  saveProfileSyncSettings,
+  saveProfileItems,
   setFirstLaunchComplete,
 } from '../services/storage';
 import { ClockHeader } from './components/ClockHeader';
@@ -155,6 +158,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     currentSettings.backgroundValue,
     currentSettings.showClock,
     currentSettings.showDate,
+    currentSettings.showLunar,
     currentSettings.showGreeting,
     currentSettings.showSearch,
   ]);
@@ -281,9 +285,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       if (style.background) {
         css += `background: ${style.background};`;
       }
-      localStorage.setItem('mytab_bg_cache', css);
-      const isLightMode = currentSettings.mode === 'light';
-      localStorage.setItem('mytab_theme_mode', isLightMode ? 'light' : 'dark');
+      if (appState?.profileId !== 'private') {
+        localStorage.setItem('mytab_bg_cache', css);
+        const isLightMode = currentSettings.mode === 'light';
+        localStorage.setItem('mytab_theme_mode', isLightMode ? 'light' : 'dark');
+      }
 
       // Keep document.body in sync with current background and remove stale init style
       const initStyleEl = document.getElementById('mytab-init-bg');
@@ -303,11 +309,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     }
   }, [backgroundStyle, currentSettings.mode]);
 
-  if (!appState) {
-    return null; // Return null instead of a jarring spinner to avoid white/black flashes on startup
-  }
-
-  const { sites, categories, activeCategoryId, isFirstLaunch } = appState;
+  const sites = appState?.sites || [];
+  const categories = appState?.categories || [];
+  const activeCategoryId = appState?.activeCategoryId || 'all';
+  const isFirstLaunch = appState?.isFirstLaunch || false;
   const settings = currentSettings;
 
   // Memoized: Filter sites based on active category and showInAll flag
@@ -344,12 +349,15 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         s.id === editingSite.id ? ({ ...s, ...siteData, updatedAt: now } as SiteItem) : s
       );
     } else {
+      const fallbackCatId = activeCategoryId !== 'all'
+        ? activeCategoryId
+        : (categories.find((c) => c.id !== 'all')?.id || 'all');
       const newSite: SiteItem = {
         id: `site-${now}`,
         title: siteData.title || '',
         url: siteData.url || '',
         icon: siteData.icon || '',
-        categoryId: siteData.categoryId || activeCategoryId,
+        categoryId: siteData.categoryId || fallbackCatId,
         sortOrder: sites.length,
         createdAt: now,
         updatedAt: now,
@@ -361,7 +369,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setAppState((prev) => (prev ? { ...prev, sites: updatedSites } : null));
     setIsSiteModalOpen(false);
     setEditingSite(null);
-  }, [sites, editingSite, activeCategoryId]);
+  }, [sites, editingSite, activeCategoryId, categories]);
 
   const handleDeleteSite = useCallback((siteId: string) => {
     const site = sites.find((s) => s.id === siteId);
@@ -379,9 +387,15 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   }, [sites, deletingSite]);
 
   const handleReorderSites = useCallback(async (reorderedSites: SiteItem[]) => {
+    const reorderedIds = new Set(reorderedSites.map((s) => s.id));
+    const reorderedMap = new Map(reorderedSites.map((s, idx) => [s.id, idx]));
+    let reorderedIdx = 0;
     const updated = sites.map((site) => {
-      const foundIndex = reorderedSites.findIndex((s) => s.id === site.id);
-      return foundIndex !== -1 ? { ...site, sortOrder: foundIndex } : site;
+      if (reorderedIds.has(site.id)) {
+        const nextSite = reorderedSites[reorderedIdx++];
+        return { ...nextSite, sortOrder: reorderedMap.get(nextSite.id) ?? 0 };
+      }
+      return site;
     });
     await saveSites(updated);
     setAppState((prev) => (prev ? { ...prev, sites: updated } : null));
@@ -420,13 +434,16 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     // Remove category
     const updatedCategories = categories.filter((c) => c.id !== catId);
 
-    // Reassign sites from deleted category to 'tools' default category
+    // Reassign sites from deleted category to default category in the current profile
+    const fallbackCategoryId = categories.find((c) => c.isDefault && c.id !== 'all')?.id || categories.find((c) => c.id !== catId)?.id || 'all';
     const updatedSites = sites.map((s) =>
-      s.categoryId === catId ? { ...s, categoryId: 'tools', updatedAt: Date.now() } : s
+      s.categoryId === catId ? { ...s, categoryId: fallbackCategoryId, updatedAt: Date.now() } : s
     );
 
-    await saveCategories(updatedCategories);
-    await saveSites(updatedSites);
+    await saveProfileItems({
+      categories: updatedCategories,
+      sites: updatedSites,
+    });
 
     // If active category was deleted, switch back to 'all'
     setAppState((prev) =>
@@ -446,6 +463,12 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setAppState((prev) => (prev ? { ...prev, activeCategoryId: catId } : null));
   };
 
+  const handleUpdateSyncSettings = async (newPolicy: ProfileSyncSettings) => {
+    await saveProfileSyncSettings(newPolicy);
+    setAppState((prev) => (prev ? { ...prev, syncSettings: newPolicy } : null));
+  };
+
+
   // Handlers for Settings & WebDAV
   const handleUpdateSettings = (newSettings: Partial<ThemeSettings>) => {
     setAppState((prev) => {
@@ -462,10 +485,15 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         ...cleanNew,
         updatedAt: Date.now(),
       };
-      saveSettings(stampedSettings).catch((e) =>
+      saveSettings(cleanNew, prev.profileId).catch((e) =>
         console.error('[MyTab] Failed to save settings:', e)
       );
-      return { ...prev, settings: stampedSettings };
+      return {
+        ...prev,
+        settings: stampedSettings,
+        hasCustomSettings: prev.profileId === 'private' ? true : prev.hasCustomSettings,
+        hasCustomWallpaper: prev.profileId === 'private' ? true : prev.hasCustomWallpaper,
+      };
     });
   };
 
@@ -483,6 +511,20 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     await setFirstLaunchComplete();
     setAppState((prev) => (prev ? { ...prev, isFirstLaunch: false } : prev));
   };
+
+  const handleOpenEditSite = useCallback((site: SiteItem) => {
+    setEditingSite(site);
+    setIsSiteModalOpen(true);
+  }, []);
+
+  const handleOpenAddSite = useCallback(() => {
+    setEditingSite(null);
+    setIsSiteModalOpen(true);
+  }, []);
+
+  if (!appState) {
+    return null;
+  }
 
   const isLight = settings.mode === 'light';
 
@@ -518,7 +560,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
 
       {/* Top Floating Actions Bar */}
       <header className="relative z-10 w-full flex items-center justify-between p-5 md:px-8">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <span
             className={`text-sm font-semibold tracking-wider px-3 py-1 rounded-full border transition-colors ${isLight
                 ? 'text-slate-800 bg-white/70 border-black/10 shadow-sm'
@@ -527,6 +569,15 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           >
             MyTab
           </span>
+          {appState?.profileId === 'private' && (
+            <span
+              className="text-xs font-medium px-2.5 py-1 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 backdrop-blur-md flex items-center gap-1.5 shadow-sm"
+              title={t('syncPrivateSpace', appState?.settings?.language || 'zh-CN')}
+            >
+              <Lock className="w-3 h-3 text-purple-400" />
+              <span>{t('syncPrivateSpace', appState?.settings?.language || 'zh-CN')}</span>
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -540,7 +591,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                 ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
                 : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
               }`}
-            title="Add shortcut"
+            title={t('addSite', settings.language)}
           >
             <Plus className="w-4.5 h-4.5" />
           </button>
@@ -552,7 +603,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                 ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
                 : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
               }`}
-            title="Settings"
+            title={t('settingsTitle', settings.language)}
           >
             <SettingsIcon className="w-4.5 h-4.5" />
           </button>
@@ -593,15 +644,9 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           sites={filteredSites}
           settings={settings}
           resolvedColors={resolvedColors}
-          onEditSite={useCallback((site) => {
-            setEditingSite(site);
-            setIsSiteModalOpen(true);
-          }, [])}
+          onEditSite={handleOpenEditSite}
           onDeleteSite={handleDeleteSite}
-          onAddSite={useCallback(() => {
-            setEditingSite(null);
-            setIsSiteModalOpen(true);
-          }, [])}
+          onAddSite={handleOpenAddSite}
           onReorderSites={handleReorderSites}
         />
       </main>
@@ -680,6 +725,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             onUpdateSettings={handleUpdateSettings}
             onUpdateWebdav={handleUpdateWebdav}
             onUpdateGit={handleUpdateGit}
+            onUpdateSyncSettings={handleUpdateSyncSettings}
             onStateReload={reloadState}
             onOpenColorCustomizer={() => {
               setIsSettingsOpen(false);
@@ -693,10 +739,6 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             isOpen={isFirstLaunch}
             settings={settings}
             onFinish={handleFinishOnboarding}
-            onOpenSettings={() => {
-              handleFinishOnboarding();
-              setIsSettingsOpen(true);
-            }}
           />
         )}
 
@@ -705,13 +747,9 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           <ConfirmModal
             isOpen={Boolean(deletingSite)}
             type="danger"
-            title={settings.language === 'zh-CN' ? `删除「${deletingSite?.title}」快捷方式` : `Delete "${deletingSite?.title}"`}
-            message={
-              settings.language === 'zh-CN'
-                ? `确定要删除「${deletingSite?.title}」(${deletingSite?.url}) 吗？`
-                : `Are you sure you want to delete "${deletingSite?.title}" (${deletingSite?.url})?`
-            }
-            confirmText={settings.language === 'zh-CN' ? '确定删除' : 'Delete'}
+            title={`${t('deleteSite', settings.language)} - ${deletingSite?.title}`}
+            message={`${t('confirmDelete', settings.language)} (${deletingSite?.title} - ${deletingSite?.url})`}
+            confirmText={t('deleteSite', settings.language)}
             language={settings.language}
             isLight={isLight}
             onConfirm={confirmDeleteSite}

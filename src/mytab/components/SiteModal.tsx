@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Sparkles, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
 import { SiteItem, ThemeSettings, Category } from '../../types';
 import { fetchSiteMetadata, generateFallbackIcon, normalizeUrl, fileToBase64Icon, urlToBase64Icon } from '../../services/metadata';
@@ -24,12 +24,18 @@ export const SiteModal: React.FC<SiteModalProps> = ({
  onClose,
  onSave,
 }) => {
+ const availableCategories = useMemo(
+   () => categories.filter((c) => c.id !== 'all'),
+   [categories]
+ );
+ const defaultCategoryId = activeCategoryId !== 'all'
+   ? activeCategoryId
+   : (availableCategories[0]?.id || 'all');
+
  const [url, setUrl] = useState('');
  const [title, setTitle] = useState('');
  const [icon, setIcon] = useState('');
- const [categoryId, setCategoryId] = useState(
- activeCategoryId === 'all' ? (categories[1]?.id || 'tools') : activeCategoryId
- );
+ const [categoryId, setCategoryId] = useState(defaultCategoryId);
  const [isFetching, setIsFetching] = useState(false);
  const [fetchMsg, setFetchMsg] = useState('');
 
@@ -38,15 +44,15 @@ export const SiteModal: React.FC<SiteModalProps> = ({
  setUrl(editingSite.url);
  setTitle(editingSite.title);
  setIcon(editingSite.icon || '');
- setCategoryId(editingSite.categoryId);
+ setCategoryId(editingSite.categoryId || 'all');
  } else {
  setUrl('');
  setTitle('');
  setIcon('');
- setCategoryId(activeCategoryId === 'all' ? (categories[1]?.id || 'tools') : activeCategoryId);
+ setCategoryId(defaultCategoryId);
  }
  setFetchMsg('');
- }, [editingSite, isOpen, activeCategoryId, categories]);
+ }, [editingSite, isOpen, defaultCategoryId]);
 
  if (!isOpen) return null;
 
@@ -114,7 +120,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
  url: finalUrl,
  title: finalTitle,
  icon: finalIcon,
- categoryId,
+ categoryId: categoryId || 'all',
  });
  };
 
@@ -296,27 +302,27 @@ export const SiteModal: React.FC<SiteModalProps> = ({
  </div>
  </div>
 
- {/* Category Select */}
- <div>
- <label
- className={`block text-xs font-medium mb-1.5 ${
- isLight ? 'text-slate-700' : 'text-white/80'
- }`}
- >
- {t('siteCategory', settings.language)}
- </label>
- <CustomSelect
- value={categoryId}
- onChange={setCategoryId}
- isLight={isLight}
- options={categories
- .filter((c) => c.id !== 'all')
- .map((cat) => ({
- value: cat.id,
- label: cat.name,
- }))}
- />
- </div>
+        {/* Category Select (only shown if categories exist) */}
+        {availableCategories.length > 0 && (
+          <div>
+            <label
+              className={`block text-xs font-medium mb-1.5 ${
+                isLight ? 'text-slate-700' : 'text-white/80'
+              }`}
+            >
+              {t('siteCategory', settings.language)}
+            </label>
+            <CustomSelect
+              value={categoryId}
+              onChange={setCategoryId}
+              isLight={isLight}
+              options={availableCategories.map((cat) => ({
+                value: cat.id,
+                label: cat.name,
+              }))}
+            />
+          </div>
+        )}
 
  {/* Actions */}
  <div className="flex justify-end gap-3 pt-3">

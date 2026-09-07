@@ -10,12 +10,14 @@ import { t } from '../../utils/i18n';
 interface WebdavSettingsProps {
   appState: AppState;
   onUpdateWebdav: (config: WebdavConfig) => void;
+  onUpdateSyncSettings?: (policy: import('../../types').ProfileSyncSettings) => void;
   onStateReload: () => void;
 }
 
 export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
   appState,
   onUpdateWebdav,
+  onUpdateSyncSettings,
   onStateReload,
 }) => {
   const { webdav, settings } = appState;
@@ -40,11 +42,11 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
     setIsTesting(true);
     setTestResult(null);
     try {
-      const client = new WebdavClient(config);
-      const res = await client.testConnection();
+      const client = new WebdavClient(config, settings.language);
+      const res = await client.testConnection(settings.language);
       setTestResult(res);
     } catch (err: any) {
-      setTestResult({ success: false, message: err.message || 'Connection failed' });
+      setTestResult({ success: false, message: err.message || t('webdavConnectionFailed', settings.language) });
     } finally {
       setIsTesting(false);
     }
@@ -228,16 +230,34 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
             />
           </div>
 
-          {/* Auto Sync Switch */}
-          <div className="flex items-center justify-between py-1">
-            <span className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
-              {t('webdavAutoSync', settings.language)}
-            </span>
-            <ToggleSwitch
-              checked={config.autoSync}
-              onChange={(checked) => handleChange({ autoSync: checked })}
-              isLight={isLight}
-            />
+          {/* Auto Sync Checkbox */}
+          <div className="flex items-center py-1">
+            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={config.autoSync}
+                onChange={(e) => handleChange({ autoSync: e.target.checked })}
+                className="rounded accent-slate-900 dark:accent-white cursor-pointer w-3.5 h-3.5"
+              />
+              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>
+                {t('webdavAutoSync', settings.language)}
+              </span>
+            </label>
+          </div>
+
+          {/* Private Space Sync Checkbox */}
+          <div className="flex items-center py-1">
+            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={appState.syncSettings?.private || false}
+                onChange={(e) => onUpdateSyncSettings?.({ normal: true, private: e.target.checked })}
+                className="rounded accent-slate-900 dark:accent-white cursor-pointer w-3.5 h-3.5"
+              />
+              <span className={isLight ? 'text-slate-600' : 'text-white/70'}>
+                {t('syncPrivateSpaceAlso', settings.language)}
+              </span>
+            </label>
           </div>
 
           {/* Action Buttons */}

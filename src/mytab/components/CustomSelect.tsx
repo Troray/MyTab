@@ -21,7 +21,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   onChange,
   options,
   isLight = false,
-  placeholder = '请选择',
+  placeholder = 'Select...',
   className = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);

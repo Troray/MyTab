@@ -6,5 +6,9 @@
   "extensionDescription": {
     "message": "Минималистичная новая вкладка с синхронизацией WebDAV и Git, гибкими категориями и скрытием приватных закладок.",
     "description": "Описание расширения"
+  },
+  "commandOpenMyTab": {
+    "message": "Открыть вкладку MyTab",
+    "description": "Описание команды ярлыка"
   }
 }

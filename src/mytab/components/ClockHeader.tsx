@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { t } from '../../utils/i18n';
+import { getLunarDisplay } from '../../utils/lunar';
 
 interface ClockHeaderProps {
   settings: ThemeSettings;
@@ -57,8 +58,7 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
     return t(defaultKey, lang);
   }, [hours, settings.language, settings.customGreetings]);
 
-  const hasAnyDisplay = settings.showClock || settings.showDate || settings.showGreeting;
-  if (!hasAnyDisplay) return null;
+  const showLunar = settings.showLunar ?? true;
 
   const is12h = settings.timeFormat === '12h';
   let displayHours = String(time.getHours()).padStart(2, '0');
@@ -79,6 +79,14 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
       weekday: 'long',
     });
   };
+
+  const lunarDate = useMemo(() => {
+    if (!showLunar) return '';
+    return getLunarDisplay(time);
+  }, [showLunar, time.getFullYear(), time.getMonth(), time.getDate()]);
+
+  const hasAnyDisplay = settings.showClock || settings.showDate || settings.showGreeting || (showLunar && !!lunarDate);
+  if (!hasAnyDisplay) return null;
 
   const isLight = settings.mode === 'light';
 
@@ -107,6 +115,8 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
     ? resolvedColors.greetingShadow
     : dateShadowClass;
 
+  const hasDateOrLunar = settings.showDate || (showLunar && !!lunarDate);
+
   return (
     <div className="flex flex-col items-center justify-center text-center select-none pt-6 pb-3 transition-colors">
       {settings.showClock && (
@@ -120,16 +130,24 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
         </div>
       )}
 
-      {(settings.showDate || settings.showGreeting) && (
+      {(hasDateOrLunar || settings.showGreeting) && (
         <div
-          className={`flex items-center gap-2.5 ${settings.showClock ? 'mt-2.5' : 'mt-1'} text-xs md:text-sm font-normal transition-colors`}
+          className={`flex items-center justify-center flex-wrap gap-2 md:gap-2.5 ${settings.showClock ? 'mt-2.5' : 'mt-1'} text-xs md:text-sm font-normal transition-colors`}
         >
           {settings.showDate && (
             <span id="mytab-date" style={dateColorStyle} className={dateShadowClass}>
               {formatDate()}
             </span>
           )}
-          {settings.showDate && settings.showGreeting && (
+          {settings.showDate && showLunar && !!lunarDate && (
+            <span style={dateColorStyle} className={`opacity-60 ${dateShadowClass}`}>•</span>
+          )}
+          {showLunar && !!lunarDate && (
+            <span id="mytab-lunar" style={dateColorStyle} className={dateShadowClass}>
+              {lunarDate}
+            </span>
+          )}
+          {hasDateOrLunar && settings.showGreeting && (
             <span style={dateColorStyle} className={`opacity-60 ${dateShadowClass}`}>•</span>
           )}
           {settings.showGreeting && (

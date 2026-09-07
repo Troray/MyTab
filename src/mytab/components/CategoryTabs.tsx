@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FolderPlus, Pencil } from 'lucide-react';
 import { Category, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
@@ -43,11 +43,30 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
     }
   };
 
+  // When zero categories exist (e.g. fresh private space), show empty list.
+  // When categories exist, ensure a root 'All' tab is available if not explicitly present.
+  const displayCategories = useMemo(() => {
+    if (!categories || categories.length === 0) return [];
+    const hasAll = categories.some((c) => c.id === 'all');
+    if (hasAll) return categories;
+    return [
+      {
+        id: 'all',
+        name: t('allCategories', settings.language) || 'All',
+        isDefault: true,
+        sortOrder: -1,
+      } as Category,
+      ...categories,
+    ];
+  }, [categories, settings.language]);
+
   return (
     <div id="mytab-tabs" className="flex items-center justify-center flex-wrap gap-2 px-4 mb-6 max-w-4xl mx-auto z-20">
-      {categories.map((cat) => {
+      {displayCategories.map((cat) => {
         const isActive = activeCategoryId === cat.id;
         const count = siteCounts[cat.id] || 0;
+
+        const displayName = cat.id === 'all' ? (t('allCategories', settings.language) || 'All') : cat.name;
 
         return (
           <div
@@ -73,7 +92,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
                 style={!isActive && resolvedColors?.tabs ? { color: resolvedColors.tabs } : undefined}
                 className={!isActive && resolvedColors?.tabsShadow ? resolvedColors.tabsShadow : ''}
               >
-                {cat.name}
+                {displayName}
               </span>
               <span
                 style={!isActive && resolvedColors?.tabs ? { color: resolvedColors.tabs } : undefined}

@@ -14,10 +14,11 @@ import {
   FolderGit2,
   Code2,
   Eye,
-  EyeOff
+  EyeOff,
+  ChevronDown
 } from 'lucide-react';
 import { AppState, GitSyncConfig, GitPlatformConfig, GitProvider } from '../../types';
-import { uploadToGit, restoreFromGit, GitClient, autoSetupGist, autoSetupRepo, isTokenLike } from '../../services/git';
+import { uploadToGit, restoreFromGit, GitClient, autoSetupGist, autoSetupRepo, isTokenLike, GitCommitHistory } from '../../services/git';
 import { ConfirmModal } from './ConfirmModal';
 import { ToggleSwitch } from './ToggleSwitch';
 import { t } from '../../utils/i18n';
@@ -26,6 +27,7 @@ import { resolveBestGitPlatform, resolveBestGitMode } from '../../utils/syncHelp
 interface GitSettingsProps {
   appState: AppState;
   onUpdateGit: (config: GitSyncConfig) => void;
+  onUpdateSyncSettings?: (policy: import('../../types').ProfileSyncSettings) => void;
   onStateReload: () => void;
 }
 
@@ -80,6 +82,7 @@ function parseRepoInput(input: string): { owner?: string; repo: string; provider
 export const GitSettings: React.FC<GitSettingsProps> = ({
   appState,
   onUpdateGit,
+  onUpdateSyncSettings,
   onStateReload,
 }) => {
   const { git, settings } = appState;
@@ -150,6 +153,11 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
   const [showPullConfirm, setShowPullConfirm] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
   const [showToken, setShowToken] = useState(false);
+  const [showAdvancedRestore, setShowAdvancedRestore] = useState(false);
+  const [customSha, setCustomSha] = useState('');
+  const [commits, setCommits] = useState<GitCommitHistory[]>([]);
+  const [isLoadingCommits, setIsLoadingCommits] = useState(false);
+  const [showCommitList, setShowCommitList] = useState(false);
 
   // Sync external appState to local state if updated
   useEffect(() => {
@@ -162,8 +170,8 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
       const currentActivePlatform: GitPlatformConfig = {
         mode: resolveBestGitMode(platformData, git),
         gistId: platformData?.gistId || (isPlatformActive ? git.gistId : '') || '',
-        owner: platformData?.owner || (isPlatformActive ? git.owner : '') || '',
-        repo: platformData?.repo || (isPlatformActive ? git.repo : '') || 'MyTab-Backup',
+        owner: platformData?.owner !== undefined ? platformData.owner : (isPlatformActive && git.owner !== undefined ? git.owner : ''),
+        repo: platformData?.repo !== undefined ? platformData.repo : (isPlatformActive && git.repo !== undefined ? git.repo : 'MyTab-Backup'),
         branch: platformData?.branch || (isPlatformActive ? git.branch : '') || (activeProvider === 'gitee' ? 'master' : 'main'),
         path: platformData?.path || (isPlatformActive ? git.path : '') || 'mytab-backup.json',
         token: platformData?.token || (isPlatformActive ? git.token : '') || '',
@@ -172,8 +180,8 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
         lastSyncError: platformData?.lastSyncError || (isPlatformActive ? git.lastSyncError : undefined),
       };
 
-      const finalRepo = isTokenLike(currentActivePlatform.repo) ? 'MyTab-Backup' : (currentActivePlatform.repo || 'MyTab-Backup');
-      const finalOwner = isTokenLike(currentActivePlatform.owner) ? '' : (currentActivePlatform.owner || '');
+      const finalRepo = isTokenLike(currentActivePlatform.repo) ? 'MyTab-Backup' : currentActivePlatform.repo;
+      const finalOwner = isTokenLike(currentActivePlatform.owner) ? '' : currentActivePlatform.owner;
 
       setConfig((prev) => ({
         ...prev,
@@ -293,6 +301,9 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     setConfig(nextConfig);
     setConnectResult(null);
     setSyncMsg('');
+    setShowCommitList(false);
+    setCommits([]);
+    setCustomSha('');
 
     if (targetPlatformData.owner && targetPlatformData.repo) {
       setRepoInput(`${targetPlatformData.owner}/${targetPlatformData.repo}`);
@@ -312,11 +323,11 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
         handleProviderChange(parsed.provider);
       }
       handleChange({
-        owner: parsed.owner || config.owner,
+        owner: parsed.owner !== undefined ? parsed.owner : '',
         repo: parsed.repo,
       });
     } else {
-      handleChange({ repo: val });
+      handleChange({ repo: val.trim(), owner: '' });
     }
   };
 
@@ -345,7 +356,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
         setConnectResult({ success: false, message: res.message });
       }
     } catch (err: any) {
-      setConnectResult({ success: false, message: err.message || '连接失败' });
+      setConnectResult({ success: false, message: err.message || t('gitConnectionFailed', settings.language) });
     } finally {
       setIsConnecting(false);
     }
@@ -386,7 +397,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
         setConnectResult({ success: false, message: res.message });
       }
     } catch (err: any) {
-      setConnectResult({ success: false, message: err.message || '连接失败' });
+      setConnectResult({ success: false, message: err.message || t('gitConnectionFailed', settings.language) });
     } finally {
       setIsTestingRepo(false);
     }
@@ -399,13 +410,13 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     try {
       const res = await uploadToGit({ ...appState, git: config });
       if (res.success) {
-        setSyncMsg(res.message || '上传备份成功');
+        setSyncMsg(res.message || t('gitBackupSuccess', settings.language));
         onStateReload();
       } else {
-        setSyncMsg(`上传失败: ${res.message}`);
+        setSyncMsg(`${t('gitUploadFailedPrefix', settings.language)}: ${res.message}`);
       }
     } catch (err: any) {
-      setSyncMsg(`上传异常: ${err.message}`);
+      setSyncMsg(`${t('gitUploadErrorPrefix', settings.language)}: ${err.message}`);
     } finally {
       setIsUploading(false);
     }
@@ -417,17 +428,35 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     setIsPulling(true);
     setSyncMsg('');
     try {
-      const res = await restoreFromGit({ ...appState, git: config });
+      const res = await restoreFromGit({ ...appState, git: config }, customSha.trim() || undefined);
       if (res.success) {
-        setSyncMsg(res.message || '拉取恢复成功');
+        setSyncMsg(res.message || t('gitRestoreSuccess', settings.language));
         onStateReload();
       } else {
-        setSyncMsg(`拉取失败: ${res.message}`);
+        setSyncMsg(`${t('gitRestoreFailedPrefix', settings.language)}: ${res.message}`);
       }
     } catch (err: any) {
-      setSyncMsg(`拉取异常: ${err.message}`);
+      setSyncMsg(`${t('gitRestoreErrorPrefix', settings.language)}: ${err.message}`);
     } finally {
       setIsPulling(false);
+    }
+  };
+
+  const handleFetchCommits = async () => {
+    if (!config.token.trim()) {
+      setSyncMsg(t('gitTokenPlaceholderRepo', settings.language));
+      return;
+    }
+    setIsLoadingCommits(true);
+    setShowCommitList(true);
+    try {
+      const client = new GitClient(config, settings.language);
+      const data = await client.getCommitHistory(10);
+      setCommits(data);
+    } catch (err: any) {
+      setSyncMsg(err.message || t('gitFetchCommitsFailed', settings.language));
+    } finally {
+      setIsLoadingCommits(false);
     }
   };
 
@@ -445,19 +474,17 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
     <div className="space-y-3.5">
       {/* 1. Enable Switch */}
       <div
-        className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${
-          isLight
-            ? 'bg-black/[0.03] border-black/8 text-slate-900'
-            : 'bg-white/[0.05] border-white/10 text-white'
-        }`}
+        className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+          ? 'bg-black/[0.03] border-black/8 text-slate-900'
+          : 'bg-white/[0.05] border-white/10 text-white'
+          }`}
       >
         <div className="flex items-center gap-3">
           <div
-            className={`p-2 rounded-xl border ${
-              isLight
-                ? 'bg-black/[0.04] border-black/5 text-slate-800'
-                : 'bg-white/10 border-white/10 text-white'
-            }`}
+            className={`p-2 rounded-xl border ${isLight
+              ? 'bg-black/[0.04] border-black/5 text-slate-800'
+              : 'bg-white/10 border-white/10 text-white'
+              }`}
           >
             <GitBranch className="w-4.5 h-4.5" />
           </div>
@@ -486,30 +513,28 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => handleProviderChange('github')}
-                className={`py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
-                  config.provider === 'github'
-                    ? isLight
-                      ? 'bg-white text-slate-900 shadow-sm border border-black/5 font-semibold'
-                      : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
-                    : isLight
+                className={`py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${config.provider === 'github'
+                  ? isLight
+                    ? 'bg-white text-slate-900 shadow-sm border border-black/5 font-semibold'
+                    : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
+                  : isLight
                     ? 'bg-transparent text-slate-600 hover:text-slate-900'
                     : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
-                }`}
+                  }`}
               >
                 GitHub
               </button>
               <button
                 type="button"
                 onClick={() => handleProviderChange('gitee')}
-                className={`py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
-                  config.provider === 'gitee'
-                    ? isLight
-                      ? 'bg-white text-slate-900 shadow-sm border border-black/5 font-semibold'
-                      : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
-                    : isLight
+                className={`py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${config.provider === 'gitee'
+                  ? isLight
+                    ? 'bg-white text-slate-900 shadow-sm border border-black/5 font-semibold'
+                    : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
+                  : isLight
                     ? 'bg-transparent text-slate-600 hover:text-slate-900'
                     : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
-                }`}
+                  }`}
               >
                 Gitee
               </button>
@@ -525,15 +550,14 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => handleChange({ mode: 'gist' })}
-                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
-                  config.mode === 'gist'
-                    ? isLight
-                      ? 'bg-white text-slate-900 shadow-sm border border-black/5 font-semibold'
-                      : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
-                    : isLight
+                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${config.mode === 'gist'
+                  ? isLight
+                    ? 'bg-white text-slate-900 shadow-sm border border-black/5 font-semibold'
+                    : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
+                  : isLight
                     ? 'bg-transparent text-slate-600 hover:text-slate-900'
                     : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
-                }`}
+                  }`}
               >
                 <Code2 className="w-3.5 h-3.5" />
                 <span>{config.provider === 'github' ? 'GitHub Gist' : t('gitModeGist', settings.language)}</span>
@@ -541,15 +565,14 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => handleChange({ mode: 'repo' })}
-                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
-                  config.mode === 'repo'
-                    ? isLight
-                      ? 'bg-white text-slate-900 shadow-sm border border-black/5 font-semibold'
-                      : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
-                    : isLight
+                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${config.mode === 'repo'
+                  ? isLight
+                    ? 'bg-white text-slate-900 shadow-sm border border-black/5 font-semibold'
+                    : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
+                  : isLight
                     ? 'bg-transparent text-slate-600 hover:text-slate-900'
                     : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
-                }`}
+                  }`}
               >
                 <FolderGit2 className="w-3.5 h-3.5" />
                 <span>{t('gitModeRepo', settings.language)}</span>
@@ -561,28 +584,26 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           {config.mode === 'gist' ? (
             /* --- Mode A: Gist 极简模式 --- */
             <div
-              className={`p-3.5 rounded-2xl border space-y-3 ${
-                isLight
-                  ? 'bg-black/[0.03] border-black/8 text-slate-800'
-                  : 'bg-white/[0.05] border-white/10 text-white'
-              }`}
+              className={`p-3.5 rounded-2xl border space-y-3 ${isLight
+                ? 'bg-black/[0.03] border-black/8 text-slate-800'
+                : 'bg-white/[0.05] border-white/10 text-white'
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs font-semibold">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>
                     {config.provider === 'github'
-                      ? t('gitGistSmartTitle', settings.language).replace(/代码片段|程式碼片段|Secret Gist|Gist|Code Snippet/gi, 'GitHub Gist')
-                      : t('gitGistSmartTitle', settings.language).replace(/Secret Gist|Gist/gi, t('gitModeGist', settings.language))}
+                      ? t('gitGistTitleGithub', settings.language)
+                      : t('gitGistTitleGitee', settings.language)}
                   </span>
                 </div>
                 <a
                   href={tokenGeneratorUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className={`text-[11px] underline flex items-center gap-1 font-medium cursor-pointer ${
-                    isLight ? 'text-amber-700 hover:text-black' : 'text-amber-400 hover:text-white'
-                  }`}
+                  className={`text-[11px] underline flex items-center gap-1 font-medium cursor-pointer ${isLight ? 'text-amber-700 hover:text-black' : 'text-amber-400 hover:text-white'
+                    }`}
                 >
                   <span>{t('gitGenerateToken', settings.language)}</span>
                   <ExternalLink className="w-3 h-3" />
@@ -606,21 +627,19 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                           ? t('gitTokenPlaceholderGithub', settings.language)
                           : t('gitTokenPlaceholderGitee', settings.language)
                       }
-                      className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none duration-0 ${
-                        isLight
-                          ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
-                          : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
-                      }`}
+                      className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none duration-0 ${isLight
+                        ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
+                        : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
+                        }`}
                     />
                     {config.token && (
                       <button
                         type="button"
                         onClick={() => setShowToken(!showToken)}
-                        className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg duration-0 cursor-pointer ${
-                          isLight
-                            ? 'text-slate-400 hover:text-slate-700 hover:bg-black/5'
-                            : 'text-white/40 hover:text-white hover:bg-white/10'
-                        }`}
+                        className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg duration-0 cursor-pointer ${isLight
+                          ? 'text-slate-400 hover:text-slate-700 hover:bg-black/5'
+                          : 'text-white/40 hover:text-white hover:bg-white/10'
+                          }`}
                         title={showToken ? t('hide', settings.language) : t('show', settings.language)}
                       >
                         {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -631,11 +650,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     type="button"
                     onClick={handleSmartConnect}
                     disabled={isConnecting || !config.token.trim()}
-                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer shrink-0 active:scale-95 ${
-                      isLight
-                        ? 'bg-white hover:bg-slate-50 text-slate-800 hover:text-black border border-slate-300 hover:border-slate-400 shadow-sm font-semibold disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
-                        : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm disabled:opacity-40'
-                    }`}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer shrink-0 active:scale-95 ${isLight
+                      ? 'bg-white hover:bg-slate-50 text-slate-800 hover:text-black border border-slate-300 hover:border-slate-400 shadow-sm font-semibold disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
+                      : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm disabled:opacity-40'
+                      }`}
                   >
                     {isConnecting ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -650,11 +668,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               {/* Connected Badge Info */}
               {config.gistId && config.owner && (
                 <div
-                  className={`p-2.5 rounded-xl text-xs flex items-center justify-between border ${
-                    isLight
-                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                      : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
-                  }`}
+                  className={`p-2.5 rounded-xl text-xs flex items-center justify-between border ${isLight
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
+                    }`}
                 >
                   <div className="flex items-center gap-2">
                     <User className="w-3.5 h-3.5 text-emerald-600" />
@@ -669,11 +686,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           ) : (
             /* --- Mode B: Repo 独立仓库模式 --- */
             <div
-              className={`p-3.5 rounded-2xl border space-y-3 ${
-                isLight
-                  ? 'bg-black/[0.03] border-black/8 text-slate-800'
-                  : 'bg-white/[0.05] border-white/10 text-white'
-              }`}
+              className={`p-3.5 rounded-2xl border space-y-3 ${isLight
+                ? 'bg-black/[0.03] border-black/8 text-slate-800'
+                : 'bg-white/[0.05] border-white/10 text-white'
+                }`}
             >
               {/* Token Input with Direct Link */}
               <div>
@@ -685,9 +701,8 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     href={tokenGeneratorUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className={`text-[11px] underline flex items-center gap-1 font-medium cursor-pointer ${
-                      isLight ? 'text-amber-700 hover:text-black' : 'text-amber-400 hover:text-white'
-                    }`}
+                    className={`text-[11px] underline flex items-center gap-1 font-medium cursor-pointer ${isLight ? 'text-amber-700 hover:text-black' : 'text-amber-400 hover:text-white'
+                      }`}
                   >
                     <span>{t('gitGenerateToken', settings.language)}</span>
                     <ExternalLink className="w-3 h-3" />
@@ -703,21 +718,19 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                         ? t('gitTokenPlaceholderRepo', settings.language)
                         : t('gitTokenPlaceholderGitee', settings.language)
                     }
-                    className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none duration-0 ${
-                      isLight
-                        ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
-                        : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
-                    }`}
+                    className={`w-full pl-3.5 pr-10 py-2.5 rounded-xl border text-xs outline-none duration-0 ${isLight
+                      ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
+                      : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
+                      }`}
                   />
                   {config.token && (
                     <button
                       type="button"
                       onClick={() => setShowToken(!showToken)}
-                      className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg duration-0 cursor-pointer ${
-                        isLight
-                          ? 'text-slate-400 hover:text-slate-700 hover:bg-black/5'
-                          : 'text-white/40 hover:text-white hover:bg-white/10'
-                      }`}
+                      className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg duration-0 cursor-pointer ${isLight
+                        ? 'text-slate-400 hover:text-slate-700 hover:bg-black/5'
+                        : 'text-white/40 hover:text-white hover:bg-white/10'
+                        }`}
                       title={showToken ? t('hide', settings.language) : t('show', settings.language)}
                     >
                       {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -743,21 +756,19 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     spellCheck={false}
                     data-lpignore="true"
                     data-1p-ignore="true"
-                    className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs outline-none duration-0 ${
-                      isLight
-                        ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
-                        : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
-                    }`}
+                    className={`flex-1 px-3.5 py-2.5 rounded-xl border text-xs outline-none duration-0 ${isLight
+                      ? 'bg-white border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
+                      : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
+                      }`}
                   />
                   <button
                     type="button"
                     onClick={handleTestRepo}
                     disabled={isTestingRepo || !config.token.trim()}
-                    className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer shrink-0 active:scale-95 ${
-                      isLight
-                        ? 'bg-white hover:bg-slate-50 text-slate-800 hover:text-black border border-slate-300 hover:border-slate-400 shadow-sm font-semibold disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
-                        : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm disabled:opacity-40'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer shrink-0 active:scale-95 ${isLight
+                      ? 'bg-white hover:bg-slate-50 text-slate-800 hover:text-black border border-slate-300 hover:border-slate-400 shadow-sm font-semibold disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
+                      : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm disabled:opacity-40'
+                      }`}
                   >
                     {isTestingRepo ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -779,29 +790,119 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
               </div>
 
               {/* Branch & Path */}
-              <div className="grid grid-cols-2 gap-2.5 pt-1">
-                <div>
-                  <label className="block text-[11px] mb-1 opacity-70">{t('gitBranch', settings.language)}</label>
-                  <input
-                    type="text"
-                    value={config.branch || 'main'}
-                    onChange={(e) => handleChange({ branch: e.target.value })}
-                    className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${
-                      isLight ? 'bg-white border-slate-200/90 text-slate-900 focus:border-slate-400 focus:ring-1 focus:ring-black/5' : 'bg-white/10 border-white/15 text-white'
-                    }`}
-                  />
+              <div>
+                <div className="flex items-end gap-2.5 pt-1">
+                  <div className="flex-1 min-w-0">
+                    <label className="block text-[11px] mb-1 opacity-70">{t('gitBranch', settings.language)}</label>
+                    <input
+                      type="text"
+                      value={config.branch || 'main'}
+                      onChange={(e) => handleChange({ branch: e.target.value })}
+                      className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${isLight ? 'bg-white border-slate-200/90 text-slate-900 focus:border-slate-400 focus:ring-1 focus:ring-black/5' : 'bg-white/10 border-white/15 text-white'
+                        }`}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <label className="block text-[11px] mb-1 opacity-70">{t('gitPath', settings.language)}</label>
+                    <input
+                      type="text"
+                      value={config.path || 'mytab-backup.json'}
+                      onChange={(e) => handleChange({ path: e.target.value })}
+                      className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${isLight ? 'bg-white border-slate-200/90 text-slate-900 focus:border-slate-400 focus:ring-1 focus:ring-black/5' : 'bg-white/10 border-white/15 text-white'
+                        }`}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedRestore(!showAdvancedRestore)}
+                    className={`p-1.5 mb-[1px] shrink-0 rounded-lg transition-colors duration-200 ${isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-white/40 hover:text-white hover:bg-white/10'
+                      }`}
+                    title={t('gitAdvancedRestoreTitle', settings.language)}
+                  >
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showAdvancedRestore ? 'rotate-180' : ''}`} />
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-[11px] mb-1 opacity-70">{t('gitPath', settings.language)}</label>
-                  <input
-                    type="text"
-                    value={config.path || 'mytab-backup.json'}
-                    onChange={(e) => handleChange({ path: e.target.value })}
-                    className={`w-full px-3 py-1.5 rounded-xl border text-xs outline-none ${
-                      isLight ? 'bg-white border-slate-200/90 text-slate-900 focus:border-slate-400 focus:ring-1 focus:ring-black/5' : 'bg-white/10 border-white/15 text-white'
-                    }`}
-                  />
-                </div>
+
+                {showAdvancedRestore && (
+                  <div className={`mt-2.5 p-3 rounded-xl border flex flex-col gap-2 ${isLight ? 'bg-slate-50/50 border-slate-200/60' : 'bg-black/20 border-white/10'
+                    }`}>
+                    <div className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-white/60'}`}>
+                      {t('gitAdvancedRestoreDesc', settings.language)}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={customSha}
+                        onChange={(e) => setCustomSha(e.target.value)}
+                        placeholder={t('gitCommitShaPlaceholder', settings.language)}
+                        className={`flex-1 px-3 py-2 rounded-lg text-xs outline-none transition-all ${isLight
+                          ? 'bg-white border border-slate-200 focus:border-slate-400 text-slate-800 placeholder:text-slate-400'
+                          : 'bg-white/5 border-transparent focus:border-white/20 text-white placeholder:text-white/30'
+                          }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleFetchCommits}
+                        disabled={isLoadingCommits || !config.token.trim()}
+                        className={`px-3 py-2 rounded-lg text-[11px] font-medium duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${isLight
+                          ? 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-700'
+                          : 'bg-white/10 border border-white/10 hover:bg-white/20 text-white'
+                          }`}
+                      >
+                        {isLoadingCommits ? (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          t('gitViewCommits', settings.language)
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Commit History List */}
+                    {showCommitList && (
+                      <div className={`mt-1 overflow-hidden rounded-lg border ${isLight ? 'border-slate-200 bg-white' : 'border-white/10 bg-black/20'}`}>
+                        {commits.length === 0 && !isLoadingCommits ? (
+                          <div className={`py-4 text-center text-xs ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                            {t('gitNoCommitHistory', settings.language)}
+                          </div>
+                        ) : (
+                          <div className="max-h-48 overflow-y-auto">
+                            <table className="w-full text-left text-[11px]">
+                              <thead className={`sticky top-0 z-10 backdrop-blur-md ${isLight ? 'bg-slate-50/90 text-slate-500' : 'bg-white/5 text-white/50'}`}>
+                                <tr>
+                                  <th className="px-3 py-2 font-medium w-[100px]">{t('gitBackupTime', settings.language)}</th>
+                                  <th className="px-3 py-2 font-medium">{t('gitShaNote', settings.language)}</th>
+                                </tr>
+                              </thead>
+                              <tbody className={`divide-y ${isLight ? 'divide-slate-100' : 'divide-white/5'}`}>
+                                {commits.map((commit) => (
+                                  <tr
+                                    key={commit.sha}
+                                    onClick={() => {
+                                      setCustomSha(commit.sha);
+                                      setShowCommitList(false);
+                                    }}
+                                    className={`cursor-pointer transition-colors ${isLight ? 'hover:bg-slate-50 text-slate-700' : 'hover:bg-white/5 text-white/70'
+                                      }`}
+                                  >
+                                    <td className="px-3 py-2 whitespace-nowrap">
+                                      {new Date(commit.date).toLocaleString(settings.language || 'zh-CN', {
+                                        year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+                                      })}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <div className="font-mono text-[10px] opacity-70 mb-0.5">{commit.sha.substring(0, 7)}</div>
+                                      <div className="truncate max-w-[240px] opacity-90">{commit.message}</div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -809,15 +910,14 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           {/* Test / Connect Result Message */}
           {connectResult && (
             <div
-              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
-                connectResult.success
-                  ? isLight
-                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  : isLight
-                    ? 'bg-red-50 text-red-700 border border-red-200'
-                    : 'bg-red-500/20 text-red-300 border border-red-500/30'
-              }`}
+              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${connectResult.success
+                ? isLight
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                : isLight
+                  ? 'bg-red-50 text-red-700 border border-red-200'
+                  : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                }`}
             >
               {connectResult.success ? (
                 <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
@@ -828,16 +928,34 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
             </div>
           )}
 
-          {/* Auto Sync Switch */}
-          <div className="flex items-center justify-between py-1">
-            <span className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
-              {t('gitAutoSync', settings.language)}
-            </span>
-            <ToggleSwitch
-              checked={config.autoSync}
-              onChange={(checked) => handleChange({ autoSync: checked })}
-              isLight={isLight}
-            />
+          {/* Auto Sync Checkbox */}
+          <div className="flex items-center py-1">
+            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={config.autoSync}
+                onChange={(e) => handleChange({ autoSync: e.target.checked })}
+                className="rounded accent-slate-900 dark:accent-white cursor-pointer w-3.5 h-3.5"
+              />
+              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>
+                {t('gitAutoSync', settings.language)}
+              </span>
+            </label>
+          </div>
+
+          {/* Private Space Sync Checkbox */}
+          <div className="flex items-center py-1">
+            <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={appState.syncSettings?.private || false}
+                onChange={(e) => onUpdateSyncSettings?.({ normal: true, private: e.target.checked })}
+                className="rounded accent-slate-900 dark:accent-white cursor-pointer w-3.5 h-3.5"
+              />
+              <span className={isLight ? 'text-slate-600' : 'text-white/70'}>
+                {t('syncPrivateSpaceAlso', settings.language)}
+              </span>
+            </label>
           </div>
 
           {/* Action Buttons (上传备份 / 拉取恢复) */}
@@ -847,11 +965,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                 type="button"
                 onClick={handleUpload}
                 disabled={isUploading || isPulling || !config.token}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
-                  isLight
-                    ? 'bg-white hover:bg-slate-50 text-slate-800 hover:text-black border border-slate-200/90 hover:border-slate-300 shadow-sm font-semibold disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
-                    : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm disabled:opacity-40'
-                }`}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${isLight
+                  ? 'bg-white hover:bg-slate-50 text-slate-800 hover:text-black border border-slate-200/90 hover:border-slate-300 shadow-sm font-semibold disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
+                  : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm disabled:opacity-40'
+                  }`}
                 title={t('uploadBackup', settings.language)}
               >
                 {isUploading ? (
@@ -866,11 +983,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                 type="button"
                 onClick={() => setShowPullConfirm(true)}
                 disabled={isUploading || isPulling || !config.token}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
-                  isLight
-                    ? 'bg-white hover:bg-slate-50 text-slate-700 hover:text-black border-slate-200/90 hover:border-slate-300 shadow-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
-                    : 'bg-white/10 hover:bg-white/20 border-white/15 text-white disabled:opacity-40'
-                }`}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${isLight
+                  ? 'bg-white hover:bg-slate-50 text-slate-700 hover:text-black border-slate-200/90 hover:border-slate-300 shadow-sm disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none disabled:cursor-not-allowed'
+                  : 'bg-white/10 hover:bg-white/20 border-white/15 text-white disabled:opacity-40'
+                  }`}
                 title={t('pullRestore', settings.language)}
               >
                 {isPulling ? (
@@ -886,11 +1002,10 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           {/* Sync Result Feedback */}
           {syncMsg && (
             <div
-              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
-                isLight
-                  ? 'bg-black/5 border border-black/10 text-slate-800'
-                  : 'bg-white/10 border border-white/15 text-white'
-              }`}
+              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${isLight
+                ? 'bg-black/5 border border-black/10 text-slate-800'
+                : 'bg-white/10 border border-white/15 text-white'
+                }`}
             >
               <RefreshCw className="w-4 h-4 shrink-0" />
               <span>{syncMsg}</span>

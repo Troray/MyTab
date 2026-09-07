@@ -6,5 +6,9 @@
   "extensionDescription": {
     "message": "A sleek, minimal New Tab extension with WebDAV & Git cloud sync, bookmark organization, and customizable themes.",
     "description": "The description of the extension."
+  },
+  "commandOpenMyTab": {
+    "message": "Open MyTab page",
+    "description": "Shortcut command description"
   }
 }
