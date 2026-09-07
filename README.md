@@ -1,3 +1,7 @@
+<div align="right">
+  <strong>简体中文</strong> | <a href="./README_EN.md">English</a>
+</div>
+
 # MyTab ✨ 高颜值新标签页扩展 (支持 WebDAV / Git 多端云同步)
 
 一款极简、高颜值、支持毛玻璃与深浅色模式的现代化浏览器新标签页（New Tab）扩展。全面兼容 **Google Chrome (MV3)**、**Microsoft Edge**、**Mozilla Firefox** 及各大 Chromium 内核浏览器。
