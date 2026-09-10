@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Sparkles, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
 import { SiteItem, ThemeSettings, Category } from '../../types';
 import { fetchSiteMetadata, generateFallbackIcon, normalizeUrl, fileToBase64Icon, urlToBase64Icon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
 import { CustomSelect } from './CustomSelect';
+import { isLightMode } from '../../utils/constants';
 
 interface SiteModalProps {
  isOpen: boolean;
@@ -28,9 +30,10 @@ export const SiteModal: React.FC<SiteModalProps> = ({
    () => categories.filter((c) => c.id !== 'all'),
    [categories]
  );
- const defaultCategoryId = activeCategoryId !== 'all'
-   ? activeCategoryId
-   : (availableCategories[0]?.id || 'all');
+  const defaultCategoryId =
+    activeCategoryId !== 'all' && activeCategoryId !== 'uncategorized' && availableCategories.some((c) => c.id === activeCategoryId)
+      ? activeCategoryId
+      : (availableCategories[0]?.id || 'all');
 
  const [url, setUrl] = useState('');
  const [title, setTitle] = useState('');
@@ -124,11 +127,10 @@ export const SiteModal: React.FC<SiteModalProps> = ({
  });
  };
 
- const isLight = settings.mode === 'light';
+ const isLight = isLightMode(settings.mode);
  const previewIcon = icon.trim() || generateFallbackIcon(title.trim() || url.trim() || 'W');
-
- return (
- <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  const content = (
+  <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
  {/* Backdrop */}
  <div
  className={`fixed inset-0 transition-opacity ${isLight ? 'bg-black/25' : 'bg-black/60'}`}
@@ -196,7 +198,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
  className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all shadow-sm cursor-pointer shrink-0 disabled:opacity-50 active:scale-95 ${
  isLight
  ? 'bg-slate-900 hover:bg-black text-white'
- : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
+ : 'bg-white/20 hover:bg-white/30 text-white border border-white/25 font-semibold'
  }`}
  title={t('autoFetch', settings.language)}
  >
@@ -342,14 +344,16 @@ export const SiteModal: React.FC<SiteModalProps> = ({
  className={`px-5 py-2 rounded-xl text-sm font-medium shadow-sm transition-all cursor-pointer active:scale-95 ${
  isLight
  ? 'bg-slate-900 hover:bg-black text-white'
- : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
+ : 'bg-white/20 hover:bg-white/30 text-white border border-white/25 font-semibold'
  }`}
  >
  {t('save', settings.language)}
  </button>
  </div>
  </form>
- </div>
- </div>
- );
+  </div>
+  </div>
+  );
+
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : content;
 };

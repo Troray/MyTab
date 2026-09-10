@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, ChevronDown, Check } from 'lucide-react';
 import { SearchEngine, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
-import { DEFAULT_SEARCH_ENGINES } from '../../utils/constants';
+import { DEFAULT_SEARCH_ENGINES, isLightMode } from '../../utils/constants';
 import { t } from '../../utils/i18n';
 
 interface SearchBarProps {
@@ -64,7 +64,7 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, resol
     }
   };
 
-  const isLight = settings.mode === 'light';
+  const isLight = isLightMode(settings.mode);
 
   return (
     <div id="mytab-search" className="relative z-30 w-full max-w-2xl mx-auto my-6 px-4">
@@ -89,10 +89,10 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, resol
             type="button"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             style={resolvedColors ? { color: resolvedColors.search } : undefined}
-            className={`flex items-center gap-1.5 pl-4 pr-3 h-full text-xs md:text-sm font-medium transition-colors cursor-pointer select-none ${
+            className={`flex items-center gap-1.5 pl-4 pr-3 h-full text-xs md:text-sm font-medium transition-all cursor-pointer select-none opacity-80 hover:opacity-100 ${
               resolvedColors?.searchShadow || ''
             } ${
-              !resolvedColors ? (isLight ? 'text-slate-800 hover:text-black' : 'text-white/90 hover:text-white') : ''
+              !resolvedColors ? (isLight ? 'text-slate-800 hover:text-black' : 'text-white/80 hover:text-white') : ''
             }`}
           >
             <span>{activeEngine.name}</span>
@@ -186,7 +186,7 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, resol
           <button
             type="submit"
             style={resolvedColors ? { color: resolvedColors.search } : undefined}
-            className={`p-2.5 mr-2 rounded-xl transition-all cursor-pointer active:scale-95 ${
+            className={`p-2.5 mr-2 rounded-xl transition-all cursor-pointer active:scale-95 opacity-75 hover:opacity-100 ${
               resolvedColors?.searchShadow || ''
             } ${
               isLight

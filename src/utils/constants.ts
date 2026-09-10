@@ -109,11 +109,31 @@ export const PRESET_GRADIENTS = [
 export const DEFAULT_PRIVATE_BACKGROUND_VALUE =
   'linear-gradient(135deg, #292832 0.000%, #272530 8.333%, #24222e 16.667%, #201f2b 25.000%, #1c1b27 33.333%, #181624 41.667%, #141220 50.000%, #100e1c 58.333%, #0c0a18 66.667%, #080614 75.000%, #050311 83.333%, #02000e 91.667%, #00000b 100.000%)';
 
+export const DEFAULT_CATEGORY_COLORS = [
+  '#ffffff', // White
+  '#000000', // Black
+  '#f43f5e', // Rose / Red (media)
+  '#8b5cf6', // Violet / Purple (social)
+  '#f59e0b', // Amber / Orange (others)
+  '#10b981', // Emerald / Green (ai)
+  '#0ea5e9', // Sky Blue
+  '#ec4899', // Pink
+];
+
+/**
+ * Slate color tokens that are considered "dark text" in the board layout.
+ * Used by BoardColumn to decide whether to apply dark-on-light or light-on-dark
+ * UI patterns (hover backgrounds, button colors, etc.) based on the resolved
+ * wallpaper text color.
+ */
+export const BOARD_DARK_TEXT_TOKENS = ['#0f172a', '#334155', '#1e293b'] as const;
+
 export const DEFAULT_SETTINGS: ThemeSettings = {
   mode: 'dark',
+  layoutMode: 'grid',
   backgroundType: 'custom',
   backgroundValue: './wallpapers/default-wallpaper.jpg',
-  cardOpacity: 0.30, // 默认卡片透明度 30%
+  cardOpacity: 0.20, // 默认卡片透明度 20%
   cardSize: 110,     // 默认卡片大小 110px
   iconSizeRatio: 0.42, // 默认图标占比 42%
   maxCardsPerRow: 8, // 默认每行最多 8 个卡片
@@ -125,6 +145,17 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   showGreeting: true,
   showDate: true,
   showLunar: true,
+  showCardBackground: true,
+  showSiteTitle: true,
+  showCategories: true,
+  iconSpacing: 20,
+  boardColumnsPerRow: 5,
+  boardCardGap: 16,
+  boardTitleAlign: 'left',
+  boardTitleSize: 15,
+  boardItemSpacing: 6,
+  boardShowCardBackground: true,
+  boardCardOpacity: 0.20,
   language: 'zh-CN',
   textColorMode: 'light',
   customTextColors: {},
@@ -174,3 +205,20 @@ export const DEFAULT_GIT_CONFIG: GitSyncConfig = {
   path: 'mytab-backup.json',
   token: '',
 };
+
+/**
+ * Detects if the current effective theme is light mode.
+ * Accurately handles 'light', 'dark', and 'system' with fallback to HTML class and media query.
+ */
+export function isLightMode(mode?: string): boolean {
+  if (mode === 'light') return true;
+  if (mode === 'dark') return false;
+  if (typeof document !== 'undefined' && document.documentElement) {
+    if (document.documentElement.classList.contains('light')) return true;
+    if (document.documentElement.classList.contains('dark')) return false;
+  }
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return !window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  return false;
+}

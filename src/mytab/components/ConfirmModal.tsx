@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, Trash2, AlertCircle, X } from 'lucide-react';
 import { t } from '../../utils/i18n';
 import { Locale } from '../../utils/i18n';
@@ -82,10 +83,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
  ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
  : isLight
  ? 'bg-slate-900 hover:bg-black text-white'
- : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold';
-
- return (
- <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+ : 'bg-white/20 hover:bg-white/30 text-white border border-white/25 font-semibold';
+  const content = (
+  <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
  {/* Frosted Glass Backdrop */}
  <div
  className={`absolute inset-0 transition-opacity animate-fade-in ${isLight ? 'bg-black/25' : 'bg-black/60'}`}
@@ -149,7 +149,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
  {confirmText || t('confirm', language)}
  </button>
  </div>
- </div>
- </div>
- );
+  </div>
+  </div>
+  );
+
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : content;
 };

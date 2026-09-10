@@ -3,6 +3,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'NeverMind';
+  src: url('/fonts/NeverMind-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NeverMind';
+  src: url('/fonts/NeverMind-DemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg-main: oklch(0.14 0.015 250);
   --bg-elevated: oklch(0.18 0.018 250);
@@ -34,7 +50,7 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+  font-family: 'NeverMind', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   color: var(--text-main);
   background-color: var(--bg-main);
   user-select: none;
@@ -64,10 +80,14 @@ body {
 /* Frosted Glass Sheet & Modal (Enhanced semi-transparent blur) */
 .glass-drawer {
   background: #4e525abf !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
 }
 
 .light .glass-drawer {
-  background: #ffffff !important;
+  background: rgba(255, 255, 255, 0.80) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
 }
 
 .glass-modal {
@@ -234,5 +254,3 @@ body {
   color: var(--search-placeholder-color, currentColor);
   opacity: 0.6;
 }
-
-
