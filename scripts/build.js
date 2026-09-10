@@ -60,6 +60,13 @@ async function buildExtension() {
       await fs.copy(localesSrc, localesDest);
     }
 
+    // Copy public fonts
+    const fontsSrc = path.resolve(rootDir, 'public/fonts');
+    const fontsDest = path.resolve(targetDir, 'fonts');
+    if (fs.existsSync(fontsSrc)) {
+      await fs.copy(fontsSrc, fontsDest);
+    }
+
     // Rename index.html or mytab.html to newtab.html if needed
     const indexHtml = path.resolve(targetDir, 'index.html');
     const mytabHtml = path.resolve(targetDir, 'mytab.html');
