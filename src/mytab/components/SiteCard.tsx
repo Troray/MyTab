@@ -105,7 +105,11 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
   const iconSpacing = settings.iconSpacing ?? 20;
 
   // When card background is off, cell wraps the icon compactly according to icon spacing
-  const cellWidth = showCardBg ? cardSize : Math.max(iconBoxSize + 12, Math.round(iconBoxSize + iconSpacing * 0.6));
+  const cellWidth = showCardBg
+    ? cardSize
+    : showTitle
+    ? Math.max(iconBoxSize + 16, Math.min(cardSize, Math.round(iconBoxSize + 8 + iconSpacing * 0.9)))
+    : iconBoxSize + 12;
   const cellHeight = showCardBg ? cardSize : Math.round(iconBoxSize + (showTitle ? 28 : 10));
 
   return (
@@ -158,7 +162,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
             : !showCardBg
             ? 'border-transparent hover:border-transparent'
             : isLight
-            ? 'border-white/80 hover:border-white shadow-md shadow-black/[0.04] hover:shadow-lg hover:shadow-black/10 hover:bg-white/95 hover:scale-[1.01]'
+            ? 'border-transparent hover:border-transparent shadow-md shadow-black/[0.04] hover:shadow-lg hover:shadow-black/10 hover:scale-[1.01]'
             : 'border-white/10 hover:border-white/30 hover:bg-white/10 hover:shadow-lg hover:shadow-black/40 hover:scale-[1.01]'
         }`}
       >
@@ -208,7 +212,9 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
         {/* Action Menu Button */}
         <div
           ref={menuRef}
-          className={`site-card-action absolute top-1.5 right-1.5 transition-opacity duration-150 ${
+          className={`site-card-action absolute transition-opacity duration-150 ${
+            showCardBg ? 'top-1.5 right-1.5' : '-top-1 -right-1'
+          } ${
             showMenu ? 'opacity-100 z-50' : 'opacity-0 group-hover:opacity-100 z-10'
           }`}
         >
@@ -218,10 +224,14 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
               e.stopPropagation();
               setShowMenu(!showMenu);
             }}
-            className={`p-1 rounded-lg transition-colors ${
-              isLight
-                ? 'text-slate-500 hover:text-slate-900 hover:bg-black/10'
-                : 'text-white/70 hover:text-white hover:bg-white/20'
+            className={`p-1 transition-colors ${
+              !showCardBg
+                ? isLight
+                  ? 'bg-white/90 text-slate-700 shadow-md border border-black/10 hover:bg-white hover:text-slate-900 rounded-full'
+                  : 'bg-black/70 text-white/90 shadow-md border border-white/20 hover:bg-black/90 hover:text-white rounded-full'
+                : isLight
+                ? 'text-slate-500 hover:text-slate-900 hover:bg-black/10 rounded-lg'
+                : 'text-white/70 hover:text-white hover:bg-white/20 rounded-lg'
             }`}
             title={t('moreActions', settings.language)}
           >
