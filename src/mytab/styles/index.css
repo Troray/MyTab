@@ -106,6 +106,220 @@ body {
   background: rgba(255, 255, 255, 0.95) !important;
 }
 
+/* ==========================================================================
+   UI/UX Design Tokens & Standardized Component Classes
+   ========================================================================== */
+@layer components {
+  /* 1. Form Inputs & Fields */
+  .glass-input {
+    background-color: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    outline: none;
+    transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .glass-input::placeholder {
+    color: rgba(255, 255, 255, 0.40);
+  }
+  .glass-input:focus {
+    border-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+  }
+
+  .light .glass-input {
+    background-color: rgba(242, 242, 242, 0.50);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: #0f172a;
+  }
+  .light .glass-input::placeholder {
+    color: #94a3b8;
+  }
+  .light .glass-input:focus {
+    border-color: rgba(0, 0, 0, 0.28);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+  }
+
+  /* 2. Action Buttons */
+  /* Primary Action Button (Save, Confirm, Submit, Export) */
+  .glass-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: all 120ms cubic-bezier(0.16, 1, 0.3, 1);
+    background-color: rgba(255, 255, 255, 0.20);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  }
+  .glass-btn-primary:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.30);
+    color: #ffffff;
+  }
+  .glass-btn-primary:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .glass-btn-primary:disabled {
+    opacity: 0.40;
+    pointer-events: none;
+  }
+
+  .light .glass-btn-primary {
+    background-color: rgba(0, 0, 0, 0.08);
+    color: #0f172a;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  .light .glass-btn-primary:hover:not(:disabled) {
+    background-color: rgba(0, 0, 0, 0.13);
+    border-color: rgba(0, 0, 0, 0.22);
+    color: #000000;
+  }
+
+  /* Secondary Button (Pull, Test, Aux, Import) */
+  .glass-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: all 120ms cubic-bezier(0.16, 1, 0.3, 1);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .glass-btn-secondary:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.22);
+  }
+  .glass-btn-secondary:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .glass-btn-secondary:disabled {
+    opacity: 0.40;
+    pointer-events: none;
+  }
+
+  .light .glass-btn-secondary {
+    background-color: rgba(0, 0, 0, 0.03);
+    color: #334155;
+    border: 1px solid rgba(0, 0, 0, 0.10);
+  }
+  .light .glass-btn-secondary:hover:not(:disabled) {
+    background-color: rgba(0, 0, 0, 0.07);
+    color: #0f172a;
+    border-color: rgba(0, 0, 0, 0.15);
+  }
+
+  /* Ghost Button (Cancel, Reset, Close) */
+  .glass-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: all 120ms cubic-bezier(0.16, 1, 0.3, 1);
+    background-color: transparent;
+    color: rgba(255, 255, 255, 0.70);
+    border: 1px solid transparent;
+  }
+  .glass-btn-ghost:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.10);
+    color: #ffffff;
+  }
+  .glass-btn-ghost:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .light .glass-btn-ghost {
+    color: #475569;
+  }
+  .light .glass-btn-ghost:hover:not(:disabled) {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #0f172a;
+  }
+
+  /* Danger Button (Delete, Destructive confirmation) */
+  .glass-btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: all 120ms cubic-bezier(0.16, 1, 0.3, 1);
+    background-color: rgba(220, 38, 38, 0.90);
+    color: #ffffff;
+    border: 1px solid rgba(220, 38, 38, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  .glass-btn-danger:hover:not(:disabled) {
+    background-color: rgb(185, 28, 28);
+    border-color: rgb(185, 28, 28);
+  }
+  .glass-btn-danger:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  /* 3. Segmented Controls & Tab Pills */
+  .glass-segment-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: all 120ms cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background-color: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.70);
+  }
+  .glass-segment-item:hover {
+    background-color: rgba(255, 255, 255, 0.10);
+    color: #ffffff;
+  }
+  .glass-segment-item-active {
+    background-color: rgba(255, 255, 255, 0.20) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  }
+
+  .light .glass-segment-item {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #475569;
+  }
+  .light .glass-segment-item:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: #0f172a;
+  }
+  .light .glass-segment-item-active {
+    background-color: rgba(0, 0, 0, 0.08) !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+    color: #0f172a !important;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+
+  /* 4. Subtle Section Cards */
+  .glass-card-subtle {
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background-color: rgba(255, 255, 255, 0.04);
+    transition: border-color 150ms ease, background-color 150ms ease;
+  }
+  .light .glass-card-subtle {
+    border-color: rgba(0, 0, 0, 0.08);
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+}
+
+
 /* Custom Refined Scrollbar */
 ::-webkit-scrollbar {
   width: 5px;
