@@ -26,7 +26,10 @@ import {
   Shield,
   AlertTriangle,
   LayoutGrid,
-  Columns3
+  Columns3,
+  AlignLeft,
+  AlignCenter,
+  AlignRight
 } from 'lucide-react';
 import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ProfileId, ProfileSyncSettings, ThemeSettings, WebdavConfig } from '../../types';
 import { PRESET_GRADIENTS, DEFAULT_SETTINGS, DEFAULT_PRIVATE_BACKGROUND_VALUE, isLightMode } from '../../utils/constants';
@@ -925,6 +928,42 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   </div>
                 </div>
 
+                {/* Board Column Alignment */}
+                <div>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('boardAlignTitle', settings.language)}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5">
+                    {[
+                      { id: 'left', label: t('alignLeft', settings.language), icon: AlignLeft },
+                      { id: 'center', label: t('alignCenter', settings.language), icon: AlignCenter },
+                      { id: 'right', label: t('alignRight', settings.language), icon: AlignRight },
+                    ].map((item) => {
+                      const Icon = item.icon;
+                      const isSelected = (settings.boardAlign || 'left') === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => handleSettingsChange({ boardAlign: item.id as 'left' | 'center' | 'right' })}
+                          className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 ${
+                            isSelected
+                              ? isLight
+                                ? 'bg-white text-slate-900 shadow-xs border border-black/10 font-semibold'
+                                : 'bg-white/20 text-white shadow-sm border border-white/20 font-semibold'
+                              : isLight
+                              ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                              : 'text-white/60 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Board Card Gap */}
                 <div>
                   <div className="flex justify-between text-xs font-medium mb-1.5">
@@ -1022,6 +1061,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         onClick={() => handleSettingsChange({
                           boardShowCardBackground: true,
                           boardColumnsPerRow: 5,
+                          boardAlign: 'left',
                           boardCardGap: 16,
                           boardTitleSize: 15,
                           boardItemSpacing: 6,

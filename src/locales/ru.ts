@@ -437,6 +437,7 @@ export const ru: Translation = {
   boardColumnsUnit: "кол.",
   boardGapTitle: "Отступ между карточками",
   boardTitleAlignTitle: "Выравнивание заголовка",
+  boardAlignTitle: "Выравнивание доски",
   alignLeft: "Слева",
   alignCenter: "По центру",
   alignRight: "Справа",

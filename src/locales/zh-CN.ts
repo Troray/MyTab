@@ -437,6 +437,7 @@ export const zhCN: Translation = {
   boardColumnsUnit: "列",
   boardGapTitle: "卡片间距",
   boardTitleAlignTitle: "标题对齐",
+  boardAlignTitle: "看板对齐方式",
   alignLeft: "靠左",
   alignCenter: "居中",
   alignRight: "靠右",

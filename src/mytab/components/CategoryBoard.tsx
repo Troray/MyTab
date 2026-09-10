@@ -366,18 +366,47 @@ export const CategoryBoard: React.FC<CategoryBoardProps> = ({
     return result;
   }, [boardCategories, effectiveCols, isEditing]);
 
+  const activeColumns = useMemo(() => {
+    return columnData.filter((col) => col.length > 0);
+  }, [columnData]);
+
+  const boardAlign = settings.boardAlign || 'left';
+  const isFewerColumns = activeColumns.length < effectiveCols;
+
+  const columnWidthStyle = useMemo<React.CSSProperties>(() => {
+    if (isFewerColumns) {
+      return {
+        width: `calc((100% - ${(effectiveCols - 1) * gap}px) / ${effectiveCols})`,
+        flex: '0 0 auto',
+        gap: `${gap}px`,
+      };
+    }
+    return {
+      flex: '1 1 0%',
+      minWidth: 0,
+      gap: `${gap}px`,
+    };
+  }, [isFewerColumns, effectiveCols, gap]);
+
+  const justifyClass =
+    boardAlign === 'center'
+      ? 'justify-center'
+      : boardAlign === 'right'
+      ? 'justify-end'
+      : 'justify-start';
+
   return (
     <div className={`w-full ${containerMaxWidth} mx-auto px-4 md:px-6 my-4 z-20`}>
       {/* Waterfall / Masonry Layout Container using Multi-Column Flex */}
       <div
-        className="w-full flex items-start"
+        className={`w-full flex items-start ${justifyClass}`}
         style={{ gap: `${gap}px` }}
       >
-        {columnData.map((colItems, colIdx) => (
+        {activeColumns.map((colItems, colIdx) => (
           <div
             key={colIdx}
-            className="flex-1 flex flex-col min-w-0"
-            style={{ gap: `${gap}px` }}
+            className="flex flex-col min-w-0"
+            style={columnWidthStyle}
           >
             {colItems.map((item) => {
               if (item.type === 'category' && item.category) {

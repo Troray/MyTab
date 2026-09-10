@@ -437,6 +437,7 @@ export const ko: Translation = {
   boardColumnsUnit: "열",
   boardGapTitle: "카드 간격",
   boardTitleAlignTitle: "제목 정렬",
+  boardAlignTitle: "보드 정렬",
   alignLeft: "왼쪽",
   alignCenter: "가운데",
   alignRight: "오른쪽",

@@ -435,6 +435,7 @@ export interface Translation {
   boardColumnsUnit: string;
   boardGapTitle: string;
   boardTitleAlignTitle: string;
+  boardAlignTitle: string;
   alignLeft: string;
   alignCenter: string;
   alignRight: string;

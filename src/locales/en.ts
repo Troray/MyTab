@@ -437,6 +437,7 @@ export const en: Translation = {
   boardColumnsUnit: "cols",
   boardGapTitle: "Card Gap",
   boardTitleAlignTitle: "Title Alignment",
+  boardAlignTitle: "Board Alignment",
   alignLeft: "Left",
   alignCenter: "Center",
   alignRight: "Right",

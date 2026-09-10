@@ -437,6 +437,7 @@ export const ja: Translation = {
   boardColumnsUnit: "列",
   boardGapTitle: "カード間隔",
   boardTitleAlignTitle: "見出し配置",
+  boardAlignTitle: "看板の配置",
   alignLeft: "左揃え",
   alignCenter: "中央",
   alignRight: "右揃え",

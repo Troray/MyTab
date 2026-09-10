@@ -156,6 +156,7 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   boardItemSpacing: 6,
   boardShowCardBackground: true,
   boardCardOpacity: 0.20,
+  boardAlign: 'left',
   language: 'zh-CN',
   textColorMode: 'light',
   customTextColors: {},
