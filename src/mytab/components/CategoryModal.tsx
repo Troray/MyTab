@@ -127,11 +127,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t('categoryName', settings.language)}
-                className={`w-full px-3.5 py-2.5 rounded-xl border text-sm outline-none transition-all ${
-                  isLight
-                    ? 'bg-black/5 border-black/10 text-slate-900 focus:border-black/30 focus:ring-2 focus:ring-black/10 placeholder-slate-400'
-                    : 'bg-white/10 border-white/15 text-white focus:border-white/30 focus:ring-2 focus:ring-white/20 placeholder-white/40'
-                }`}
+                className="glass-input w-full px-3.5 py-2.5 rounded-xl text-sm"
               />
             </div>
 
