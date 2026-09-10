@@ -11,6 +11,7 @@ interface SiteCardProps {
   index: number;
   settings: ThemeSettings;
   resolvedColors?: ResolvedTextColors;
+  isLight?: boolean;
   isDragging?: boolean;
   isAnyDragging?: boolean;
   isJustDropped?: boolean;
@@ -27,6 +28,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
   index,
   settings,
   resolvedColors,
+  isLight: propsIsLight,
   isDragging,
   isAnyDragging,
   isJustDropped,
@@ -74,10 +76,12 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
   const cardSize = settings.cardSize || 110;
   const iconRatio = settings.iconSizeRatio || 0.42;
   const isLight =
-    settings.mode === 'light' ||
-    (settings.mode === 'system' &&
-      typeof window !== 'undefined' &&
-      !window.matchMedia('(prefers-color-scheme: dark)').matches);
+    propsIsLight !== undefined
+      ? propsIsLight
+      : settings.mode === 'light' ||
+        (settings.mode === 'system' &&
+          typeof window !== 'undefined' &&
+          !window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   // Responsive scaling calculations based on cardSize and custom icon ratio
   const iconBoxSize = Math.max(24, Math.round(cardSize * iconRatio));

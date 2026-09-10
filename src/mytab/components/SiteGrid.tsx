@@ -9,6 +9,7 @@ interface SiteGridProps {
   sites: SiteItem[];
   settings: ThemeSettings;
   resolvedColors?: ResolvedTextColors;
+  isLight?: boolean;
   onEditSite: (site: SiteItem) => void;
   onDeleteSite: (siteId: string) => void;
   onAddSite: () => void;
@@ -19,6 +20,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
   sites,
   settings,
   resolvedColors,
+  isLight,
   onEditSite,
   onDeleteSite,
   onAddSite,
@@ -226,6 +228,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
             index={index}
             settings={settings}
             resolvedColors={resolvedColors}
+            isLight={isLight}
             isDragging={draggingSiteId === site.id}
             isAnyDragging={Boolean(draggingSiteId)}
             isJustDropped={justDroppedSiteId === site.id}

@@ -286,6 +286,21 @@ function analyzeGradientLuminance(gradientStr: string): WallpaperLuminance {
   };
 }
 
+const EMPTY_SAMPLE_ARRAY: number[] = [];
+
+function getPercentileFromHist(hist: Uint32Array, total: number, ratio: number): number {
+  if (total <= 0) return 0;
+  const target = Math.max(1, Math.floor(total * ratio));
+  let cumulative = 0;
+  for (let i = 0; i < hist.length; i++) {
+    cumulative += hist[i];
+    if (cumulative >= target) {
+      return i;
+    }
+  }
+  return hist.length - 1;
+}
+
 // 核心采样统计函数：提取 ROI 像素的分布、极值与分位数
 export function extractPixelStats(
   imgData: Uint8ClampedArray,
@@ -296,6 +311,7 @@ export function extractPixelStats(
   y1: number
 ): RawSampleData {
   let sumLum = 0;
+  let sumLumSq = 0;
   let sumRelLum = 0;
   let count = 0;
   let minLum = 255;
@@ -305,8 +321,8 @@ export function extractPixelStats(
   let darkCount = 0;
   let lightCount = 0;
 
-  const lums: number[] = [];
-  const relLums: number[] = [];
+  const lumHist = new Uint32Array(256);
+  const relHist = new Uint32Array(256);
 
   for (let y = y0; y <= y1; y++) {
     for (let x = x0; x <= x1; x++) {
@@ -321,6 +337,7 @@ export function extractPixelStats(
       const relLum = getRelativeLuminance(r, g, b);
 
       sumLum += lum;
+      sumLumSq += lum * lum;
       sumRelLum += relLum;
       count++;
 
@@ -332,28 +349,22 @@ export function extractPixelStats(
       if (lum < 75) darkCount++;
       if (lum > 175) lightCount++;
 
-      lums.push(lum);
-      relLums.push(relLum);
+      const lumBucket = Math.min(255, Math.max(0, Math.round(lum)));
+      lumHist[lumBucket]++;
+
+      const relBucket = Math.min(255, Math.max(0, Math.round(relLum * 255)));
+      relHist[relBucket]++;
     }
   }
 
   const validCount = count || 1;
   const meanLum = sumLum / validCount;
   const meanRelLum = sumRelLum / validCount;
+  const variance = Math.max(0, sumLumSq / validCount - meanLum * meanLum);
 
-  let varianceSum = 0;
-  for (let i = 0; i < lums.length; i++) {
-    varianceSum += (lums[i] - meanLum) ** 2;
-  }
-  const variance = varianceSum / validCount;
-
-  // 快速排序计算分位数
-  relLums.sort((a, b) => a - b);
-  lums.sort((a, b) => a - b);
-
-  const p10RelLum = relLums.length > 0 ? relLums[Math.floor(relLums.length * 0.1)] : 0;
-  const p90RelLum = relLums.length > 0 ? relLums[Math.min(relLums.length - 1, Math.floor(relLums.length * 0.9))] : 1;
-  const medianLum = lums.length > 0 ? lums[Math.floor(lums.length * 0.5)] : meanLum;
+  const p10RelLum = count > 0 ? getPercentileFromHist(relHist, count, 0.1) / 255 : 0;
+  const p90RelLum = count > 0 ? Math.min(1.0, getPercentileFromHist(relHist, count, 0.9) / 255) : 1;
+  const medianLum = count > 0 ? getPercentileFromHist(lumHist, count, 0.5) : meanLum;
 
   const darkRatio = darkCount / validCount;
   const lightRatio = lightCount / validCount;
@@ -365,8 +376,8 @@ export function extractPixelStats(
     (darkRatio > 0.20 && lightRatio > 0.20);
 
   return {
-    lums,
-    relLums,
+    lums: EMPTY_SAMPLE_ARRAY,
+    relLums: EMPTY_SAMPLE_ARRAY,
     meanLum,
     meanRelLum,
     variance,

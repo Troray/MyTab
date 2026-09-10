@@ -99,25 +99,31 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
 
     const timer = setTimeout(async () => {
       let changed = false;
-      const updated = await Promise.all(
-        appState.sites.map(async (s) => {
-          if (s.icon && (s.icon.startsWith('http://') || s.icon.startsWith('https://'))) {
-            try {
-              const base64 = await urlToBase64Icon(s.icon, 128);
-              if (base64 && base64.startsWith('data:image/')) {
-                changed = true;
-                return { ...s, icon: base64 };
+      const sitesCopy = [...appState.sites];
+      const BATCH_SIZE = 3;
+
+      for (let i = 0; i < sitesCopy.length; i += BATCH_SIZE) {
+        const batch = sitesCopy.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          batch.map(async (s, idx) => {
+            if (s.icon && (s.icon.startsWith('http://') || s.icon.startsWith('https://'))) {
+              try {
+                const base64 = await urlToBase64Icon(s.icon, 128);
+                if (base64 && base64.startsWith('data:image/')) {
+                  changed = true;
+                  sitesCopy[i + idx] = { ...s, icon: base64 };
+                }
+              } catch (err) {
+                console.warn('[MyTab] Cache warmer failed to convert icon:', err);
               }
-            } catch (err) {
-              console.warn('[MyTab] Cache warmer failed to convert icon:', err);
             }
-          }
-          return s;
-        })
-      );
+          })
+        );
+      }
+
       if (changed) {
-        await saveSites(updated);
-        setAppState((prev) => (prev ? { ...prev, sites: updated } : null));
+        await saveSites(sitesCopy);
+        setAppState((prev) => (prev ? { ...prev, sites: sitesCopy } : null));
       }
     }, CACHE_WARMER_DELAY);
 
@@ -151,6 +157,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   // Luminance analysis for wallpaper contrast with DOM rect calibration
   useEffect(() => {
     let isCancelled = false;
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     const runAnalysis = () => {
       analyzeWallpaperLuminance(
         currentSettings.backgroundType,
@@ -170,13 +177,19 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     const timer = setTimeout(runAnalysis, 50);
 
     const handleResize = () => {
-      runAnalysis();
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (!isCancelled) {
+          runAnalysis();
+        }
+      }, 200);
     };
     window.addEventListener('resize', handleResize);
 
     return () => {
       isCancelled = true;
       clearTimeout(timer);
+      if (resizeTimer) clearTimeout(resizeTimer);
       window.removeEventListener('resize', handleResize);
     };
   }, [
@@ -357,13 +370,19 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     const hiddenInAllCatIds = new Set(
       categories.filter((c) => c.showInAll === false).map((c) => c.id)
     );
-    const allVisibleCount = sites.filter((s) => !hiddenInAllCatIds.has(s.categoryId)).length;
-    const counts: Record<string, number> = { all: allVisibleCount };
-    categories.forEach((cat) => {
-      counts[cat.id] = cat.id === 'all'
-        ? allVisibleCount
-        : sites.filter((s) => s.categoryId === cat.id).length;
-    });
+    const counts: Record<string, number> = {};
+    for (let i = 0; i < categories.length; i++) {
+      counts[categories[i].id] = 0;
+    }
+    let allVisibleCount = 0;
+    for (let i = 0; i < sites.length; i++) {
+      const s = sites[i];
+      counts[s.categoryId] = (counts[s.categoryId] || 0) + 1;
+      if (!hiddenInAllCatIds.has(s.categoryId)) {
+        allVisibleCount++;
+      }
+    }
+    counts['all'] = allVisibleCount;
     return counts;
   }, [sites, categories]);
 
@@ -440,7 +459,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setAppState((prev) => (prev ? { ...prev, sites: updated } : null));
   }, [sites]);
 
-  const handleAddCategory = async (data: { name: string; showInAll: boolean; color?: string }) => {
+  const handleAddCategory = useCallback(async (data: { name: string; showInAll: boolean; color?: string }) => {
     const now = Date.now();
     const newCat: Category = {
       id: `cat-${now}`,
@@ -455,18 +474,18 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     const updated = [...categories, newCat];
     await saveCategories(updated);
     setAppState((prev) => (prev ? { ...prev, categories: updated } : null));
-  };
+  }, [categories]);
 
-  const handleUpdateCategory = async (id: string, updates: Partial<Category>) => {
+  const handleUpdateCategory = useCallback(async (id: string, updates: Partial<Category>) => {
     const now = Date.now();
     const updated = categories.map((c) =>
       c.id === id ? { ...c, ...updates, updatedAt: now } : c
     );
     await saveCategories(updated);
     setAppState((prev) => (prev ? { ...prev, categories: updated } : null));
-  };
+  }, [categories]);
 
-  const handleDeleteCategory = async (catId: string) => {
+  const handleDeleteCategory = useCallback(async (catId: string) => {
     // Cannot delete default categories
     const target = categories.find((c) => c.id === catId);
     if (!target || target.isDefault) return;
@@ -496,12 +515,12 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         }
         : null
     );
-  };
+  }, [categories, sites]);
 
-  const handleSelectCategory = async (catId: string) => {
+  const handleSelectCategory = useCallback(async (catId: string) => {
     await saveActiveCategory(catId);
     setAppState((prev) => (prev ? { ...prev, activeCategoryId: catId } : null));
-  };
+  }, []);
 
   const handleUpdateSyncSettings = async (newPolicy: ProfileSyncSettings) => {
     await saveProfileSyncSettings(newPolicy);
@@ -590,7 +609,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     return null;
   }
 
-  const isLight = isLightMode(settings.mode);
+  const isLight = activeThemeMode === 'light';
 
   return (
     <div
@@ -688,7 +707,6 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                   setIsBoardEditing(false);
                 }
                 handleUpdateSettings({
-                  ...settings,
                   layoutMode: settings.layoutMode === 'board' ? 'grid' : 'board',
                 });
               }}
@@ -745,7 +763,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       {/* Center Main Section */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-start max-w-7xl mx-auto w-full pb-12">
         {/* Clock & Greetings */}
-        <ClockHeader settings={settings} resolvedColors={resolvedColors} />
+        <ClockHeader settings={settings} resolvedColors={resolvedColors} isLight={isLight} />
 
         {/* Search Bar */}
         {(settings.showSearch ?? true) && (
@@ -753,7 +771,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             settings={settings}
             resolvedColors={resolvedColors}
             onEngineChange={(engineId) =>
-              handleUpdateSettings({ ...settings, activeEngineId: engineId })
+              handleUpdateSettings({ activeEngineId: engineId })
             }
           />
         )}
@@ -765,6 +783,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             sites={sites}
             settings={settings}
             resolvedColors={resolvedColors}
+            isLight={isLight}
             isEditing={isBoardEditing}
             onOpenSite={handleOpenSite}
             onEditSite={handleOpenEditSite}
@@ -797,6 +816,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               sites={filteredSites}
               settings={settings}
               resolvedColors={resolvedColors}
+              isLight={isLight}
               onEditSite={handleOpenEditSite}
               onDeleteSite={handleDeleteSite}
               onAddSite={handleOpenAddSite}

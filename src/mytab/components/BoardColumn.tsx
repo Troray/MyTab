@@ -12,6 +12,7 @@ interface BoardColumnProps {
   sites: SiteItem[];
   settings: ThemeSettings;
   resolvedColors?: ResolvedTextColors;
+  isLight?: boolean;
   isEditing?: boolean;
   onOpenSite: (url: string) => void;
   onEditSite: (site: SiteItem) => void;
@@ -35,6 +36,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
   sites,
   settings,
   resolvedColors,
+  isLight: propsIsLight,
   isEditing = false,
   onOpenSite,
   onEditSite,
@@ -51,10 +53,12 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
   onDragEnd,
 }) => {
   const isLight =
-    settings.mode === 'light' ||
-    (settings.mode === 'system' &&
-      typeof window !== 'undefined' &&
-      !window.matchMedia('(prefers-color-scheme: dark)').matches);
+    propsIsLight !== undefined
+      ? propsIsLight
+      : settings.mode === 'light' ||
+        (settings.mode === 'system' &&
+          typeof window !== 'undefined' &&
+          !window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   const [activeMenu, setActiveMenu] = useState<
     | { type: 'site'; site: SiteItem; x: number; y: number }

@@ -12,6 +12,7 @@ interface CategoryBoardProps {
   sites: SiteItem[];
   settings: ThemeSettings;
   resolvedColors?: ResolvedTextColors;
+  isLight?: boolean;
   isEditing?: boolean;
   onOpenSite: (url: string) => void;
   onEditSite: (site: SiteItem) => void;
@@ -28,6 +29,7 @@ export const CategoryBoard: React.FC<CategoryBoardProps> = ({
   sites,
   settings,
   resolvedColors,
+  isLight: propsIsLight,
   isEditing = false,
   onOpenSite,
   onEditSite,
@@ -39,10 +41,12 @@ export const CategoryBoard: React.FC<CategoryBoardProps> = ({
   onReorderSites,
 }) => {
   const isLight =
-    settings.mode === 'light' ||
-    (settings.mode === 'system' &&
-      typeof window !== 'undefined' &&
-      !window.matchMedia('(prefers-color-scheme: dark)').matches);
+    propsIsLight !== undefined
+      ? propsIsLight
+      : settings.mode === 'light' ||
+        (settings.mode === 'system' &&
+          typeof window !== 'undefined' &&
+          !window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   // Category modal for editing/adding directly within board view
   // undefined: closed; null: add; Category: edit
@@ -419,6 +423,7 @@ export const CategoryBoard: React.FC<CategoryBoardProps> = ({
                     sites={categorySites}
                     settings={settings}
                     resolvedColors={resolvedColors}
+                    isLight={isLight}
                     isEditing={isEditing}
                     draggingSiteId={draggingSiteId}
                     dropTarget={dropTarget}

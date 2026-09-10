@@ -8,23 +8,42 @@ import { isLightMode } from '../../utils/constants';
 interface ClockHeaderProps {
   settings: ThemeSettings;
   resolvedColors?: ResolvedTextColors;
+  isLight?: boolean;
 }
 
-export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, resolvedColors }) => {
-  const [time, setTime] = useState(new Date());
-  const [hours, setHours] = useState(new Date().getHours());
+export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, resolvedColors, isLight: propsIsLight }) => {
+  const [time, setTime] = useState(() => new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    let lastMinute = new Date().getMinutes();
+
+    const checkTime = () => {
       const now = new Date();
-      setTime(now);
-      setHours(now.getHours());
-    }, 1000);
-    return () => clearInterval(timer);
+      if (now.getMinutes() !== lastMinute) {
+        lastMinute = now.getMinutes();
+        setTime(now);
+      }
+    };
+
+    const timer = setInterval(checkTime, 1000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const now = new Date();
+        lastMinute = now.getMinutes();
+        setTime(now);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const greeting = useMemo(() => {
-    const h = hours;
+    const h = time.getHours();
     const lang = settings.language;
     const custom = settings.customGreetings;
 
@@ -57,7 +76,7 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
     }
 
     return t(defaultKey, lang);
-  }, [hours, settings.language, settings.customGreetings]);
+  }, [time.getHours(), settings.language, settings.customGreetings]);
 
   const showLunar = settings.showLunar ?? true;
 
@@ -101,7 +120,7 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
   const hasAnyDisplay = settings.showClock || settings.showDate || settings.showGreeting || (showLunar && !!lunarDate);
   if (!hasAnyDisplay) return null;
 
-  const isLight = isLightMode(settings.mode);
+  const isLight = propsIsLight !== undefined ? propsIsLight : isLightMode(settings.mode);
 
   // Determine clock color & shadow
   const clockColorStyle = resolvedColors ? { color: resolvedColors.clock } : undefined;
