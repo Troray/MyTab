@@ -57,15 +57,7 @@ export const LayoutSwitcher: React.FC<LayoutSwitcherProps> = ({
       <button
         type="button"
         onClick={() => onChange('grid')}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer ${
-          isGrid
-            ? isLight
-              ? 'bg-black/[0.08] text-slate-900 border border-black/10 shadow-xs font-semibold'
-              : 'bg-white/20 text-white shadow-sm font-semibold'
-            : isLight
-            ? 'text-slate-500 hover:text-slate-900'
-            : 'text-white/60 hover:text-white'
-        }`}
+        className={`glass-segment-item flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ${!isGrid ? "glass-segment-item-active" : ""}`}
       >
         <LayoutGrid className="w-3.5 h-3.5" />
         <span>{t('layoutGrid', settings.language)}</span>
@@ -74,15 +66,7 @@ export const LayoutSwitcher: React.FC<LayoutSwitcherProps> = ({
       <button
         type="button"
         onClick={() => onChange('board')}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer ${
-          !isGrid
-            ? isLight
-              ? 'bg-black/[0.08] text-slate-900 border border-black/10 shadow-xs font-semibold'
-              : 'bg-white/20 text-white shadow-sm font-semibold'
-            : isLight
-            ? 'text-slate-500 hover:text-slate-900'
-            : 'text-white/60 hover:text-white'
-        }`}
+        className={`glass-segment-item flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ${isGrid ? "glass-segment-item-active" : ""}`}
       >
         <Columns3 className="w-3.5 h-3.5" />
         <span>{t('layoutBoard', settings.language)}</span>
