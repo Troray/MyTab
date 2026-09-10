@@ -29,7 +29,8 @@ import {
   Columns3,
   AlignLeft,
   AlignCenter,
-  AlignRight
+  AlignRight,
+  Folder
 } from 'lucide-react';
 import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ProfileId, ProfileSyncSettings, ThemeSettings, WebdavConfig } from '../../types';
 import { PRESET_GRADIENTS, DEFAULT_SETTINGS, DEFAULT_PRIVATE_BACKGROUND_VALUE, isLightMode } from '../../utils/constants';
@@ -1235,6 +1236,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         onClick={() => handleSettingsChange({
                           showCardBackground: true,
                           showSiteTitle: true,
+                          showCategories: true,
                           cardSize: 110,
                           cardOpacity: 0.20,
                           iconSizeRatio: 0.42,
@@ -1389,22 +1391,40 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 </div>
 
                 {/* Show Search */}
- <div
- className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
- ? 'bg-black/[0.03] border-black/8 text-slate-900'
- : 'bg-white/[0.05] border-white/10 text-white'
- }`}
- >
- <div className="flex items-center gap-2.5">
- <Search className="w-4 h-4 opacity-70" />
- <span className="text-xs font-medium">{t('showSearchOnly', settings.language)}</span>
- </div>
- <ToggleSwitch
- checked={settings.showSearch ?? true}
- onChange={(checked) => handleSettingsChange({ showSearch: checked })}
- isLight={isLight}
- />
- </div>
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Search className="w-4 h-4 opacity-70" />
+                    <span className="text-xs font-medium">{t('showSearchOnly', settings.language)}</span>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.showSearch ?? true}
+                    onChange={(checked) => handleSettingsChange({ showSearch: checked })}
+                    isLight={isLight}
+                  />
+                </div>
+
+                {/* Show Categories */}
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Folder className="w-4 h-4 opacity-70" />
+                    <span className="text-xs font-medium">{t('showCategoriesOnly', settings.language)}</span>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.showCategories ?? true}
+                    onChange={(checked) => handleSettingsChange({ showCategories: checked })}
+                    isLight={isLight}
+                  />
+                </div>
 
  {/* Show Greeting & Custom Greetings Section */}
  <div
