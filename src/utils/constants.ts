@@ -213,12 +213,14 @@ export const DEFAULT_GIT_CONFIG: GitSyncConfig = {
 export function isLightMode(mode?: string): boolean {
   if (mode === 'light') return true;
   if (mode === 'dark') return false;
+  // When mode is 'system' or omitted, query the operating system preference directly
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return !window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  // SSR or fallback check
   if (typeof document !== 'undefined' && document.documentElement) {
     if (document.documentElement.classList.contains('light')) return true;
     if (document.documentElement.classList.contains('dark')) return false;
-  }
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    return !window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
   return false;
 }
