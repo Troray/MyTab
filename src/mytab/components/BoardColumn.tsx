@@ -56,11 +56,11 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
       typeof window !== 'undefined' &&
       !window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-  const [activeMenu, setActiveMenu] = useState<{
-    site: SiteItem;
-    x: number;
-    y: number;
-  } | null>(null);
+  const [activeMenu, setActiveMenu] = useState<
+    | { type: 'site'; site: SiteItem; x: number; y: number }
+    | { type: 'category'; x: number; y: number }
+    | null
+  >(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -99,7 +99,18 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
     const menuHeight = 88;
     const x = Math.min(e.clientX, window.innerWidth - menuWidth - 8);
     const y = Math.min(e.clientY, window.innerHeight - menuHeight - 8);
-    setActiveMenu({ site, x, y });
+    setActiveMenu({ type: 'site', site, x, y });
+  };
+
+  const handleCategoryContextMenu = (e: React.MouseEvent) => {
+    if (category.id === 'uncategorized') return;
+    e.preventDefault();
+    e.stopPropagation();
+    const menuWidth = 136;
+    const menuHeight = 88;
+    const x = Math.min(e.clientX, window.innerWidth - menuWidth - 8);
+    const y = Math.min(e.clientY, window.innerHeight - menuHeight - 8);
+    setActiveMenu({ type: 'category', x, y });
   };
 
   // Category Title Color: category.color (per-category custom) -> custom boardTitle -> preset palette fallback
@@ -171,7 +182,8 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
     >
       {/* Column Header */}
       <div
-        className={`group/header relative flex items-center pb-1.5 mb-1.5 border-b ${isDarkText ? 'border-black/[0.06]' : 'border-white/10'} ${
+        onContextMenu={handleCategoryContextMenu}
+        className={`group/header relative flex items-center pb-1.5 mb-1.5 border-b select-none ${isDarkText ? 'border-black/[0.06]' : 'border-white/10'} ${
           titleAlign === 'center'
             ? 'justify-center text-center'
             : titleAlign === 'right'
@@ -430,38 +442,77 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
               : 'border-white/15 shadow-black/50 text-white'
           }`}
         >
-          <button
-            type="button"
-            onClick={() => {
-              const siteToEdit = activeMenu.site;
-              setActiveMenu(null);
-              onEditSite(siteToEdit);
-            }}
-            className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
-              isLight
-                ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
-                : 'text-white/80 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <Pencil className="w-3.5 h-3.5" />
-            <span>{t('editSite', settings.language)}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const siteIdToDelete = activeMenu.site.id;
-              setActiveMenu(null);
-              onDeleteSite(siteIdToDelete);
-            }}
-            className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
-              isLight
-                ? 'text-red-600 hover:bg-red-50'
-                : 'text-red-400 hover:bg-red-500/10'
-            }`}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>{t('deleteSite', settings.language)}</span>
-          </button>
+          {activeMenu.type === 'site' ? (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  const siteToEdit = activeMenu.site;
+                  setActiveMenu(null);
+                  onEditSite(siteToEdit);
+                }}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+                  isLight
+                    ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                    : 'text-white/80 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span>{t('editSite', settings.language)}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const siteIdToDelete = activeMenu.site.id;
+                  setActiveMenu(null);
+                  onDeleteSite(siteIdToDelete);
+                }}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+                  isLight
+                    ? 'text-red-600 hover:bg-red-50'
+                    : 'text-red-400 hover:bg-red-500/10'
+                }`}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{t('deleteSite', settings.language)}</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveMenu(null);
+                  onEditCategory(category);
+                }}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+                  isLight
+                    ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                    : 'text-white/80 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span>{t('editCategory', settings.language)}</span>
+              </button>
+              {!category.isDefault && onDeleteCategory && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMenu(null);
+                    onDeleteCategory(category.id);
+                  }}
+                  className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+                    isLight
+                      ? 'text-red-600 hover:bg-red-50'
+                      : 'text-red-400 hover:bg-red-500/10'
+                  }`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>{t('deleteCategory', settings.language)}</span>
+                </button>
+              )}
+            </>
+          )}
         </div>,
         document.body
       )}

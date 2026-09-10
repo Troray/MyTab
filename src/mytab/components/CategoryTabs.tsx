@@ -153,18 +153,6 @@ const CategoryTabItem: React.FC<CategoryTabItemProps> = ({
             : 'text-slate-800 hover:text-black bg-white/70 hover:bg-white/90 border-black/8 shadow-sm shadow-black/[0.03]'
         }`}
       >
-        {/* Themed micro-dot indicator if color is present */}
-        {hasCustomColor && (
-          <span
-            className={`rounded-full shrink-0 transition-transform ${
-              isActive ? 'w-2 h-2 scale-105' : 'w-1.5 h-1.5 opacity-80 group-hover:opacity-100'
-            }`}
-            style={{
-              backgroundColor: color,
-              boxShadow: isActive ? `0 0 6px ${color}` : undefined,
-            }}
-          />
-        )}
 
         {/* Tab Name */}
         <span
