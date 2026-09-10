@@ -77,13 +77,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
  const isLight = propsIsLight ?? (typeof document !== 'undefined' && document.documentElement.classList.contains('light'));
 
  const confirmBtnClass =
- type === 'danger'
- ? 'bg-red-600 hover:bg-red-700 text-white shadow-sm'
- : type === 'warning'
- ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
- : isLight
- ? 'bg-slate-900 hover:bg-black text-white'
- : 'bg-white/20 hover:bg-white/30 text-white border border-white/25 font-semibold';
+    type === 'danger'
+      ? 'glass-btn-danger'
+      : type === 'warning'
+      ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
+      : 'glass-btn-primary';
   const content = (
   <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
  {/* Frosted Glass Backdrop */}
@@ -131,11 +129,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
  <button
  type="button"
  onClick={onCancel}
- className={`px-4 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${
- isLight
- ? 'bg-black/5 hover:bg-black/10 text-slate-700'
- : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white'
- }`}
+ className="glass-btn-ghost px-4 py-2 rounded-xl text-xs font-medium"
  >
  {cancelText || t('cancel', language)}
  </button>
