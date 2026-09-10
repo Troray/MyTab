@@ -20,6 +20,7 @@ export interface Translation {
   confirm: string;
   confirmDelete: string;
   allCategories: string;
+  uncategorized: string;
   addCategory: string;
   editCategory: string;
   deleteCategory: string;
@@ -53,11 +54,16 @@ export interface Translation {
   iconRatioLow: string;
   iconRatioMed: string;
   iconRatioHigh: string;
+  iconSpacingTitle: string;
+  iconSpacingCompact: string;
+  iconSpacingDefault: string;
+  iconSpacingLoose: string;
   maxCardsPerRow: string;
   cardsPerRowCompact: string;
   cardsPerRowDefault: string;
   cardsPerRowWide: string;
   cardLayoutAdvanced: string;
+  resetCardLayout: string;
   cardsPerRowUnit: string;
   bgLocal: string;
   resetDefaultWallpaper: string;
@@ -74,6 +80,11 @@ export interface Translation {
   showGreetingOnly: string;
   showDateOnly: string;
   showLunarOnly: string;
+  showCategoriesOnly: string;
+  showCardBackground: string;
+  showCardBackgroundDesc: string;
+  showSiteTitle: string;
+  showSiteTitleDesc: string;
   customGreetings: string;
   customGreetingsDesc: string;
   importGreetings: string;
@@ -409,6 +420,29 @@ export interface Translation {
   errorBoundaryTitle: string;
   errorBoundaryDesc: string;
   reloadPage: string;
+  layoutMode: string;
+  layoutGrid: string;
+  layoutBoard: string;
+  categoryColor: string;
+  categoryColorCustom: string;
+  textColorTargetBoard: string;
+  textColorTargetBoardTitle: string;
+  addSiteToCategory: string;
+  emptyCategorySites: string;
+  editBoard: string;
+  doneEditingBoard: string;
+  boardColumnsTitle: string;
+  boardColumnsUnit: string;
+  boardGapTitle: string;
+  boardTitleAlignTitle: string;
+  alignLeft: string;
+  alignCenter: string;
+  alignRight: string;
+  boardTitleSizeTitle: string;
+  boardItemSpacingTitle: string;
+  boardItemSpacingCompact: string;
+  boardItemSpacingDefault: string;
+  boardItemSpacingLoose: string;
 }
 
 export type TranslationKey = keyof Translation;
