@@ -54,6 +54,8 @@ export interface ResolvedTextColors {
   search: string;
   tabs: string;
   cards: string;
+  boardText: string;
+  boardTitle: string;
   clockShadow: string;
   dateShadow: string;
   greetingShadow: string;
@@ -433,7 +435,7 @@ function computeComponentReadability(
 function computeCardsReadability(
   imgData: Uint8ClampedArray,
   canvasWidth: number,
-  canvasHeight: number,
+  _canvasHeight: number,
   x0: number,
   x1: number,
   y0: number,
@@ -673,6 +675,55 @@ export function analyzeWallpaperLuminance(
   };
 }
 
+/**
+ * 基于物理 Alpha 混合计算卡片容器表面的有效亮度
+ * L_composite = L_card * alpha + L_wallpaper * (1 - alpha)
+ * 并结合人眼明暗对比度感官阈值判定最佳文本颜色与抗眩光微光晕
+ */
+function getCompositeSurfaceReadability(
+  wallpaperLum: number,
+  isLightCard: boolean,
+  cardOpacity: number,
+  hasCardBackground: boolean,
+  wallpaperComp: ComponentReadability
+): {
+  textColor: '#0f172a' | '#ffffff';
+  shadow: string;
+} {
+  // 若未开启卡片背景，文本直接悬浮于壁纸上，完全依从壁纸分析结果
+  if (!hasCardBackground || cardOpacity <= 0.03) {
+    const isWhiteText = wallpaperComp.recommendedColor === '#ffffff';
+    return {
+      textColor: isWhiteText ? '#ffffff' : '#0f172a',
+      shadow: isWhiteText
+        ? 'drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]'
+        : 'drop-shadow-none',
+    };
+  }
+
+  // 开启卡片背景时计算物理合成明度
+  const cardLum = isLightCard ? 255 : 18;
+  const effectiveLum = cardLum * cardOpacity + wallpaperLum * (1 - cardOpacity);
+
+  // 临界阈值判定：经过人眼反差实验，当有效明度 >= 148 时黑字最清晰；
+  // < 148 时白字配合微光晕最清晰，避免 30%~50% 半透磨砂区间出现字迹“发虚”的低对比度现象
+  const isLightSurface = effectiveLum >= 148;
+
+  if (isLightSurface) {
+    return {
+      textColor: '#0f172a',
+      shadow: 'drop-shadow-none',
+    };
+  } else {
+    // 偏暗合成底：采用高质感亮白字，微光晕根据底层反差自适应
+    const shadowAlpha = Math.min(0.85, Math.max(0.35, (1 - effectiveLum / 148) * 0.9));
+    return {
+      textColor: '#ffffff',
+      shadow: `drop-shadow-[0_1px_2px_rgba(0,0,0,${shadowAlpha.toFixed(2)})]`,
+    };
+  }
+}
+
 // 统一解析各个组件的最终字色与抗眩光微投影
 export function resolveTextColors(
   settings: ThemeSettings,
@@ -698,6 +749,8 @@ export function resolveTextColors(
       search: '#ffffff',
       tabs: '#ffffff',
       cards: '#ffffff',
+      boardText: '#ffffff',
+      boardTitle: '#ffffff',
       clockShadow: 'drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]',
       dateShadow: 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]',
       greetingShadow: 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]',
@@ -731,6 +784,8 @@ export function resolveTextColors(
       search: '#1e293b',
       tabs: '#1e293b',
       cards: '#0f172a',
+      boardText: '#334155',
+      boardTitle: '#0f172a',
       clockShadow: 'drop-shadow-sm',
       dateShadow: 'drop-shadow-none',
       greetingShadow: 'drop-shadow-none',
@@ -764,6 +819,8 @@ export function resolveTextColors(
     const searchColor = custom.search || defaultColor;
     const tabsColor = custom.tabs || defaultColor;
     const cardsColor = custom.cards || defaultColor;
+    const boardTextColor = custom.boardText || defaultColor;
+    const boardTitleColor = custom.boardTitle || defaultColor;
 
     const isClockDark = parseHexLuminance(clockColor) < 135;
     const isDateDark = parseHexLuminance(dateColor) < 135;
@@ -779,6 +836,8 @@ export function resolveTextColors(
       search: searchColor,
       tabs: tabsColor,
       cards: cardsColor,
+      boardText: boardTextColor,
+      boardTitle: boardTitleColor,
       clockShadow: isClockDark ? 'drop-shadow-none' : 'drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]',
       dateShadow: isDateDark ? 'drop-shadow-none' : 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]',
       greetingShadow: isGreetingDark ? 'drop-shadow-none' : 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]',
@@ -837,19 +896,47 @@ export function resolveTextColors(
     }
   };
 
+  // 物理 Alpha 混合与复合表面真实明度推导 (True Physical Alpha Blending & Contrast Engine):
+  const isLightMode = activeThemeMode === 'light';
+  const wallpaperLum = cards.luminance ?? 128;
+
+  // 1. 看板模式 (Board Mode) 表面复合可读性推导
+  const showBoardCardBg = settings.boardShowCardBackground !== false;
+  const boardOpacity = settings.boardCardOpacity ?? 0.20;
+  const boardSurface = getCompositeSurfaceReadability(
+    wallpaperLum,
+    isLightMode,
+    boardOpacity,
+    showBoardCardBg,
+    cards
+  );
+
+  // 2. 网格模式 (Grid Mode) 表面复合可读性推导
+  const showGridCardBg = settings.showCardBackground !== false;
+  const gridOpacity = settings.cardOpacity ?? 0.20;
+  const gridSurface = getCompositeSurfaceReadability(
+    wallpaperLum,
+    isLightMode,
+    gridOpacity,
+    showGridCardBg,
+    cards
+  );
+
   return {
     clock: clock.recommendedColor,
     date: clock.recommendedColor === '#ffffff' ? 'rgba(255, 255, 255, 0.95)' : '#334155',
     greeting: greeting.recommendedColor === '#ffffff' ? 'rgba(255, 255, 255, 0.95)' : '#334155',
     search: search.recommendedColor === '#ffffff' ? 'rgba(255, 255, 255, 0.92)' : '#1e293b',
     tabs: tabs.recommendedColor,
-    cards: cards.recommendedColor,
+    cards: gridSurface.textColor,
+    boardText: boardSurface.textColor === '#0f172a' ? '#334155' : 'rgba(255, 255, 255, 0.90)',
+    boardTitle: boardSurface.textColor,
     clockShadow: getAdaptiveShadow(clock, 'large'),
     dateShadow: getAdaptiveShadow(date, 'medium'),
     greetingShadow: getAdaptiveShadow(greeting, 'medium'),
     searchShadow: getAdaptiveShadow(search, 'medium'),
     tabsShadow: getAdaptiveShadow(tabs, 'small'),
-    cardShadow: getAdaptiveShadow(cards, 'small'),
+    cardShadow: gridSurface.shadow,
     clockProtection: clock.protectionLevel,
     dateProtection: date.protectionLevel,
     greetingProtection: greeting.protectionLevel,
@@ -861,9 +948,9 @@ export function resolveTextColors(
     greetingIsDark: greeting.recommendedColor === '#ffffff',
     searchIsDark: search.recommendedColor === '#ffffff',
     tabsIsDark: tabs.recommendedColor === '#ffffff',
-    cardsIsDark: cards.recommendedColor === '#ffffff',
+    cardsIsDark: gridSurface.textColor === '#ffffff',
     topIsDark: clock.recommendedColor === '#ffffff',
     centerIsDark: search.recommendedColor === '#ffffff',
-    bottomIsDark: cards.recommendedColor === '#ffffff',
+    bottomIsDark: gridSurface.textColor === '#ffffff',
   };
 }

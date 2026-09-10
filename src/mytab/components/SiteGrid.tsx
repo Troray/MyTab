@@ -184,9 +184,14 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
     }, 550);
   }, [onReorderSites]);
 
-  const gap = Math.max(12, Math.round(cardSize * 0.14));
+  const showCardBg = settings.showCardBackground !== false;
+  const iconSpacing = settings.iconSpacing ?? 20;
+  const iconRatio = settings.iconSizeRatio || 0.42;
+  const iconBoxSize = Math.max(24, Math.round(cardSize * iconRatio));
+  const cellWidth = showCardBg ? cardSize : Math.max(iconBoxSize + 12, Math.round(iconBoxSize + iconSpacing * 0.6));
+  const gap = showCardBg ? Math.max(12, Math.round(cardSize * 0.14)) : iconSpacing;
   const maxPerRow = settings.maxCardsPerRow || 8;
-  const gridMaxWidth = maxPerRow * cardSize + (maxPerRow - 1) * gap;
+  const gridMaxWidth = maxPerRow * cellWidth + (maxPerRow - 1) * gap;
 
   return (
     <div

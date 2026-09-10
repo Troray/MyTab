@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
-import { Settings as SettingsIcon, Plus, Lock } from 'lucide-react';
+import { Settings as SettingsIcon, Plus, Lock, Pencil, Check } from 'lucide-react';
 import { t } from '../locales';
 import { AppState, Category, GitSyncConfig, ProfileSyncSettings, SiteItem, ThemeSettings, WebdavConfig } from '../types';
 import {
@@ -18,8 +18,9 @@ import { ClockHeader } from './components/ClockHeader';
 import { SearchBar } from './components/SearchBar';
 import { CategoryTabs } from './components/CategoryTabs';
 import { SiteGrid } from './components/SiteGrid';
+import { CategoryBoard } from './components/CategoryBoard';
 import { urlToBase64Icon } from '../services/metadata';
-import { DEFAULT_SETTINGS } from '../utils/constants';
+import { DEFAULT_SETTINGS, isLightMode } from '../utils/constants';
 import { ConfirmModal } from './components/ConfirmModal';
 import { analyzeWallpaperLuminance, resolveTextColors, WallpaperLuminance, DEFAULT_LUMINANCE } from '../utils/wallpaperAnalyzer';
 import { TextColorCustomizer } from './components/TextColorCustomizer';
@@ -38,6 +39,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const [editingSite, setEditingSite] = useState<SiteItem | null>(null);
   const [deletingSite, setDeletingSite] = useState<SiteItem | null>(null);
   const [isCustomizingColors, setIsCustomizingColors] = useState(false);
+  const [isBoardEditing, setIsBoardEditing] = useState(false);
   const [wallpaperLuminance, setWallpaperLuminance] = useState<WallpaperLuminance>(DEFAULT_LUMINANCE);
 
   // Track OS system theme dynamic changes
@@ -287,8 +289,8 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       }
       if (appState?.profileId !== 'private') {
         localStorage.setItem('mytab_bg_cache', css);
-        const isLightMode = currentSettings.mode === 'light';
-        localStorage.setItem('mytab_theme_mode', isLightMode ? 'light' : 'dark');
+        const isEffectiveLight = isLightMode(currentSettings.mode);
+        localStorage.setItem('mytab_theme_mode', isEffectiveLight ? 'light' : 'dark');
       }
 
       // Keep document.body in sync with current background and remove stale init style
@@ -320,10 +322,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     const hiddenInAllCatIds = new Set(
       categories.filter((c) => c.showInAll === false).map((c) => c.id)
     );
-    return activeCategoryId === 'all'
+    const effectiveCatId = (settings.showCategories ?? true) ? activeCategoryId : 'all';
+    return effectiveCatId === 'all'
       ? sites.filter((s) => !hiddenInAllCatIds.has(s.categoryId))
-      : sites.filter((s) => s.categoryId === activeCategoryId);
-  }, [sites, categories, activeCategoryId]);
+      : sites.filter((s) => s.categoryId === effectiveCatId);
+  }, [sites, categories, activeCategoryId, settings.showCategories]);
 
   // Memoized: Compute count of sites per category
   const siteCounts = useMemo(() => {
@@ -349,9 +352,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         s.id === editingSite.id ? ({ ...s, ...siteData, updatedAt: now } as SiteItem) : s
       );
     } else {
-      const fallbackCatId = activeCategoryId !== 'all'
-        ? activeCategoryId
-        : (categories.find((c) => c.id !== 'all')?.id || 'all');
+      const fallbackCatId =
+        activeCategoryId !== 'all' && activeCategoryId !== 'uncategorized' && categories.some((c) => c.id === activeCategoryId)
+          ? activeCategoryId
+          : (categories.find((c) => c.id !== 'all')?.id || 'all');
       const newSite: SiteItem = {
         id: `site-${now}`,
         title: siteData.title || '',
@@ -387,25 +391,37 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   }, [sites, deletingSite]);
 
   const handleReorderSites = useCallback(async (reorderedSites: SiteItem[]) => {
-    const reorderedIds = new Set(reorderedSites.map((s) => s.id));
-    const reorderedMap = new Map(reorderedSites.map((s, idx) => [s.id, idx]));
-    let reorderedIdx = 0;
-    const updated = sites.map((site) => {
-      if (reorderedIds.has(site.id)) {
-        const nextSite = reorderedSites[reorderedIdx++];
-        return { ...nextSite, sortOrder: reorderedMap.get(nextSite.id) ?? 0 };
-      }
-      return site;
+    const reorderedMap = new Map(reorderedSites.map((s) => [s.id, s]));
+    const isCrossCategory = reorderedSites.some((s) => {
+      const orig = sites.find((origSite) => origSite.id === s.id);
+      return orig && orig.categoryId !== s.categoryId;
     });
+
+    let updated: SiteItem[];
+    if (isCrossCategory) {
+      updated = sites.map((site) => (reorderedMap.has(site.id) ? reorderedMap.get(site.id)! : site));
+    } else {
+      const reorderedIds = new Set(reorderedSites.map((s) => s.id));
+      const reorderedIdxMap = new Map(reorderedSites.map((s, idx) => [s.id, idx]));
+      let reorderedIdx = 0;
+      updated = sites.map((site) => {
+        if (reorderedIds.has(site.id)) {
+          const nextSite = reorderedSites[reorderedIdx++];
+          return { ...nextSite, sortOrder: reorderedIdxMap.get(nextSite.id) ?? 0 };
+        }
+        return site;
+      });
+    }
     await saveSites(updated);
     setAppState((prev) => (prev ? { ...prev, sites: updated } : null));
   }, [sites]);
 
-  const handleAddCategory = async (data: { name: string; showInAll: boolean }) => {
+  const handleAddCategory = async (data: { name: string; showInAll: boolean; color?: string }) => {
     const now = Date.now();
     const newCat: Category = {
       id: `cat-${now}`,
       name: data.name || '',
+      color: data.color,
       isDefault: false,
       showInAll: data.showInAll ?? true,
       sortOrder: categories.length,
@@ -522,11 +538,25 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setIsSiteModalOpen(true);
   }, []);
 
+  const handleOpenSite = useCallback((url: string) => {
+    if (settings.openInNewTab) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      window.location.href = url;
+    }
+  }, [settings.openInNewTab]);
+
+  const handleAddSiteToCategory = useCallback((categoryId: string) => {
+    setAppState((prev) => prev ? { ...prev, activeCategoryId: categoryId } : null);
+    setEditingSite(null);
+    setIsSiteModalOpen(true);
+  }, []);
+
   if (!appState) {
     return null;
   }
 
-  const isLight = settings.mode === 'light';
+  const isLight = isLightMode(settings.mode);
 
   return (
     <div
@@ -580,32 +610,55 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           )}
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5">
+          {/* Board Edit Mode Toggle (only in board layout mode) */}
+          {settings.layoutMode === 'board' && (
+            <button
+              onClick={() => setIsBoardEditing((prev) => !prev)}
+              className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                isBoardEditing
+                  ? 'bg-amber-500/15 text-amber-500 dark:text-amber-400'
+                  : isLight
+                  ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
+                  : 'text-white/40 hover:text-white hover:bg-white/10'
+              }`}
+              title={isBoardEditing ? t('doneEditingBoard', settings.language) : t('editBoard', settings.language)}
+            >
+              {isBoardEditing ? (
+                <Check className="w-3.5 h-3.5" />
+              ) : (
+                <Pencil className="w-3.5 h-3.5" />
+              )}
+            </button>
+          )}
+
           {/* Quick Add Button */}
           <button
             onClick={() => {
               setEditingSite(null);
               setIsSiteModalOpen(true);
             }}
-            className={`p-2.5 rounded-xl border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${isLight
-                ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
-                : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
-              }`}
+            className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+              isLight
+                ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
+                : 'text-white/40 hover:text-white hover:bg-white/10'
+            }`}
             title={t('addSite', settings.language)}
           >
-            <Plus className="w-4.5 h-4.5" />
+            <Plus className="w-3.5 h-3.5" />
           </button>
 
           {/* Settings Drawer Trigger */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className={`p-2.5 rounded-xl border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${isLight
-                ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
-                : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
-              }`}
+            className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+              isLight
+                ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
+                : 'text-white/40 hover:text-white hover:bg-white/10'
+            }`}
             title={t('settingsTitle', settings.language)}
           >
-            <SettingsIcon className="w-4.5 h-4.5" />
+            <SettingsIcon className="w-3.5 h-3.5" />
           </button>
         </div>
       </header>
@@ -626,29 +679,52 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           />
         )}
 
-        {/* Category Tabs */}
-        <CategoryTabs
-          categories={categories}
-          resolvedColors={resolvedColors}
-          activeCategoryId={activeCategoryId}
-          settings={settings}
-          siteCounts={siteCounts}
-          onSelectCategory={handleSelectCategory}
-          onAddCategory={handleAddCategory}
-          onUpdateCategory={handleUpdateCategory}
-          onDeleteCategory={handleDeleteCategory}
-        />
+        {/* Content View: Category Board vs Icon Grid */}
+        {settings.layoutMode === 'board' ? (
+          <CategoryBoard
+            categories={categories}
+            sites={sites}
+            settings={settings}
+            resolvedColors={resolvedColors}
+            isEditing={isBoardEditing}
+            onOpenSite={handleOpenSite}
+            onEditSite={handleOpenEditSite}
+            onDeleteSite={handleDeleteSite}
+            onAddSiteToCategory={handleAddSiteToCategory}
+            onAddCategory={handleAddCategory}
+            onUpdateCategory={handleUpdateCategory}
+            onDeleteCategory={handleDeleteCategory}
+            onReorderSites={handleReorderSites}
+          />
+        ) : (
+          <>
+            {/* Category Tabs */}
+            {(settings.showCategories ?? true) && (
+              <CategoryTabs
+                categories={categories}
+                resolvedColors={resolvedColors}
+                activeCategoryId={activeCategoryId}
+                settings={settings}
+                siteCounts={siteCounts}
+                onSelectCategory={handleSelectCategory}
+                onAddCategory={handleAddCategory}
+                onUpdateCategory={handleUpdateCategory}
+                onDeleteCategory={handleDeleteCategory}
+              />
+            )}
 
-        {/* Shortcuts Grid */}
-        <SiteGrid
-          sites={filteredSites}
-          settings={settings}
-          resolvedColors={resolvedColors}
-          onEditSite={handleOpenEditSite}
-          onDeleteSite={handleDeleteSite}
-          onAddSite={handleOpenAddSite}
-          onReorderSites={handleReorderSites}
-        />
+            {/* Shortcuts Grid */}
+            <SiteGrid
+              sites={filteredSites}
+              settings={settings}
+              resolvedColors={resolvedColors}
+              onEditSite={handleOpenEditSite}
+              onDeleteSite={handleDeleteSite}
+              onAddSite={handleOpenAddSite}
+              onReorderSites={handleReorderSites}
+            />
+          </>
+        )}
       </main>
 
       {/* Footer Minimalist Credit */}

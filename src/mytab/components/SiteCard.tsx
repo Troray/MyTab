@@ -58,7 +58,11 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
   const iconSrc = imgError || !site.icon ? generateFallbackIcon(site.title || site.url) : site.icon;
   const cardSize = settings.cardSize || 110;
   const iconRatio = settings.iconSizeRatio || 0.42;
-  const isLight = settings.mode === 'light';
+  const isLight =
+    settings.mode === 'light' ||
+    (settings.mode === 'system' &&
+      typeof window !== 'undefined' &&
+      !window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   // Responsive scaling calculations based on cardSize and custom icon ratio
   const iconBoxSize = Math.max(24, Math.round(cardSize * iconRatio));
@@ -96,6 +100,14 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
         : 'ios-jiggle-odd'
       : '';
 
+  const showCardBg = settings.showCardBackground !== false;
+  const showTitle = settings.showSiteTitle !== false;
+  const iconSpacing = settings.iconSpacing ?? 20;
+
+  // When card background is off, cell wraps the icon compactly according to icon spacing
+  const cellWidth = showCardBg ? cardSize : Math.max(iconBoxSize + 12, Math.round(iconBoxSize + iconSpacing * 0.6));
+  const cellHeight = showCardBg ? cardSize : Math.round(iconBoxSize + (showTitle ? 28 : 10));
+
   return (
     <div
       ref={ref}
@@ -111,8 +123,8 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
       onDragEnd={onDragEnd}
       onClick={handleClick}
       style={{
-        width: `${cardSize}px`,
-        minHeight: `${cardSize}px`,
+        width: `${cellWidth}px`,
+        minHeight: `${cellHeight}px`,
       }}
       className={`relative shrink-0 select-none cursor-grab active:cursor-grabbing ${
         isDragging ? 'opacity-30 scale-95 will-change-transform' : isJustDropped ? 'will-change-transform' : ''
@@ -122,8 +134,10 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
       <div
         style={{
           width: '100%',
-          minHeight: `${cardSize}px`,
-          background: isDragging
+          minHeight: `${cellHeight}px`,
+          background: !showCardBg
+            ? 'transparent'
+            : isDragging
             ? isLight
               ? 'rgba(0, 0, 0, 0.06)'
               : 'rgba(255, 255, 255, 0.15)'
@@ -132,15 +146,17 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
               ? 'rgba(0, 0, 0, 0.08)'
               : 'rgba(255, 255, 255, 0.18)'
             : isLight
-            ? `rgba(255, 255, 255, ${Math.max(0.45, Math.min(0.96, settings.cardOpacity + 0.42))})`
+            ? `rgba(255, 255, 255, ${settings.cardOpacity})`
             : `rgba(255, 255, 255, ${settings.cardOpacity})`,
-          padding: `${paddingPx}px`,
+          padding: showCardBg ? `${paddingPx}px` : '4px 2px',
         }}
         className={`group relative flex flex-col items-center justify-center rounded-2xl border duration-0 h-full w-full ${jiggleClass} ${
           isDragging
             ? 'ios-dragged border-amber-500/60 ring-2 ring-amber-500/30'
             : isJustDropped
             ? 'ios-drop-spring border-amber-500/80 ring-2 ring-amber-500/40'
+            : !showCardBg
+            ? 'border-transparent hover:border-transparent'
             : isLight
             ? 'border-white/80 hover:border-white shadow-md shadow-black/[0.04] hover:shadow-lg hover:shadow-black/10 hover:bg-white/95 hover:scale-[1.01]'
             : 'border-white/10 hover:border-white/30 hover:bg-white/10 hover:shadow-lg hover:shadow-black/40 hover:scale-[1.01]'
@@ -149,10 +165,16 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
         {/* Icon Inset Container */}
         <div
           style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px` }}
-          className={`rounded-xl flex items-center justify-center shadow-inner overflow-hidden mb-2 duration-0 group-hover:scale-105 shrink-0 pointer-events-none ${
-            isLight
-              ? 'bg-white/80 border border-black/[0.06]'
-              : 'bg-white/[0.08] border border-white/10'
+          className={`rounded-xl flex items-center justify-center overflow-hidden shrink-0 pointer-events-none transition-all duration-200 group-hover:scale-105 ${
+            showTitle ? 'mb-2' : ''
+          } ${
+            showCardBg
+              ? isLight
+                ? 'bg-white/80 border border-black/[0.06] shadow-inner'
+                : 'bg-white/[0.08] border border-white/10 shadow-inner'
+              : isLight
+              ? 'bg-white/90 border border-black/[0.08] shadow-md shadow-black/10 group-hover:shadow-lg'
+              : 'bg-white/[0.14] border border-white/15 shadow-md shadow-black/30 group-hover:shadow-lg group-hover:shadow-black/50'
           }`}
         >
           <img
@@ -168,18 +190,20 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
         </div>
 
         {/* Site Title */}
-        <span
-          draggable={false}
-          style={{
-            fontSize: cardSize < 95 ? '11px' : cardSize > 130 ? '14px' : '12px',
-            color: resolvedColors?.cards,
-          }}
-          className={`font-medium truncate max-w-full text-center tracking-wide px-1 select-none pointer-events-none duration-0 ${
-            resolvedColors?.cardShadow || (isLight ? 'text-slate-800 group-hover:text-black' : 'text-white/90 group-hover:text-white drop-shadow')
-          }`}
-        >
-          {site.title || 'Untitled'}
-        </span>
+        {showTitle && (
+          <span
+            draggable={false}
+            style={{
+              fontSize: cardSize < 95 ? '11px' : cardSize > 130 ? '14px' : '12px',
+              color: resolvedColors?.cards,
+            }}
+            className={`font-medium truncate max-w-full text-center tracking-wide px-1 select-none pointer-events-none duration-0 ${
+              resolvedColors?.cardShadow || (isLight ? 'text-slate-800 group-hover:text-black' : 'text-white/90 group-hover:text-white drop-shadow')
+            }`}
+          >
+            {site.title || 'Untitled'}
+          </span>
+        )}
 
         {/* Action Menu Button */}
         <div

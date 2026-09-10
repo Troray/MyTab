@@ -13,6 +13,7 @@ export interface Category {
   id: string;
   name: string;
   sortOrder: number;
+  color?: string;
   isDefault?: boolean;
   showInAll?: boolean;
   createdAt?: number;
@@ -37,6 +38,8 @@ export interface CustomTextColors {
   search?: string;
   tabs?: string;
   cards?: string;
+  boardText?: string;
+  boardTitle?: string;
 }
 
 import { Locale } from '../locales';
@@ -51,10 +54,11 @@ export interface CustomGreetings {
 
 export interface ThemeSettings {
   mode: ThemeMode;
+  layoutMode?: 'grid' | 'board';
   backgroundType: BackgroundType;
   backgroundValue: string;
   cardBlur?: number; // 废弃：保留可选兼容旧版存储
-  cardOpacity: number; // 0.1 ~ 1.0 (default 0.3)
+  cardOpacity: number; // 0.1 ~ 1.0 (default 0.2)
   cardSize: number; // in px or scale: e.g. 90 ~ 160 (default 110)
   iconSizeRatio?: number; // 0.28 ~ 0.68, default 0.42
   maxCardsPerRow?: number; // e.g. 4 ~ 12 (default 8)
@@ -66,6 +70,17 @@ export interface ThemeSettings {
   showGreeting: boolean;
   showDate: boolean;
   showLunar?: boolean;
+  showCardBackground?: boolean;
+  showSiteTitle?: boolean;
+  showCategories?: boolean;
+  iconSpacing?: number; // Spacing/compactness between icons in icon-only mode (8 ~ 48px, default 20)
+  boardColumnsPerRow?: number; // Board view columns per row (2 ~ 8, default 5)
+  boardCardGap?: number; // Board view gap between cards (8 ~ 32px, default 16)
+  boardTitleAlign?: 'left' | 'center' | 'right'; // Board category title alignment (default 'left')
+  boardTitleSize?: number; // Board category title font size (12 ~ 22px, default 15)
+  boardItemSpacing?: number; // Board site item vertical spacing (2 ~ 14px, default 6)
+  boardShowCardBackground?: boolean; // Board view show card background (default true)
+  boardCardOpacity?: number; // Board view card opacity (0.05 ~ 0.95, default 0.20)
   language: Locale;
   textColorMode?: TextColorMode;
   customTextColors?: CustomTextColors;

@@ -4,6 +4,7 @@ import { Category, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { CategoryModal } from './CategoryModal';
 import { t } from '../../utils/i18n';
+import { isLightMode } from '../../utils/constants';
 
 interface CategoryTabsProps {
  categories: Category[];
@@ -12,7 +13,7 @@ interface CategoryTabsProps {
  resolvedColors?: ResolvedTextColors;
  siteCounts: Record<string, number>;
  onSelectCategory: (id: string) => void;
- onAddCategory: (data: { name: string; showInAll: boolean }) => void;
+ onAddCategory: (data: { name: string; showInAll: boolean; color?: string }) => void;
  onUpdateCategory: (id: string, updates: Partial<Category>) => void;
  onDeleteCategory: (id: string) => void;
 }
@@ -30,12 +31,12 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
 }) => {
  // modalCategory: undefined -> closed; null -> add mode; Category -> edit mode
  const [modalCategory, setModalCategory] = useState<Category | null | undefined>(undefined);
-  const isLight = settings.mode === 'light';
+  const isLight = isLightMode(settings.mode);
   const isDarkWallpaper = resolvedColors
     ? resolvedColors.tabsIsDark
     : !isLight;
 
-  const handleSaveCategory = (catId: string | null, data: { name: string; showInAll: boolean }) => {
+  const handleSaveCategory = (catId: string | null, data: { name: string; showInAll: boolean; color?: string }) => {
     if (catId) {
       onUpdateCategory(catId, data);
     } else {
@@ -82,7 +83,9 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
               }
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs md:text-sm font-medium transition-all duration-150 cursor-pointer select-none active:scale-95 ${
                 isActive
-                  ? 'bg-white text-slate-950 shadow-md border border-black/10 font-semibold'
+                  ? isDarkWallpaper
+                    ? 'bg-white/20 text-white shadow-sm border border-white/25 font-semibold backdrop-blur-md'
+                    : 'bg-white text-slate-900 shadow-sm border border-black/10 font-semibold'
                   : isDarkWallpaper
                   ? 'text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border border-white/15 shadow-xs'
                   : 'text-slate-800 hover:text-black bg-white/75 hover:bg-white/95 border border-black/8 shadow-sm shadow-black/[0.03]'
@@ -98,7 +101,9 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
                 style={!isActive && resolvedColors?.tabs ? { color: resolvedColors.tabs } : undefined}
                 className={`text-[10px] px-1.5 py-0.2 rounded-full font-tabular ${
                   isActive
-                    ? 'bg-black/15 text-slate-900 font-semibold'
+                    ? isDarkWallpaper
+                      ? 'bg-white/20 text-white font-semibold'
+                      : 'bg-black/10 text-slate-900 font-semibold'
                     : isDarkWallpaper
                     ? 'bg-white/15 text-white/80'
                     : 'bg-black/[0.05] text-slate-600'
