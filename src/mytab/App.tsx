@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
-import { Settings as SettingsIcon, Plus, Lock, Pencil, Check } from 'lucide-react';
+import { Settings as SettingsIcon, Plus, Lock, Pencil, Check, LayoutGrid, Columns3 } from 'lucide-react';
 import { t } from '../locales';
 import { AppState, Category, GitSyncConfig, ProfileSyncSettings, SiteItem, ThemeSettings, WebdavConfig } from '../types';
 import {
@@ -501,6 +501,16 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         ...cleanNew,
         updatedAt: Date.now(),
       };
+      if (cleanNew.mode !== undefined && typeof document !== 'undefined' && document.documentElement) {
+        const isDark = cleanNew.mode === 'dark' || (cleanNew.mode === 'system' && systemIsDark);
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        } else {
+          document.documentElement.classList.add('light');
+          document.documentElement.classList.remove('dark');
+        }
+      }
       saveSettings(cleanNew, prev.profileId).catch((e) =>
         console.error('[MyTab] Failed to save settings:', e)
       );
@@ -631,6 +641,32 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               )}
             </button>
           )}
+
+          {/* Quick Layout Switcher (Grid <-> Board) */}
+          <button
+            onClick={() =>
+              handleUpdateSettings({
+                ...settings,
+                layoutMode: settings.layoutMode === 'board' ? 'grid' : 'board',
+              })
+            }
+            className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+              isLight
+                ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
+                : 'text-white/40 hover:text-white hover:bg-white/10'
+            }`}
+            title={
+              settings.layoutMode === 'board'
+                ? t('layoutGrid', settings.language)
+                : t('layoutBoard', settings.language)
+            }
+          >
+            {settings.layoutMode === 'board' ? (
+              <LayoutGrid className="w-3.5 h-3.5" />
+            ) : (
+              <Columns3 className="w-3.5 h-3.5" />
+            )}
+          </button>
 
           {/* Quick Add Button */}
           <button
