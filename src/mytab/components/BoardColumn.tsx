@@ -111,7 +111,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
           ? isLight
             ? isEditing
               ? 'border-blue-500/30 ring-1 ring-blue-500/20 shadow-md shadow-black/[0.04]'
-              : 'border-white/80 hover:border-white shadow-md shadow-black/[0.04] hover:shadow-lg hover:shadow-black/10 hover:scale-[1.01]'
+              : 'border-transparent hover:border-transparent shadow-md shadow-black/[0.04] hover:shadow-lg hover:shadow-black/10 hover:scale-[1.01]'
             : isEditing
               ? 'border-blue-400/30 ring-1 ring-blue-400/20 shadow-md shadow-black/20'
               : 'border-white/10 hover:border-white/30 shadow-md shadow-black/20 hover:shadow-lg hover:shadow-black/40 hover:scale-[1.01]'
