@@ -41,6 +41,30 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const [isCustomizingColors, setIsCustomizingColors] = useState(false);
   const [isBoardEditing, setIsBoardEditing] = useState(false);
   const [wallpaperLuminance, setWallpaperLuminance] = useState<WallpaperLuminance>(DEFAULT_LUMINANCE);
+  const [isLayoutHovered, setIsLayoutHovered] = useState(false);
+  const layoutHoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLayoutMouseEnter = () => {
+    if (layoutHoverTimeoutRef.current) {
+      clearTimeout(layoutHoverTimeoutRef.current);
+      layoutHoverTimeoutRef.current = null;
+    }
+    setIsLayoutHovered(true);
+  };
+
+  const handleLayoutMouseLeave = () => {
+    layoutHoverTimeoutRef.current = setTimeout(() => {
+      setIsLayoutHovered(false);
+    }, 180);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (layoutHoverTimeoutRef.current) {
+        clearTimeout(layoutHoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Track OS system theme dynamic changes
   const [systemIsDark, setSystemIsDark] = useState(() =>
@@ -621,52 +645,71 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* Board Edit Mode Toggle (only in board layout mode) */}
-          {settings.layoutMode === 'board' && (
+          {/* Quick Layout Switcher & Hover-Revealed Board Edit Controls */}
+          <div
+            className="relative flex items-center"
+            onMouseEnter={handleLayoutMouseEnter}
+            onMouseLeave={handleLayoutMouseLeave}
+          >
+            {/* Board Edit Mode Toggle (only in board layout mode, reveals on hover or while editing) */}
+            {settings.layoutMode === 'board' && (
+              <div
+                className={`flex items-center justify-center overflow-hidden transition-all duration-200 ease-out ${
+                  isBoardEditing || isLayoutHovered
+                    ? 'w-7 opacity-100 mr-1'
+                    : 'w-0 opacity-0 mr-0 pointer-events-none'
+                }`}
+              >
+                <button
+                  onClick={() => setIsBoardEditing((prev) => !prev)}
+                  tabIndex={isBoardEditing || isLayoutHovered ? 0 : -1}
+                  className={`shrink-0 p-1.5 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                    isBoardEditing
+                      ? 'bg-amber-500/15 text-amber-500 dark:text-amber-400'
+                      : isLight
+                      ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
+                      : 'text-white/40 hover:text-white hover:bg-white/10'
+                  }`}
+                  title={isBoardEditing ? t('doneEditingBoard', settings.language) : t('editBoard', settings.language)}
+                >
+                  {isBoardEditing ? (
+                    <Check className="w-3.5 h-3.5" />
+                  ) : (
+                    <Pencil className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Quick Layout Switcher (Grid <-> Board) */}
             <button
-              onClick={() => setIsBoardEditing((prev) => !prev)}
+              onClick={() => {
+                if (settings.layoutMode === 'board' && isBoardEditing) {
+                  setIsBoardEditing(false);
+                }
+                handleUpdateSettings({
+                  ...settings,
+                  layoutMode: settings.layoutMode === 'board' ? 'grid' : 'board',
+                });
+              }}
               className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
-                isBoardEditing
-                  ? 'bg-amber-500/15 text-amber-500 dark:text-amber-400'
-                  : isLight
+                isLight
                   ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
                   : 'text-white/40 hover:text-white hover:bg-white/10'
               }`}
-              title={isBoardEditing ? t('doneEditingBoard', settings.language) : t('editBoard', settings.language)}
+              title={
+                settings.layoutMode === 'board'
+                  ? t('layoutGrid', settings.language)
+                  : t('layoutBoard', settings.language)
+              }
             >
-              {isBoardEditing ? (
-                <Check className="w-3.5 h-3.5" />
+              {settings.layoutMode === 'board' ? (
+                <LayoutGrid className="w-3.5 h-3.5" />
               ) : (
-                <Pencil className="w-3.5 h-3.5" />
+                <Columns3 className="w-3.5 h-3.5" />
               )}
             </button>
-          )}
-
-          {/* Quick Layout Switcher (Grid <-> Board) */}
-          <button
-            onClick={() =>
-              handleUpdateSettings({
-                ...settings,
-                layoutMode: settings.layoutMode === 'board' ? 'grid' : 'board',
-              })
-            }
-            className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
-              isLight
-                ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
-                : 'text-white/40 hover:text-white hover:bg-white/10'
-            }`}
-            title={
-              settings.layoutMode === 'board'
-                ? t('layoutGrid', settings.language)
-                : t('layoutBoard', settings.language)
-            }
-          >
-            {settings.layoutMode === 'board' ? (
-              <LayoutGrid className="w-3.5 h-3.5" />
-            ) : (
-              <Columns3 className="w-3.5 h-3.5" />
-            )}
-          </button>
+          </div>
 
           {/* Quick Add Button */}
           <button

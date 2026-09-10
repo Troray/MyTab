@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react';
 import { Category, SiteItem, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
@@ -54,6 +55,52 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
     (settings.mode === 'system' &&
       typeof window !== 'undefined' &&
       !window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  const [activeMenu, setActiveMenu] = useState<{
+    site: SiteItem;
+    x: number;
+    y: number;
+  } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activeMenu) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setActiveMenu(null);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveMenu(null);
+      }
+    };
+
+    const handleScroll = () => {
+      setActiveMenu(null);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [activeMenu]);
+
+  const handleSiteContextMenu = (e: React.MouseEvent, site: SiteItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const menuWidth = 128;
+    const menuHeight = 88;
+    const x = Math.min(e.clientX, window.innerWidth - menuWidth - 8);
+    const y = Math.min(e.clientY, window.innerHeight - menuHeight - 8);
+    setActiveMenu({ site, x, y });
+  };
 
   // Category Title Color: category.color (per-category custom) -> custom boardTitle -> preset palette fallback
   const titleColor =
@@ -111,10 +158,10 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
           ? isLight
             ? isEditing
               ? 'border-blue-500/30 ring-1 ring-blue-500/20 shadow-md shadow-black/[0.04]'
-              : 'border-transparent hover:border-transparent shadow-md shadow-black/[0.04] hover:shadow-lg hover:shadow-black/10 hover:scale-[1.01]'
+              : 'border-transparent hover:border-transparent shadow-md shadow-black/[0.04] hover:shadow-lg hover:shadow-black/10'
             : isEditing
               ? 'border-blue-400/30 ring-1 ring-blue-400/20 shadow-md shadow-black/20'
-              : 'border-white/10 hover:border-white/30 shadow-md shadow-black/20 hover:shadow-lg hover:shadow-black/40 hover:scale-[1.01]'
+              : 'border-white/10 hover:border-white/30 shadow-md shadow-black/20 hover:shadow-lg hover:shadow-black/40'
           : isEditing
             ? isLight
               ? 'border border-dashed border-blue-500/40 bg-white/20'
@@ -241,9 +288,11 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
                 tabIndex={isEditing ? 0 : undefined}
                 onDragStart={(e) => {
                   if (isEditing) {
+                    setActiveMenu(null);
                     onDragStart?.(e, site.id, category.id);
                   }
                 }}
+                onContextMenu={(e) => handleSiteContextMenu(e, site)}
                 onDragOver={(e) => {
                   if (isEditing) {
                     e.preventDefault();
@@ -360,6 +409,61 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
             <Plus className="w-4 h-4 transition-transform duration-150 group-hover/add-site:scale-110" />
           </button>
         </div>
+      )}
+
+      {/* Context Menu (Triggered by Right-Click on Any Site) */}
+      {activeMenu && typeof document !== 'undefined' && createPortal(
+        <div
+          ref={menuRef}
+          onClick={(e) => e.stopPropagation()}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          style={{
+            top: `${activeMenu.y}px`,
+            left: `${activeMenu.x}px`,
+          }}
+          className={`glass-dropdown fixed w-32 py-1.5 rounded-xl border shadow-2xl z-[9999] animate-scale-in text-xs font-medium overflow-hidden select-none ${
+            isLight
+              ? 'border-black/10 shadow-black/15 text-slate-800'
+              : 'border-white/15 shadow-black/50 text-white'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              const siteToEdit = activeMenu.site;
+              setActiveMenu(null);
+              onEditSite(siteToEdit);
+            }}
+            className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+              isLight
+                ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                : 'text-white/80 hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            <span>{t('editSite', settings.language)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const siteIdToDelete = activeMenu.site.id;
+              setActiveMenu(null);
+              onDeleteSite(siteIdToDelete);
+            }}
+            className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+              isLight
+                ? 'text-red-600 hover:bg-red-50'
+                : 'text-red-400 hover:bg-red-500/10'
+            }`}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>{t('deleteSite', settings.language)}</span>
+          </button>
+        </div>,
+        document.body
       )}
     </div>
   );

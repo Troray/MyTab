@@ -193,7 +193,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
     ? cardSize
     : showTitle
     ? Math.max(iconBoxSize + 16, Math.min(cardSize, Math.round(iconBoxSize + 8 + iconSpacing * 0.9)))
-    : iconBoxSize + 12;
+    : iconBoxSize + 16;
   const gap = showCardBg ? Math.max(12, Math.round(cardSize * 0.14)) : iconSpacing;
   const maxPerRow = settings.maxCardsPerRow || 8;
   const gridMaxWidth = maxPerRow * cellWidth + (maxPerRow - 1) * gap;
