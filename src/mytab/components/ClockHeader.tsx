@@ -16,28 +16,37 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
 
   useEffect(() => {
     let lastMinute = new Date().getMinutes();
+    let timerId: ReturnType<typeof setTimeout> | null = null;
 
-    const checkTime = () => {
+    const scheduleNextMinute = () => {
       const now = new Date();
       if (now.getMinutes() !== lastMinute) {
         lastMinute = now.getMinutes();
         setTime(now);
       }
+      // Calculate milliseconds until next minute boundary + 50ms safety margin
+      const msUntilNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds() + 50;
+      timerId = setTimeout(scheduleNextMinute, Math.max(100, msUntilNextMinute));
     };
 
-    const timer = setInterval(checkTime, 1000);
+    scheduleNextMinute();
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        if (timerId) clearTimeout(timerId);
         const now = new Date();
-        lastMinute = now.getMinutes();
-        setTime(now);
+        if (now.getMinutes() !== lastMinute) {
+          lastMinute = now.getMinutes();
+          setTime(now);
+        }
+        const msUntilNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds() + 50;
+        timerId = setTimeout(scheduleNextMinute, Math.max(100, msUntilNextMinute));
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      clearInterval(timer);
+      if (timerId) clearTimeout(timerId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);

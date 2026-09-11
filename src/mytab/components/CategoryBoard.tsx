@@ -24,7 +24,7 @@ interface CategoryBoardProps {
   onReorderSites?: (reorderedSites: SiteItem[]) => void;
 }
 
-export const CategoryBoard: React.FC<CategoryBoardProps> = ({
+export const CategoryBoard: React.FC<CategoryBoardProps> = React.memo(({
   categories,
   sites,
   settings,
@@ -99,13 +99,22 @@ export const CategoryBoard: React.FC<CategoryBoardProps> = ({
     return { boardCategories: displayCats, sitesByCategory: map };
   }, [categories, sites, settings.language]);
 
-  const handleSaveCategory = (catId: string | null, data: { name: string; showInAll: boolean; color?: string }) => {
+  const handleSaveCategory = useCallback((catId: string | null, data: { name: string; showInAll: boolean; color?: string }) => {
     if (catId) {
       onUpdateCategory(catId, data);
     } else {
       onAddCategory(data);
     }
-  };
+  }, [onUpdateCategory, onAddCategory]);
+
+  const handleOpenEditCategoryModal = useCallback((cat: Category) => {
+    setModalCategory(cat);
+  }, []);
+
+  const handleOpenDeleteCategoryModal = useCallback((catId: string) => {
+    const target = categories.find((c) => c.id === catId);
+    if (target) setConfirmingDeleteCategory(target);
+  }, [categories]);
 
   // Drag and Drop state across columns
   const [draggingSiteId, setDraggingSiteId] = useState<string | null>(null);
@@ -321,9 +330,18 @@ export const CategoryBoard: React.FC<CategoryBoardProps> = ({
   );
 
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const handleResize = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        setWindowWidth(window.innerWidth);
+      }, 150);
+    };
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   // Compute effective columns based on screen width and user setting
@@ -426,7 +444,7 @@ export const CategoryBoard: React.FC<CategoryBoardProps> = ({
                     isLight={isLight}
                     isEditing={isEditing}
                     draggingSiteId={draggingSiteId}
-                    dropTarget={dropTarget}
+                    dropTarget={dropTarget?.categoryId === item.category.id ? dropTarget : null}
                     onDragStart={handleDragStart}
                     onDragOverSite={handleDragOverSite}
                     onDragOverColumn={handleDragOverColumn}
@@ -436,11 +454,8 @@ export const CategoryBoard: React.FC<CategoryBoardProps> = ({
                     onEditSite={onEditSite}
                     onDeleteSite={onDeleteSite}
                     onAddSiteToCategory={onAddSiteToCategory}
-                    onEditCategory={(cat) => setModalCategory(cat)}
-                    onDeleteCategory={(catId) => {
-                      const target = categories.find((c) => c.id === catId);
-                      if (target) setConfirmingDeleteCategory(target);
-                    }}
+                    onEditCategory={handleOpenEditCategoryModal}
+                    onDeleteCategory={handleOpenDeleteCategoryModal}
                   />
                 );
               }
@@ -531,4 +546,4 @@ export const CategoryBoard: React.FC<CategoryBoardProps> = ({
       )}
     </div>
   );
-};
+});

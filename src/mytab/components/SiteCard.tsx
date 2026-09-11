@@ -184,7 +184,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
             : `rgba(255, 255, 255, ${settings.cardOpacity})`,
           padding: showCardBg ? `${paddingPx}px` : '5px 3px',
         }}
-        className={`group relative flex flex-col items-center justify-center rounded-2xl border duration-0 transition-colors h-full w-full ${jiggleClass} ${
+        className={`group relative flex flex-col items-center justify-center rounded-2xl border duration-0 transition-all h-full w-full ${jiggleClass} ${
           isDragging
             ? 'ios-dragged border-amber-500/60 ring-2 ring-amber-500/30'
             : isJustDropped
@@ -192,7 +192,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
             : !showCardBg
             ? 'border-transparent hover:border-transparent'
             : isLight
-            ? 'border-black/[0.06] hover:border-black/20 shadow-md shadow-black/[0.04]'
+            ? 'border-black/[0.06] hover:border-black/15 shadow-md shadow-black/[0.04] hover:shadow-xl hover:shadow-black/[0.08]'
             : 'border-white/10 hover:border-white/30 shadow-md shadow-black/20'
         }`}
       >
@@ -201,7 +201,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
           <div
             className={`absolute inset-0 rounded-2xl pointer-events-none duration-0 transition-colors ${
               isLight
-                ? 'group-hover:bg-black/[0.05] group-active:bg-black/[0.10]'
+                ? 'group-hover:bg-white/55 group-active:bg-white/70'
                 : 'group-hover:bg-white/[0.14] group-active:bg-white/[0.20]'
             }`}
           />
@@ -210,15 +210,15 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
         {/* Icon Inset Container */}
         <div
           style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px` }}
-          className={`rounded-xl flex items-center justify-center overflow-hidden shrink-0 pointer-events-none duration-0 transition-colors ${
+          className={`rounded-xl flex items-center justify-center overflow-hidden shrink-0 pointer-events-none duration-0 transition-all ${
             showTitle ? 'mb-2' : ''
           } ${
             showCardBg
               ? isLight
-                ? 'bg-white/80 border border-black/[0.06] shadow-inner group-hover:bg-white group-hover:border-black/15'
+                ? 'bg-white/60 border border-black/[0.05] shadow-sm group-hover:bg-white group-hover:border-black/15 group-hover:shadow-md group-hover:shadow-black/[0.08]'
                 : 'bg-white/[0.08] border border-white/10 shadow-inner group-hover:bg-white/[0.16] group-hover:border-white/25'
               : isLight
-              ? 'bg-white/90 border border-black/[0.08] shadow-md shadow-black/10 group-hover:bg-white group-hover:border-black/25 group-active:bg-black/[0.06]'
+              ? 'bg-white/80 border border-black/[0.08] shadow-md shadow-black/10 group-hover:bg-white group-hover:shadow-xl group-hover:shadow-black/15 group-hover:border-black/20 group-hover:ring-2 group-hover:ring-white/90 group-active:bg-white/95'
               : 'bg-white/[0.14] border border-white/15 shadow-md shadow-black/30 group-hover:bg-white/[0.25] group-hover:border-white/35 group-active:bg-white/[0.30]'
           }`}
         >

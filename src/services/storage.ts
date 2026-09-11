@@ -69,6 +69,44 @@ export async function getItem<T>(key: string, defaultValue: T): Promise<T> {
   return defaultValue;
 }
 
+/**
+ * Reads multiple items from storage in a single IPC / localStorage operation.
+ */
+export async function getMultipleItems<T extends Record<string, any>>(defaults: T): Promise<T> {
+  const keys = Object.keys(defaults);
+  if (isExtension) {
+    try {
+      const res = await chrome.storage.local.get(keys);
+      const result = { ...defaults };
+      for (const key of keys) {
+        if (res && res[key] !== undefined) {
+          (result as any)[key] = res[key];
+        }
+      }
+      return result;
+    } catch (e) {
+      console.warn('[Storage] Failed to read multiple keys from extension storage', e);
+    }
+  }
+
+  if (typeof localStorage !== 'undefined') {
+    const result = { ...defaults };
+    for (const key of keys) {
+      const raw = localStorage.getItem(key);
+      if (raw !== null) {
+        try {
+          (result as any)[key] = JSON.parse(raw);
+        } catch {
+          // preserve default
+        }
+      }
+    }
+    return result;
+  }
+
+  return defaults;
+}
+
 export async function setItem<T>(key: string, value: T): Promise<void> {
   if (isExtension) {
     try {
@@ -250,16 +288,44 @@ export async function saveProfileSyncSettings(settings: ProfileSyncSettings): Pr
  * Loads the complete AppState for the requested profile (or resolves current window profile).
  */
 export async function loadAppState(targetProfileId?: ProfileId): Promise<AppState> {
-  const profileId = targetProfileId || (await getCurrentProfileId());
-
-  const [container, settings, webdav, git, isFirst, syncSettings] = await Promise.all([
-    loadProfileContainer(),
-    getItem<ThemeSettings>(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS),
-    getItem<WebdavConfig>(STORAGE_KEYS.WEBDAV, DEFAULT_WEBDAV_CONFIG),
-    getItem<GitSyncConfig>(STORAGE_KEYS.GIT, DEFAULT_GIT_CONFIG),
-    getItem<boolean>(STORAGE_KEYS.FIRST_LAUNCH, true),
-    getProfileSyncSettings(),
+  const [profileId, storageData] = await Promise.all([
+    targetProfileId ? Promise.resolve(targetProfileId) : getCurrentProfileId(),
+    getMultipleItems({
+      [STORAGE_KEYS.PROFILE_DATA]: null as ProfileContainer | null,
+      [STORAGE_KEYS.SETTINGS]: DEFAULT_SETTINGS,
+      [STORAGE_KEYS.WEBDAV]: DEFAULT_WEBDAV_CONFIG,
+      [STORAGE_KEYS.GIT]: DEFAULT_GIT_CONFIG,
+      [STORAGE_KEYS.FIRST_LAUNCH]: true,
+      [STORAGE_KEYS.SYNC_SETTINGS]: DEFAULT_PROFILE_SYNC_SETTINGS,
+    }),
   ]);
+
+  let container = storageData[STORAGE_KEYS.PROFILE_DATA];
+  if (!container || container.version !== 2 || !container.profiles) {
+    container = await loadProfileContainer();
+  } else {
+    // In-memory verification for normal/private profile existence
+    let modified = false;
+    const profiles = { ...container.profiles };
+    if (!profiles.normal) {
+      profiles.normal = createDefaultNormalProfile();
+      modified = true;
+    }
+    if (!profiles.private) {
+      profiles.private = createDefaultPrivateProfile();
+      modified = true;
+    }
+    if (modified) {
+      container = { version: 2, profiles };
+      setItem(STORAGE_KEYS.PROFILE_DATA, container).catch(() => {});
+    }
+  }
+
+  const settings = storageData[STORAGE_KEYS.SETTINGS];
+  const webdav = storageData[STORAGE_KEYS.WEBDAV];
+  const git = storageData[STORAGE_KEYS.GIT];
+  const isFirst = storageData[STORAGE_KEYS.FIRST_LAUNCH];
+  const syncSettings = storageData[STORAGE_KEYS.SYNC_SETTINGS];
 
   const currentProfile = container.profiles[profileId] || (profileId === 'private' ? createDefaultPrivateProfile() : createDefaultNormalProfile());
 

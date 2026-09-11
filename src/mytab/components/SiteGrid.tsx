@@ -63,6 +63,8 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
   useLayoutEffect(() => {
     if (prevRects.current.size === 0) return;
 
+    const movedElements: HTMLDivElement[] = [];
+
     cardElements.current.forEach((el, id) => {
       const oldRect = prevRects.current.get(id);
       if (!oldRect || !el) return;
@@ -75,16 +77,22 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
         // Invert: snap element to previous visual position
         el.style.transform = `translate(${dx}px, ${dy}px)`;
         el.style.transition = 'none';
-
-        // Play: smoothly slide to new position in the next animation frame
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            el.style.transition = 'transform 320ms cubic-bezier(0.25, 1, 0.5, 1)';
-            el.style.transform = '';
-          });
-        });
+        movedElements.push(el);
       }
     });
+
+    if (movedElements.length > 0) {
+      // Play: smoothly slide all moved cards to new positions in a single unified animation frame
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          for (let i = 0; i < movedElements.length; i++) {
+            const el = movedElements[i];
+            el.style.transition = 'transform 320ms cubic-bezier(0.25, 1, 0.5, 1)';
+            el.style.transform = '';
+          }
+        });
+      });
+    }
 
     prevRects.current.clear();
   }, [displaySites]);

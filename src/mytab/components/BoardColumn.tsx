@@ -30,7 +30,7 @@ interface BoardColumnProps {
   onDragEnd?: () => void;
 }
 
-export const BoardColumn: React.FC<BoardColumnProps> = ({
+export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
   category,
   index,
   sites,
@@ -522,4 +522,4 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
       )}
     </div>
   );
-};
+});

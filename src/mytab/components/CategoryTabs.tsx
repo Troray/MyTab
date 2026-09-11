@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { FolderPlus, Pencil, Trash2 } from 'lucide-react';
 import { Category, ThemeSettings } from '../../types';
@@ -38,11 +38,11 @@ interface CategoryTabItemProps {
   displayName: string;
   isDarkWallpaper: boolean;
   resolvedColors?: ResolvedTextColors;
-  onSelect: () => void;
+  onSelect: (id: string) => void;
   onContextMenu: (e: React.MouseEvent, cat: Category) => void;
 }
 
-const CategoryTabItem: React.FC<CategoryTabItemProps> = ({
+const CategoryTabItem: React.FC<CategoryTabItemProps> = React.memo(({
   cat,
   isActive,
   count,
@@ -126,7 +126,7 @@ const CategoryTabItem: React.FC<CategoryTabItemProps> = ({
   return (
     <div className="relative flex items-center">
       <button
-        onClick={onSelect}
+        onClick={() => onSelect(cat.id)}
         onContextMenu={(e) => onContextMenu(e, cat)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -188,7 +188,7 @@ const CategoryTabItem: React.FC<CategoryTabItemProps> = ({
       </button>
     </div>
   );
-};
+});
 
 interface CategoryTabsProps {
   categories: Category[];
@@ -257,7 +257,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
     };
   }, [activeMenu]);
 
-  const handleContextMenu = (e: React.MouseEvent, cat: Category) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent, cat: Category) => {
     if (cat.isDefault || cat.id === 'all') return;
     e.preventDefault();
     e.stopPropagation();
@@ -266,7 +266,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
     const x = Math.min(e.clientX, window.innerWidth - menuWidth - 8);
     const y = Math.min(e.clientY, window.innerHeight - menuHeight - 8);
     setActiveMenu({ category: cat, x, y });
-  };
+  }, []);
 
   const handleSaveCategory = (catId: string | null, data: { name: string; showInAll: boolean; color?: string }) => {
     if (catId) {
@@ -309,7 +309,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
             displayName={displayName}
             isDarkWallpaper={isDarkWallpaper}
             resolvedColors={resolvedColors}
-            onSelect={() => onSelectCategory(cat.id)}
+            onSelect={onSelectCategory}
             onContextMenu={handleContextMenu}
           />
         );

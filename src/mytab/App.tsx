@@ -21,9 +21,7 @@ import { SiteGrid } from './components/SiteGrid';
 import { CategoryBoard } from './components/CategoryBoard';
 import { urlToBase64Icon } from '../services/metadata';
 import { DEFAULT_SETTINGS, isLightMode } from '../utils/constants';
-import { ConfirmModal } from './components/ConfirmModal';
 import { analyzeWallpaperLuminance, resolveTextColors, WallpaperLuminance, DEFAULT_LUMINANCE } from '../utils/wallpaperAnalyzer';
-import { TextColorCustomizer } from './components/TextColorCustomizer';
 
 const CACHE_WARMER_DELAY = 1200; // Delay to avoid blocking initial render
 
@@ -31,6 +29,8 @@ const CACHE_WARMER_DELAY = 1200; // Delay to avoid blocking initial render
 const SiteModal = lazy(() => import('./components/SiteModal').then(m => ({ default: m.SiteModal })));
 const SettingsDrawer = lazy(() => import('./components/SettingsDrawer').then(m => ({ default: m.SettingsDrawer })));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
+const ConfirmModal = lazy(() => import('./components/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
+const TextColorCustomizer = lazy(() => import('./components/TextColorCustomizer').then(m => ({ default: m.TextColorCustomizer })));
 
 export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => {
   const [appState, setAppState] = useState<AppState | null>(initialState || null);
@@ -245,9 +245,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const [isCrossFading, setIsCrossFading] = useState(false);
 
   useEffect(() => {
-    const currentCss = JSON.stringify(visibleBgRef.current);
-    const nextCss = JSON.stringify(backgroundStyle);
-    if (currentCss === nextCss) return;
+    const cur = visibleBgRef.current;
+    const nxt = backgroundStyle;
+    if (cur.background === nxt.background && cur.backgroundImage === nxt.backgroundImage) {
+      return;
+    }
 
     const bgUrlMatch = (backgroundStyle as any).backgroundImage?.match(/url\(["']?([^"']+)["']?\)/);
     const targetUrl = bgUrlMatch ? bgUrlMatch[1] : null;
@@ -643,18 +645,19 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
 
       {/* Top Floating Actions Bar */}
       <header className="relative z-10 w-full flex items-center justify-between p-5 md:px-8">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <span
-            className={`text-sm font-semibold tracking-wider px-3 py-1 rounded-full border transition-colors ${isLight
-                ? 'text-slate-800 bg-white/70 border-black/10 shadow-sm'
-                : 'text-white/80 bg-white/10 border-white/10'
-              }`}
+            className={`text-xs font-medium tracking-wider px-2.5 py-0.5 rounded-full border transition-colors ${
+              isLight
+                ? 'text-slate-500 bg-white/50 border-black/5'
+                : 'text-white/60 bg-white/5 border-white/5'
+            }`}
           >
             MyTab
           </span>
           {appState?.profileId === 'private' && (
             <span
-              className="text-xs font-medium px-2.5 py-1 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 backdrop-blur-md flex items-center gap-1.5 shadow-sm"
+              className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 backdrop-blur-md flex items-center gap-1.5 shadow-sm"
               title={t('syncPrivateSpace', appState?.settings?.language || 'zh-CN')}
             >
               <Lock className="w-3 h-3 text-purple-400" />
@@ -663,7 +666,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {/* Quick Layout Switcher & Hover-Revealed Board Edit Controls */}
           <div
             className="relative flex items-center"
@@ -675,14 +678,14 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               <div
                 className={`flex items-center justify-center overflow-hidden transition-all duration-200 ease-out ${
                   isBoardEditing || isLayoutHovered
-                    ? 'w-7 opacity-100 mr-1'
+                    ? 'w-8 opacity-100 mr-1'
                     : 'w-0 opacity-0 mr-0 pointer-events-none'
                 }`}
               >
                 <button
                   onClick={() => setIsBoardEditing((prev) => !prev)}
                   tabIndex={isBoardEditing || isLayoutHovered ? 0 : -1}
-                  className={`shrink-0 p-1.5 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                  className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
                     isBoardEditing
                       ? 'bg-amber-500/15 text-amber-500 dark:text-amber-400'
                       : isLight
@@ -692,9 +695,9 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                   title={isBoardEditing ? t('doneEditingBoard', settings.language) : t('editBoard', settings.language)}
                 >
                   {isBoardEditing ? (
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-4 h-4" />
                   ) : (
-                    <Pencil className="w-3.5 h-3.5" />
+                    <Pencil className="w-4 h-4" />
                   )}
                 </button>
               </div>
@@ -710,7 +713,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                   layoutMode: settings.layoutMode === 'board' ? 'grid' : 'board',
                 });
               }}
-              className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+              className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
                 isLight
                   ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
                   : 'text-white/40 hover:text-white hover:bg-white/10'
@@ -722,9 +725,9 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               }
             >
               {settings.layoutMode === 'board' ? (
-                <LayoutGrid className="w-3.5 h-3.5" />
+                <LayoutGrid className="w-4 h-4" />
               ) : (
-                <Columns3 className="w-3.5 h-3.5" />
+                <Columns3 className="w-4 h-4" />
               )}
             </button>
           </div>
@@ -735,27 +738,27 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               setEditingSite(null);
               setIsSiteModalOpen(true);
             }}
-            className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+            className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
               isLight
                 ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
                 : 'text-white/40 hover:text-white hover:bg-white/10'
             }`}
             title={t('addSite', settings.language)}
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
           </button>
 
           {/* Settings Drawer Trigger */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+            className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
               isLight
                 ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
                 : 'text-white/40 hover:text-white hover:bg-white/10'
             }`}
             title={t('settingsTitle', settings.language)}
           >
-            <SettingsIcon className="w-3.5 h-3.5" />
+            <SettingsIcon className="w-4 h-4" />
           </button>
         </div>
       </header>
