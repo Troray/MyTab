@@ -1,3 +1,4 @@
+import browser from 'webextension-polyfill';
 import {
   Category,
   ProfileId,
@@ -26,49 +27,70 @@ function normalizeForComparison(rawUrl: string): string {
 }
 
 /**
- * Requests Chrome/Firefox bookmark permission on-demand using optional_permissions.
- * Returns true if granted or already possessed; false otherwise.
- */
-export async function requestBookmarkPermission(): Promise<boolean> {
-  if (typeof chrome === 'undefined' || !chrome.permissions) {
-    return false;
-  }
-  try {
-    const hasPermission = await chrome.permissions.contains({ permissions: ['bookmarks'] });
-    if (hasPermission) return true;
-    return await chrome.permissions.request({ permissions: ['bookmarks'] });
-  } catch (err) {
-    console.warn('[BookmarkImporter] Permission request failed:', err);
-    return false;
-  }
-}
-
-/**
  * Checks if the extension currently possesses the 'bookmarks' permission.
+ * If 'bookmarks' is already in manifest permissions, the API is available immediately.
  */
 export async function checkBookmarkPermission(): Promise<boolean> {
-  if (typeof chrome === 'undefined' || !chrome.permissions) {
-    return false;
+  const bookmarksApi = (typeof browser !== 'undefined' && browser.bookmarks)
+    ? browser.bookmarks
+    : (typeof chrome !== 'undefined' && chrome.bookmarks)
+    ? chrome.bookmarks
+    : null;
+  if (bookmarksApi) {
+    return true;
   }
   try {
-    return await chrome.permissions.contains({ permissions: ['bookmarks'] });
+    if (typeof browser !== 'undefined' && browser.permissions?.contains) {
+      return await browser.permissions.contains({ permissions: ['bookmarks'] });
+    }
+    if (typeof chrome !== 'undefined' && chrome.permissions?.contains) {
+      return await chrome.permissions.contains({ permissions: ['bookmarks'] });
+    }
   } catch {
     return false;
   }
+  return false;
+}
+
+/**
+ * Requests Chrome/Firefox bookmark permission on-demand if not already granted.
+ * Returns true if granted or already possessed; false otherwise.
+ */
+export async function requestBookmarkPermission(): Promise<boolean> {
+  const hasAlready = await checkBookmarkPermission();
+  if (hasAlready) return true;
+
+  try {
+    if (typeof browser !== 'undefined' && browser.permissions?.request) {
+      return await browser.permissions.request({ permissions: ['bookmarks'] });
+    }
+    if (typeof chrome !== 'undefined' && chrome.permissions?.request) {
+      return await chrome.permissions.request({ permissions: ['bookmarks'] });
+    }
+  } catch (err) {
+    console.warn('[BookmarkImporter] Permission request failed:', err);
+  }
+  return false;
 }
 
 /**
  * Fetches the browser's native bookmark tree and returns the primary top-level folders.
  */
 export async function fetchNativeBookmarkTree(): Promise<RawBookmarkNode[]> {
-  if (typeof chrome === 'undefined' || !chrome.bookmarks) {
+  const bookmarksApi = (typeof browser !== 'undefined' && browser.bookmarks)
+    ? browser.bookmarks
+    : (typeof chrome !== 'undefined' && chrome.bookmarks)
+    ? chrome.bookmarks
+    : null;
+
+  if (!bookmarksApi) {
     throw new Error('Browser bookmarks API is not available');
   }
 
-  const tree = await chrome.bookmarks.getTree();
+  const tree = await bookmarksApi.getTree();
   if (!tree || tree.length === 0) return [];
 
-  function mapNode(node: chrome.bookmarks.BookmarkTreeNode): RawBookmarkNode {
+  function mapNode(node: any): RawBookmarkNode {
     return {
       id: node.id,
       title: node.title || (node.url ? node.url : 'Folder'),
