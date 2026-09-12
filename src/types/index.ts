@@ -202,6 +202,7 @@ export interface ProfileData {
   activeCategoryId: string;
   gridPages?: GridPage[];
   activeGridPageId?: string;
+  pageCategoryMap?: Record<string, string>;
   settings?: Partial<ThemeSettings>;
   wallpaper?: WallpaperSettings;
 }
@@ -232,6 +233,7 @@ export interface AppState {
   sites: SiteItem[];
   gridPages?: GridPage[];
   activeGridPageId?: string;
+  pageCategoryMap?: Record<string, string>;
   settings: ThemeSettings;
   webdav: WebdavConfig;
   git: GitSyncConfig;

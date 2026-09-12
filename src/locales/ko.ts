@@ -493,6 +493,7 @@ export const ko: Translation = {
   renameDesktopPage: "데스크톱 이름 변경",
   deleteDesktopPage: "데스크톱 삭제",
   confirmDeletePage: "이 데스크톱을 삭제하시겠습니까? 바로가기는 첫 번째 데스크톱으로 이동됩니다.",
+  manageDesktopTooltip: "우클릭하여 이름 변경 또는 삭제",
   pageNamePlaceholder: "데스크톱 이름 입력",
   siteDesktop: "소속 데스크톱",
   defaultDesktopName: "데스크톱",

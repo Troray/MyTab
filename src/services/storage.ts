@@ -137,6 +137,7 @@ export function createDefaultNormalProfile(): ProfileData {
     activeCategoryId: 'all',
     gridPages: DEFAULT_GRID_PAGES,
     activeGridPageId: 'page-1',
+    pageCategoryMap: { 'page-1': 'all' },
   };
 }
 
@@ -150,6 +151,7 @@ export function createDefaultPrivateProfile(): ProfileData {
     activeCategoryId: 'all',
     gridPages: DEFAULT_GRID_PAGES,
     activeGridPageId: 'page-1',
+    pageCategoryMap: { 'page-1': 'all' },
     settings: {
       backgroundType: 'gradient',
       backgroundValue: DEFAULT_PRIVATE_BACKGROUND_VALUE,
@@ -444,6 +446,7 @@ export async function loadAppState(targetProfileId?: ProfileId): Promise<AppStat
     sites: currentProfile.sites,
     categories: currentProfile.categories,
     activeCategoryId: currentProfile.activeCategoryId,
+    pageCategoryMap: currentProfile.pageCategoryMap || {},
     gridPages: currentProfile.gridPages && currentProfile.gridPages.length > 0 ? currentProfile.gridPages : DEFAULT_GRID_PAGES,
     activeGridPageId: currentProfile.activeGridPageId || (currentProfile.gridPages?.[0]?.id) || 'page-1',
     settings: effectiveSettings,
@@ -504,12 +507,16 @@ export async function deleteGridPage(pageIdToDelete: string, profileId?: Profile
       return s;
     });
 
+    const updatedPageCategoryMap = { ...(profile.pageCategoryMap || {}) };
+    delete updatedPageCategoryMap[pageIdToDelete];
+
     return {
       ...profile,
       gridPages: safeRemaining,
       categories: updatedCategories,
       sites: updatedSites,
       activeGridPageId: profile.activeGridPageId === pageIdToDelete ? fallbackPageId : profile.activeGridPageId,
+      pageCategoryMap: updatedPageCategoryMap,
     };
   });
 }
@@ -535,11 +542,27 @@ export async function moveCategoryToGridPage(
   }));
 }
 
-export async function saveActiveCategory(activeCategoryId: string, profileId?: ProfileId): Promise<void> {
+export async function saveActiveCategory(
+  activeCategoryId: string,
+  pageCategoryMap?: Record<string, string>,
+  profileId?: ProfileId
+): Promise<void> {
   const targetId = profileId || (await getCurrentProfileId());
   await updateProfile(targetId, (profile) => ({
     ...profile,
     activeCategoryId,
+    pageCategoryMap: pageCategoryMap !== undefined ? pageCategoryMap : (profile.pageCategoryMap || {}),
+  }));
+}
+
+export async function savePageCategoryMap(
+  pageCategoryMap: Record<string, string>,
+  profileId?: ProfileId
+): Promise<void> {
+  const targetId = profileId || (await getCurrentProfileId());
+  await updateProfile(targetId, (profile) => ({
+    ...profile,
+    pageCategoryMap,
   }));
 }
 
@@ -552,7 +575,14 @@ export async function saveActiveGridPageId(activeGridPageId: string, profileId?:
 }
 
 export async function saveProfileItems(
-  updates: { sites?: SiteItem[]; categories?: Category[]; activeCategoryId?: string; gridPages?: GridPage[]; activeGridPageId?: string },
+  updates: {
+    sites?: SiteItem[];
+    categories?: Category[];
+    activeCategoryId?: string;
+    pageCategoryMap?: Record<string, string>;
+    gridPages?: GridPage[];
+    activeGridPageId?: string;
+  },
   profileId?: ProfileId
 ): Promise<void> {
   const targetId = profileId || (await getCurrentProfileId());
@@ -561,6 +591,7 @@ export async function saveProfileItems(
     ...(updates.sites !== undefined ? { sites: updates.sites } : {}),
     ...(updates.categories !== undefined ? { categories: updates.categories } : {}),
     ...(updates.activeCategoryId !== undefined ? { activeCategoryId: updates.activeCategoryId } : {}),
+    ...(updates.pageCategoryMap !== undefined ? { pageCategoryMap: updates.pageCategoryMap } : {}),
     ...(updates.gridPages !== undefined ? { gridPages: updates.gridPages } : {}),
     ...(updates.activeGridPageId !== undefined ? { activeGridPageId: updates.activeGridPageId } : {}),
   }));

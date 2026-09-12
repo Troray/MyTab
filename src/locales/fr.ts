@@ -493,6 +493,7 @@ export const fr: Translation = {
   renameDesktopPage: "Renommer le bureau",
   deleteDesktopPage: "Supprimer le bureau",
   confirmDeletePage: "Voulez-vous vraiment supprimer ce bureau ? Les raccourcis seront déplacés vers le premier bureau.",
+  manageDesktopTooltip: "Clic droit pour renommer ou supprimer",
   pageNamePlaceholder: "Nom du bureau",
   siteDesktop: "Page du bureau",
   defaultDesktopName: "Bureau",

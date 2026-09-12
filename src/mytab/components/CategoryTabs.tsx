@@ -233,11 +233,29 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
   const menuRef = useRef<HTMLDivElement>(null);
   const moreDropdownRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
-
   const isLight = isLightMode(settings.mode);
   const isDarkWallpaper = resolvedColors
     ? resolvedColors.tabsIsDark
     : !isLight;
+
+  const prevPageIdRef = useRef(activeGridPageId);
+  const [slideDirection, setSlideDirection] = useState<'right' | 'left' | null>(null);
+  const [animKey, setAnimKey] = useState(0);
+
+  useEffect(() => {
+    if (prevPageIdRef.current && activeGridPageId && prevPageIdRef.current !== activeGridPageId) {
+      const prevIdx = gridPages?.findIndex((p) => p.id === prevPageIdRef.current) ?? -1;
+      const currentIdx = gridPages?.findIndex((p) => p.id === activeGridPageId) ?? -1;
+      const direction = currentIdx >= prevIdx ? 'right' : 'left';
+      setSlideDirection(direction);
+      setAnimKey((k) => k + 1);
+      setIsMoreOpen(false);
+      setActiveMenu(null);
+      prevPageIdRef.current = activeGridPageId;
+    } else if (activeGridPageId) {
+      prevPageIdRef.current = activeGridPageId;
+    }
+  }, [activeGridPageId, gridPages]);
 
   useEffect(() => {
     if (!isMoreOpen) return;
@@ -357,138 +375,170 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
   }, [overflowCategories, activeCategoryId]);
 
   return (
-    <div id="mytab-tabs" className="flex items-center justify-center flex-wrap gap-2 px-4 mb-6 max-w-4xl mx-auto z-20">
-      {visibleCategories.map((cat) => {
-        const isActive = activeCategoryId === cat.id;
-        const count = siteCounts[cat.id] || 0;
-        const displayName = cat.id === 'all' ? (t('allCategories', settings.language) || 'All') : cat.name;
+    <div
+      id="mytab-tabs"
+      className="flex items-center justify-center flex-wrap gap-2 px-4 mb-6 max-w-4xl mx-auto z-20"
+    >
+      <div
+        key={animKey}
+        className={`flex items-center justify-center flex-wrap gap-2 ${
+          slideDirection === 'right'
+            ? 'animate-cat-tabs-right'
+            : slideDirection === 'left'
+            ? 'animate-cat-tabs-left'
+            : ''
+        }`}
+      >
+        {visibleCategories.map((cat) => {
+          const isActive = activeCategoryId === cat.id;
+          const count = siteCounts[cat.id] || 0;
+          const displayName = cat.id === 'all' ? (t('allCategories', settings.language) || 'All') : cat.name;
 
-        return (
-          <CategoryTabItem
-            key={cat.id}
-            cat={cat}
-            isActive={isActive}
-            count={count}
-            displayName={displayName}
-            isDarkWallpaper={isDarkWallpaper}
-            resolvedColors={resolvedColors}
-            onSelect={onSelectCategory}
-            onContextMenu={handleContextMenu}
-          />
-        );
-      })}
+          return (
+            <CategoryTabItem
+              key={cat.id}
+              cat={cat}
+              isActive={isActive}
+              count={count}
+              displayName={displayName}
+              isDarkWallpaper={isDarkWallpaper}
+              resolvedColors={resolvedColors}
+              onSelect={onSelectCategory}
+              onContextMenu={handleContextMenu}
+            />
+          );
+        })}
 
-      {/* Overflow "More" Categories Dropdown */}
-      {overflowCategories.length > 0 && (
-        <div className="relative flex items-center">
-          <button
-            ref={moreButtonRef}
-            onClick={() => setIsMoreOpen((prev) => !prev)}
-            style={
-              isOverflowActive && activeOverflowCategory?.color
-                ? {
-                    backgroundColor: hexToRgba(activeOverflowCategory.color, isDarkWallpaper ? 0.28 : 0.20),
-                    borderColor: hexToRgba(activeOverflowCategory.color, isDarkWallpaper ? 0.60 : 0.45),
-                  }
-                : !isOverflowActive && resolvedColors?.tabs
-                ? { color: resolvedColors.tabs }
-                : undefined
-            }
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs md:text-sm font-medium transition-all duration-150 cursor-pointer select-none active:scale-95 border backdrop-blur-md ${
-              isOverflowActive
-                ? isDarkWallpaper
-                  ? 'bg-white/20 text-white shadow-sm border-white/25 font-semibold'
-                  : 'bg-white/85 text-slate-900 shadow-sm border-black/10 font-semibold'
-                : isDarkWallpaper
-                ? 'text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border-white/15 shadow-xs'
-                : 'text-slate-800 hover:text-black bg-white/70 hover:bg-white/90 border-black/8 shadow-sm shadow-black/[0.03]'
-            }`}
-            title={t('moreCategories', settings.language)}
-          >
-            <span>
-              {isOverflowActive && activeOverflowCategory
-                ? `${t('moreCategories', settings.language)}: ${activeOverflowCategory.name}`
-                : t('moreCategories', settings.language)}
-            </span>
-            {isOverflowActive && activeOverflowCategory && (
-              <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-tabular border ${
-                  isDarkWallpaper
-                    ? 'bg-white/20 text-white border-transparent font-semibold'
-                    : 'bg-black/10 text-slate-900 border-transparent font-semibold'
-                }`}
-              >
-                {siteCounts[activeOverflowCategory.id] || 0}
-              </span>
-            )}
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isMoreOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {/* Frosted Glass Dropdown Menu */}
-          {isMoreOpen && (
-            <div
-              ref={moreDropdownRef}
-              className={`absolute top-full right-0 mt-2 z-50 min-w-[200px] max-h-[340px] overflow-y-auto py-1.5 px-1 rounded-2xl border backdrop-blur-xl shadow-xl animate-in fade-in zoom-in-95 duration-150 ${
-                isLight
-                  ? 'bg-white/85 border-black/10 shadow-black/15 text-slate-900'
-                  : 'bg-slate-900/90 border-white/15 shadow-black/50 text-white'
+        {/* Overflow "More" Categories Dropdown */}
+        {overflowCategories.length > 0 && (
+          <div className="relative flex items-center">
+            <button
+              ref={moreButtonRef}
+              onClick={() => setIsMoreOpen((prev) => !prev)}
+              style={
+                isOverflowActive && activeOverflowCategory?.color
+                  ? {
+                      backgroundColor: hexToRgba(activeOverflowCategory.color, isDarkWallpaper ? 0.28 : 0.20),
+                      borderColor: hexToRgba(activeOverflowCategory.color, isDarkWallpaper ? 0.60 : 0.45),
+                    }
+                  : !isOverflowActive && resolvedColors?.tabs
+                  ? { color: resolvedColors.tabs }
+                  : undefined
+              }
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs md:text-sm font-medium transition-all duration-150 cursor-pointer select-none active:scale-95 border backdrop-blur-md ${
+                isOverflowActive
+                  ? isDarkWallpaper
+                    ? 'bg-white/20 text-white shadow-sm border-white/25 font-semibold'
+                    : 'bg-white/85 text-slate-900 shadow-sm border-black/10 font-semibold'
+                  : isDarkWallpaper
+                  ? 'text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border-white/15 shadow-xs'
+                  : 'text-slate-800 hover:text-black bg-white/70 hover:bg-white/90 border-black/8 shadow-sm shadow-black/[0.03]'
               }`}
             >
-              <div className="px-2.5 py-1 text-[11px] font-semibold text-white/50 uppercase tracking-wider">
-                {t('moreCategories', settings.language)} ({overflowCategories.length})
-              </div>
-              {overflowCategories.map((cat) => {
-                const isCatActive = activeCategoryId === cat.id;
-                const count = siteCounts[cat.id] || 0;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      onSelectCategory(cat.id);
-                      setIsMoreOpen(false);
-                    }}
-                    onContextMenu={(e) => {
-                      handleContextMenu(e, cat);
-                      setIsMoreOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer text-left ${
-                      isCatActive
-                        ? isLight
-                          ? 'bg-black/10 font-semibold text-black'
-                          : 'bg-white/20 font-semibold text-white'
-                        : isLight
-                        ? 'hover:bg-black/5 text-slate-700 hover:text-slate-900'
-                        : 'hover:bg-white/10 text-white/80 hover:text-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      {cat.color ? (
-                        <span
-                          className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
-                          style={{ backgroundColor: cat.color }}
-                        />
-                      ) : (
-                        <span className="w-2 h-2 rounded-full bg-white/30 shrink-0" />
-                      )}
-                      <span className="truncate">{cat.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-tabular ${
-                          isLight ? 'bg-black/5 text-slate-500' : 'bg-white/10 text-white/60'
+              <span>
+                {isOverflowActive && activeOverflowCategory
+                  ? `${t('moreCategories', settings.language)}: ${activeOverflowCategory.name}`
+                  : t('moreCategories', settings.language)}
+              </span>
+              {isOverflowActive && activeOverflowCategory && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-tabular border ${
+                    isDarkWallpaper
+                      ? 'bg-white/20 text-white border-transparent font-semibold'
+                    : 'bg-black/10 text-slate-900 border-transparent font-semibold'
+                  }`}
+                >
+                  {siteCounts[activeOverflowCategory.id] || 0}
+                </span>
+              )}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isMoreOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Standardized Frosted Glass Dropdown Menu */}
+            {isMoreOpen && (
+              <div
+                ref={moreDropdownRef}
+                className={`glass-dropdown absolute top-[calc(100%+8px)] right-0 z-50 min-w-[210px] max-h-[340px] overflow-y-auto py-1.5 px-1.5 rounded-2xl border shadow-2xl animate-scale-in scrollbar-thin select-none ${
+                  isLight
+                    ? 'border-black/10 shadow-black/15 text-slate-900'
+                    : 'border-white/15 shadow-black/50 text-white'
+                }`}
+              >
+                <div
+                  className={`px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider ${
+                    isLight ? 'text-slate-400' : 'text-white/40'
+                  }`}
+                >
+                  {t('moreCategories', settings.language)} ({overflowCategories.length})
+                </div>
+                <div className="space-y-0.5 mt-0.5">
+                  {overflowCategories.map((cat) => {
+                    const isCatActive = activeCategoryId === cat.id;
+                    const count = siteCounts[cat.id] || 0;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          onSelectCategory(cat.id);
+                          setIsMoreOpen(false);
+                        }}
+                        onContextMenu={(e) => {
+                          handleContextMenu(e, cat);
+                          setIsMoreOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer text-left ${
+                          isCatActive
+                            ? isLight
+                              ? 'bg-black/5 font-semibold text-black'
+                              : 'bg-white/15 font-semibold text-white'
+                            : isLight
+                            ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                            : 'text-white/80 hover:bg-white/10 hover:text-white'
                         }`}
                       >
-                        {count}
-                      </span>
-                      {isCatActive && <Check className="w-3.5 h-3.5 text-blue-400" />}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+                        <div className="flex items-center gap-2 truncate">
+                          {cat.color ? (
+                            <span
+                              className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
+                              style={{ backgroundColor: cat.color }}
+                            />
+                          ) : (
+                            <span
+                              className={`w-2 h-2 rounded-full shrink-0 ${
+                                isLight ? 'bg-slate-300' : 'bg-white/30'
+                              }`}
+                            />
+                          )}
+                          <span className="truncate">{cat.name}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span
+                            className={`text-[10px] px-1.5 py-0.2 rounded-full font-tabular ${
+                              isLight
+                                ? 'bg-black/[0.05] text-slate-600'
+                                : 'bg-white/10 text-white/60'
+                            }`}
+                          >
+                            {count}
+                          </span>
+                          {isCatActive && (
+                            <Check
+                              className={`w-3.5 h-3.5 shrink-0 ml-1 ${
+                                isLight ? 'text-blue-600' : 'text-blue-400'
+                              }`}
+                            />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Unified Add/Edit Category Modal */}
       <CategoryModal

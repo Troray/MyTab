@@ -493,6 +493,7 @@ export const zhTW: Translation = {
   renameDesktopPage: "重新命名桌面",
   deleteDesktopPage: "刪除桌面",
   confirmDeletePage: "確定要刪除此桌面嗎？該桌面上的捷徑將自動合併至第一個桌面。",
+  manageDesktopTooltip: "右鍵重新命名或刪除",
   pageNamePlaceholder: "請輸入桌面名稱",
   siteDesktop: "所屬桌面",
   defaultDesktopName: "桌面",

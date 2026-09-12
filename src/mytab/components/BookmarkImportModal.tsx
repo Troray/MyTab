@@ -84,7 +84,7 @@ export const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
   onClose,
   onImportSuccess,
 }) => {
-  const isLight = isLightMode(appState.settings);
+  const isLight = isLightMode(appState.settings.mode);
   const language = appState.settings.language;
   const isPrivateSpace = appState.profileId === 'private';
 

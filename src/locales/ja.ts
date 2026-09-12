@@ -493,6 +493,7 @@ export const ja: Translation = {
   renameDesktopPage: "デスクトップ名を変更",
   deleteDesktopPage: "デスクトップを削除",
   confirmDeletePage: "このデスクトップを削除してもよろしいですか？含まれるショートカットは最初のデスクトップに移動されます。",
+  manageDesktopTooltip: "右クリックで名前変更/削除",
   pageNamePlaceholder: "デスクトップ名を入力",
   siteDesktop: "所属デスクトップ",
   defaultDesktopName: "デスクトップ",

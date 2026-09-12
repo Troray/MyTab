@@ -493,6 +493,7 @@ export const ru: Translation = {
   renameDesktopPage: "Переименовать рабочий стол",
   deleteDesktopPage: "Удалить рабочий стол",
   confirmDeletePage: "Вы уверены, что хотите удалить этот рабочий стол? Ярлыки будут перемещены на первый рабочий стол.",
+  manageDesktopTooltip: "ПКМ для переименования или удаления",
   pageNamePlaceholder: "Введите название рабочего стола",
   siteDesktop: "Рабочий стол",
   defaultDesktopName: "Рабочий стол",

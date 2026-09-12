@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "embla-carousel-react": "^8.6.0",
     "lucide-react": "^1.16.0",
     "lunar-javascript": "^1.7.7",
     "react": "^18.3.1",

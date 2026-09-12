@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react';
-import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef, useLayoutEffect, useCallback, useMemo } from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
+import { Plus } from 'lucide-react';
 import { SiteItem, ThemeSettings, GridPage } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { SiteCard } from './SiteCard';
@@ -39,35 +40,70 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
   onRenamePage,
   onDeletePage,
 }) => {
-  const [displaySites, setDisplaySites] = useState<SiteItem[]>(sites);
+  const defaultPageId = gridPages?.[0]?.id || 'page-1';
+
+  const pagesToRender = useMemo(() => {
+    if (gridPages && gridPages.length > 0) {
+      return gridPages;
+    }
+    return [{ id: defaultPageId, name: `${t('defaultDesktopName', settings.language)} 1`, sortOrder: 0 }];
+  }, [gridPages, defaultPageId, settings.language]);
+
+  const activePageIndex = Math.max(
+    0,
+    pagesToRender.findIndex((p) => p.id === activeGridPageId)
+  );
+
+  // Partition sites by desktop page for seamless continuous track rendering
+  const sitesByPage = useMemo(() => {
+    const map = new Map<string, SiteItem[]>();
+    for (const p of pagesToRender) {
+      map.set(p.id, []);
+    }
+    for (const s of sites) {
+      const pId = s.pageId || defaultPageId;
+      const list = map.get(pId);
+      if (list) {
+        list.push(s);
+      } else {
+        const firstList = map.get(defaultPageId);
+        if (firstList) {
+          firstList.push(s);
+        } else {
+          map.set(pId, [s]);
+        }
+      }
+    }
+    return map;
+  }, [sites, pagesToRender, defaultPageId]);
+
+  const currentActivePageSites = useMemo(() => {
+    return sitesByPage.get(activeGridPageId || defaultPageId) || [];
+  }, [sitesByPage, activeGridPageId, defaultPageId]);
+
+  const [displaySites, setDisplaySites] = useState<SiteItem[]>(currentActivePageSites);
   const [draggingSiteId, setDraggingSiteId] = useState<string | null>(null);
   const [justDroppedSiteId, setJustDroppedSiteId] = useState<string | null>(null);
-  const [slideAnim, setSlideAnim] = useState<'left' | 'right' | null>(null);
-  const prevPageIdRef = useRef<string | undefined>(activeGridPageId);
 
+  // Sync displaySites when currentActivePageSites changes outside of active drag
   useEffect(() => {
-    if (activeGridPageId && prevPageIdRef.current && prevPageIdRef.current !== activeGridPageId) {
-      const oldIdx = gridPages?.findIndex((p) => p.id === prevPageIdRef.current) ?? 0;
-      const newIdx = gridPages?.findIndex((p) => p.id === activeGridPageId) ?? 0;
-      setSlideAnim(newIdx > oldIdx ? 'right' : 'left');
-      const timer = setTimeout(() => setSlideAnim(null), 250);
-      prevPageIdRef.current = activeGridPageId;
-      return () => clearTimeout(timer);
+    if (!draggingSiteId) {
+      setDisplaySites(currentActivePageSites);
     }
-    prevPageIdRef.current = activeGridPageId;
-  }, [activeGridPageId, gridPages]);
+  }, [currentActivePageSites, draggingSiteId]);
 
   // Refs for callbacks to avoid breaking React.memo on SiteCards
-  const displaySitesRef = useRef<SiteItem[]>(sites);
+  const displaySitesRef = useRef<SiteItem[]>(currentActivePageSites);
   const draggingSiteIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    displaySitesRef.current = displaySites;
-  }, [displaySites]);
+    displaySitesRef.current = draggingSiteId ? displaySites : currentActivePageSites;
+  }, [displaySites, currentActivePageSites, draggingSiteId]);
 
   useEffect(() => {
     draggingSiteIdRef.current = draggingSiteId;
   }, [draggingSiteId]);
+
   const cardSize = settings.cardSize || 110;
 
   // DOM node references and previous bounding rects for FLIP animation
@@ -124,19 +160,15 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
     prevRects.current.clear();
   }, [displaySites]);
 
-  // Sync displaySites when sites prop changes outside of active drag
-  useEffect(() => {
-    if (!draggingSiteId) {
-      setDisplaySites(sites);
-    }
-  }, [sites, draggingSiteId]);
-
   const handleDragStart = useCallback((e: React.DragEvent, siteId: string) => {
+    draggingSiteIdRef.current = siteId;
+    displaySitesRef.current = currentActivePageSites;
+    setDisplaySites(currentActivePageSites);
     setDraggingSiteId(siteId);
     lastSwapTime.current = Date.now();
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', siteId);
-  }, []);
+  }, [currentActivePageSites]);
 
   const handleDragOver = useCallback((e: React.DragEvent, targetSiteId: string) => {
     e.preventDefault();
@@ -183,43 +215,43 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    const currentDragId = draggingSiteIdRef.current;
-    if (!currentDragId) return;
+    const currentDragId = draggingSiteIdRef.current || draggingSiteId;
     draggingSiteIdRef.current = null;
+    if (currentDragId) {
+      const committedSites = displaySitesRef.current.map((site, index) => ({
+        ...site,
+        sortOrder: index,
+        updatedAt: Date.now(),
+      }));
 
-    const committedSites = displaySitesRef.current.map((site, index) => ({
-      ...site,
-      sortOrder: index,
-      updatedAt: Date.now(),
-    }));
-
-    onReorderSites(committedSites);
-    setJustDroppedSiteId(currentDragId);
+      onReorderSites(committedSites);
+      setJustDroppedSiteId(currentDragId);
+    }
     setDraggingSiteId(null);
 
     setTimeout(() => {
       setJustDroppedSiteId(null);
     }, 550);
-  }, [onReorderSites]);
+  }, [draggingSiteId, onReorderSites]);
 
   const handleDragEnd = useCallback(() => {
-    const currentDragId = draggingSiteIdRef.current;
-    if (!currentDragId) return;
+    const currentDragId = draggingSiteIdRef.current || draggingSiteId;
     draggingSiteIdRef.current = null;
-
-    const committedSites = displaySitesRef.current.map((site, index) => ({
-      ...site,
-      sortOrder: index,
-      updatedAt: Date.now(),
-    }));
-    onReorderSites(committedSites);
-    setJustDroppedSiteId(currentDragId);
+    if (currentDragId) {
+      const committedSites = displaySitesRef.current.map((site, index) => ({
+        ...site,
+        sortOrder: index,
+        updatedAt: Date.now(),
+      }));
+      onReorderSites(committedSites);
+      setJustDroppedSiteId(currentDragId);
+    }
     setDraggingSiteId(null);
 
     setTimeout(() => {
       setJustDroppedSiteId(null);
     }, 550);
-  }, [onReorderSites]);
+  }, [draggingSiteId, onReorderSites]);
 
   const showCardBg = settings.showCardBackground !== false;
   const showTitle = settings.showSiteTitle !== false;
@@ -234,109 +266,218 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
   const gap = showCardBg ? Math.max(12, Math.round(cardSize * 0.14)) : iconSpacing;
   const maxPerRow = settings.maxCardsPerRow || 8;
   const gridMaxWidth = maxPerRow * cellWidth + (maxPerRow - 1) * gap;
-  const activePageIndex = gridPages && activeGridPageId
-    ? Math.max(0, gridPages.findIndex((p) => p.id === activeGridPageId))
-    : 0;
+
+  // Embla Carousel Integration for authentic mobile-grade momentum & spring swipe
+  const initialIndexRef = useRef(activePageIndex);
+  const pagesCountRef = useRef(pagesToRender.length);
+
+  useEffect(() => {
+    pagesCountRef.current = pagesToRender.length;
+  }, [pagesToRender.length]);
+
+  // Static options so useEmblaCarousel NEVER triggers reInit() on page index changes!
+  const emblaOptions = useMemo(
+    () => ({
+      loop: false,
+      duration: 35,
+      skipSnaps: false,
+      startIndex: initialIndexRef.current,
+      watchDrag: (_emblaApi: any, evt: MouseEvent | TouchEvent) => {
+        if (pagesCountRef.current <= 1) return false;
+        const target = evt.target as HTMLElement | null;
+        if (!target) return true;
+        // Do not start carousel drag if interacting with a card, button, link, form control, modal, etc.
+        if (
+          target.closest('[data-site-card]') ||
+          target.closest('button') ||
+          target.closest('a') ||
+          target.closest('input') ||
+          target.closest('textarea') ||
+          target.closest('select') ||
+          target.closest('[role="dialog"]') ||
+          target.closest('[role="menu"]')
+        ) {
+          return false;
+        }
+        return true;
+      },
+    }),
+    []
+  );
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(emblaOptions);
+
+  // Embla Tween Scale & Opacity for authentic iOS/iPadOS/Android launcher depth
+  const applyTween = useCallback(() => {
+    if (!emblaApi) return;
+    const scrollProgress = emblaApi.scrollProgress();
+    const scrollSnaps = emblaApi.scrollSnapList();
+    const slideNodes = emblaApi.slideNodes();
+    const pagesCount = scrollSnaps.length;
+
+    if (pagesCount <= 1 || !slideNodes || slideNodes.length === 0) {
+      slideNodes?.forEach((node) => {
+        const inner = node.querySelector<HTMLElement>('.embla-slide-inner');
+        if (inner) {
+          inner.style.transform = '';
+          inner.style.opacity = '';
+        }
+      });
+      return;
+    }
+
+    scrollSnaps.forEach((scrollSnap, snapIndex) => {
+      const slideNode = slideNodes[snapIndex];
+      if (!slideNode) return;
+      const inner = slideNode.querySelector<HTMLElement>('.embla-slide-inner');
+      if (!inner) return;
+
+      const diffToTarget = Math.abs(scrollSnap - scrollProgress) * (pagesCount - 1);
+      const normalizedDiff = Math.min(Math.max(diffToTarget, 0), 1);
+      // Cosine easing creates smooth deceleration near 0
+      const factor = Math.cos(normalizedDiff * Math.PI * 0.5);
+
+      const scale = 0.90 + 0.10 * factor;
+      const opacity = 0.25 + 0.75 * factor;
+
+      inner.style.transform = `scale(${scale.toFixed(4)})`;
+      inner.style.opacity = opacity.toFixed(4);
+    });
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    applyTween();
+    emblaApi.on('init', applyTween);
+    emblaApi.on('scroll', applyTween);
+    emblaApi.on('reInit', applyTween);
+    emblaApi.on('settle', applyTween);
+
+    return () => {
+      emblaApi.off('init', applyTween);
+      emblaApi.off('scroll', applyTween);
+      emblaApi.off('reInit', applyTween);
+      emblaApi.off('settle', applyTween);
+    };
+  }, [emblaApi, applyTween]);
+
+  // Sync active page when user drags/swipes Embla to another slide
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    const index = emblaApi.selectedScrollSnap();
+    const targetPage = pagesToRender[index];
+    if (targetPage && targetPage.id !== activeGridPageId && onSelectPage) {
+      onSelectPage(targetPage.id);
+    }
+  }, [emblaApi, pagesToRender, activeGridPageId, onSelectPage]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on('select', onSelect);
+
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  // Sync Embla scroll position when activeGridPageId changes externally (e.g. indicator dots, keyboard)
+  useEffect(() => {
+    if (!emblaApi) return;
+    const currentIndex = emblaApi.selectedScrollSnap();
+    if (currentIndex !== activePageIndex) {
+      emblaApi.scrollTo(activePageIndex);
+    }
+  }, [emblaApi, activePageIndex]);
+
+  // Re-init Embla when pages count changes
+  useEffect(() => {
+    if (emblaApi) {
+      emblaApi.reInit();
+    }
+  }, [emblaApi, pagesToRender.length]);
 
   return (
-    <div
-      id="mytab-cards"
-      className="relative w-full max-w-7xl mx-auto px-4 pt-3 pb-10 flex flex-col items-center"
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={handleDrop}
-    >
-      {/* Floating Side Nav Arrows (Desktop) */}
-      {gridPages && gridPages.length > 1 && onSelectPage && (
-        <>
-          {activePageIndex > 0 && (
-            <button
-              type="button"
-              onClick={() => onSelectPage(gridPages[activePageIndex - 1].id)}
-              className={`hidden md:flex items-center justify-center absolute left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full backdrop-blur-md border transition-all cursor-pointer shadow-lg active:scale-95 ${
-                isLight
-                  ? 'bg-white/70 hover:bg-white/95 text-slate-700 border-black/10'
-                  : 'bg-black/30 hover:bg-black/60 text-white/80 hover:text-white border-white/15'
-              }`}
-              title={t('prevPage', settings.language)}
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          )}
-
-          {activePageIndex < gridPages.length - 1 && (
-            <button
-              type="button"
-              onClick={() => onSelectPage(gridPages[activePageIndex + 1].id)}
-              className={`hidden md:flex items-center justify-center absolute right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full backdrop-blur-md border transition-all cursor-pointer shadow-lg active:scale-95 ${
-                isLight
-                  ? 'bg-white/70 hover:bg-white/95 text-slate-700 border-black/10'
-                  : 'bg-black/30 hover:bg-black/60 text-white/80 hover:text-white border-white/15'
-              }`}
-              title={t('nextPage', settings.language)}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          )}
-        </>
-      )}
-
-      {/* Cards Grid Container with horizontal sliding transition */}
+    <div className="w-full flex-1 flex flex-col items-center">
+      {/* Embla Viewport */}
       <div
-        className={`w-full flex justify-center transition-all duration-200 ${
-          slideAnim === 'right'
-            ? 'animate-in slide-in-from-right-8 fade-in-50 duration-200'
-            : slideAnim === 'left'
-            ? 'animate-in slide-in-from-left-8 fade-in-50 duration-200'
-            : ''
-        }`}
+        id="mytab-cards"
+        ref={emblaRef}
+        className="relative flex-1 w-full max-w-7xl mx-auto px-4 pt-3 pb-28 min-h-[min(540px,calc(100vh-320px))] overflow-hidden cursor-default"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
       >
-        <div
-          className="flex flex-wrap justify-center items-center mx-auto"
-          style={{
-            gap: `${gap}px`,
-            maxWidth: `${gridMaxWidth}px`,
-          }}
-        >
-          {displaySites.map((site, index) => (
-            <SiteCard
-              key={site.id}
-              ref={(el) => {
-                if (el) {
-                  cardElements.current.set(site.id, el);
-                } else {
-                  cardElements.current.delete(site.id);
-                }
-              }}
-              site={site}
-              index={index}
-              settings={settings}
-              resolvedColors={resolvedColors}
-              isLight={isLight}
-              isDragging={draggingSiteId === site.id}
-              isAnyDragging={Boolean(draggingSiteId)}
-              isJustDropped={justDroppedSiteId === site.id}
-              onEdit={onEditSite}
-              onDelete={onDeleteSite}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onDragEnd={handleDragEnd}
-            />
-          ))}
+        {/* Embla Container */}
+        <div className="flex flex-row w-full min-h-full touch-pan-y">
+          {pagesToRender.map((page: GridPage) => {
+            const isCurrent = page.id === (activeGridPageId || defaultPageId);
+            const pageSites = isCurrent && draggingSiteId
+              ? displaySites
+              : (sitesByPage.get(page.id) || []);
 
-          {displaySites.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-10 text-white/50 space-y-3">
-              <p className="text-xs">{t('noSitesInCategory', settings.language)}</p>
-              <button
-                type="button"
-                onClick={onAddSite}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium border border-white/15 transition-colors cursor-pointer"
+            return (
+              <div
+                key={page.id}
+                className="flex-[0_0_100%] min-w-0 flex flex-col items-center min-h-full"
               >
-                <Plus className="w-4 h-4" />
-                <span>{t('addSite', settings.language)}</span>
-              </button>
-            </div>
-          )}
+                <div
+                  className="embla-slide-inner w-full flex flex-col items-center will-change-[transform,opacity]"
+                  style={{
+                    transformOrigin: 'center 35%',
+                  }}
+                >
+                  <div
+                    className="flex flex-wrap justify-center items-center mx-auto w-full"
+                    style={{
+                      gap: `${gap}px`,
+                      maxWidth: `${gridMaxWidth}px`,
+                    }}
+                  >
+                    {pageSites.map((site: SiteItem, index: number) => (
+                      <SiteCard
+                        key={site.id}
+                        ref={(el) => {
+                          if (el) {
+                            cardElements.current.set(site.id, el);
+                          } else {
+                            cardElements.current.delete(site.id);
+                          }
+                        }}
+                        site={site}
+                        index={index}
+                        settings={settings}
+                        resolvedColors={resolvedColors}
+                        isLight={isLight}
+                        isDragging={draggingSiteId === site.id}
+                        isAnyDragging={Boolean(draggingSiteId)}
+                        isJustDropped={justDroppedSiteId === site.id}
+                        onEdit={onEditSite}
+                        onDelete={onDeleteSite}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        onDragEnd={handleDragEnd}
+                      />
+                    ))}
+
+                    {pageSites.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-10 text-white/50 space-y-3">
+                        <p className="text-xs">{t('noSitesInCategory', settings.language)}</p>
+                        <button
+                          type="button"
+                          onClick={onAddSite}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium border border-white/15 transition-colors cursor-pointer"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>{t('addSite', settings.language)}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

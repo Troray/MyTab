@@ -493,6 +493,7 @@ export const en: Translation = {
   renameDesktopPage: "Rename Desktop",
   deleteDesktopPage: "Delete Desktop",
   confirmDeletePage: "Are you sure you want to delete this desktop? Shortcuts on it will be moved to the first desktop.",
+  manageDesktopTooltip: "Right-click to rename or delete",
   pageNamePlaceholder: "Enter desktop name",
   siteDesktop: "Desktop Page",
   defaultDesktopName: "Desktop",

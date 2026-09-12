@@ -42,6 +42,8 @@ const {
   deleteGridPage,
   moveCategoryToGridPage,
   getProfileData,
+  saveActiveCategory,
+  savePageCategoryMap,
   saveCategories,
   saveSites,
   loadAppState,
@@ -270,4 +272,35 @@ test('Grid Pages: activeGridPageId is persisted and restored via loadAppState', 
   await deleteGridPage('page-3', 'normal');
   state = await loadAppState('normal');
   assert.equal(state.activeGridPageId, 'page-1');
+});
+
+test('Grid Pages: pageCategoryMap is persisted per desktop and restored via loadAppState', async () => {
+  mockStorage.clear();
+  const pages = [
+    { id: 'page-1', name: '桌面 1', sortOrder: 0 },
+    { id: 'page-2', name: '桌面 2', sortOrder: 1 },
+  ];
+  await saveGridPages(pages, 'normal');
+
+  // Select category 'cat-work' on page-1
+  const map1 = { 'page-1': 'cat-work' };
+  await saveActiveCategory('cat-work', map1, 'normal');
+
+  let state = await loadAppState('normal');
+  assert.equal(state.pageCategoryMap?.['page-1'], 'cat-work');
+  assert.equal(state.activeCategoryId, 'cat-work');
+
+  // Select category 'cat-design' on page-2
+  const map2 = { 'page-1': 'cat-work', 'page-2': 'cat-design' };
+  await saveActiveCategory('cat-design', map2, 'normal');
+
+  state = await loadAppState('normal');
+  assert.equal(state.pageCategoryMap?.['page-1'], 'cat-work');
+  assert.equal(state.pageCategoryMap?.['page-2'], 'cat-design');
+
+  // Delete page-2 -> pageCategoryMap removes 'page-2'
+  await deleteGridPage('page-2', 'normal');
+  state = await loadAppState('normal');
+  assert.equal(state.pageCategoryMap?.['page-1'], 'cat-work');
+  assert.equal(state.pageCategoryMap?.['page-2'], undefined);
 });

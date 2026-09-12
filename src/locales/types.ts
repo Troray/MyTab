@@ -491,6 +491,7 @@ export interface Translation {
   renameDesktopPage: string;
   deleteDesktopPage: string;
   confirmDeletePage: string;
+  manageDesktopTooltip: string;
   pageNamePlaceholder: string;
   siteDesktop: string;
   defaultDesktopName: string;
