@@ -38,11 +38,13 @@ import assert from 'node:assert/strict';
 const {
   DEFAULT_GRID_PAGES,
   saveGridPages,
+  saveActiveGridPageId,
   deleteGridPage,
   moveCategoryToGridPage,
   getProfileData,
   saveCategories,
   saveSites,
+  loadAppState,
 } = await import('../src/services/storage.ts');
 
 test('Grid Pages: DEFAULT_GRID_PAGES provides clean initial desktop page', () => {
@@ -242,4 +244,30 @@ test('BookmarkImport: Tree cascading selection and tri-state calculation', () =>
   assert.equal(selected.includes('sub-dev'), false);
   assert.equal(selected.includes('sub-fe'), false);
   assert.equal(selected.includes('sub-be'), false);
+});
+
+test('Grid Pages: activeGridPageId is persisted and restored via loadAppState', async () => {
+  mockStorage.clear();
+  const pages = [
+    { id: 'page-1', name: '桌面 1', sortOrder: 0 },
+    { id: 'page-2', name: '桌面 2', sortOrder: 1 },
+    { id: 'page-3', name: '桌面 3', sortOrder: 2 },
+  ];
+  await saveGridPages(pages, 'normal');
+
+  // Initial load defaults to page-1
+  let state = await loadAppState('normal');
+  assert.equal(state.activeGridPageId, 'page-1');
+
+  // Switch to page-3 and persist
+  await saveActiveGridPageId('page-3', 'normal');
+
+  // Next tab loadAppState restores page-3
+  state = await loadAppState('normal');
+  assert.equal(state.activeGridPageId, 'page-3');
+
+  // Deleting the active page-3 falls back to page-1
+  await deleteGridPage('page-3', 'normal');
+  state = await loadAppState('normal');
+  assert.equal(state.activeGridPageId, 'page-1');
 });

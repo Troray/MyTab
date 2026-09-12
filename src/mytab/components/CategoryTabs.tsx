@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { FolderPlus, Pencil, Trash2, Bookmark, ChevronDown, Check, FolderInput } from 'lucide-react';
+import { FolderPlus, Pencil, Trash2, ChevronDown, Check, FolderInput } from 'lucide-react';
 import { Category, GridPage, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { CategoryModal } from './CategoryModal';
@@ -488,46 +488,6 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
             </div>
           )}
         </div>
-      )}
-
-      {/* Add Category Button */}
-      <button
-        onClick={() => setModalCategory(null)}
-        style={
-          resolvedColors?.tabs
-            ? { color: resolvedColors.tabs }
-            : undefined
-        }
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-dashed backdrop-blur-md transition-all cursor-pointer select-none active:scale-95 ${
-          isDarkWallpaper
-            ? 'text-white/75 hover:text-white bg-white/[0.06] hover:bg-white/15 border-white/20'
-            : 'text-slate-700 hover:text-black bg-white/60 hover:bg-white/90 border-black/15 shadow-sm'
-        }`}
-        title={t('addCategory', settings.language)}
-      >
-        <FolderPlus className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">{t('addCategory', settings.language)}</span>
-      </button>
-
-      {/* Import Bookmarks Quick Button */}
-      {onOpenBookmarkImport && (
-        <button
-          onClick={onOpenBookmarkImport}
-          style={
-            resolvedColors?.tabs
-              ? { color: resolvedColors.tabs }
-              : undefined
-          }
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-dashed backdrop-blur-md transition-all cursor-pointer select-none active:scale-95 ${
-            isDarkWallpaper
-              ? 'text-white/75 hover:text-white bg-white/[0.06] hover:bg-white/15 border-white/20'
-              : 'text-slate-700 hover:text-black bg-white/60 hover:bg-white/90 border-black/15 shadow-sm'
-          }`}
-          title={t('importBookmarks', settings.language)}
-        >
-          <Bookmark className="w-3.5 h-3.5 text-blue-500" />
-          <span className="hidden md:inline">{t('importBookmarks', settings.language)}</span>
-        </button>
       )}
 
       {/* Unified Add/Edit Category Modal */}

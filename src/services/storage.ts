@@ -136,6 +136,7 @@ export function createDefaultNormalProfile(): ProfileData {
     categories: DEFAULT_CATEGORIES,
     activeCategoryId: 'all',
     gridPages: DEFAULT_GRID_PAGES,
+    activeGridPageId: 'page-1',
   };
 }
 
@@ -148,6 +149,7 @@ export function createDefaultPrivateProfile(): ProfileData {
     categories: [],
     activeCategoryId: 'all',
     gridPages: DEFAULT_GRID_PAGES,
+    activeGridPageId: 'page-1',
     settings: {
       backgroundType: 'gradient',
       backgroundValue: DEFAULT_PRIVATE_BACKGROUND_VALUE,
@@ -443,6 +445,7 @@ export async function loadAppState(targetProfileId?: ProfileId): Promise<AppStat
     categories: currentProfile.categories,
     activeCategoryId: currentProfile.activeCategoryId,
     gridPages: currentProfile.gridPages && currentProfile.gridPages.length > 0 ? currentProfile.gridPages : DEFAULT_GRID_PAGES,
+    activeGridPageId: currentProfile.activeGridPageId || (currentProfile.gridPages?.[0]?.id) || 'page-1',
     settings: effectiveSettings,
     webdav: { ...DEFAULT_WEBDAV_CONFIG, ...webdav },
     git: normalizedGit,
@@ -506,6 +509,7 @@ export async function deleteGridPage(pageIdToDelete: string, profileId?: Profile
       gridPages: safeRemaining,
       categories: updatedCategories,
       sites: updatedSites,
+      activeGridPageId: profile.activeGridPageId === pageIdToDelete ? fallbackPageId : profile.activeGridPageId,
     };
   });
 }
@@ -539,8 +543,16 @@ export async function saveActiveCategory(activeCategoryId: string, profileId?: P
   }));
 }
 
+export async function saveActiveGridPageId(activeGridPageId: string, profileId?: ProfileId): Promise<void> {
+  const targetId = profileId || (await getCurrentProfileId());
+  await updateProfile(targetId, (profile) => ({
+    ...profile,
+    activeGridPageId,
+  }));
+}
+
 export async function saveProfileItems(
-  updates: { sites?: SiteItem[]; categories?: Category[]; activeCategoryId?: string },
+  updates: { sites?: SiteItem[]; categories?: Category[]; activeCategoryId?: string; gridPages?: GridPage[]; activeGridPageId?: string },
   profileId?: ProfileId
 ): Promise<void> {
   const targetId = profileId || (await getCurrentProfileId());
@@ -549,6 +561,8 @@ export async function saveProfileItems(
     ...(updates.sites !== undefined ? { sites: updates.sites } : {}),
     ...(updates.categories !== undefined ? { categories: updates.categories } : {}),
     ...(updates.activeCategoryId !== undefined ? { activeCategoryId: updates.activeCategoryId } : {}),
+    ...(updates.gridPages !== undefined ? { gridPages: updates.gridPages } : {}),
+    ...(updates.activeGridPageId !== undefined ? { activeGridPageId: updates.activeGridPageId } : {}),
   }));
 }
 

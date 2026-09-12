@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Pencil, Trash2, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { GridPage, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { ConfirmModal } from './ConfirmModal';
@@ -12,7 +13,7 @@ interface GridPageIndicatorProps {
   resolvedColors?: ResolvedTextColors;
   isLight?: boolean;
   onSelectPage: (pageId: string) => void;
-  onAddPage: (name?: string) => void;
+  onAddPage?: (name?: string) => void;
   onRenamePage: (pageId: string, newName: string) => void;
   onDeletePage: (pageId: string) => void;
 }
@@ -24,7 +25,6 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
   resolvedColors,
   isLight = false,
   onSelectPage,
-  onAddPage,
   onRenamePage,
   onDeletePage,
 }) => {
@@ -88,14 +88,18 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
     gridPages.findIndex((p) => p.id === activeGridPageId)
   );
 
-  return (
-    <div className="flex flex-col items-center justify-center mt-3 mb-1 select-none z-20">
+  const content = (
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 select-none z-40 pointer-events-none">
       {/* Frosted Floating Pill Capsule */}
       <div
-        className={`inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border backdrop-blur-md shadow-sm transition-all ${
+        className={`pointer-events-auto inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border backdrop-blur-xl shadow-lg transition-all duration-300 ease-out ${
+          contextMenu || renamingPage || deletingPage
+            ? 'opacity-100 scale-100 shadow-xl'
+            : 'opacity-35 hover:opacity-100 hover:scale-105 hover:shadow-2xl'
+        } ${
           isLight
-            ? 'bg-white/65 border-black/10 text-slate-800'
-            : 'bg-black/30 border-white/15 text-white'
+            ? 'bg-white/80 hover:bg-white/95 border-black/10 text-slate-800 shadow-black/10'
+            : 'bg-black/45 hover:bg-black/70 border-white/15 text-white shadow-black/40'
         }`}
       >
         {/* Previous page arrow (if multiple pages) */}
@@ -118,7 +122,7 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
         )}
 
         {/* Page Dots / Pills */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {gridPages.map((page, idx) => {
             const isActive = page.id === activeGridPageId;
             return (
@@ -128,18 +132,21 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
                 onClick={() => onSelectPage(page.id)}
                 onContextMenu={(e) => handleContextMenu(e, page)}
                 title={`${page.name || `${t('defaultDesktopName', settings.language)} ${idx + 1}`} (${t('desktopPage', settings.language)} ${idx + 1})`}
-                className={`relative group transition-all duration-300 cursor-pointer focus:outline-none ${
-                  isActive
-                    ? isLight
-                      ? 'w-6 h-2 rounded-full bg-slate-900 shadow-sm'
-                      : 'w-6 h-2 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.7)]'
-                    : isLight
-                    ? 'w-2 h-2 rounded-full bg-slate-400 hover:bg-slate-700 hover:scale-125'
-                    : 'w-2 h-2 rounded-full bg-white/35 hover:bg-white/75 hover:scale-125'
-                }`}
+                className="relative group p-1 transition-all duration-300 cursor-pointer focus:outline-none flex items-center justify-center"
               >
+                <span
+                  className={`block transition-all duration-300 ${
+                    isActive
+                      ? isLight
+                        ? 'w-6 h-2 rounded-full bg-slate-900 shadow-sm'
+                        : 'w-6 h-2 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.7)]'
+                      : isLight
+                      ? 'w-2 h-2 rounded-full bg-slate-400 group-hover:bg-slate-700 group-hover:scale-125'
+                      : 'w-2 h-2 rounded-full bg-white/40 group-hover:bg-white/80 group-hover:scale-125'
+                  }`}
+                />
                 {/* Active Tooltip */}
-                <span className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white shadow-md z-30">
+                <span className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-md text-[10px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white shadow-md z-50">
                   {page.name || `${t('defaultDesktopName', settings.language)} ${idx + 1}`}
                 </span>
               </button>
@@ -165,20 +172,6 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         )}
-
-        {/* Add Page Button */}
-        <button
-          type="button"
-          onClick={() => onAddPage()}
-          className={`p-1 rounded-full transition-all cursor-pointer active:scale-90 ${
-            isLight
-              ? 'text-slate-600 hover:text-black hover:bg-black/5'
-              : 'text-white/70 hover:text-white hover:bg-white/15'
-          }`}
-          title={t('addDesktopPage', settings.language)}
-        >
-          <Plus className="w-3.5 h-3.5" />
-        </button>
       </div>
 
       {/* Context Menu for Page */}
@@ -186,7 +179,7 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
         <div
           ref={menuRef}
           style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-          className={`fixed z-50 min-w-[140px] py-1.5 px-1 rounded-2xl border backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-150 ${
+          className={`pointer-events-auto fixed z-50 min-w-[140px] py-1.5 px-1 rounded-2xl border backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in-95 duration-150 ${
             isLight
               ? 'bg-white/90 border-black/10 text-slate-800 shadow-black/15'
               : 'bg-slate-900/90 border-white/15 text-white shadow-black/80'
@@ -225,7 +218,7 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
 
       {/* Rename Dialog Modal */}
       {renamingPage && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <div className="pointer-events-auto fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div
             className={`fixed inset-0 transition-opacity ${isLight ? 'bg-black/30' : 'bg-black/60'}`}
             onClick={() => setRenamingPage(null)}
@@ -297,4 +290,6 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
       />
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : content;
 };

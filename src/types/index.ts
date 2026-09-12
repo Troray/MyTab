@@ -201,6 +201,7 @@ export interface ProfileData {
   categories: Category[];
   activeCategoryId: string;
   gridPages?: GridPage[];
+  activeGridPageId?: string;
   settings?: Partial<ThemeSettings>;
   wallpaper?: WallpaperSettings;
 }

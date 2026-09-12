@@ -241,7 +241,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
   return (
     <div
       id="mytab-cards"
-      className="relative w-full max-w-7xl mx-auto px-4 py-3 flex flex-col items-center"
+      className="relative w-full max-w-7xl mx-auto px-4 pt-3 pb-10 flex flex-col items-center"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >

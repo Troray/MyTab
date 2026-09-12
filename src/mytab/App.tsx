@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
-import { Settings as SettingsIcon, Plus, Lock, Pencil, Check, LayoutGrid, Columns3 } from 'lucide-react';
+import { Settings as SettingsIcon, Plus, Lock, Pencil, Check, LayoutGrid, Columns3, FolderPlus, Bookmark, SquarePlus } from 'lucide-react';
 import { t } from '../locales';
 import { AppState, Category, GitSyncConfig, GridPage, ProfileSyncSettings, SiteItem, ThemeSettings, WebdavConfig } from '../types';
 import {
@@ -13,6 +13,7 @@ import {
   saveProfileSyncSettings,
   saveProfileItems,
   saveGridPages,
+  saveActiveGridPageId,
   deleteGridPage,
   moveCategoryToGridPage,
   DEFAULT_GRID_PAGES,
@@ -36,38 +37,39 @@ const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m
 const ConfirmModal = lazy(() => import('./components/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 const TextColorCustomizer = lazy(() => import('./components/TextColorCustomizer').then(m => ({ default: m.TextColorCustomizer })));
 const BookmarkImportModal = lazy(() => import('./components/BookmarkImportModal').then(m => ({ default: m.BookmarkImportModal })));
+const CategoryModal = lazy(() => import('./components/CategoryModal').then(m => ({ default: m.CategoryModal })));
 
 export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => {
   const [appState, setAppState] = useState<AppState | null>(initialState || null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isBookmarkImportModalOpen, setIsBookmarkImportModalOpen] = useState(false);
+  const [isAddHovered, setIsAddHovered] = useState(false);
+  const addHoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [editingSite, setEditingSite] = useState<SiteItem | null>(null);
   const [deletingSite, setDeletingSite] = useState<SiteItem | null>(null);
   const [isCustomizingColors, setIsCustomizingColors] = useState(false);
   const [isBoardEditing, setIsBoardEditing] = useState(false);
   const [wallpaperLuminance, setWallpaperLuminance] = useState<WallpaperLuminance>(DEFAULT_LUMINANCE);
-  const [isLayoutHovered, setIsLayoutHovered] = useState(false);
-  const layoutHoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleLayoutMouseEnter = () => {
-    if (layoutHoverTimeoutRef.current) {
-      clearTimeout(layoutHoverTimeoutRef.current);
-      layoutHoverTimeoutRef.current = null;
+  const handleAddMouseEnter = () => {
+    if (addHoverTimeoutRef.current) {
+      clearTimeout(addHoverTimeoutRef.current);
+      addHoverTimeoutRef.current = null;
     }
-    setIsLayoutHovered(true);
+    setIsAddHovered(true);
   };
 
-  const handleLayoutMouseLeave = () => {
-    layoutHoverTimeoutRef.current = setTimeout(() => {
-      setIsLayoutHovered(false);
-    }, 180);
-  };
+  const handleAddMouseLeave = useCallback(() => {
+    addHoverTimeoutRef.current = setTimeout(() => {
+      setIsAddHovered(false);
+    }, 150);
+  }, []);
 
   useEffect(() => {
     return () => {
-      if (layoutHoverTimeoutRef.current) {
-        clearTimeout(layoutHoverTimeoutRef.current);
+      if (addHoverTimeoutRef.current) {
+        clearTimeout(addHoverTimeoutRef.current);
       }
     };
   }, []);
@@ -89,6 +91,9 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const reloadState = useCallback(async () => {
     const data = await loadAppState();
     setAppState(data);
+    if (data.activeGridPageId) {
+      setActiveGridPageId(data.activeGridPageId);
+    }
   }, []);
 
   useEffect(() => {
@@ -368,12 +373,24 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       : DEFAULT_GRID_PAGES;
   }, [appState?.gridPages]);
 
-  const [activeGridPageId, setActiveGridPageId] = useState<string>('page-1');
+  const [activeGridPageId, setActiveGridPageId] = useState<string>(() => {
+    return initialState?.activeGridPageId || 'page-1';
+  });
+
+  const handleSelectGridPage = useCallback((pageId: string) => {
+    setActiveGridPageId(pageId);
+    saveActiveGridPageId(pageId).catch((err) => {
+      console.warn('[MyTab] Failed to persist activeGridPageId:', err);
+    });
+    setAppState((prev) => (prev ? { ...prev, activeGridPageId: pageId } : null));
+  }, []);
 
   // Keep activeGridPageId valid if pages change
   useEffect(() => {
     if (gridPages.length > 0 && !gridPages.some((p) => p.id === activeGridPageId)) {
-      setActiveGridPageId(gridPages[0].id);
+      const fallback = gridPages[0].id;
+      setActiveGridPageId(fallback);
+      saveActiveGridPageId(fallback).catch(() => {});
     }
   }, [gridPages, activeGridPageId]);
 
@@ -445,7 +462,8 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     };
     const updatedPages = [...gridPages, newPage];
     await saveGridPages(updatedPages);
-    setAppState((prev) => (prev ? { ...prev, gridPages: updatedPages } : null));
+    await saveActiveGridPageId(newPage.id);
+    setAppState((prev) => (prev ? { ...prev, gridPages: updatedPages, activeGridPageId: newPage.id } : null));
     setActiveGridPageId(newPage.id);
   }, [gridPages, settings.language]);
 
@@ -468,12 +486,14 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     const updatedSites = sites.map((s) =>
       (s.pageId || defaultPageId) === pageId ? { ...s, pageId: fallbackId, updatedAt: Date.now() } : s
     );
-    setAppState((prev) =>
-      prev ? { ...prev, gridPages: remaining, categories: updatedCategories, sites: updatedSites } : null
-    );
+    const nextActivePageId = activeGridPageId === pageId ? fallbackId : activeGridPageId;
     if (activeGridPageId === pageId) {
+      await saveActiveGridPageId(fallbackId);
       setActiveGridPageId(fallbackId);
     }
+    setAppState((prev) =>
+      prev ? { ...prev, gridPages: remaining, categories: updatedCategories, sites: updatedSites, activeGridPageId: nextActivePageId } : null
+    );
   }, [gridPages, categories, sites, activeGridPageId, defaultPageId]);
 
   const handleSaveSite = useCallback(async (siteData: Partial<SiteItem>) => {
@@ -799,24 +819,129 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Quick Layout Switcher & Hover-Revealed Board Edit Controls */}
+          {/* Quick Layout Switcher (Grid <-> Board) */}
+          <button
+            onClick={() => {
+              if (settings.layoutMode === 'board' && isBoardEditing) {
+                setIsBoardEditing(false);
+              }
+              handleUpdateSettings({
+                layoutMode: settings.layoutMode === 'board' ? 'grid' : 'board',
+              });
+            }}
+            className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+              isLight
+                ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
+                : 'text-white/40 hover:text-white hover:bg-white/10'
+            }`}
+            title={
+              settings.layoutMode === 'board'
+                ? t('layoutGrid', settings.language)
+                : t('layoutBoard', settings.language)
+            }
+          >
+            {settings.layoutMode === 'board' ? (
+              <LayoutGrid className="w-4 h-4" />
+            ) : (
+              <Columns3 className="w-4 h-4" />
+            )}
+          </button>
+
+          {/* Quick Add & Board Controls (Hover Slide-out Icons) */}
           <div
             className="relative flex items-center"
-            onMouseEnter={handleLayoutMouseEnter}
-            onMouseLeave={handleLayoutMouseLeave}
+            onMouseEnter={handleAddMouseEnter}
+            onMouseLeave={handleAddMouseLeave}
           >
+            {/* Import Bookmarks Button (reveals on hover) */}
+            <div
+              className={`flex items-center justify-center overflow-hidden transition-all duration-200 ease-out ${
+                isAddHovered
+                  ? 'w-8 opacity-100 mr-1'
+                  : 'w-0 opacity-0 mr-0 pointer-events-none'
+              }`}
+            >
+              <button
+                onClick={() => {
+                  setIsAddHovered(false);
+                  setIsBookmarkImportModalOpen(true);
+                }}
+                tabIndex={isAddHovered ? 0 : -1}
+                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                  isLight
+                    ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
+                    : 'text-white/40 hover:text-white hover:bg-white/10'
+                }`}
+                title={t('importBookmarks', settings.language)}
+              >
+                <Bookmark className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Add Desktop Page Button (only in Grid mode, reveals on hover) */}
+            {settings.layoutMode === 'grid' && (
+              <div
+                className={`flex items-center justify-center overflow-hidden transition-all duration-200 ease-out ${
+                  isAddHovered
+                    ? 'w-8 opacity-100 mr-1'
+                    : 'w-0 opacity-0 mr-0 pointer-events-none'
+                }`}
+              >
+                <button
+                  onClick={() => {
+                    setIsAddHovered(false);
+                    handleAddGridPage();
+                  }}
+                  tabIndex={isAddHovered ? 0 : -1}
+                  className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                    isLight
+                      ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
+                      : 'text-white/40 hover:text-white hover:bg-white/10'
+                  }`}
+                  title={t('addDesktopPage', settings.language)}
+                >
+                  <SquarePlus className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Add Category Button (reveals on hover) */}
+            <div
+              className={`flex items-center justify-center overflow-hidden transition-all duration-200 ease-out ${
+                isAddHovered
+                  ? 'w-8 opacity-100 mr-1'
+                  : 'w-0 opacity-0 mr-0 pointer-events-none'
+              }`}
+            >
+              <button
+                onClick={() => {
+                  setIsAddHovered(false);
+                  setIsCategoryModalOpen(true);
+                }}
+                tabIndex={isAddHovered ? 0 : -1}
+                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                  isLight
+                    ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
+                    : 'text-white/40 hover:text-white hover:bg-white/10'
+                }`}
+                title={t('addCategory', settings.language)}
+              >
+                <FolderPlus className="w-4 h-4" />
+              </button>
+            </div>
+
             {/* Board Edit Mode Toggle (only in board layout mode, reveals on hover or while editing) */}
             {settings.layoutMode === 'board' && (
               <div
                 className={`flex items-center justify-center overflow-hidden transition-all duration-200 ease-out ${
-                  isBoardEditing || isLayoutHovered
+                  isBoardEditing || isAddHovered
                     ? 'w-8 opacity-100 mr-1'
                     : 'w-0 opacity-0 mr-0 pointer-events-none'
                 }`}
               >
                 <button
                   onClick={() => setIsBoardEditing((prev) => !prev)}
-                  tabIndex={isBoardEditing || isLayoutHovered ? 0 : -1}
+                  tabIndex={isBoardEditing || isAddHovered ? 0 : -1}
                   className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
                     isBoardEditing
                       ? 'bg-amber-500/15 text-amber-500 dark:text-amber-400'
@@ -835,50 +960,23 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               </div>
             )}
 
-            {/* Quick Layout Switcher (Grid <-> Board) */}
+            {/* Add Shortcut / Site (+) Button */}
             <button
               onClick={() => {
-                if (settings.layoutMode === 'board' && isBoardEditing) {
-                  setIsBoardEditing(false);
-                }
-                handleUpdateSettings({
-                  layoutMode: settings.layoutMode === 'board' ? 'grid' : 'board',
-                });
+                setIsAddHovered(false);
+                setEditingSite(null);
+                setIsSiteModalOpen(true);
               }}
               className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
                 isLight
                   ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
                   : 'text-white/40 hover:text-white hover:bg-white/10'
               }`}
-              title={
-                settings.layoutMode === 'board'
-                  ? t('layoutGrid', settings.language)
-                  : t('layoutBoard', settings.language)
-              }
+              title={t('addSite', settings.language)}
             >
-              {settings.layoutMode === 'board' ? (
-                <LayoutGrid className="w-4 h-4" />
-              ) : (
-                <Columns3 className="w-4 h-4" />
-              )}
+              <Plus className="w-4 h-4" />
             </button>
           </div>
-
-          {/* Quick Add Button */}
-          <button
-            onClick={() => {
-              setEditingSite(null);
-              setIsSiteModalOpen(true);
-            }}
-            className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
-              isLight
-                ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
-                : 'text-white/40 hover:text-white hover:bg-white/10'
-            }`}
-            title={t('addSite', settings.language)}
-          >
-            <Plus className="w-4 h-4" />
-          </button>
 
           {/* Settings Drawer Trigger */}
           <button
@@ -962,7 +1060,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               onDeleteSite={handleDeleteSite}
               onAddSite={handleOpenAddSite}
               onReorderSites={handleReorderSites}
-              onSelectPage={setActiveGridPageId}
+              onSelectPage={handleSelectGridPage}
               onAddPage={handleAddGridPage}
               onRenamePage={handleRenameGridPage}
               onDeletePage={handleDeleteGridPage}
@@ -972,15 +1070,16 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       </main>
 
       {/* Footer Minimalist Credit */}
-      <footer className="relative z-10 w-full flex items-center justify-between p-4 px-6 text-xs text-white/40">
+      <footer className="relative z-10 w-full flex items-center justify-between p-4 px-6 text-xs text-white/40 pointer-events-none">
         <div className="w-1/3">
           {settings.backgroundType === 'unsplash' && settings.unsplashAuthorName && (
             <a
               href={`${settings.unsplashAuthorUrl}?utm_source=MyTab&utm_medium=referral`}
               target="_blank"
               rel="noreferrer"
-              className={`inline-flex items-center gap-1 transition-colors ${isLight ? 'text-slate-600 hover:text-black' : 'text-white/50 hover:text-white'
-                }`}
+              className={`pointer-events-auto inline-flex items-center gap-1 transition-colors ${
+                isLight ? 'text-slate-600 hover:text-black' : 'text-white/50 hover:text-white'
+              }`}
             >
               <span>Photo by</span>
               <span className="underline decoration-dotted underline-offset-2">
@@ -991,22 +1090,25 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           )}
         </div>
 
-        <div className="w-1/3 text-center">
-          Crafted with passion by{' '}
-          <a
-            href="https://github.com/Troray/MyTab"
-            target="_blank"
-            rel="noreferrer"
-            className={`transition-colors underline decoration-dotted underline-offset-2 ${isLight
-                ? 'hover:text-black decoration-slate-400'
-                : 'hover:text-white decoration-white/30'
-              }`}
-          >
-            Troray
-          </a>
-        </div>
+        <div className="w-1/3"></div>
 
-        <div className="w-1/3 text-right"></div>
+        <div className="w-1/3 text-right">
+          <span className="pointer-events-auto inline-block">
+            Crafted with passion by{' '}
+            <a
+              href="https://github.com/Troray/MyTab"
+              target="_blank"
+              rel="noreferrer"
+              className={`transition-colors underline decoration-dotted underline-offset-2 ${
+                isLight
+                  ? 'hover:text-black decoration-slate-400'
+                  : 'hover:text-white decoration-white/30'
+              }`}
+            >
+              Troray
+            </a>
+          </span>
+        </div>
       </footer>
 
       {/* Modals & Drawers (lazy-loaded) */}
@@ -1066,6 +1168,18 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             appState={appState}
             onClose={() => setIsBookmarkImportModalOpen(false)}
             onImportSuccess={reloadState}
+          />
+        )}
+
+        {isCategoryModalOpen && (
+          <CategoryModal
+            isOpen={isCategoryModalOpen}
+            category={null}
+            settings={settings}
+            gridPages={gridPages}
+            activeGridPageId={activeGridPageId}
+            onClose={() => setIsCategoryModalOpen(false)}
+            onSave={handleAddCategory}
           />
         )}
 
