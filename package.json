@@ -22,7 +22,7 @@
     "package": "node scripts/package.js",
     "generate:icons": "node scripts/generate-icons.js",
     "preview": "vite preview",
-    "test": "npx tsx test/private-space.test.js"
+    "test": "npx tsx test/private-space.test.js && npx tsx test/bookmark-import.test.js && npx tsx test/grid-pages.test.js"
   },
   "dependencies": {
     "clsx": "^2.1.1",

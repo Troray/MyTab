@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
 import { Settings as SettingsIcon, Plus, Lock, Pencil, Check, LayoutGrid, Columns3 } from 'lucide-react';
 import { t } from '../locales';
-import { AppState, Category, GitSyncConfig, ProfileSyncSettings, SiteItem, ThemeSettings, WebdavConfig } from '../types';
+import { AppState, Category, GitSyncConfig, GridPage, ProfileSyncSettings, SiteItem, ThemeSettings, WebdavConfig } from '../types';
 import {
   loadAppState,
   saveSites,
@@ -12,6 +12,10 @@ import {
   saveActiveCategory,
   saveProfileSyncSettings,
   saveProfileItems,
+  saveGridPages,
+  deleteGridPage,
+  moveCategoryToGridPage,
+  DEFAULT_GRID_PAGES,
   setFirstLaunchComplete,
 } from '../services/storage';
 import { ClockHeader } from './components/ClockHeader';
@@ -31,11 +35,13 @@ const SettingsDrawer = lazy(() => import('./components/SettingsDrawer').then(m =
 const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
 const ConfirmModal = lazy(() => import('./components/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 const TextColorCustomizer = lazy(() => import('./components/TextColorCustomizer').then(m => ({ default: m.TextColorCustomizer })));
+const BookmarkImportModal = lazy(() => import('./components/BookmarkImportModal').then(m => ({ default: m.BookmarkImportModal })));
 
 export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => {
   const [appState, setAppState] = useState<AppState | null>(initialState || null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
+  const [isBookmarkImportModalOpen, setIsBookmarkImportModalOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<SiteItem | null>(null);
   const [deletingSite, setDeletingSite] = useState<SiteItem | null>(null);
   const [isCustomizingColors, setIsCustomizingColors] = useState(false);
@@ -356,37 +362,119 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const isFirstLaunch = appState?.isFirstLaunch || false;
   const settings = currentSettings;
 
+  const gridPages = useMemo(() => {
+    return appState?.gridPages && appState.gridPages.length > 0
+      ? appState.gridPages
+      : DEFAULT_GRID_PAGES;
+  }, [appState?.gridPages]);
+
+  const [activeGridPageId, setActiveGridPageId] = useState<string>('page-1');
+
+  // Keep activeGridPageId valid if pages change
+  useEffect(() => {
+    if (gridPages.length > 0 && !gridPages.some((p) => p.id === activeGridPageId)) {
+      setActiveGridPageId(gridPages[0].id);
+    }
+  }, [gridPages, activeGridPageId]);
+
+  const defaultPageId = gridPages[0]?.id || 'page-1';
+
+  // In Grid mode, categories belong to specific desktop pages.
+  // Categories without a pageId default to the first desktop (defaultPageId).
+  const currentGridCategories = useMemo(() => {
+    return categories.filter((c) => {
+      const cPageId = c.pageId || defaultPageId;
+      return cPageId === activeGridPageId;
+    });
+  }, [categories, defaultPageId, activeGridPageId]);
+
+  // Check if activeCategoryId exists on the current desktop page
+  const isCategoryOnCurrentGrid = useMemo(() => {
+    if (activeCategoryId === 'all') return true;
+    return currentGridCategories.some((c) => c.id === activeCategoryId);
+  }, [activeCategoryId, currentGridCategories]);
+
+  const effectiveCatId = (settings.showCategories ?? true) && isCategoryOnCurrentGrid ? activeCategoryId : 'all';
+
   // Memoized: Filter sites based on active category and showInAll flag
   const filteredSites = useMemo(() => {
     const hiddenInAllCatIds = new Set(
       categories.filter((c) => c.showInAll === false).map((c) => c.id)
     );
-    const effectiveCatId = (settings.showCategories ?? true) ? activeCategoryId : 'all';
     return effectiveCatId === 'all'
       ? sites.filter((s) => !hiddenInAllCatIds.has(s.categoryId))
       : sites.filter((s) => s.categoryId === effectiveCatId);
-  }, [sites, categories, activeCategoryId, settings.showCategories]);
+  }, [sites, categories, effectiveCatId]);
 
-  // Memoized: Compute count of sites per category
+  // Sites filtered by active category AND active desktop page (for Grid mode)
+  const filteredGridSites = useMemo(() => {
+    return filteredSites.filter((s) => (s.pageId || defaultPageId) === activeGridPageId);
+  }, [filteredSites, defaultPageId, activeGridPageId]);
+
+  // Memoized: Compute count of sites per category on active desktop page
   const siteCounts = useMemo(() => {
     const hiddenInAllCatIds = new Set(
       categories.filter((c) => c.showInAll === false).map((c) => c.id)
     );
     const counts: Record<string, number> = {};
-    for (let i = 0; i < categories.length; i++) {
-      counts[categories[i].id] = 0;
+    for (let i = 0; i < currentGridCategories.length; i++) {
+      counts[currentGridCategories[i].id] = 0;
     }
     let allVisibleCount = 0;
     for (let i = 0; i < sites.length; i++) {
       const s = sites[i];
-      counts[s.categoryId] = (counts[s.categoryId] || 0) + 1;
-      if (!hiddenInAllCatIds.has(s.categoryId)) {
-        allVisibleCount++;
+      const sitePageId = s.pageId || defaultPageId;
+      if (sitePageId === activeGridPageId) {
+        counts[s.categoryId] = (counts[s.categoryId] || 0) + 1;
+        if (!hiddenInAllCatIds.has(s.categoryId)) {
+          allVisibleCount++;
+        }
       }
     }
     counts['all'] = allVisibleCount;
     return counts;
-  }, [sites, categories]);
+  }, [sites, categories, currentGridCategories, defaultPageId, activeGridPageId]);
+
+  const handleAddGridPage = useCallback(async (name?: string) => {
+    const nextNum = gridPages.length + 1;
+    const pageName = name?.trim() || `${t('defaultDesktopName', settings.language)} ${nextNum}`;
+    const newPage: GridPage = {
+      id: `page-${Date.now()}`,
+      name: pageName,
+      sortOrder: gridPages.length,
+    };
+    const updatedPages = [...gridPages, newPage];
+    await saveGridPages(updatedPages);
+    setAppState((prev) => (prev ? { ...prev, gridPages: updatedPages } : null));
+    setActiveGridPageId(newPage.id);
+  }, [gridPages, settings.language]);
+
+  const handleRenameGridPage = useCallback(async (pageId: string, newName: string) => {
+    const updatedPages = gridPages.map((p) =>
+      p.id === pageId ? { ...p, name: newName.trim() } : p
+    );
+    await saveGridPages(updatedPages);
+    setAppState((prev) => (prev ? { ...prev, gridPages: updatedPages } : null));
+  }, [gridPages]);
+
+  const handleDeleteGridPage = useCallback(async (pageId: string) => {
+    if (gridPages.length <= 1) return;
+    await deleteGridPage(pageId);
+    const remaining = gridPages.filter((p) => p.id !== pageId);
+    const fallbackId = remaining[0]?.id || 'page-1';
+    const updatedCategories = categories.map((c) =>
+      (c.pageId || defaultPageId) === pageId ? { ...c, pageId: fallbackId, updatedAt: Date.now() } : c
+    );
+    const updatedSites = sites.map((s) =>
+      (s.pageId || defaultPageId) === pageId ? { ...s, pageId: fallbackId, updatedAt: Date.now() } : s
+    );
+    setAppState((prev) =>
+      prev ? { ...prev, gridPages: remaining, categories: updatedCategories, sites: updatedSites } : null
+    );
+    if (activeGridPageId === pageId) {
+      setActiveGridPageId(fallbackId);
+    }
+  }, [gridPages, categories, sites, activeGridPageId, defaultPageId]);
 
   const handleSaveSite = useCallback(async (siteData: Partial<SiteItem>) => {
     let updatedSites: SiteItem[];
@@ -407,6 +495,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         url: siteData.url || '',
         icon: siteData.icon || '',
         categoryId: siteData.categoryId || fallbackCatId,
+        pageId: siteData.pageId || activeGridPageId || defaultPageId,
         sortOrder: sites.length,
         createdAt: now,
         updatedAt: now,
@@ -418,7 +507,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setAppState((prev) => (prev ? { ...prev, sites: updatedSites } : null));
     setIsSiteModalOpen(false);
     setEditingSite(null);
-  }, [sites, editingSite, activeCategoryId, categories]);
+  }, [sites, editingSite, activeCategoryId, categories, activeGridPageId, defaultPageId]);
 
   const handleDeleteSite = useCallback((siteId: string) => {
     const site = sites.find((s) => s.id === siteId);
@@ -461,12 +550,14 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setAppState((prev) => (prev ? { ...prev, sites: updated } : null));
   }, [sites]);
 
-  const handleAddCategory = useCallback(async (data: { name: string; showInAll: boolean; color?: string }) => {
+  const handleAddCategory = useCallback(async (data: { name: string; showInAll: boolean; color?: string; pageId?: string }) => {
     const now = Date.now();
+    const targetPageId = data.pageId || activeGridPageId || defaultPageId;
     const newCat: Category = {
       id: `cat-${now}`,
       name: data.name || '',
       color: data.color,
+      pageId: targetPageId,
       isDefault: false,
       showInAll: data.showInAll ?? true,
       sortOrder: categories.length,
@@ -476,16 +567,57 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     const updated = [...categories, newCat];
     await saveCategories(updated);
     setAppState((prev) => (prev ? { ...prev, categories: updated } : null));
-  }, [categories]);
+  }, [categories, activeGridPageId, defaultPageId]);
 
   const handleUpdateCategory = useCallback(async (id: string, updates: Partial<Category>) => {
     const now = Date.now();
+    const existing = categories.find((c) => c.id === id);
+    const isPageChanged = Boolean(updates.pageId && existing && (existing.pageId || defaultPageId) !== updates.pageId);
+
+    let updatedSites = sites;
+    if (isPageChanged && updates.pageId) {
+      updatedSites = sites.map((s) =>
+        s.categoryId === id ? { ...s, pageId: updates.pageId, updatedAt: now } : s
+      );
+      await saveSites(updatedSites);
+    }
+
     const updated = categories.map((c) =>
       c.id === id ? { ...c, ...updates, updatedAt: now } : c
     );
     await saveCategories(updated);
-    setAppState((prev) => (prev ? { ...prev, categories: updated } : null));
-  }, [categories]);
+    setAppState((prev) =>
+      prev
+        ? {
+            ...prev,
+            categories: updated,
+            sites: updatedSites,
+            activeCategoryId: isPageChanged && prev.activeCategoryId === id ? 'all' : prev.activeCategoryId,
+          }
+        : null
+    );
+  }, [categories, sites, defaultPageId]);
+
+  const handleMoveCategoryToPage = useCallback(async (categoryId: string, targetPageId: string) => {
+    await moveCategoryToGridPage(categoryId, targetPageId);
+    const now = Date.now();
+    const updatedCategories = categories.map((c) =>
+      c.id === categoryId ? { ...c, pageId: targetPageId, updatedAt: now } : c
+    );
+    const updatedSites = sites.map((s) =>
+      s.categoryId === categoryId ? { ...s, pageId: targetPageId, updatedAt: now } : s
+    );
+    setAppState((prev) =>
+      prev
+        ? {
+            ...prev,
+            categories: updatedCategories,
+            sites: updatedSites,
+            activeCategoryId: prev.activeCategoryId === categoryId ? 'all' : prev.activeCategoryId,
+          }
+        : null
+    );
+  }, [categories, sites]);
 
   const handleDeleteCategory = useCallback(async (catId: string) => {
     // Cannot delete default categories
@@ -802,28 +934,38 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             {/* Category Tabs */}
             {(settings.showCategories ?? true) && (
               <CategoryTabs
-                categories={categories}
+                categories={currentGridCategories}
                 resolvedColors={resolvedColors}
                 activeCategoryId={activeCategoryId}
                 settings={settings}
                 siteCounts={siteCounts}
+                gridPages={gridPages}
+                activeGridPageId={activeGridPageId}
                 onSelectCategory={handleSelectCategory}
                 onAddCategory={handleAddCategory}
                 onUpdateCategory={handleUpdateCategory}
                 onDeleteCategory={handleDeleteCategory}
+                onMoveCategoryToPage={handleMoveCategoryToPage}
+                onOpenBookmarkImport={() => setIsBookmarkImportModalOpen(true)}
               />
             )}
 
             {/* Shortcuts Grid */}
             <SiteGrid
-              sites={filteredSites}
+              sites={filteredGridSites}
               settings={settings}
               resolvedColors={resolvedColors}
               isLight={isLight}
+              gridPages={gridPages}
+              activeGridPageId={activeGridPageId}
               onEditSite={handleOpenEditSite}
               onDeleteSite={handleDeleteSite}
               onAddSite={handleOpenAddSite}
               onReorderSites={handleReorderSites}
+              onSelectPage={setActiveGridPageId}
+              onAddPage={handleAddGridPage}
+              onRenamePage={handleRenameGridPage}
+              onDeletePage={handleDeleteGridPage}
             />
           </>
         )}
@@ -875,6 +1017,8 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             editingSite={editingSite}
             categories={categories}
             activeCategoryId={activeCategoryId}
+            gridPages={gridPages}
+            activeGridPageId={activeGridPageId}
             settings={settings}
             onClose={() => {
               setIsSiteModalOpen(false);
@@ -909,6 +1053,19 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               setIsSettingsOpen(false);
               setIsCustomizingColors(true);
             }}
+            onOpenBookmarkImport={() => {
+              setIsSettingsOpen(false);
+              setIsBookmarkImportModalOpen(true);
+            }}
+          />
+        )}
+
+        {isBookmarkImportModalOpen && (
+          <BookmarkImportModal
+            isOpen={isBookmarkImportModalOpen}
+            appState={appState}
+            onClose={() => setIsBookmarkImportModalOpen(false)}
+            onImportSuccess={reloadState}
           />
         )}
 

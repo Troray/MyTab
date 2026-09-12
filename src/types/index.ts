@@ -1,3 +1,16 @@
+export interface BookmarkSourceMeta {
+  sourceId?: string;
+  path?: string[];
+  addDate?: number;
+  importSource: 'browser_api' | 'html_file';
+}
+
+export interface GridPage {
+  id: string;
+  name: string;
+  sortOrder: number;
+}
+
 export interface SiteItem {
   id: string;
   title: string;
@@ -7,6 +20,8 @@ export interface SiteItem {
   sortOrder: number;
   createdAt: number;
   updatedAt: number;
+  bookmark?: BookmarkSourceMeta;
+  pageId?: string;
 }
 
 export interface Category {
@@ -18,6 +33,11 @@ export interface Category {
   showInAll?: boolean;
   createdAt?: number;
   updatedAt?: number;
+  pageId?: string;
+  bookmarkSource?: {
+    folderId?: string;
+    path?: string[];
+  };
 }
 
 export interface SearchEngine {
@@ -73,6 +93,7 @@ export interface ThemeSettings {
   showCardBackground?: boolean;
   showSiteTitle?: boolean;
   showCategories?: boolean;
+  maxNavCategories?: number; // Max categories shown on navbar before folding to 'More' (0 means unlimited, default 6)
   iconSpacing?: number; // Spacing/compactness between icons in icon-only mode (8 ~ 48px, default 20)
   boardColumnsPerRow?: number; // Board view columns per row (2 ~ 8, default 5)
   boardCardGap?: number; // Board view gap between cards (8 ~ 32px, default 16)
@@ -179,6 +200,7 @@ export interface ProfileData {
   sites: SiteItem[];
   categories: Category[];
   activeCategoryId: string;
+  gridPages?: GridPage[];
   settings?: Partial<ThemeSettings>;
   wallpaper?: WallpaperSettings;
 }
@@ -199,6 +221,7 @@ export interface SyncPayload {
   profiles?: Partial<Record<ProfileId, ProfileData>>;
   categories?: Category[]; // V1 backward compatibility
   sites?: SiteItem[];      // V1 backward compatibility
+  gridPages?: GridPage[];
   settings: ThemeSettings;
 }
 
@@ -206,6 +229,8 @@ export interface AppState {
   profileId: ProfileId;
   categories: Category[];
   sites: SiteItem[];
+  gridPages?: GridPage[];
+  activeGridPageId?: string;
   settings: ThemeSettings;
   webdav: WebdavConfig;
   git: GitSyncConfig;
@@ -215,5 +240,48 @@ export interface AppState {
   hasCustomSettings?: boolean;
   hasCustomWallpaper?: boolean;
 }
+
+export type BookmarkOrganizeStrategy = 'smart' | 'top_level' | 'deepest_leaf';
+export type BookmarkDuplicateStrategy = 'skip' | 'overwrite' | 'keep_both';
+
+export interface RawBookmarkNode {
+  id: string;
+  title: string;
+  url?: string;
+  icon?: string;
+  children?: RawBookmarkNode[];
+  dateAdded?: number;
+}
+
+export interface BookmarkImportOptions {
+  strategy: BookmarkOrganizeStrategy;
+  duplicateStrategy: BookmarkDuplicateStrategy;
+  selectedFolderIds: string[];
+  targetProfileId: ProfileId;
+}
+
+export interface BookmarkImportPreviewCategory {
+  name: string;
+  originalPath: string[];
+  siteCount: number;
+  sampleSites: Array<{ title: string; url: string }>;
+}
+
+export interface BookmarkImportPreviewStats {
+  totalUrls: number;
+  validUrls: number;
+  duplicateUrls: number;
+  ignoredFolders: number;
+  predictedCategories: BookmarkImportPreviewCategory[];
+}
+
+export interface BookmarkImportResult {
+  success: boolean;
+  importedSitesCount: number;
+  importedCategoriesCount: number;
+  skippedDuplicatesCount: number;
+  error?: string;
+}
+
 
 

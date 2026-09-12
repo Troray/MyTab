@@ -148,6 +148,7 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   showCardBackground: true,
   showSiteTitle: true,
   showCategories: true,
+  maxNavCategories: 6,
   iconSpacing: 20,
   boardColumnsPerRow: 5,
   boardCardGap: 16,

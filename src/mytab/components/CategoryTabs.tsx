@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { FolderPlus, Pencil, Trash2 } from 'lucide-react';
-import { Category, ThemeSettings } from '../../types';
+import { FolderPlus, Pencil, Trash2, Bookmark, ChevronDown, Check, FolderInput } from 'lucide-react';
+import { Category, GridPage, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { CategoryModal } from './CategoryModal';
 import { ConfirmModal } from './ConfirmModal';
@@ -196,10 +196,14 @@ interface CategoryTabsProps {
   settings: ThemeSettings;
   resolvedColors?: ResolvedTextColors;
   siteCounts: Record<string, number>;
+  gridPages?: GridPage[];
+  activeGridPageId?: string;
   onSelectCategory: (id: string) => void;
-  onAddCategory: (data: { name: string; showInAll: boolean; color?: string }) => void;
+  onAddCategory: (data: { name: string; showInAll: boolean; color?: string; pageId?: string }) => void;
   onUpdateCategory: (id: string, updates: Partial<Category>) => void;
   onDeleteCategory: (id: string) => void;
+  onMoveCategoryToPage?: (categoryId: string, targetPageId: string) => void;
+  onOpenBookmarkImport?: () => void;
 }
 
 export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
@@ -208,10 +212,14 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
   settings,
   resolvedColors,
   siteCounts,
+  gridPages,
+  activeGridPageId,
   onSelectCategory,
   onAddCategory,
   onUpdateCategory,
   onDeleteCategory,
+  onMoveCategoryToPage,
+  onOpenBookmarkImport,
 }) => {
   // modalCategory: undefined -> closed; null -> add mode; Category -> edit mode
   const [modalCategory, setModalCategory] = useState<Category | null | undefined>(undefined);
@@ -221,12 +229,43 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
     y: number;
   } | null>(null);
   const [confirmDeleteCat, setConfirmDeleteCat] = useState<Category | null>(null);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const moreDropdownRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
 
   const isLight = isLightMode(settings.mode);
   const isDarkWallpaper = resolvedColors
     ? resolvedColors.tabsIsDark
     : !isLight;
+
+  useEffect(() => {
+    if (!isMoreOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        moreDropdownRef.current &&
+        !moreDropdownRef.current.contains(e.target as Node) &&
+        moreButtonRef.current &&
+        !moreButtonRef.current.contains(e.target as Node)
+      ) {
+        setIsMoreOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMoreOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMoreOpen]);
 
   useEffect(() => {
     if (!activeMenu) return;
@@ -261,14 +300,14 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
     if (cat.isDefault || cat.id === 'all') return;
     e.preventDefault();
     e.stopPropagation();
-    const menuWidth = 136;
-    const menuHeight = 88;
+    const menuWidth = 180;
+    const menuHeight = 160;
     const x = Math.min(e.clientX, window.innerWidth - menuWidth - 8);
     const y = Math.min(e.clientY, window.innerHeight - menuHeight - 8);
     setActiveMenu({ category: cat, x, y });
   }, []);
 
-  const handleSaveCategory = (catId: string | null, data: { name: string; showInAll: boolean; color?: string }) => {
+  const handleSaveCategory = (catId: string | null, data: { name: string; showInAll: boolean; color?: string; pageId?: string }) => {
     if (catId) {
       onUpdateCategory(catId, data);
     } else {
@@ -293,9 +332,33 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
     ];
   }, [categories, settings.language]);
 
+  // Configurable navbar visible categories limit.
+  // maxNavCategories: 0 means unlimited (no folding); > 0 (default 6) folds excess categories into "More" dropdown
+  const { visibleCategories, overflowCategories } = useMemo(() => {
+    const limit = settings.maxNavCategories ?? 6;
+    if (limit > 0 && displayCategories.length > limit) {
+      return {
+        visibleCategories: displayCategories.slice(0, limit),
+        overflowCategories: displayCategories.slice(limit),
+      };
+    }
+    return {
+      visibleCategories: displayCategories,
+      overflowCategories: [],
+    };
+  }, [displayCategories, settings.maxNavCategories]);
+
+  const isOverflowActive = useMemo(() => {
+    return overflowCategories.some((c) => c.id === activeCategoryId);
+  }, [overflowCategories, activeCategoryId]);
+
+  const activeOverflowCategory = useMemo(() => {
+    return overflowCategories.find((c) => c.id === activeCategoryId);
+  }, [overflowCategories, activeCategoryId]);
+
   return (
     <div id="mytab-tabs" className="flex items-center justify-center flex-wrap gap-2 px-4 mb-6 max-w-4xl mx-auto z-20">
-      {displayCategories.map((cat) => {
+      {visibleCategories.map((cat) => {
         const isActive = activeCategoryId === cat.id;
         const count = siteCounts[cat.id] || 0;
         const displayName = cat.id === 'all' ? (t('allCategories', settings.language) || 'All') : cat.name;
@@ -314,6 +377,118 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
           />
         );
       })}
+
+      {/* Overflow "More" Categories Dropdown */}
+      {overflowCategories.length > 0 && (
+        <div className="relative flex items-center">
+          <button
+            ref={moreButtonRef}
+            onClick={() => setIsMoreOpen((prev) => !prev)}
+            style={
+              isOverflowActive && activeOverflowCategory?.color
+                ? {
+                    backgroundColor: hexToRgba(activeOverflowCategory.color, isDarkWallpaper ? 0.28 : 0.20),
+                    borderColor: hexToRgba(activeOverflowCategory.color, isDarkWallpaper ? 0.60 : 0.45),
+                  }
+                : !isOverflowActive && resolvedColors?.tabs
+                ? { color: resolvedColors.tabs }
+                : undefined
+            }
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs md:text-sm font-medium transition-all duration-150 cursor-pointer select-none active:scale-95 border backdrop-blur-md ${
+              isOverflowActive
+                ? isDarkWallpaper
+                  ? 'bg-white/20 text-white shadow-sm border-white/25 font-semibold'
+                  : 'bg-white/85 text-slate-900 shadow-sm border-black/10 font-semibold'
+                : isDarkWallpaper
+                ? 'text-white/90 hover:text-white bg-white/10 hover:bg-white/20 border-white/15 shadow-xs'
+                : 'text-slate-800 hover:text-black bg-white/70 hover:bg-white/90 border-black/8 shadow-sm shadow-black/[0.03]'
+            }`}
+            title={t('moreCategories', settings.language)}
+          >
+            <span>
+              {isOverflowActive && activeOverflowCategory
+                ? `${t('moreCategories', settings.language)}: ${activeOverflowCategory.name}`
+                : t('moreCategories', settings.language)}
+            </span>
+            {isOverflowActive && activeOverflowCategory && (
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-tabular border ${
+                  isDarkWallpaper
+                    ? 'bg-white/20 text-white border-transparent font-semibold'
+                    : 'bg-black/10 text-slate-900 border-transparent font-semibold'
+                }`}
+              >
+                {siteCounts[activeOverflowCategory.id] || 0}
+              </span>
+            )}
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isMoreOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Frosted Glass Dropdown Menu */}
+          {isMoreOpen && (
+            <div
+              ref={moreDropdownRef}
+              className={`absolute top-full right-0 mt-2 z-50 min-w-[200px] max-h-[340px] overflow-y-auto py-1.5 px-1 rounded-2xl border backdrop-blur-xl shadow-xl animate-in fade-in zoom-in-95 duration-150 ${
+                isLight
+                  ? 'bg-white/85 border-black/10 shadow-black/15 text-slate-900'
+                  : 'bg-slate-900/90 border-white/15 shadow-black/50 text-white'
+              }`}
+            >
+              <div className="px-2.5 py-1 text-[11px] font-semibold text-white/50 uppercase tracking-wider">
+                {t('moreCategories', settings.language)} ({overflowCategories.length})
+              </div>
+              {overflowCategories.map((cat) => {
+                const isCatActive = activeCategoryId === cat.id;
+                const count = siteCounts[cat.id] || 0;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      onSelectCategory(cat.id);
+                      setIsMoreOpen(false);
+                    }}
+                    onContextMenu={(e) => {
+                      handleContextMenu(e, cat);
+                      setIsMoreOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer text-left ${
+                      isCatActive
+                        ? isLight
+                          ? 'bg-black/10 font-semibold text-black'
+                          : 'bg-white/20 font-semibold text-white'
+                        : isLight
+                        ? 'hover:bg-black/5 text-slate-700 hover:text-slate-900'
+                        : 'hover:bg-white/10 text-white/80 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      {cat.color ? (
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-white/30 shrink-0" />
+                      )}
+                      <span className="truncate">{cat.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-tabular ${
+                          isLight ? 'bg-black/5 text-slate-500' : 'bg-white/10 text-white/60'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                      {isCatActive && <Check className="w-3.5 h-3.5 text-blue-400" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Add Category Button */}
       <button
@@ -334,11 +509,34 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
         <span className="hidden sm:inline">{t('addCategory', settings.language)}</span>
       </button>
 
+      {/* Import Bookmarks Quick Button */}
+      {onOpenBookmarkImport && (
+        <button
+          onClick={onOpenBookmarkImport}
+          style={
+            resolvedColors?.tabs
+              ? { color: resolvedColors.tabs }
+              : undefined
+          }
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-dashed backdrop-blur-md transition-all cursor-pointer select-none active:scale-95 ${
+            isDarkWallpaper
+              ? 'text-white/75 hover:text-white bg-white/[0.06] hover:bg-white/15 border-white/20'
+              : 'text-slate-700 hover:text-black bg-white/60 hover:bg-white/90 border-black/15 shadow-sm'
+          }`}
+          title={t('importBookmarks', settings.language)}
+        >
+          <Bookmark className="w-3.5 h-3.5 text-blue-500" />
+          <span className="hidden md:inline">{t('importBookmarks', settings.language)}</span>
+        </button>
+      )}
+
       {/* Unified Add/Edit Category Modal */}
       <CategoryModal
         isOpen={modalCategory !== undefined}
         category={modalCategory ?? null}
         settings={settings}
+        gridPages={gridPages}
+        activeGridPageId={activeGridPageId}
         onClose={() => setModalCategory(undefined)}
         onSave={handleSaveCategory}
         onDelete={onDeleteCategory}
@@ -358,7 +556,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
               top: `${activeMenu.y}px`,
               left: `${activeMenu.x}px`,
             }}
-            className={`glass-dropdown fixed w-34 py-1.5 rounded-xl border shadow-2xl z-[9999] animate-scale-in text-xs font-medium overflow-hidden select-none ${
+            className={`glass-dropdown fixed min-w-[160px] max-w-[220px] py-1.5 rounded-xl border shadow-2xl z-[9999] animate-scale-in text-xs font-medium overflow-hidden select-none ${
               isLight
                 ? 'border-black/10 shadow-black/15 text-slate-800'
                 : 'border-white/15 shadow-black/50 text-white'
@@ -380,6 +578,42 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
               <Pencil className="w-3.5 h-3.5" />
               <span>{t('editCategory', settings.language)}</span>
             </button>
+
+            {/* Move to another desktop options */}
+            {gridPages && gridPages.length > 1 && onMoveCategoryToPage && (
+              <>
+                <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
+                {gridPages
+                  .filter((p) => p.id !== (activeMenu.category.pageId || activeGridPageId || (gridPages && gridPages[0]?.id)))
+                  .map((page, pIdx) => {
+                    const pageDisplayName = page.name || `${t('defaultDesktopName', settings.language)} ${pIdx + 1}`;
+                    return (
+                      <button
+                        key={page.id}
+                        type="button"
+                        onClick={() => {
+                          const catId = activeMenu.category.id;
+                          setActiveMenu(null);
+                          onMoveCategoryToPage(catId, page.id);
+                        }}
+                        className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+                          isLight
+                            ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                            : 'text-white/80 hover:bg-white/10 hover:text-white'
+                        }`}
+                        title={`${t('moveToDesktop', settings.language)}: ${pageDisplayName}`}
+                      >
+                        <FolderInput className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                        <span className="truncate">
+                          {t('moveToDesktop', settings.language)}: {pageDisplayName}
+                        </span>
+                      </button>
+                    );
+                  })}
+                <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
+              </>
+            )}
+
             <button
               type="button"
               onClick={() => {

@@ -129,6 +129,7 @@ async function buildExtension() {
       permissions: target === 'chrome' 
         ? ['storage', 'alarms', 'unlimitedStorage', 'tabs', 'favicon'] 
         : ['storage', 'alarms', 'unlimitedStorage', 'tabs'],
+      optional_permissions: ['bookmarks'],
       host_permissions: ['https://*/*', 'http://*/*'],
     };
 

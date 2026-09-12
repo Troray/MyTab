@@ -1,61 +1,80 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Sparkles, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
-import { SiteItem, ThemeSettings, Category } from '../../types';
+import { SiteItem, ThemeSettings, Category, GridPage } from '../../types';
 import { fetchSiteMetadata, generateFallbackIcon, normalizeUrl, fileToBase64Icon, urlToBase64Icon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
 import { CustomSelect } from './CustomSelect';
 import { isLightMode } from '../../utils/constants';
 
 interface SiteModalProps {
- isOpen: boolean;
- editingSite?: SiteItem | null;
- categories: Category[];
- activeCategoryId: string;
- settings: ThemeSettings;
- onClose: () => void;
- onSave: (siteData: Partial<SiteItem>) => void;
+  isOpen: boolean;
+  editingSite?: SiteItem | null;
+  categories: Category[];
+  activeCategoryId: string;
+  gridPages?: GridPage[];
+  activeGridPageId?: string;
+  settings: ThemeSettings;
+  onClose: () => void;
+  onSave: (siteData: Partial<SiteItem>) => void;
 }
 
 export const SiteModal: React.FC<SiteModalProps> = ({
- isOpen,
- editingSite,
- categories,
- activeCategoryId,
- settings,
- onClose,
- onSave,
+  isOpen,
+  editingSite,
+  categories,
+  activeCategoryId,
+  gridPages,
+  activeGridPageId,
+  settings,
+  onClose,
+  onSave,
 }) => {
- const availableCategories = useMemo(
-   () => categories.filter((c) => c.id !== 'all'),
-   [categories]
- );
+  const defaultPageId = activeGridPageId || gridPages?.[0]?.id || 'page-1';
+
+  const [url, setUrl] = useState('');
+  const [title, setTitle] = useState('');
+  const [icon, setIcon] = useState('');
+  const [pageId, setPageId] = useState(defaultPageId);
+
+  const availableCategories = useMemo(
+    () => categories.filter((c) => c.id !== 'all' && (c.pageId || defaultPageId) === pageId),
+    [categories, pageId, defaultPageId]
+  );
+
   const defaultCategoryId =
     activeCategoryId !== 'all' && activeCategoryId !== 'uncategorized' && availableCategories.some((c) => c.id === activeCategoryId)
       ? activeCategoryId
       : (availableCategories[0]?.id || 'all');
 
- const [url, setUrl] = useState('');
- const [title, setTitle] = useState('');
- const [icon, setIcon] = useState('');
- const [categoryId, setCategoryId] = useState(defaultCategoryId);
- const [isFetching, setIsFetching] = useState(false);
- const [fetchMsg, setFetchMsg] = useState('');
+  const [categoryId, setCategoryId] = useState(defaultCategoryId);
+  const [isFetching, setIsFetching] = useState(false);
+  const [fetchMsg, setFetchMsg] = useState('');
 
- useEffect(() => {
- if (editingSite) {
- setUrl(editingSite.url);
- setTitle(editingSite.title);
- setIcon(editingSite.icon || '');
- setCategoryId(editingSite.categoryId || 'all');
- } else {
- setUrl('');
- setTitle('');
- setIcon('');
- setCategoryId(defaultCategoryId);
- }
- setFetchMsg('');
- }, [editingSite, isOpen, defaultCategoryId]);
+  useEffect(() => {
+    if (editingSite) {
+      setUrl(editingSite.url);
+      setTitle(editingSite.title);
+      setIcon(editingSite.icon || '');
+      setCategoryId(editingSite.categoryId || 'all');
+      setPageId(editingSite.pageId || defaultPageId);
+    } else {
+      setUrl('');
+      setTitle('');
+      setIcon('');
+      setCategoryId(defaultCategoryId);
+      setPageId(defaultPageId);
+    }
+    setFetchMsg('');
+  }, [editingSite, isOpen, defaultCategoryId, defaultPageId]);
+
+  useEffect(() => {
+    if (availableCategories.length > 0 && !availableCategories.some((c) => c.id === categoryId)) {
+      setCategoryId(availableCategories[0].id);
+    } else if (availableCategories.length === 0 && categoryId !== 'all') {
+      setCategoryId('all');
+    }
+  }, [pageId, availableCategories, categoryId]);
 
  if (!isOpen) return null;
 
@@ -124,6 +143,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
  title: finalTitle,
  icon: finalIcon,
  categoryId: categoryId || 'all',
+ pageId: pageId || defaultPageId,
  });
  };
 
@@ -305,6 +325,28 @@ export const SiteModal: React.FC<SiteModalProps> = ({
               options={availableCategories.map((cat) => ({
                 value: cat.id,
                 label: cat.name,
+              }))}
+            />
+          </div>
+        )}
+
+        {/* Desktop Page Select (only shown if multiple desktop pages exist) */}
+        {gridPages && gridPages.length > 1 && (
+          <div>
+            <label
+              className={`block text-xs font-medium mb-1.5 ${
+                isLight ? 'text-slate-700' : 'text-white/80'
+              }`}
+            >
+              {t('siteDesktop', settings.language)}
+            </label>
+            <CustomSelect
+              value={pageId}
+              onChange={setPageId}
+              isLight={isLight}
+              options={gridPages.map((page, idx) => ({
+                value: page.id,
+                label: page.name || `${t('defaultDesktopName', settings.language)} ${idx + 1}`,
               }))}
             />
           </div>

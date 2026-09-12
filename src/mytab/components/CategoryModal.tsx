@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, FolderPlus, FolderEdit, Check, Trash2, RotateCcw } from 'lucide-react';
-import { Category, ThemeSettings } from '../../types';
+import { Category, GridPage, ThemeSettings } from '../../types';
 import { ConfirmModal } from './ConfirmModal';
 import { ToggleSwitch } from './ToggleSwitch';
+import { CustomSelect } from './CustomSelect';
 import { DEFAULT_CATEGORY_COLORS } from '../../utils/constants';
 import { t } from '../../utils/i18n';
 import { isLightMode } from '../../utils/constants';
@@ -12,8 +13,10 @@ interface CategoryModalProps {
   isOpen: boolean;
   category: Category | null; // null 表示新增，非 null 表示编辑
   settings: ThemeSettings;
+  gridPages?: GridPage[];
+  activeGridPageId?: string;
   onClose: () => void;
-  onSave: (catId: string | null, data: { name: string; showInAll: boolean; color?: string }) => void;
+  onSave: (catId: string | null, data: { name: string; showInAll: boolean; color?: string; pageId?: string }) => void;
   onDelete?: (catId: string) => void;
 }
 
@@ -21,6 +24,8 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   isOpen,
   category,
   settings,
+  gridPages,
+  activeGridPageId,
   onClose,
   onSave,
   onDelete,
@@ -29,6 +34,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   const [name, setName] = useState('');
   const [color, setColor] = useState('');
   const [showInAll, setShowInAll] = useState(true);
+  const [pageId, setPageId] = useState('');
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   useEffect(() => {
@@ -36,13 +42,15 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       setName(category.name || '');
       setColor(category.color || '');
       setShowInAll(category.showInAll !== false);
+      setPageId(category.pageId || activeGridPageId || (gridPages && gridPages[0]?.id) || 'page-1');
     } else {
       setName('');
       setColor('');
       setShowInAll(true);
+      setPageId(activeGridPageId || (gridPages && gridPages[0]?.id) || 'page-1');
     }
     setIsConfirmingDelete(false);
-  }, [category, isOpen]);
+  }, [category, isOpen, activeGridPageId, gridPages]);
 
   if (!isOpen) return null;
 
@@ -53,6 +61,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         name: name.trim(),
         showInAll,
         color: color || undefined,
+        pageId: pageId || undefined,
       });
       onClose();
     }
@@ -202,6 +211,28 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                 </label>
               </div>
             </div>
+
+            {/* Desktop Page Select (only shown if multiple desktop pages exist) */}
+            {gridPages && gridPages.length > 1 && (
+              <div>
+                <label
+                  className={`block text-xs font-medium mb-1.5 ${
+                    isLight ? 'text-slate-700' : 'text-white/80'
+                  }`}
+                >
+                  {t('categoryDesktop', settings.language)}
+                </label>
+                <CustomSelect
+                  value={pageId}
+                  onChange={setPageId}
+                  isLight={isLight}
+                  options={gridPages.map((page, idx) => ({
+                    value: page.id,
+                    label: page.name || `${t('defaultDesktopName', settings.language)} ${idx + 1}`,
+                  }))}
+                />
+              </div>
+            )}
 
             {/* Show in "All" Toggle */}
             <div

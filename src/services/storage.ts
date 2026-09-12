@@ -2,6 +2,7 @@ import {
   AppState,
   Category,
   GitSyncConfig,
+  GridPage,
   ProfileContainer,
   ProfileData,
   ProfileId,
@@ -34,7 +35,7 @@ export const STORAGE_KEYS = {
   LEGACY_SITES: 'mytab_sites',
   LEGACY_CATEGORIES: 'mytab_categories',
   LEGACY_ACTIVE_CATEGORY: 'mytab_active_category'
-};
+} as const;
 
 export const DEFAULT_PROFILE_SYNC_SETTINGS: ProfileSyncSettings = {
   normal: true,
@@ -122,6 +123,10 @@ export async function setItem<T>(key: string, value: T): Promise<void> {
   }
 }
 
+export const DEFAULT_GRID_PAGES: GridPage[] = [
+  { id: 'page-1', name: '桌面 1', sortOrder: 0 },
+];
+
 /**
  * Creates default data for the normal profile.
  */
@@ -130,6 +135,7 @@ export function createDefaultNormalProfile(): ProfileData {
     sites: DEFAULT_SITES,
     categories: DEFAULT_CATEGORIES,
     activeCategoryId: 'all',
+    gridPages: DEFAULT_GRID_PAGES,
   };
 }
 
@@ -141,6 +147,7 @@ export function createDefaultPrivateProfile(): ProfileData {
     sites: [],
     categories: [],
     activeCategoryId: 'all',
+    gridPages: DEFAULT_GRID_PAGES,
     settings: {
       backgroundType: 'gradient',
       backgroundValue: DEFAULT_PRIVATE_BACKGROUND_VALUE,
@@ -290,8 +297,15 @@ export async function saveProfileSyncSettings(settings: ProfileSyncSettings): Pr
 export async function loadAppState(targetProfileId?: ProfileId): Promise<AppState> {
   const [profileId, storageData] = await Promise.all([
     targetProfileId ? Promise.resolve(targetProfileId) : getCurrentProfileId(),
-    getMultipleItems({
-      [STORAGE_KEYS.PROFILE_DATA]: null as ProfileContainer | null,
+    getMultipleItems<{
+      [STORAGE_KEYS.PROFILE_DATA]: ProfileContainer | null;
+      [STORAGE_KEYS.SETTINGS]: ThemeSettings;
+      [STORAGE_KEYS.WEBDAV]: WebdavConfig;
+      [STORAGE_KEYS.GIT]: GitSyncConfig;
+      [STORAGE_KEYS.FIRST_LAUNCH]: boolean;
+      [STORAGE_KEYS.SYNC_SETTINGS]: ProfileSyncSettings;
+    }>({
+      [STORAGE_KEYS.PROFILE_DATA]: null,
       [STORAGE_KEYS.SETTINGS]: DEFAULT_SETTINGS,
       [STORAGE_KEYS.WEBDAV]: DEFAULT_WEBDAV_CONFIG,
       [STORAGE_KEYS.GIT]: DEFAULT_GIT_CONFIG,
@@ -300,7 +314,7 @@ export async function loadAppState(targetProfileId?: ProfileId): Promise<AppStat
     }),
   ]);
 
-  let container = storageData[STORAGE_KEYS.PROFILE_DATA];
+  let container = storageData[STORAGE_KEYS.PROFILE_DATA] as ProfileContainer | null;
   if (!container || container.version !== 2 || !container.profiles) {
     container = await loadProfileContainer();
   } else {
@@ -321,11 +335,11 @@ export async function loadAppState(targetProfileId?: ProfileId): Promise<AppStat
     }
   }
 
-  const settings = storageData[STORAGE_KEYS.SETTINGS];
-  const webdav = storageData[STORAGE_KEYS.WEBDAV];
-  const git = storageData[STORAGE_KEYS.GIT];
-  const isFirst = storageData[STORAGE_KEYS.FIRST_LAUNCH];
-  const syncSettings = storageData[STORAGE_KEYS.SYNC_SETTINGS];
+  const settings = storageData[STORAGE_KEYS.SETTINGS] as ThemeSettings;
+  const webdav = storageData[STORAGE_KEYS.WEBDAV] as WebdavConfig;
+  const git = storageData[STORAGE_KEYS.GIT] as GitSyncConfig;
+  const isFirst = storageData[STORAGE_KEYS.FIRST_LAUNCH] as boolean;
+  const syncSettings = storageData[STORAGE_KEYS.SYNC_SETTINGS] as ProfileSyncSettings;
 
   const currentProfile = container.profiles[profileId] || (profileId === 'private' ? createDefaultPrivateProfile() : createDefaultNormalProfile());
 
@@ -428,6 +442,7 @@ export async function loadAppState(targetProfileId?: ProfileId): Promise<AppStat
     sites: currentProfile.sites,
     categories: currentProfile.categories,
     activeCategoryId: currentProfile.activeCategoryId,
+    gridPages: currentProfile.gridPages && currentProfile.gridPages.length > 0 ? currentProfile.gridPages : DEFAULT_GRID_PAGES,
     settings: effectiveSettings,
     webdav: { ...DEFAULT_WEBDAV_CONFIG, ...webdav },
     git: normalizedGit,
@@ -451,6 +466,68 @@ export async function saveCategories(categories: Category[], profileId?: Profile
   await updateProfile(targetId, (profile) => ({
     ...profile,
     categories,
+  }));
+}
+
+export async function saveGridPages(gridPages: GridPage[], profileId?: ProfileId): Promise<void> {
+  const targetId = profileId || (await getCurrentProfileId());
+  await updateProfile(targetId, (profile) => ({
+    ...profile,
+    gridPages,
+  }));
+}
+
+export async function deleteGridPage(pageIdToDelete: string, profileId?: ProfileId): Promise<void> {
+  const targetId = profileId || (await getCurrentProfileId());
+  await updateProfile(targetId, (profile) => {
+    const existingPages = profile.gridPages && profile.gridPages.length > 0 ? profile.gridPages : DEFAULT_GRID_PAGES;
+    const remainingPages = existingPages.filter((p) => p.id !== pageIdToDelete);
+    const safeRemaining = remainingPages.length > 0 ? remainingPages : DEFAULT_GRID_PAGES;
+    const fallbackPageId = safeRemaining[0].id;
+
+    // Migrate any categories assigned to deleted page to fallbackPageId
+    const updatedCategories = (profile.categories || []).map((c) => {
+      if (c.pageId === pageIdToDelete) {
+        return { ...c, pageId: fallbackPageId, updatedAt: Date.now() };
+      }
+      return c;
+    });
+
+    // Migrate any sites assigned to deleted page to fallbackPageId
+    const updatedSites = (profile.sites || []).map((s) => {
+      if (s.pageId === pageIdToDelete) {
+        return { ...s, pageId: fallbackPageId, updatedAt: Date.now() };
+      }
+      return s;
+    });
+
+    return {
+      ...profile,
+      gridPages: safeRemaining,
+      categories: updatedCategories,
+      sites: updatedSites,
+    };
+  });
+}
+
+/**
+ * Moves an entire category and all its contained sites to a target grid desktop page.
+ */
+export async function moveCategoryToGridPage(
+  categoryId: string,
+  targetPageId: string,
+  profileId?: ProfileId
+): Promise<void> {
+  const targetId = profileId || (await getCurrentProfileId());
+  const now = Date.now();
+  await updateProfile(targetId, (profile) => ({
+    ...profile,
+    categories: (profile.categories || []).map((c) =>
+      c.id === categoryId ? { ...c, pageId: targetPageId, updatedAt: now } : c
+    ),
+    sites: (profile.sites || []).map((s) =>
+      s.categoryId === categoryId ? { ...s, pageId: targetPageId, updatedAt: now } : s
+    ),
   }));
 }
 
