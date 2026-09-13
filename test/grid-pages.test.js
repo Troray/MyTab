@@ -41,6 +41,7 @@ const {
   saveActiveGridPageId,
   deleteGridPage,
   moveCategoryToGridPage,
+  moveSiteToGridPage,
   getProfileData,
   saveActiveCategory,
   savePageCategoryMap,
@@ -448,5 +449,27 @@ test('Grid Pages Backup: exportAllData & importData restore multi-desktop struct
   assert.equal(state.gridPages[1].name, '副桌面');
   assert.equal(state.activeGridPageId, 'page-2');
   assert.equal(state.pageCategoryMap?.['page-2'], 'cat-2');
+});
+
+test('Grid Pages: moveSiteToGridPage moves single site to target desktop page', async () => {
+  mockStorage.clear();
+
+  const initialSites = [
+    { id: 'site-1', title: 'Site 1', url: 'https://site1.com', categoryId: 'cat-1', pageId: 'page-1' },
+    { id: 'site-2', title: 'Site 2', url: 'https://site2.com', categoryId: 'cat-1', pageId: 'page-1' },
+  ];
+  await saveSites(initialSites, 'normal');
+
+  // Move site-1 to page-2 with category 'cat-2'
+  await moveSiteToGridPage('site-1', 'page-2', 'cat-2', 'normal');
+
+  const profile = await getProfileData('normal');
+  const site1 = profile.sites.find((s) => s.id === 'site-1');
+  const site2 = profile.sites.find((s) => s.id === 'site-2');
+
+  assert.equal(site1.pageId, 'page-2');
+  assert.equal(site1.categoryId, 'cat-2');
+  assert.equal(site2.pageId, 'page-1');
+  assert.equal(site2.categoryId, 'cat-1');
 });
 

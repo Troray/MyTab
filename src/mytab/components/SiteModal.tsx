@@ -36,45 +36,58 @@ export const SiteModal: React.FC<SiteModalProps> = ({
   const [title, setTitle] = useState('');
   const [icon, setIcon] = useState('');
   const [pageId, setPageId] = useState(defaultPageId);
+  const [categoryId, setCategoryId] = useState('all');
+  const [isFetching, setIsFetching] = useState(false);
+  const [fetchMsg, setFetchMsg] = useState('');
 
   const availableCategories = useMemo(
     () => categories.filter((c) => c.id !== 'all' && (c.pageId || defaultPageId) === pageId),
     [categories, pageId, defaultPageId]
   );
 
-  const defaultCategoryId =
-    activeCategoryId !== 'all' && activeCategoryId !== 'uncategorized' && availableCategories.some((c) => c.id === activeCategoryId)
-      ? activeCategoryId
-      : (availableCategories[0]?.id || 'all');
-
-  const [categoryId, setCategoryId] = useState(defaultCategoryId);
-  const [isFetching, setIsFetching] = useState(false);
-  const [fetchMsg, setFetchMsg] = useState('');
-
+  // Initialize form fields only when modal opens or editingSite changes
   useEffect(() => {
+    if (!isOpen) return;
+
     if (editingSite) {
-      setUrl(editingSite.url);
-      setTitle(editingSite.title);
+      setUrl(editingSite.url || '');
+      setTitle(editingSite.title || '');
       setIcon(editingSite.icon || '');
-      setCategoryId(editingSite.categoryId || 'all');
       setPageId(editingSite.pageId || defaultPageId);
+      setCategoryId(editingSite.categoryId || 'all');
     } else {
+      const initialPageId = defaultPageId;
+      const initialAvailableCats = categories.filter(
+        (c) => c.id !== 'all' && (c.pageId || defaultPageId) === initialPageId
+      );
+      const initialCatId =
+        activeCategoryId !== 'all' &&
+        activeCategoryId !== 'uncategorized' &&
+        initialAvailableCats.some((c) => c.id === activeCategoryId)
+          ? activeCategoryId
+          : (initialAvailableCats[0]?.id || 'all');
+
       setUrl('');
       setTitle('');
       setIcon('');
-      setCategoryId(defaultCategoryId);
-      setPageId(defaultPageId);
+      setPageId(initialPageId);
+      setCategoryId(initialCatId);
     }
     setFetchMsg('');
-  }, [editingSite, isOpen, defaultCategoryId, defaultPageId]);
+  }, [editingSite, isOpen, defaultPageId, activeCategoryId, categories]);
 
+  // Keep category synchronized when the user switches desktop page inside modal
   useEffect(() => {
-    if (availableCategories.length > 0 && !availableCategories.some((c) => c.id === categoryId)) {
-      setCategoryId(availableCategories[0].id);
-    } else if (availableCategories.length === 0 && categoryId !== 'all') {
+    if (!isOpen) return;
+
+    if (availableCategories.length > 0) {
+      if (!availableCategories.some((c) => c.id === categoryId)) {
+        setCategoryId(availableCategories[0].id);
+      }
+    } else if (categoryId !== 'all') {
       setCategoryId('all');
     }
-  }, [pageId, availableCategories, categoryId]);
+  }, [isOpen, pageId, availableCategories, categoryId]);
 
  if (!isOpen) return null;
 

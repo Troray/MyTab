@@ -17,6 +17,7 @@ import {
   saveActiveGridPageId,
   deleteGridPage,
   moveCategoryToGridPage,
+  moveSiteToGridPage,
   DEFAULT_GRID_PAGES,
   setFirstLaunchComplete,
 } from '../services/storage';
@@ -771,6 +772,24 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     );
   }, [categories, sites, pageCategoryMap]);
 
+  const handleMoveSiteToPage = useCallback(async (siteId: string, targetPageId: string) => {
+    const site = sites.find((s) => s.id === siteId);
+    if (!site) return;
+
+    // Determine appropriate category on target page
+    const targetCats = categories.filter((c) => c.id !== 'all' && (c.pageId || defaultPageId) === targetPageId);
+    const catBelongsToTarget = targetCats.some((c) => c.id === site.categoryId);
+    const newCategoryId = catBelongsToTarget ? site.categoryId : (targetCats[0]?.id || 'all');
+
+    await moveSiteToGridPage(siteId, targetPageId, newCategoryId);
+    const now = Date.now();
+    const updatedSites = sites.map((s) =>
+      s.id === siteId ? { ...s, pageId: targetPageId, categoryId: newCategoryId, updatedAt: now } : s
+    );
+
+    setAppState((prev) => (prev ? { ...prev, sites: updatedSites } : null));
+  }, [sites, categories, defaultPageId]);
+
   const handleDeleteCategory = useCallback(async (catId: string) => {
     // Cannot delete default categories
     const target = categories.find((c) => c.id === catId);
@@ -1238,6 +1257,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               activeGridPageId={activeGridPageId}
               onEditSite={handleOpenEditSite}
               onDeleteSite={handleDeleteSite}
+              onMoveSiteToPage={handleMoveSiteToPage}
               onAddSite={handleOpenAddSite}
               onReorderSites={handleReorderSites}
               onSelectPage={handleSelectGridPage}

@@ -541,6 +541,31 @@ export async function moveCategoryToGridPage(
   }));
 }
 
+/**
+ * Moves an individual site to a target grid desktop page, optionally updating its category.
+ */
+export async function moveSiteToGridPage(
+  siteId: string,
+  targetPageId: string,
+  targetCategoryId?: string,
+  profileId?: ProfileId
+): Promise<void> {
+  const targetId = profileId || (await getCurrentProfileId());
+  const now = Date.now();
+  await updateProfile(targetId, (profile) => ({
+    ...profile,
+    sites: (profile.sites || []).map((s) => {
+      if (s.id !== siteId) return s;
+      return {
+        ...s,
+        pageId: targetPageId,
+        ...(targetCategoryId !== undefined ? { categoryId: targetCategoryId } : {}),
+        updatedAt: now,
+      };
+    }),
+  }));
+}
+
 export async function saveActiveCategory(
   activeCategoryId: string,
   pageCategoryMap?: Record<string, string>,

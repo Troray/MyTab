@@ -16,6 +16,7 @@ interface SiteGridProps {
   activeGridPageId?: string;
   onEditSite: (site: SiteItem) => void;
   onDeleteSite: (siteId: string) => void;
+  onMoveSiteToPage?: (siteId: string, targetPageId: string) => void;
   onAddSite: () => void;
   onReorderSites: (newSites: SiteItem[]) => void;
   onSelectPage?: (pageId: string) => void;
@@ -33,6 +34,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
   activeGridPageId,
   onEditSite,
   onDeleteSite,
+  onMoveSiteToPage,
   onAddSite,
   onReorderSites,
   onSelectPage,
@@ -451,8 +453,11 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
                         isDragging={draggingSiteId === site.id}
                         isAnyDragging={Boolean(draggingSiteId)}
                         isJustDropped={justDroppedSiteId === site.id}
+                        gridPages={gridPages}
+                        activeGridPageId={activeGridPageId}
                         onEdit={onEditSite}
                         onDelete={onDeleteSite}
+                        onMoveSiteToPage={onMoveSiteToPage}
                         onDragStart={handleDragStart}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
