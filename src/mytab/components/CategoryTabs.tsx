@@ -579,8 +579,9 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
                 <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
                 {gridPages
                   .filter((p) => p.id !== (activeMenu.category.pageId || activeGridPageId || (gridPages && gridPages[0]?.id)))
-                  .map((page, pIdx) => {
-                    const pageDisplayName = page.name || `${t('defaultDesktopName', settings.language)} ${pIdx + 1}`;
+                  .map((page) => {
+                    const originalIdx = gridPages.findIndex((gp) => gp.id === page.id);
+                    const pageDisplayName = page.name || `${t('defaultDesktopName', settings.language)} ${originalIdx + 1}`;
                     return (
                       <button
                         key={page.id}

@@ -212,8 +212,8 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
               </div>
             </div>
 
-            {/* Desktop Page Select (only shown if multiple desktop pages exist) */}
-            {gridPages && gridPages.length > 1 && (
+            {/* Desktop Page Select (only shown in grid layout and if multiple desktop pages exist) */}
+            {settings.layoutMode !== 'board' && gridPages && gridPages.length > 1 && (
               <div>
                 <label
                   className={`block text-xs font-medium mb-1.5 ${
