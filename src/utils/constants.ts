@@ -1,4 +1,4 @@
-import { Category, SiteItem, SearchEngine, ThemeSettings, WebdavConfig, GitSyncConfig, GitPlatformConfig } from '../types';
+import { Category, SiteItem, SearchEngine, ThemeSettings, WebdavConfig, GitSyncConfig, GitPlatformConfig, GridPage } from '../types';
 
 export const DEFAULT_SEARCH_ENGINES: SearchEngine[] = [
   {
@@ -38,6 +38,10 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'work', name: '工作与开发', sortOrder: 1 },
   { id: 'tools', name: '常用工具', sortOrder: 2 },
   { id: 'media', name: '设计与灵感', sortOrder: 3 },
+];
+
+export const DEFAULT_GRID_PAGES: GridPage[] = [
+  { id: 'page-1', name: '桌面 1', sortOrder: 0 },
 ];
 
 export const DEFAULT_SITES: SiteItem[] = [

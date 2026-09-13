@@ -1,6 +1,7 @@
 import type {
   Category,
   ConflictStrategy,
+  GridPage,
   ProfileContainer,
   ProfileData,
   ProfileId,
@@ -10,7 +11,7 @@ import type {
   ThemeSettings,
 } from '../types';
 
-import { DEFAULT_SETTINGS } from '../utils/constants';
+import { DEFAULT_SETTINGS, DEFAULT_GRID_PAGES } from '../utils/constants';
 
 export const SYNC_PAYLOAD_VERSION = 2;
 
@@ -26,28 +27,74 @@ function getSortOrder(item: { sortOrder?: number | string | null }): number {
 }
 
 /**
- * Merges two lists of sites based on updatedAt timestamp.
- * Defends against null/undefined lists or corrupted entries.
+ * Normalizes a URL for deduplication comparison.
+ */
+function normalizeUrlForDedupe(u?: string): string {
+  if (!u) return '';
+  try {
+    const parsed = new URL(u);
+    return (parsed.origin + parsed.pathname.replace(/\/+$/, '')).toLowerCase();
+  } catch {
+    return (u || '').trim().toLowerCase().replace(/\/+$/, '');
+  }
+}
+
+/**
+ * Merges two lists of sites based on updatedAt timestamp and URL-level deduplication.
+ * Defends against duplicate shortcuts on the same desktop page/category.
  */
 export function mergeSites(localSites: SiteItem[] = [], remoteSites: SiteItem[] = []): SiteItem[] {
   const safeLocal = Array.isArray(localSites) ? localSites : [];
   const safeRemote = Array.isArray(remoteSites) ? remoteSites : [];
   const map = new Map<string, SiteItem>();
+  const urlToIdMap = new Map<string, string>();
+
+  const getDedupeKey = (s: SiteItem) => {
+    const normUrl = normalizeUrlForDedupe(s.url);
+    if (!normUrl) return '';
+    const catId = s.categoryId || 'work';
+    const pageId = s.pageId || 'page-1';
+    return `${normUrl}::${catId}::${pageId}`;
+  };
 
   for (const s of safeLocal) {
     if (!s || typeof s !== 'object' || !s.id || typeof s.id !== 'string') continue;
     map.set(s.id, s);
+    const key = getDedupeKey(s);
+    if (key) {
+      urlToIdMap.set(key, s.id);
+    }
   }
 
   for (const s of safeRemote) {
     if (!s || typeof s !== 'object' || !s.id || typeof s.id !== 'string') continue;
-    const existing = map.get(s.id);
-    if (!existing) {
-      map.set(s.id, s);
-    } else {
-      if ((s.updatedAt || 0) > (existing.updatedAt || 0)) {
+    const existingById = map.get(s.id);
+    if (existingById) {
+      if ((s.updatedAt || 0) > (existingById.updatedAt || 0)) {
         map.set(s.id, s);
       }
+      continue;
+    }
+
+    // Deduplicate sites with identical URL in the same category and same desktop page
+    const key = getDedupeKey(s);
+    const duplicateId = key ? urlToIdMap.get(key) : undefined;
+    if (duplicateId && map.has(duplicateId)) {
+      const duplicate = map.get(duplicateId)!;
+      // Overwrite if remote is newer or local is an unedited default template site
+      if ((s.updatedAt || 0) > (duplicate.updatedAt || 0) || duplicateId.startsWith('site-')) {
+        map.set(duplicateId, {
+          ...duplicate,
+          ...s,
+          id: duplicateId,
+        });
+      }
+      continue;
+    }
+
+    map.set(s.id, s);
+    if (key) {
+      urlToIdMap.set(key, s.id);
     }
   }
 
@@ -91,11 +138,44 @@ export function mergeCategories(localCats: Category[] = [], remoteCats: Category
   });
 }
 
+/**
+ * Merges two lists of grid pages preserving order and unique desktop IDs.
+ * Defends against empty lists by falling back to DEFAULT_GRID_PAGES.
+ */
+export function mergeGridPages(localPages: GridPage[] = [], remotePages: GridPage[] = []): GridPage[] {
+  const safeLocal = Array.isArray(localPages) && localPages.length > 0 ? localPages : DEFAULT_GRID_PAGES;
+  const safeRemote = Array.isArray(remotePages) && remotePages.length > 0 ? remotePages : [];
+
+  if (safeRemote.length === 0) return safeLocal;
+
+  const map = new Map<string, GridPage>();
+  for (const p of safeLocal) {
+    if (p && p.id) map.set(p.id, p);
+  }
+
+  for (const p of safeRemote) {
+    if (p && p.id) {
+      const existing = map.get(p.id);
+      if (!existing) {
+        map.set(p.id, p);
+      } else {
+        map.set(p.id, {
+          ...existing,
+          ...p,
+        });
+      }
+    }
+  }
+
+  const result = Array.from(map.values()).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  return result.length > 0 ? result : DEFAULT_GRID_PAGES;
+}
+
 const DEFAULT_EMPTY_CONTAINER: ProfileContainer = {
   version: SYNC_PAYLOAD_VERSION,
   profiles: {
-    normal: { sites: [], categories: [], activeCategoryId: 'all' },
-    private: { sites: [], categories: [], activeCategoryId: 'all' },
+    normal: { sites: [], categories: [], activeCategoryId: 'all', gridPages: DEFAULT_GRID_PAGES, activeGridPageId: 'page-1', pageCategoryMap: { 'page-1': 'all' } },
+    private: { sites: [], categories: [], activeCategoryId: 'all', gridPages: DEFAULT_GRID_PAGES, activeGridPageId: 'page-1', pageCategoryMap: { 'page-1': 'all' } },
   },
 };
 
@@ -132,7 +212,13 @@ export function buildSyncPayload(
       sites: [...normalSites],
       categories: [...normalCats],
       activeCategoryId: safeContainer.profiles.normal.activeCategoryId || 'all',
-      ...(safeContainer.profiles.normal.pageCategoryMap ? { pageCategoryMap: { ...safeContainer.profiles.normal.pageCategoryMap } } : {}),
+      gridPages: safeContainer.profiles.normal.gridPages && safeContainer.profiles.normal.gridPages.length > 0
+        ? [...safeContainer.profiles.normal.gridPages]
+        : [...DEFAULT_GRID_PAGES],
+      activeGridPageId: safeContainer.profiles.normal.activeGridPageId || 'page-1',
+      pageCategoryMap: safeContainer.profiles.normal.pageCategoryMap
+        ? { ...safeContainer.profiles.normal.pageCategoryMap }
+        : { 'page-1': 'all' },
     };
   }
 
@@ -148,7 +234,13 @@ export function buildSyncPayload(
       sites: [...privateSites],
       categories: [...privateCats],
       activeCategoryId: safeContainer.profiles.private.activeCategoryId || 'all',
-      ...(safeContainer.profiles.private.pageCategoryMap ? { pageCategoryMap: { ...safeContainer.profiles.private.pageCategoryMap } } : {}),
+      gridPages: safeContainer.profiles.private.gridPages && safeContainer.profiles.private.gridPages.length > 0
+        ? [...safeContainer.profiles.private.gridPages]
+        : [...DEFAULT_GRID_PAGES],
+      activeGridPageId: safeContainer.profiles.private.activeGridPageId || 'page-1',
+      pageCategoryMap: safeContainer.profiles.private.pageCategoryMap
+        ? { ...safeContainer.profiles.private.pageCategoryMap }
+        : { 'page-1': 'all' },
       ...(safeContainer.profiles.private.settings ? { settings: { ...safeContainer.profiles.private.settings } } : {}),
       ...(safeContainer.profiles.private.wallpaper ? { wallpaper: { ...safeContainer.profiles.private.wallpaper } } : {}),
     };
@@ -162,6 +254,7 @@ export function buildSyncPayload(
     // V1 backward compatibility for older clients
     categories: profilesPayload.normal?.categories || [],
     sites: profilesPayload.normal?.sites || [],
+    gridPages: profilesPayload.normal?.gridPages || [...DEFAULT_GRID_PAGES],
   };
 
   return payload;
@@ -189,23 +282,29 @@ function extractRemoteProfiles(remotePayload?: SyncPayload | null): Partial<Reco
   // If V2 profiles object exists:
   if (remotePayload.profiles && typeof remotePayload.profiles === 'object') {
     if (remotePayload.profiles.normal && typeof remotePayload.profiles.normal === 'object') {
+      const norm = remotePayload.profiles.normal;
       result.normal = {
-        sites: Array.isArray(remotePayload.profiles.normal.sites) ? remotePayload.profiles.normal.sites : [],
-        categories: Array.isArray(remotePayload.profiles.normal.categories) ? remotePayload.profiles.normal.categories : [],
-        activeCategoryId: remotePayload.profiles.normal.activeCategoryId || 'all',
-        ...(remotePayload.profiles.normal.pageCategoryMap ? { pageCategoryMap: { ...remotePayload.profiles.normal.pageCategoryMap } } : {}),
-        ...(remotePayload.profiles.normal.settings ? { settings: { ...remotePayload.profiles.normal.settings } } : {}),
-        ...(remotePayload.profiles.normal.wallpaper ? { wallpaper: { ...remotePayload.profiles.normal.wallpaper } } : {}),
+        sites: Array.isArray(norm.sites) ? norm.sites : [],
+        categories: Array.isArray(norm.categories) ? norm.categories : [],
+        activeCategoryId: norm.activeCategoryId || 'all',
+        gridPages: Array.isArray(norm.gridPages) && norm.gridPages.length > 0 ? norm.gridPages : undefined,
+        activeGridPageId: typeof norm.activeGridPageId === 'string' ? norm.activeGridPageId : undefined,
+        pageCategoryMap: norm.pageCategoryMap && typeof norm.pageCategoryMap === 'object' ? { ...norm.pageCategoryMap } : undefined,
+        ...(norm.settings ? { settings: { ...norm.settings } } : {}),
+        ...(norm.wallpaper ? { wallpaper: { ...norm.wallpaper } } : {}),
       };
     }
     if (remotePayload.profiles.private && typeof remotePayload.profiles.private === 'object') {
+      const priv = remotePayload.profiles.private;
       result.private = {
-        sites: Array.isArray(remotePayload.profiles.private.sites) ? remotePayload.profiles.private.sites : [],
-        categories: Array.isArray(remotePayload.profiles.private.categories) ? remotePayload.profiles.private.categories : [],
-        activeCategoryId: remotePayload.profiles.private.activeCategoryId || 'all',
-        ...(remotePayload.profiles.private.pageCategoryMap ? { pageCategoryMap: { ...remotePayload.profiles.private.pageCategoryMap } } : {}),
-        ...(remotePayload.profiles.private.settings ? { settings: { ...remotePayload.profiles.private.settings } } : {}),
-        ...(remotePayload.profiles.private.wallpaper ? { wallpaper: { ...remotePayload.profiles.private.wallpaper } } : {}),
+        sites: Array.isArray(priv.sites) ? priv.sites : [],
+        categories: Array.isArray(priv.categories) ? priv.categories : [],
+        activeCategoryId: priv.activeCategoryId || 'all',
+        gridPages: Array.isArray(priv.gridPages) && priv.gridPages.length > 0 ? priv.gridPages : undefined,
+        activeGridPageId: typeof priv.activeGridPageId === 'string' ? priv.activeGridPageId : undefined,
+        pageCategoryMap: priv.pageCategoryMap && typeof priv.pageCategoryMap === 'object' ? { ...priv.pageCategoryMap } : undefined,
+        ...(priv.settings ? { settings: { ...priv.settings } } : {}),
+        ...(priv.wallpaper ? { wallpaper: { ...priv.wallpaper } } : {}),
       };
     }
   } else if (
@@ -217,6 +316,7 @@ function extractRemoteProfiles(remotePayload?: SyncPayload | null): Partial<Reco
       sites: Array.isArray(remotePayload.sites) ? remotePayload.sites : [],
       categories: Array.isArray(remotePayload.categories) ? remotePayload.categories : [],
       activeCategoryId: 'all',
+      gridPages: Array.isArray(remotePayload.gridPages) && remotePayload.gridPages.length > 0 ? remotePayload.gridPages : undefined,
     };
   }
 
@@ -266,6 +366,9 @@ export function applyRemotePayload(
       sites: [],
       categories: [],
       activeCategoryId: 'all',
+      gridPages: DEFAULT_GRID_PAGES,
+      activeGridPageId: 'page-1',
+      pageCategoryMap: { 'page-1': 'all' },
     };
     const remote = remoteProfiles[pid]!;
 
@@ -275,22 +378,50 @@ export function applyRemotePayload(
       const preferredCat = remote.activeCategoryId || local.activeCategoryId || 'all';
       const isValidCat = preferredCat === 'all' || remoteCats.some((c) => c && c.id === preferredCat);
 
+      const remotePages = Array.isArray(remote.gridPages) && remote.gridPages.length > 0
+        ? remote.gridPages
+        : (local.gridPages && local.gridPages.length > 0 ? local.gridPages : DEFAULT_GRID_PAGES);
+      const preferredPageId = remote.activeGridPageId || local.activeGridPageId || remotePages[0]?.id || 'page-1';
+      const isValidPage = remotePages.some((p) => p && p.id === preferredPageId);
+
+      const mergedPageCategoryMap = {
+        ...(local.pageCategoryMap || {}),
+        ...(remote.pageCategoryMap || {}),
+      };
+
       updatedProfiles[pid] = {
         sites: remoteSites,
         categories: remoteCats,
         activeCategoryId: isValidCat ? preferredCat : 'all',
+        gridPages: remotePages,
+        activeGridPageId: isValidPage ? preferredPageId : (remotePages[0]?.id || 'page-1'),
+        pageCategoryMap: mergedPageCategoryMap,
         settings: remote.settings !== undefined ? remote.settings : local.settings,
         wallpaper: remote.wallpaper !== undefined ? remote.wallpaper : local.wallpaper,
       };
     } else if (strategy === 'local') {
       // Local strategy keeps local data
-      updatedProfiles[pid] = local;
+      updatedProfiles[pid] = {
+        ...local,
+        gridPages: local.gridPages && local.gridPages.length > 0 ? local.gridPages : DEFAULT_GRID_PAGES,
+        activeGridPageId: local.activeGridPageId || 'page-1',
+        pageCategoryMap: local.pageCategoryMap || { 'page-1': 'all' },
+      };
     } else {
       // 'merge' strategy
       const mergedSites = mergeSites(local.sites || [], remote.sites || []);
       const mergedCats = mergeCategories(local.categories || [], remote.categories || []);
       const preferredCat = local.activeCategoryId || remote.activeCategoryId || 'all';
       const isValidCat = preferredCat === 'all' || mergedCats.some((c) => c && c.id === preferredCat);
+
+      const mergedPages = mergeGridPages(local.gridPages || DEFAULT_GRID_PAGES, remote.gridPages || []);
+      const preferredPageId = local.activeGridPageId || remote.activeGridPageId || mergedPages[0]?.id || 'page-1';
+      const isValidPage = mergedPages.some((p) => p && p.id === preferredPageId);
+
+      const mergedPageCategoryMap = {
+        ...(local.pageCategoryMap || {}),
+        ...(remote.pageCategoryMap || {}),
+      };
 
       // Timestamp-based arbitration for private profile settings
       let mergedSettings = local.settings;
@@ -309,6 +440,9 @@ export function applyRemotePayload(
         sites: mergedSites,
         categories: mergedCats,
         activeCategoryId: isValidCat ? preferredCat : 'all',
+        gridPages: mergedPages,
+        activeGridPageId: isValidPage ? preferredPageId : (mergedPages[0]?.id || 'page-1'),
+        pageCategoryMap: mergedPageCategoryMap,
         settings: mergedSettings,
         wallpaper: mergedWallpaper,
       };
