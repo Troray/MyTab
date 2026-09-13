@@ -100,10 +100,32 @@ body {
 
 .glass-dropdown {
   background: #4e525abf !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
 }
 
 .light .glass-dropdown {
   background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+}
+
+.glass-tooltip {
+  background: rgba(15, 23, 42, 0.88) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45) !important;
+}
+
+.light .glass-tooltip {
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #0f172a !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.10) !important;
 }
 
 /* ==========================================================================
@@ -468,3 +490,47 @@ body {
   color: var(--search-placeholder-color, currentColor);
   opacity: 0.6;
 }
+
+/* ==========================================================================
+   Desktop Multi-Page Transitions (Silky GPU-accelerated slide & spring)
+   ========================================================================== */
+
+@keyframes desktopSlideInRight {
+  0% {
+    opacity: 0;
+    transform: translate3d(56px, 0, 0) scale(0.97);
+  }
+  60% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes desktopSlideInLeft {
+  0% {
+    opacity: 0;
+    transform: translate3d(-56px, 0, 0) scale(0.97);
+  }
+  60% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-desktop-slide-right {
+  animation: desktopSlideInRight 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.animate-desktop-slide-left {
+  animation: desktopSlideInLeft 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+

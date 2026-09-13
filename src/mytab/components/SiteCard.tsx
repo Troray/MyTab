@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Edit2, Trash2 } from 'lucide-react';
 import { SiteItem, ThemeSettings } from '../../types';
@@ -74,7 +74,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
 
   const iconSrc = imgError || !site.icon ? generateFallbackIcon(site.title || site.url) : site.icon;
   const cardSize = settings.cardSize || 110;
-  const iconRatio = settings.iconSizeRatio || 0.42;
+  const iconRatio = settings.iconSizeRatio ?? 0.55;
   const isLight =
     propsIsLight !== undefined
       ? propsIsLight
@@ -110,6 +110,28 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
     setMenuPos({ x, y });
   };
 
+  const internalCardRef = useRef<HTMLDivElement | null>(null);
+
+  const setCardRef = useCallback((el: HTMLDivElement | null) => {
+    internalCardRef.current = el;
+    if (typeof ref === 'function') {
+      ref(el);
+    } else if (ref && 'current' in ref) {
+      (ref as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    }
+  }, [ref]);
+
+  useEffect(() => {
+    const el = internalCardRef.current;
+    if (!el) return;
+    const protectDragStart = (e: DragEvent) => {
+      // Disarm preventDefault so parent carousel listeners (e.g. Embla) do not abort HTML5 drag
+      e.preventDefault = () => {};
+    };
+    el.addEventListener('dragstart', protectDragStart);
+    return () => el.removeEventListener('dragstart', protectDragStart);
+  }, []);
+
   const handleDragStartInternal = (e: React.DragEvent<HTMLDivElement>) => {
     setMenuPos(null);
     if (e.currentTarget) {
@@ -129,7 +151,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
         : 'ios-jiggle-odd'
       : '';
 
-  const showCardBg = settings.showCardBackground !== false;
+  const showCardBg = settings.showCardBackground ?? false;
   const showTitle = settings.showSiteTitle !== false;
   const iconSpacing = settings.iconSpacing ?? 20;
 
@@ -143,7 +165,8 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
 
   return (
     <div
-      ref={ref}
+      ref={setCardRef}
+      data-site-card="true"
       draggable
       onDragStart={handleDragStartInternal}
       onDragOver={(e) => {

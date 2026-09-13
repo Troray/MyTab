@@ -1,6 +1,6 @@
 {
   "name": "mytab",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "A modern, aesthetic New Tab extension with WebDAV & Git sync and smart metadata fetching for Chrome and Firefox",
   "author": "Troray",
   "homepage": "https://github.com/Troray/MyTab#readme",
@@ -22,10 +22,11 @@
     "package": "node scripts/package.js",
     "generate:icons": "node scripts/generate-icons.js",
     "preview": "vite preview",
-    "test": "npx tsx test/private-space.test.js"
+    "test": "npx tsx test/private-space.test.js && npx tsx test/bookmark-import.test.js && npx tsx test/grid-pages.test.js"
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "embla-carousel-react": "^8.6.0",
     "lucide-react": "^1.16.0",
     "lunar-javascript": "^1.7.7",
     "react": "^18.3.1",
