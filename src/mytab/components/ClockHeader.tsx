@@ -3,27 +3,56 @@ import { ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { t } from '../../utils/i18n';
 import { getLunarDisplay } from '../../utils/lunar';
+import { isLightMode } from '../../utils/constants';
 
 interface ClockHeaderProps {
   settings: ThemeSettings;
   resolvedColors?: ResolvedTextColors;
+  isLight?: boolean;
 }
 
-export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, resolvedColors }) => {
-  const [time, setTime] = useState(new Date());
-  const [hours, setHours] = useState(new Date().getHours());
+export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, resolvedColors, isLight: propsIsLight }) => {
+  const [time, setTime] = useState(() => new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    let lastMinute = new Date().getMinutes();
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleNextMinute = () => {
       const now = new Date();
-      setTime(now);
-      setHours(now.getHours());
-    }, 1000);
-    return () => clearInterval(timer);
+      if (now.getMinutes() !== lastMinute) {
+        lastMinute = now.getMinutes();
+        setTime(now);
+      }
+      // Calculate milliseconds until next minute boundary + 50ms safety margin
+      const msUntilNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds() + 50;
+      timerId = setTimeout(scheduleNextMinute, Math.max(100, msUntilNextMinute));
+    };
+
+    scheduleNextMinute();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        if (timerId) clearTimeout(timerId);
+        const now = new Date();
+        if (now.getMinutes() !== lastMinute) {
+          lastMinute = now.getMinutes();
+          setTime(now);
+        }
+        const msUntilNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds() + 50;
+        timerId = setTimeout(scheduleNextMinute, Math.max(100, msUntilNextMinute));
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      if (timerId) clearTimeout(timerId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const greeting = useMemo(() => {
-    const h = hours;
+    const h = time.getHours();
     const lang = settings.language;
     const custom = settings.customGreetings;
 
@@ -56,7 +85,7 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
     }
 
     return t(defaultKey, lang);
-  }, [hours, settings.language, settings.customGreetings]);
+  }, [time.getHours(), settings.language, settings.customGreetings]);
 
   const showLunar = settings.showLunar ?? true;
 
@@ -73,7 +102,19 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
   const minutes = String(time.getMinutes()).padStart(2, '0');
 
   const formatDate = () => {
-    return time.toLocaleDateString(settings.language || 'zh-CN', {
+    const lang = settings.language || 'zh-CN';
+    if (lang.startsWith('zh') || lang === 'ja') {
+      const datePart = time.toLocaleDateString(lang, {
+        month: 'long',
+        day: 'numeric',
+      });
+      const weekdayPart = time.toLocaleDateString(lang, {
+        weekday: 'long',
+      });
+      return `${datePart} ${weekdayPart}`;
+    }
+
+    return time.toLocaleDateString(lang, {
       month: 'long',
       day: 'numeric',
       weekday: 'long',
@@ -88,17 +129,17 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
   const hasAnyDisplay = settings.showClock || settings.showDate || settings.showGreeting || (showLunar && !!lunarDate);
   if (!hasAnyDisplay) return null;
 
-  const isLight = settings.mode === 'light';
+  const isLight = propsIsLight !== undefined ? propsIsLight : isLightMode(settings.mode);
 
   // Determine clock color & shadow
   const clockColorStyle = resolvedColors ? { color: resolvedColors.clock } : undefined;
   const clockShadowClass = resolvedColors
     ? resolvedColors.clockShadow
     : isLight
-    ? settings.backgroundType === 'gradient'
-      ? 'text-slate-800 drop-shadow-sm'
-      : 'text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)]'
-    : 'text-white drop-shadow-md';
+      ? settings.backgroundType === 'gradient'
+        ? 'text-slate-800 drop-shadow-sm'
+        : 'text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)]'
+      : 'text-white drop-shadow-md';
 
   // Determine date & greeting colors & shadow
   const dateColorStyle = resolvedColors ? { color: resolvedColors.date } : undefined;
@@ -106,10 +147,10 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
   const dateShadowClass = resolvedColors
     ? resolvedColors.dateShadow
     : isLight
-    ? settings.backgroundType === 'gradient'
-      ? 'text-slate-700 drop-shadow-sm'
-      : 'text-white/95 drop-shadow-[0_1px_8px_rgba(0,0,0,0.4)]'
-    : 'text-white/90 drop-shadow';
+      ? settings.backgroundType === 'gradient'
+        ? 'text-slate-700 drop-shadow-sm'
+        : 'text-white/95 drop-shadow-[0_1px_8px_rgba(0,0,0,0.4)]'
+      : 'text-white/90 drop-shadow';
 
   const greetingShadowClass = resolvedColors
     ? resolvedColors.greetingShadow
@@ -123,16 +164,26 @@ export const ClockHeader: React.FC<ClockHeaderProps> = React.memo(({ settings, r
         <div
           id="mytab-clock"
           style={clockColorStyle}
-          className={`flex items-baseline justify-center text-6xl sm:text-7xl md:text-8xl font-extralight tracking-tight tabular-nums transition-colors ${clockShadowClass}`}
+          className={`flex items-baseline justify-center text-7xl sm:text-8xl md:text-[108px] lg:text-[120px] font-semibold tracking-tight transition-colors leading-none ${clockShadowClass}`}
         >
-          <span>{displayHours}<span className="opacity-75 animate-pulse">:</span>{minutes}</span>
-          {is12h && <span className="text-xl sm:text-2xl md:text-3xl ml-3 font-medium opacity-80">{ampm}</span>}
+          <div className="flex items-baseline justify-center">
+            <span className="inline-flex justify-center">
+              <span className="inline-block w-[0.68em] text-center">{displayHours[0]}</span>
+              <span className="inline-block w-[0.68em] text-center">{displayHours[1]}</span>
+            </span>
+            <span className="inline-block w-[0.32em] text-center opacity-75 animate-pulse select-none">:</span>
+            <span className="inline-flex justify-center">
+              <span className="inline-block w-[0.68em] text-center">{minutes[0]}</span>
+              <span className="inline-block w-[0.68em] text-center">{minutes[1]}</span>
+            </span>
+          </div>
+          {is12h && <span className="text-xl sm:text-2xl md:text-3xl ml-3.5 font-semibold opacity-80">{ampm}</span>}
         </div>
       )}
 
       {(hasDateOrLunar || settings.showGreeting) && (
         <div
-          className={`flex items-center justify-center flex-wrap gap-2 md:gap-2.5 ${settings.showClock ? 'mt-2.5' : 'mt-1'} text-xs md:text-sm font-normal transition-colors`}
+          className={`flex items-center justify-center flex-wrap gap-2 md:gap-2.5 ${settings.showClock ? 'mt-3.5 md:mt-4' : 'mt-1'} text-xs md:text-sm font-normal transition-colors`}
         >
           {settings.showDate && (
             <span id="mytab-date" style={dateColorStyle} className={dateShadowClass}>

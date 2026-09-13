@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
-import { Settings as SettingsIcon, Plus, Lock } from 'lucide-react';
+import { Settings as SettingsIcon, Plus, Lock, Pencil, Check, LayoutGrid, Columns3, FolderPlus, Bookmark, SquarePlus } from 'lucide-react';
 import { t } from '../locales';
-import { AppState, Category, GitSyncConfig, ProfileSyncSettings, SiteItem, ThemeSettings, WebdavConfig } from '../types';
+import { AppState, Category, GitSyncConfig, GridPage, ProfileSyncSettings, SiteItem, ThemeSettings, WebdavConfig } from '../types';
 import {
   loadAppState,
   saveSites,
@@ -10,19 +10,24 @@ import {
   saveWebdavConfig,
   saveGitConfig,
   saveActiveCategory,
+  savePageCategoryMap,
   saveProfileSyncSettings,
   saveProfileItems,
+  saveGridPages,
+  saveActiveGridPageId,
+  deleteGridPage,
+  moveCategoryToGridPage,
+  DEFAULT_GRID_PAGES,
   setFirstLaunchComplete,
 } from '../services/storage';
 import { ClockHeader } from './components/ClockHeader';
 import { SearchBar } from './components/SearchBar';
 import { CategoryTabs } from './components/CategoryTabs';
 import { SiteGrid } from './components/SiteGrid';
+import { CategoryBoard } from './components/CategoryBoard';
 import { urlToBase64Icon } from '../services/metadata';
-import { DEFAULT_SETTINGS } from '../utils/constants';
-import { ConfirmModal } from './components/ConfirmModal';
+import { DEFAULT_SETTINGS, isLightMode } from '../utils/constants';
 import { analyzeWallpaperLuminance, resolveTextColors, WallpaperLuminance, DEFAULT_LUMINANCE } from '../utils/wallpaperAnalyzer';
-import { TextColorCustomizer } from './components/TextColorCustomizer';
 
 const CACHE_WARMER_DELAY = 1200; // Delay to avoid blocking initial render
 
@@ -30,15 +35,45 @@ const CACHE_WARMER_DELAY = 1200; // Delay to avoid blocking initial render
 const SiteModal = lazy(() => import('./components/SiteModal').then(m => ({ default: m.SiteModal })));
 const SettingsDrawer = lazy(() => import('./components/SettingsDrawer').then(m => ({ default: m.SettingsDrawer })));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
+const ConfirmModal = lazy(() => import('./components/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
+const TextColorCustomizer = lazy(() => import('./components/TextColorCustomizer').then(m => ({ default: m.TextColorCustomizer })));
+const BookmarkImportModal = lazy(() => import('./components/BookmarkImportModal').then(m => ({ default: m.BookmarkImportModal })));
+const CategoryModal = lazy(() => import('./components/CategoryModal').then(m => ({ default: m.CategoryModal })));
 
 export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => {
   const [appState, setAppState] = useState<AppState | null>(initialState || null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isBookmarkImportModalOpen, setIsBookmarkImportModalOpen] = useState(false);
+  const [isAddHovered, setIsAddHovered] = useState(false);
+  const addHoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [editingSite, setEditingSite] = useState<SiteItem | null>(null);
   const [deletingSite, setDeletingSite] = useState<SiteItem | null>(null);
   const [isCustomizingColors, setIsCustomizingColors] = useState(false);
+  const [isBoardEditing, setIsBoardEditing] = useState(false);
   const [wallpaperLuminance, setWallpaperLuminance] = useState<WallpaperLuminance>(DEFAULT_LUMINANCE);
+  const handleAddMouseEnter = () => {
+    if (addHoverTimeoutRef.current) {
+      clearTimeout(addHoverTimeoutRef.current);
+      addHoverTimeoutRef.current = null;
+    }
+    setIsAddHovered(true);
+  };
+
+  const handleAddMouseLeave = useCallback(() => {
+    addHoverTimeoutRef.current = setTimeout(() => {
+      setIsAddHovered(false);
+    }, 150);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (addHoverTimeoutRef.current) {
+        clearTimeout(addHoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Track OS system theme dynamic changes
   const [systemIsDark, setSystemIsDark] = useState(() =>
@@ -57,6 +92,12 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const reloadState = useCallback(async () => {
     const data = await loadAppState();
     setAppState(data);
+    if (data.activeGridPageId) {
+      setActiveGridPageId(data.activeGridPageId);
+    }
+    if (data.pageCategoryMap) {
+      setPageCategoryMap(data.pageCategoryMap);
+    }
   }, []);
 
   useEffect(() => {
@@ -73,25 +114,31 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
 
     const timer = setTimeout(async () => {
       let changed = false;
-      const updated = await Promise.all(
-        appState.sites.map(async (s) => {
-          if (s.icon && (s.icon.startsWith('http://') || s.icon.startsWith('https://'))) {
-            try {
-              const base64 = await urlToBase64Icon(s.icon, 128);
-              if (base64 && base64.startsWith('data:image/')) {
-                changed = true;
-                return { ...s, icon: base64 };
+      const sitesCopy = [...appState.sites];
+      const BATCH_SIZE = 3;
+
+      for (let i = 0; i < sitesCopy.length; i += BATCH_SIZE) {
+        const batch = sitesCopy.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          batch.map(async (s, idx) => {
+            if (s.icon && (s.icon.startsWith('http://') || s.icon.startsWith('https://'))) {
+              try {
+                const base64 = await urlToBase64Icon(s.icon, 128);
+                if (base64 && base64.startsWith('data:image/')) {
+                  changed = true;
+                  sitesCopy[i + idx] = { ...s, icon: base64 };
+                }
+              } catch (err) {
+                console.warn('[MyTab] Cache warmer failed to convert icon:', err);
               }
-            } catch (err) {
-              console.warn('[MyTab] Cache warmer failed to convert icon:', err);
             }
-          }
-          return s;
-        })
-      );
+          })
+        );
+      }
+
       if (changed) {
-        await saveSites(updated);
-        setAppState((prev) => (prev ? { ...prev, sites: updated } : null));
+        await saveSites(sitesCopy);
+        setAppState((prev) => (prev ? { ...prev, sites: sitesCopy } : null));
       }
     }, CACHE_WARMER_DELAY);
 
@@ -125,6 +172,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   // Luminance analysis for wallpaper contrast with DOM rect calibration
   useEffect(() => {
     let isCancelled = false;
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     const runAnalysis = () => {
       analyzeWallpaperLuminance(
         currentSettings.backgroundType,
@@ -144,13 +192,19 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     const timer = setTimeout(runAnalysis, 50);
 
     const handleResize = () => {
-      runAnalysis();
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (!isCancelled) {
+          runAnalysis();
+        }
+      }, 200);
     };
     window.addEventListener('resize', handleResize);
 
     return () => {
       isCancelled = true;
       clearTimeout(timer);
+      if (resizeTimer) clearTimeout(resizeTimer);
       window.removeEventListener('resize', handleResize);
     };
   }, [
@@ -206,9 +260,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const [isCrossFading, setIsCrossFading] = useState(false);
 
   useEffect(() => {
-    const currentCss = JSON.stringify(visibleBgRef.current);
-    const nextCss = JSON.stringify(backgroundStyle);
-    if (currentCss === nextCss) return;
+    const cur = visibleBgRef.current;
+    const nxt = backgroundStyle;
+    if (cur.background === nxt.background && cur.backgroundImage === nxt.backgroundImage) {
+      return;
+    }
 
     const bgUrlMatch = (backgroundStyle as any).backgroundImage?.match(/url\(["']?([^"']+)["']?\)/);
     const targetUrl = bgUrlMatch ? bgUrlMatch[1] : null;
@@ -287,8 +343,8 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       }
       if (appState?.profileId !== 'private') {
         localStorage.setItem('mytab_bg_cache', css);
-        const isLightMode = currentSettings.mode === 'light';
-        localStorage.setItem('mytab_theme_mode', isLightMode ? 'light' : 'dark');
+        const isEffectiveLight = isLightMode(currentSettings.mode);
+        localStorage.setItem('mytab_theme_mode', isEffectiveLight ? 'light' : 'dark');
       }
 
       // Keep document.body in sync with current background and remove stale init style
@@ -315,30 +371,227 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const isFirstLaunch = appState?.isFirstLaunch || false;
   const settings = currentSettings;
 
+  const gridPages = useMemo(() => {
+    return appState?.gridPages && appState.gridPages.length > 0
+      ? appState.gridPages
+      : DEFAULT_GRID_PAGES;
+  }, [appState?.gridPages]);
+
+  const [activeGridPageId, setActiveGridPageId] = useState<string>(() => {
+    return initialState?.activeGridPageId || 'page-1';
+  });
+
+  const handleSelectGridPage = useCallback((pageId: string) => {
+    setActiveGridPageId(pageId);
+    saveActiveGridPageId(pageId).catch((err) => {
+      console.warn('[MyTab] Failed to persist activeGridPageId:', err);
+    });
+    setAppState((prev) => (prev ? { ...prev, activeGridPageId: pageId } : null));
+  }, []);
+
+  // Keep activeGridPageId valid if pages change
+  useEffect(() => {
+    if (gridPages.length > 0 && !gridPages.some((p) => p.id === activeGridPageId)) {
+      const fallback = gridPages[0].id;
+      setActiveGridPageId(fallback);
+      saveActiveGridPageId(fallback).catch(() => {});
+    }
+  }, [gridPages, activeGridPageId]);
+
+  // Keyboard navigation for desktop pages (ArrowLeft / ArrowRight in Grid mode)
+  useEffect(() => {
+    if (settings.layoutMode !== 'grid' || !gridPages || gridPages.length <= 1) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (
+        isSiteModalOpen ||
+        isSettingsOpen ||
+        isBookmarkImportModalOpen ||
+        isCategoryModalOpen
+      ) {
+        return;
+      }
+
+      const currentIndex = gridPages.findIndex((p) => p.id === activeGridPageId);
+      if (currentIndex === -1) return;
+
+      if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        e.preventDefault();
+        handleSelectGridPage(gridPages[currentIndex - 1].id);
+      } else if (e.key === 'ArrowRight' && currentIndex < gridPages.length - 1) {
+        e.preventDefault();
+        handleSelectGridPage(gridPages[currentIndex + 1].id);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    settings.layoutMode,
+    gridPages,
+    activeGridPageId,
+    handleSelectGridPage,
+    isSiteModalOpen,
+    isSettingsOpen,
+    isBookmarkImportModalOpen,
+    isCategoryModalOpen,
+  ]);
+
+  const defaultPageId = gridPages[0]?.id || 'page-1';
+
+  // Track active category per desktop page so switching desktops preserves category isolation
+  const [pageCategoryMap, setPageCategoryMap] = useState<Record<string, string>>(() => {
+    const initialMap = initialState?.pageCategoryMap ? { ...initialState.pageCategoryMap } : {};
+    const initPageId = initialState?.activeGridPageId || 'page-1';
+    if (!initialMap[initPageId] && initialState?.activeCategoryId && initialState.activeCategoryId !== 'all') {
+      initialMap[initPageId] = initialState.activeCategoryId;
+    }
+    return initialMap;
+  });
+
+  const getActiveCategoryForPage = useCallback((pId: string) => {
+    const catIdForPage = pageCategoryMap[pId];
+    if (catIdForPage) {
+      if (catIdForPage === 'all') return 'all';
+      const exists = categories.some((c) => c.id === catIdForPage && (c.pageId || defaultPageId) === pId);
+      if (exists) return catIdForPage;
+    }
+    // If not in pageCategoryMap, check if activeCategoryId from appState belongs to this page
+    if (activeCategoryId !== 'all') {
+      const belongs = categories.some((c) => c.id === activeCategoryId && (c.pageId || defaultPageId) === pId);
+      if (belongs) return activeCategoryId;
+    }
+    return 'all';
+  }, [pageCategoryMap, categories, defaultPageId, activeCategoryId]);
+
+  const effectiveActiveCategoryId = (settings.showCategories ?? true)
+    ? getActiveCategoryForPage(activeGridPageId)
+    : 'all';
+
+  // In Grid mode, categories belong to specific desktop pages.
+  // Categories without a pageId default to the first desktop (defaultPageId).
+  const currentGridCategories = useMemo(() => {
+    return categories.filter((c) => {
+      const cPageId = c.pageId || defaultPageId;
+      return cPageId === activeGridPageId;
+    });
+  }, [categories, defaultPageId, activeGridPageId]);
+
   // Memoized: Filter sites based on active category and showInAll flag
   const filteredSites = useMemo(() => {
     const hiddenInAllCatIds = new Set(
       categories.filter((c) => c.showInAll === false).map((c) => c.id)
     );
-    return activeCategoryId === 'all'
+    return effectiveActiveCategoryId === 'all'
       ? sites.filter((s) => !hiddenInAllCatIds.has(s.categoryId))
-      : sites.filter((s) => s.categoryId === activeCategoryId);
-  }, [sites, categories, activeCategoryId]);
+      : sites.filter((s) => s.categoryId === effectiveActiveCategoryId);
+  }, [sites, categories, effectiveActiveCategoryId]);
 
-  // Memoized: Compute count of sites per category
+  // Sites filtered by active category AND active desktop page (for Grid mode)
+  const filteredGridSites = useMemo(() => {
+    return filteredSites.filter((s) => (s.pageId || defaultPageId) === activeGridPageId);
+  }, [filteredSites, defaultPageId, activeGridPageId]);
+
+  // Memoized: Compute all sites for Grid mode multi-desktop carousel (strictly respecting each desktop's own active category)
+  const allGridSites = useMemo(() => {
+    const hiddenInAllCatIds = new Set(
+      categories.filter((c) => c.showInAll === false).map((c) => c.id)
+    );
+    return sites.filter((s) => {
+      const sitePageId = s.pageId || defaultPageId;
+      const catForThisPage = (settings.showCategories ?? true)
+        ? getActiveCategoryForPage(sitePageId)
+        : 'all';
+      if (catForThisPage !== 'all') {
+        return s.categoryId === catForThisPage;
+      }
+      return !hiddenInAllCatIds.has(s.categoryId);
+    });
+  }, [sites, categories, defaultPageId, settings.showCategories, getActiveCategoryForPage]);
+
+  // Memoized: Compute count of sites per category on active desktop page
   const siteCounts = useMemo(() => {
     const hiddenInAllCatIds = new Set(
       categories.filter((c) => c.showInAll === false).map((c) => c.id)
     );
-    const allVisibleCount = sites.filter((s) => !hiddenInAllCatIds.has(s.categoryId)).length;
-    const counts: Record<string, number> = { all: allVisibleCount };
-    categories.forEach((cat) => {
-      counts[cat.id] = cat.id === 'all'
-        ? allVisibleCount
-        : sites.filter((s) => s.categoryId === cat.id).length;
-    });
+    const counts: Record<string, number> = {};
+    for (let i = 0; i < currentGridCategories.length; i++) {
+      counts[currentGridCategories[i].id] = 0;
+    }
+    let allVisibleCount = 0;
+    for (let i = 0; i < sites.length; i++) {
+      const s = sites[i];
+      const sitePageId = s.pageId || defaultPageId;
+      if (sitePageId === activeGridPageId) {
+        counts[s.categoryId] = (counts[s.categoryId] || 0) + 1;
+        if (!hiddenInAllCatIds.has(s.categoryId)) {
+          allVisibleCount++;
+        }
+      }
+    }
+    counts['all'] = allVisibleCount;
     return counts;
-  }, [sites, categories]);
+  }, [sites, categories, currentGridCategories, defaultPageId, activeGridPageId]);
+
+  const handleAddGridPage = useCallback(async (name?: string) => {
+    const nextNum = gridPages.length + 1;
+    const pageName = name?.trim() || `${t('defaultDesktopName', settings.language)} ${nextNum}`;
+    const newPage: GridPage = {
+      id: `page-${Date.now()}`,
+      name: pageName,
+      sortOrder: gridPages.length,
+    };
+    const updatedPages = [...gridPages, newPage];
+    await saveGridPages(updatedPages);
+    await saveActiveGridPageId(newPage.id);
+    setAppState((prev) => (prev ? { ...prev, gridPages: updatedPages, activeGridPageId: newPage.id } : null));
+    setActiveGridPageId(newPage.id);
+  }, [gridPages, settings.language]);
+
+  const handleRenameGridPage = useCallback(async (pageId: string, newName: string) => {
+    const updatedPages = gridPages.map((p) =>
+      p.id === pageId ? { ...p, name: newName.trim() } : p
+    );
+    await saveGridPages(updatedPages);
+    setAppState((prev) => (prev ? { ...prev, gridPages: updatedPages } : null));
+  }, [gridPages]);
+
+  const handleDeleteGridPage = useCallback(async (pageId: string) => {
+    if (gridPages.length <= 1) return;
+    await deleteGridPage(pageId);
+    const remaining = gridPages.filter((p) => p.id !== pageId);
+    const fallbackId = remaining[0]?.id || 'page-1';
+    const updatedCategories = categories.map((c) =>
+      (c.pageId || defaultPageId) === pageId ? { ...c, pageId: fallbackId, updatedAt: Date.now() } : c
+    );
+    const updatedSites = sites.map((s) =>
+      (s.pageId || defaultPageId) === pageId ? { ...s, pageId: fallbackId, updatedAt: Date.now() } : s
+    );
+    const nextActivePageId = activeGridPageId === pageId ? fallbackId : activeGridPageId;
+    if (activeGridPageId === pageId) {
+      await saveActiveGridPageId(fallbackId);
+      setActiveGridPageId(fallbackId);
+    }
+    let nextCategoryMap = pageCategoryMap;
+    if (pageId in pageCategoryMap) {
+      nextCategoryMap = { ...pageCategoryMap };
+      delete nextCategoryMap[pageId];
+      setPageCategoryMap(nextCategoryMap);
+      await savePageCategoryMap(nextCategoryMap);
+    }
+    setAppState((prev) =>
+      prev ? { ...prev, gridPages: remaining, categories: updatedCategories, sites: updatedSites, activeGridPageId: nextActivePageId, pageCategoryMap: nextCategoryMap } : null
+    );
+  }, [gridPages, categories, sites, activeGridPageId, defaultPageId, pageCategoryMap]);
 
   const handleSaveSite = useCallback(async (siteData: Partial<SiteItem>) => {
     let updatedSites: SiteItem[];
@@ -349,15 +602,17 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         s.id === editingSite.id ? ({ ...s, ...siteData, updatedAt: now } as SiteItem) : s
       );
     } else {
-      const fallbackCatId = activeCategoryId !== 'all'
-        ? activeCategoryId
-        : (categories.find((c) => c.id !== 'all')?.id || 'all');
+      const fallbackCatId =
+        activeCategoryId !== 'all' && activeCategoryId !== 'uncategorized' && categories.some((c) => c.id === activeCategoryId)
+          ? activeCategoryId
+          : (categories.find((c) => c.id !== 'all')?.id || 'all');
       const newSite: SiteItem = {
         id: `site-${now}`,
         title: siteData.title || '',
         url: siteData.url || '',
         icon: siteData.icon || '',
         categoryId: siteData.categoryId || fallbackCatId,
+        pageId: siteData.pageId || activeGridPageId || defaultPageId,
         sortOrder: sites.length,
         createdAt: now,
         updatedAt: now,
@@ -369,7 +624,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setAppState((prev) => (prev ? { ...prev, sites: updatedSites } : null));
     setIsSiteModalOpen(false);
     setEditingSite(null);
-  }, [sites, editingSite, activeCategoryId, categories]);
+  }, [sites, editingSite, activeCategoryId, categories, activeGridPageId, defaultPageId]);
 
   const handleDeleteSite = useCallback((siteId: string) => {
     const site = sites.find((s) => s.id === siteId);
@@ -387,25 +642,39 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   }, [sites, deletingSite]);
 
   const handleReorderSites = useCallback(async (reorderedSites: SiteItem[]) => {
-    const reorderedIds = new Set(reorderedSites.map((s) => s.id));
-    const reorderedMap = new Map(reorderedSites.map((s, idx) => [s.id, idx]));
-    let reorderedIdx = 0;
-    const updated = sites.map((site) => {
-      if (reorderedIds.has(site.id)) {
-        const nextSite = reorderedSites[reorderedIdx++];
-        return { ...nextSite, sortOrder: reorderedMap.get(nextSite.id) ?? 0 };
-      }
-      return site;
+    const reorderedMap = new Map(reorderedSites.map((s) => [s.id, s]));
+    const isCrossCategory = reorderedSites.some((s) => {
+      const orig = sites.find((origSite) => origSite.id === s.id);
+      return orig && orig.categoryId !== s.categoryId;
     });
+
+    let updated: SiteItem[];
+    if (isCrossCategory) {
+      updated = sites.map((site) => (reorderedMap.has(site.id) ? reorderedMap.get(site.id)! : site));
+    } else {
+      const reorderedIds = new Set(reorderedSites.map((s) => s.id));
+      const reorderedIdxMap = new Map(reorderedSites.map((s, idx) => [s.id, idx]));
+      let reorderedIdx = 0;
+      updated = sites.map((site) => {
+        if (reorderedIds.has(site.id)) {
+          const nextSite = reorderedSites[reorderedIdx++];
+          return { ...nextSite, sortOrder: reorderedIdxMap.get(nextSite.id) ?? 0 };
+        }
+        return site;
+      });
+    }
     await saveSites(updated);
     setAppState((prev) => (prev ? { ...prev, sites: updated } : null));
   }, [sites]);
 
-  const handleAddCategory = async (data: { name: string; showInAll: boolean }) => {
+  const handleAddCategory = useCallback(async (data: { name: string; showInAll: boolean; color?: string; pageId?: string }) => {
     const now = Date.now();
+    const targetPageId = data.pageId || activeGridPageId || defaultPageId;
     const newCat: Category = {
       id: `cat-${now}`,
       name: data.name || '',
+      color: data.color,
+      pageId: targetPageId,
       isDefault: false,
       showInAll: data.showInAll ?? true,
       sortOrder: categories.length,
@@ -415,18 +684,94 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     const updated = [...categories, newCat];
     await saveCategories(updated);
     setAppState((prev) => (prev ? { ...prev, categories: updated } : null));
-  };
+  }, [categories, activeGridPageId, defaultPageId]);
 
-  const handleUpdateCategory = async (id: string, updates: Partial<Category>) => {
+  const handleUpdateCategory = useCallback(async (id: string, updates: Partial<Category>) => {
     const now = Date.now();
+    const existing = categories.find((c) => c.id === id);
+    const isPageChanged = Boolean(updates.pageId && existing && (existing.pageId || defaultPageId) !== updates.pageId);
+
+    let updatedSites = sites;
+    if (isPageChanged && updates.pageId) {
+      updatedSites = sites.map((s) =>
+        s.categoryId === id ? { ...s, pageId: updates.pageId, updatedAt: now } : s
+      );
+      await saveSites(updatedSites);
+    }
+
     const updated = categories.map((c) =>
       c.id === id ? { ...c, ...updates, updatedAt: now } : c
     );
     await saveCategories(updated);
-    setAppState((prev) => (prev ? { ...prev, categories: updated } : null));
-  };
+    let nextCategoryMap = pageCategoryMap;
+    if (isPageChanged && updates.pageId) {
+      let changed = false;
+      const copy = { ...pageCategoryMap };
+      for (const [pId, cat] of Object.entries(copy)) {
+        if (cat === id && pId !== updates.pageId) {
+          copy[pId] = 'all';
+          changed = true;
+        }
+      }
+      if (changed) {
+        nextCategoryMap = copy;
+        setPageCategoryMap(nextCategoryMap);
+        await savePageCategoryMap(nextCategoryMap);
+      }
+    }
 
-  const handleDeleteCategory = async (catId: string) => {
+    setAppState((prev) =>
+      prev
+        ? {
+            ...prev,
+            categories: updated,
+            sites: updatedSites,
+            activeCategoryId: isPageChanged && prev.activeCategoryId === id ? 'all' : prev.activeCategoryId,
+            pageCategoryMap: nextCategoryMap,
+          }
+        : null
+    );
+  }, [categories, sites, defaultPageId, pageCategoryMap]);
+
+  const handleMoveCategoryToPage = useCallback(async (categoryId: string, targetPageId: string) => {
+    await moveCategoryToGridPage(categoryId, targetPageId);
+    const now = Date.now();
+    const updatedCategories = categories.map((c) =>
+      c.id === categoryId ? { ...c, pageId: targetPageId, updatedAt: now } : c
+    );
+    const updatedSites = sites.map((s) =>
+      s.categoryId === categoryId ? { ...s, pageId: targetPageId, updatedAt: now } : s
+    );
+
+    let nextCategoryMap = pageCategoryMap;
+    let mapChanged = false;
+    const copy = { ...pageCategoryMap };
+    for (const [pId, cat] of Object.entries(copy)) {
+      if (cat === categoryId && pId !== targetPageId) {
+        copy[pId] = 'all';
+        mapChanged = true;
+      }
+    }
+    if (mapChanged) {
+      nextCategoryMap = copy;
+      setPageCategoryMap(nextCategoryMap);
+      await savePageCategoryMap(nextCategoryMap);
+    }
+
+    setAppState((prev) =>
+      prev
+        ? {
+            ...prev,
+            categories: updatedCategories,
+            sites: updatedSites,
+            activeCategoryId: prev.activeCategoryId === categoryId ? 'all' : prev.activeCategoryId,
+            pageCategoryMap: nextCategoryMap,
+          }
+        : null
+    );
+  }, [categories, sites, pageCategoryMap]);
+
+  const handleDeleteCategory = useCallback(async (catId: string) => {
     // Cannot delete default categories
     const target = categories.find((c) => c.id === catId);
     if (!target || target.isDefault) return;
@@ -440,9 +785,24 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       s.categoryId === catId ? { ...s, categoryId: fallbackCategoryId, updatedAt: Date.now() } : s
     );
 
+    let nextCategoryMap = pageCategoryMap;
+    let mapChanged = false;
+    const copy = { ...pageCategoryMap };
+    for (const [pId, cat] of Object.entries(copy)) {
+      if (cat === catId) {
+        copy[pId] = 'all';
+        mapChanged = true;
+      }
+    }
+    if (mapChanged) {
+      nextCategoryMap = copy;
+      setPageCategoryMap(nextCategoryMap);
+    }
+
     await saveProfileItems({
       categories: updatedCategories,
       sites: updatedSites,
+      pageCategoryMap: nextCategoryMap,
     });
 
     // If active category was deleted, switch back to 'all'
@@ -453,15 +813,21 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           categories: updatedCategories,
           sites: updatedSites,
           activeCategoryId: prev.activeCategoryId === catId ? 'all' : prev.activeCategoryId,
+          pageCategoryMap: nextCategoryMap,
         }
         : null
     );
-  };
+  }, [categories, sites, pageCategoryMap]);
 
-  const handleSelectCategory = async (catId: string) => {
-    await saveActiveCategory(catId);
-    setAppState((prev) => (prev ? { ...prev, activeCategoryId: catId } : null));
-  };
+  const handleSelectCategory = useCallback(async (catId: string) => {
+    const nextCategoryMap = {
+      ...pageCategoryMap,
+      [activeGridPageId]: catId,
+    };
+    setPageCategoryMap(nextCategoryMap);
+    await saveActiveCategory(catId, nextCategoryMap);
+    setAppState((prev) => (prev ? { ...prev, activeCategoryId: catId, pageCategoryMap: nextCategoryMap } : null));
+  }, [activeGridPageId, pageCategoryMap]);
 
   const handleUpdateSyncSettings = async (newPolicy: ProfileSyncSettings) => {
     await saveProfileSyncSettings(newPolicy);
@@ -485,6 +851,16 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         ...cleanNew,
         updatedAt: Date.now(),
       };
+      if (cleanNew.mode !== undefined && typeof document !== 'undefined' && document.documentElement) {
+        const isDark = cleanNew.mode === 'dark' || (cleanNew.mode === 'system' && systemIsDark);
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        } else {
+          document.documentElement.classList.add('light');
+          document.documentElement.classList.remove('dark');
+        }
+      }
       saveSettings(cleanNew, prev.profileId).catch((e) =>
         console.error('[MyTab] Failed to save settings:', e)
       );
@@ -522,11 +898,25 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setIsSiteModalOpen(true);
   }, []);
 
+  const handleOpenSite = useCallback((url: string) => {
+    if (settings.openInNewTab) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      window.location.href = url;
+    }
+  }, [settings.openInNewTab]);
+
+  const handleAddSiteToCategory = useCallback((categoryId: string) => {
+    setAppState((prev) => prev ? { ...prev, activeCategoryId: categoryId } : null);
+    setEditingSite(null);
+    setIsSiteModalOpen(true);
+  }, []);
+
   if (!appState) {
     return null;
   }
 
-  const isLight = settings.mode === 'light';
+  const isLight = activeThemeMode === 'light';
 
   return (
     <div
@@ -560,19 +950,19 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
 
       {/* Top Floating Actions Bar */}
       <header className="relative z-10 w-full flex items-center justify-between p-5 md:px-8">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <span
-            className={`text-sm font-semibold tracking-wider px-3 py-1 rounded-full border transition-colors ${isLight
-                ? 'text-slate-800 bg-white/70 border-black/10 shadow-sm'
-                : 'text-white/80 bg-white/10 border-white/10'
-              }`}
+            className={`text-xs font-medium tracking-wider px-2.5 py-0.5 rounded-full border transition-colors ${
+              isLight
+                ? 'text-slate-500 bg-white/50 border-black/5'
+                : 'text-white/60 bg-white/5 border-white/5'
+            }`}
           >
             MyTab
           </span>
           {appState?.profileId === 'private' && (
             <span
-              className="text-xs font-medium px-2.5 py-1 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 backdrop-blur-md flex items-center gap-1.5 shadow-sm"
-              title={t('syncPrivateSpace', appState?.settings?.language || 'zh-CN')}
+              className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 backdrop-blur-md flex items-center gap-1.5 shadow-sm"
             >
               <Lock className="w-3 h-3 text-purple-400" />
               <span>{t('syncPrivateSpace', appState?.settings?.language || 'zh-CN')}</span>
@@ -580,40 +970,213 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           )}
         </div>
 
-        <div className="flex items-center gap-2.5">
-          {/* Quick Add Button */}
-          <button
-            onClick={() => {
-              setEditingSite(null);
-              setIsSiteModalOpen(true);
-            }}
-            className={`p-2.5 rounded-xl border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${isLight
-                ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
-                : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
+        <div className="flex items-center gap-2">
+          {/* Quick Layout Switcher (Grid <-> Board) */}
+          <div className="relative group/tooltip flex items-center justify-center">
+            <button
+              onClick={() => {
+                if (settings.layoutMode === 'board' && isBoardEditing) {
+                  setIsBoardEditing(false);
+                }
+                handleUpdateSettings({
+                  layoutMode: settings.layoutMode === 'board' ? 'grid' : 'board',
+                });
+              }}
+              className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                isLight
+                  ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+                  : 'text-white/80 hover:text-white hover:bg-white/10'
               }`}
-            title={t('addSite', settings.language)}
+            >
+              {settings.layoutMode === 'board' ? (
+                <LayoutGrid className="w-4 h-4" />
+              ) : (
+                <Columns3 className="w-4 h-4" />
+              )}
+            </button>
+            <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
+              {settings.layoutMode === 'board'
+                ? t('layoutGrid', settings.language)
+                : t('layoutBoard', settings.language)}
+            </span>
+          </div>
+
+          {/* Quick Add & Board Controls (Hover Slide-out Icons) */}
+          <div
+            className="relative flex items-center"
+            onMouseEnter={handleAddMouseEnter}
+            onMouseLeave={handleAddMouseLeave}
           >
-            <Plus className="w-4.5 h-4.5" />
-          </button>
+            {/* Import Bookmarks Button (reveals on hover) */}
+            <div
+              className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${
+                isAddHovered
+                  ? 'w-8 opacity-100 mr-1'
+                  : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
+              }`}
+            >
+              <button
+                onClick={() => {
+                  setIsAddHovered(false);
+                  setIsBookmarkImportModalOpen(true);
+                }}
+                tabIndex={isAddHovered ? 0 : -1}
+                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                  isLight
+                    ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Bookmark className="w-4 h-4" />
+              </button>
+              {isAddHovered && (
+                <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
+                  {t('importBookmarks', settings.language)}
+                </span>
+              )}
+            </div>
+
+            {/* Add Desktop Page Button (only in Grid mode, reveals on hover) */}
+            {settings.layoutMode === 'grid' && (
+              <div
+                className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${
+                  isAddHovered
+                    ? 'w-8 opacity-100 mr-1'
+                    : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
+                }`}
+              >
+                <button
+                  onClick={() => {
+                    setIsAddHovered(false);
+                    handleAddGridPage();
+                  }}
+                  tabIndex={isAddHovered ? 0 : -1}
+                  className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                    isLight
+                      ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  <SquarePlus className="w-4 h-4" />
+                </button>
+                {isAddHovered && (
+                  <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
+                    {t('addDesktopPage', settings.language)}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Add Category Button (reveals on hover) */}
+            <div
+              className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${
+                isAddHovered
+                  ? 'w-8 opacity-100 mr-1'
+                  : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
+              }`}
+            >
+              <button
+                onClick={() => {
+                  setIsAddHovered(false);
+                  setIsCategoryModalOpen(true);
+                }}
+                tabIndex={isAddHovered ? 0 : -1}
+                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                  isLight
+                    ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <FolderPlus className="w-4 h-4" />
+              </button>
+              {isAddHovered && (
+                <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
+                  {t('addCategory', settings.language)}
+                </span>
+              )}
+            </div>
+
+            {/* Board Edit Mode Toggle (only in board layout mode, reveals on hover or while editing) */}
+            {settings.layoutMode === 'board' && (
+              <div
+                className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${
+                  isBoardEditing || isAddHovered
+                    ? 'w-8 opacity-100 mr-1'
+                    : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
+                }`}
+              >
+                <button
+                  onClick={() => setIsBoardEditing((prev) => !prev)}
+                  tabIndex={isBoardEditing || isAddHovered ? 0 : -1}
+                  className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                    isBoardEditing
+                      ? 'bg-amber-500/15 text-amber-500 dark:text-amber-400'
+                      : isLight
+                      ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {isBoardEditing ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Pencil className="w-4 h-4" />
+                  )}
+                </button>
+                {(isBoardEditing || isAddHovered) && (
+                  <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
+                    {isBoardEditing
+                      ? t('doneEditingBoard', settings.language)
+                      : t('editBoard', settings.language)}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Add Shortcut / Site (+) Button */}
+            <div className="relative group/tooltip flex items-center justify-center">
+              <button
+                onClick={() => {
+                  setIsAddHovered(false);
+                  setEditingSite(null);
+                  setIsSiteModalOpen(true);
+                }}
+                className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                  isLight
+                    ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+              <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
+                {t('addSite', settings.language)}
+              </span>
+            </div>
+          </div>
 
           {/* Settings Drawer Trigger */}
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className={`p-2.5 rounded-xl border shadow-sm transition-all duration-150 cursor-pointer active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20 dark:focus-visible:ring-white/20 ${isLight
-                ? 'bg-white/80 hover:bg-white text-slate-700 hover:text-black border-black/10 shadow-black/[0.02]'
-                : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border-white/10'
+          <div className="relative group/tooltip flex items-center justify-center">
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                isLight
+                  ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+                  : 'text-white/80 hover:text-white hover:bg-white/10'
               }`}
-            title={t('settingsTitle', settings.language)}
-          >
-            <SettingsIcon className="w-4.5 h-4.5" />
-          </button>
+            >
+              <SettingsIcon className="w-4 h-4" />
+            </button>
+            <span className="pointer-events-none absolute top-full right-0 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
+              {t('settingsTitle', settings.language)}
+            </span>
+          </div>
         </div>
       </header>
 
       {/* Center Main Section */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-start max-w-7xl mx-auto w-full pb-12">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-start max-w-7xl mx-auto w-full pb-6">
         {/* Clock & Greetings */}
-        <ClockHeader settings={settings} resolvedColors={resolvedColors} />
+        <ClockHeader settings={settings} resolvedColors={resolvedColors} isLight={isLight} />
 
         {/* Search Bar */}
         {(settings.showSearch ?? true) && (
@@ -621,46 +1184,82 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             settings={settings}
             resolvedColors={resolvedColors}
             onEngineChange={(engineId) =>
-              handleUpdateSettings({ ...settings, activeEngineId: engineId })
+              handleUpdateSettings({ activeEngineId: engineId })
             }
           />
         )}
 
-        {/* Category Tabs */}
-        <CategoryTabs
-          categories={categories}
-          resolvedColors={resolvedColors}
-          activeCategoryId={activeCategoryId}
-          settings={settings}
-          siteCounts={siteCounts}
-          onSelectCategory={handleSelectCategory}
-          onAddCategory={handleAddCategory}
-          onUpdateCategory={handleUpdateCategory}
-          onDeleteCategory={handleDeleteCategory}
-        />
+        {/* Content View: Category Board vs Icon Grid */}
+        {settings.layoutMode === 'board' ? (
+          <CategoryBoard
+            categories={categories}
+            sites={sites}
+            settings={settings}
+            resolvedColors={resolvedColors}
+            isLight={isLight}
+            isEditing={isBoardEditing}
+            onOpenSite={handleOpenSite}
+            onEditSite={handleOpenEditSite}
+            onDeleteSite={handleDeleteSite}
+            onAddSiteToCategory={handleAddSiteToCategory}
+            onAddCategory={handleAddCategory}
+            onUpdateCategory={handleUpdateCategory}
+            onDeleteCategory={handleDeleteCategory}
+            onReorderSites={handleReorderSites}
+          />
+        ) : (
+          <>
+            {/* Category Tabs */}
+            {(settings.showCategories ?? true) && (
+              <CategoryTabs
+                categories={currentGridCategories}
+                resolvedColors={resolvedColors}
+                activeCategoryId={effectiveActiveCategoryId}
+                settings={settings}
+                siteCounts={siteCounts}
+                gridPages={gridPages}
+                activeGridPageId={activeGridPageId}
+                onSelectCategory={handleSelectCategory}
+                onAddCategory={handleAddCategory}
+                onUpdateCategory={handleUpdateCategory}
+                onDeleteCategory={handleDeleteCategory}
+                onMoveCategoryToPage={handleMoveCategoryToPage}
+                onOpenBookmarkImport={() => setIsBookmarkImportModalOpen(true)}
+              />
+            )}
 
-        {/* Shortcuts Grid */}
-        <SiteGrid
-          sites={filteredSites}
-          settings={settings}
-          resolvedColors={resolvedColors}
-          onEditSite={handleOpenEditSite}
-          onDeleteSite={handleDeleteSite}
-          onAddSite={handleOpenAddSite}
-          onReorderSites={handleReorderSites}
-        />
+            {/* Shortcuts Grid */}
+            <SiteGrid
+              sites={allGridSites}
+              settings={settings}
+              resolvedColors={resolvedColors}
+              isLight={isLight}
+              gridPages={gridPages}
+              activeGridPageId={activeGridPageId}
+              onEditSite={handleOpenEditSite}
+              onDeleteSite={handleDeleteSite}
+              onAddSite={handleOpenAddSite}
+              onReorderSites={handleReorderSites}
+              onSelectPage={handleSelectGridPage}
+              onAddPage={handleAddGridPage}
+              onRenamePage={handleRenameGridPage}
+              onDeletePage={handleDeleteGridPage}
+            />
+          </>
+        )}
       </main>
 
       {/* Footer Minimalist Credit */}
-      <footer className="relative z-10 w-full flex items-center justify-between p-4 px-6 text-xs text-white/40">
+      <footer className="relative z-10 w-full flex items-center justify-between p-4 px-6 text-xs text-white/40 pointer-events-none">
         <div className="w-1/3">
           {settings.backgroundType === 'unsplash' && settings.unsplashAuthorName && (
             <a
               href={`${settings.unsplashAuthorUrl}?utm_source=MyTab&utm_medium=referral`}
               target="_blank"
               rel="noreferrer"
-              className={`inline-flex items-center gap-1 transition-colors ${isLight ? 'text-slate-600 hover:text-black' : 'text-white/50 hover:text-white'
-                }`}
+              className={`pointer-events-auto inline-flex items-center gap-1 transition-colors ${
+                isLight ? 'text-slate-600 hover:text-black' : 'text-white/50 hover:text-white'
+              }`}
             >
               <span>Photo by</span>
               <span className="underline decoration-dotted underline-offset-2">
@@ -671,22 +1270,25 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           )}
         </div>
 
-        <div className="w-1/3 text-center">
-          Crafted with passion by{' '}
-          <a
-            href="https://github.com/Troray/MyTab"
-            target="_blank"
-            rel="noreferrer"
-            className={`transition-colors underline decoration-dotted underline-offset-2 ${isLight
-                ? 'hover:text-black decoration-slate-400'
-                : 'hover:text-white decoration-white/30'
-              }`}
-          >
-            Troray
-          </a>
-        </div>
+        <div className="w-1/3"></div>
 
-        <div className="w-1/3 text-right"></div>
+        <div className="w-1/3 text-right">
+          <span className="pointer-events-auto inline-block">
+            Crafted with passion by{' '}
+            <a
+              href="https://github.com/Troray/MyTab"
+              target="_blank"
+              rel="noreferrer"
+              className={`transition-colors underline decoration-dotted underline-offset-2 ${
+                isLight
+                  ? 'hover:text-black decoration-slate-400'
+                  : 'hover:text-white decoration-white/30'
+              }`}
+            >
+              Troray
+            </a>
+          </span>
+        </div>
       </footer>
 
       {/* Modals & Drawers (lazy-loaded) */}
@@ -696,7 +1298,9 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             isOpen={isSiteModalOpen}
             editingSite={editingSite}
             categories={categories}
-            activeCategoryId={activeCategoryId}
+            activeCategoryId={effectiveActiveCategoryId}
+            gridPages={gridPages}
+            activeGridPageId={activeGridPageId}
             settings={settings}
             onClose={() => {
               setIsSiteModalOpen(false);
@@ -731,6 +1335,31 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               setIsSettingsOpen(false);
               setIsCustomizingColors(true);
             }}
+            onOpenBookmarkImport={() => {
+              setIsSettingsOpen(false);
+              setIsBookmarkImportModalOpen(true);
+            }}
+          />
+        )}
+
+        {isBookmarkImportModalOpen && (
+          <BookmarkImportModal
+            isOpen={isBookmarkImportModalOpen}
+            appState={appState}
+            onClose={() => setIsBookmarkImportModalOpen(false)}
+            onImportSuccess={reloadState}
+          />
+        )}
+
+        {isCategoryModalOpen && (
+          <CategoryModal
+            isOpen={isCategoryModalOpen}
+            category={null}
+            settings={settings}
+            gridPages={gridPages}
+            activeGridPageId={activeGridPageId}
+            onClose={() => setIsCategoryModalOpen(false)}
+            onSave={(_, data) => handleAddCategory(data)}
           />
         )}
 

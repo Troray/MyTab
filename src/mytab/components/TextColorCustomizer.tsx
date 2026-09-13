@@ -3,6 +3,7 @@ import { Palette, Check, RotateCcw, Sparkles, X } from 'lucide-react';
 import { ThemeSettings, TextColorMode, CustomTextColors } from '../../types';
 import { TranslationKey } from '../../locales/types';
 import { t } from '../../utils/i18n';
+import { isLightMode } from '../../utils/constants';
 
 interface TextColorCustomizerProps {
   settings: ThemeSettings;
@@ -10,7 +11,7 @@ interface TextColorCustomizerProps {
   onClose: () => void;
 }
 
-type ElementTarget = 'all' | 'clock' | 'date' | 'greeting' | 'search' | 'tabs' | 'cards';
+type ElementTarget = 'all' | 'clock' | 'date' | 'greeting' | 'search' | 'tabs' | 'cards' | 'boardTitle' | 'boardText';
 
 interface PaletteItem {
   labelKey: TranslationKey;
@@ -33,7 +34,7 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
   onUpdateSettings,
   onClose,
 }) => {
-  const isLight = settings.mode === 'light';
+  const isLight = isLightMode(settings.mode);
 
   // Dual-mode separation: light and dark maintain their own independent settings
   const currentMode: TextColorMode = (isLight
@@ -103,6 +104,8 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
     if (target === 'search') return customColors.search || defaultColor;
     if (target === 'tabs') return customColors.tabs || defaultColor;
     if (target === 'cards') return customColors.cards || defaultColor;
+    if (target === 'boardTitle') return customColors.boardTitle || defaultColor;
+    if (target === 'boardText') return customColors.boardText || defaultColor;
     return defaultColor;
   };
 
@@ -115,6 +118,8 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
         search: hex,
         tabs: hex,
         cards: hex,
+        boardTitle: hex,
+        boardText: hex,
       });
     } else {
       const nextColors: CustomTextColors = {
@@ -124,6 +129,8 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
         search: customColors.search || defaultColor,
         tabs: customColors.tabs || defaultColor,
         cards: customColors.cards || defaultColor,
+        boardTitle: customColors.boardTitle || defaultColor,
+        boardText: customColors.boardText || defaultColor,
         ...customColors,
         [activeTarget]: hex,
       };
@@ -143,6 +150,8 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
     { id: 'search', labelKey: 'textColorTargetSearch' },
     { id: 'tabs', labelKey: 'textColorTargetTabs' },
     { id: 'cards', labelKey: 'textColorTargetCards' },
+    { id: 'boardTitle', labelKey: 'textColorTargetBoardTitle' },
+    { id: 'boardText', labelKey: 'textColorTargetBoard' },
   ];
 
   return (
@@ -198,7 +207,7 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
                 currentMode === 'auto'
                   ? isLight
                     ? 'bg-white text-slate-900 font-semibold shadow-sm'
-                    : 'bg-white text-slate-950 font-semibold shadow-sm'
+                    : 'bg-white/20 text-white font-semibold shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
               }`}
             >
@@ -213,7 +222,7 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
                 currentMode === 'light'
                   ? isLight
                     ? 'bg-white text-slate-900 font-semibold shadow-sm'
-                    : 'bg-white text-slate-950 font-semibold shadow-sm'
+                    : 'bg-white/20 text-white font-semibold shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
               }`}
             >
@@ -228,7 +237,7 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
                 currentMode === 'dark'
                   ? isLight
                     ? 'bg-white text-slate-900 font-semibold shadow-sm'
-                    : 'bg-white text-slate-950 font-semibold shadow-sm'
+                    : 'bg-white/20 text-white font-semibold shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
               }`}
             >
@@ -243,7 +252,7 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
                 currentMode === 'custom'
                   ? isLight
                     ? 'bg-white text-slate-900 font-semibold shadow-sm'
-                    : 'bg-white text-slate-950 font-semibold shadow-sm'
+                    : 'bg-white/20 text-white font-semibold shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
               }`}
             >
@@ -256,18 +265,18 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
         {/* Custom Section */}
         {currentMode === 'custom' && (
           <div className="space-y-3 pt-1 border-t border-black/5 dark:border-white/10 animate-in fade-in duration-150">
-            {/* Target Element Tabs */}
-            <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
+            {/* Target Element Tabs: Wrap naturally without horizontal scroll */}
+            <div className="flex items-center flex-wrap gap-1.5 pt-1">
               {targets.map((tgt) => (
                 <button
                   key={tgt.id}
                   type="button"
                   onClick={() => setActiveTarget(tgt.id)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium shrink-0 duration-0 cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer ${
                     activeTarget === tgt.id
                       ? isLight
                         ? 'bg-slate-900 text-white font-semibold shadow-xs'
-                        : 'bg-white text-slate-950 font-semibold shadow-xs'
+                        : 'bg-white/20 text-white font-semibold shadow-xs'
                       : isLight
                       ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       : 'bg-white/10 text-white/70 hover:bg-white/15'
@@ -350,11 +359,7 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
             <button
               type="button"
               onClick={handleReset}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium cursor-pointer transition-colors duration-0 active:scale-95 ${
-                isLight
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                  : 'bg-white/10 hover:bg-white/15 text-white/80 hover:text-white'
-              }`}
+              className="glass-btn-ghost flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium cursor-pointer active:scale-95"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>{t('reset', settings.language)}</span>
@@ -363,11 +368,7 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className={`flex items-center gap-1 px-3.5 py-1.5 rounded-xl text-xs font-semibold shadow-sm cursor-pointer active:scale-95 duration-0 ${
-                isLight
-                  ? 'bg-slate-900 hover:bg-black text-white'
-                  : 'bg-white hover:bg-slate-100 text-slate-950'
-              }`}
+              className="glass-btn-primary flex items-center gap-1 px-3.5 py-1.5 rounded-xl text-xs font-semibold active:scale-95 duration-0"
             >
               <Check className="w-3.5 h-3.5" />
               <span>{t('done', settings.language)}</span>

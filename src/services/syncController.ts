@@ -132,6 +132,7 @@ export function buildSyncPayload(
       sites: [...normalSites],
       categories: [...normalCats],
       activeCategoryId: safeContainer.profiles.normal.activeCategoryId || 'all',
+      ...(safeContainer.profiles.normal.pageCategoryMap ? { pageCategoryMap: { ...safeContainer.profiles.normal.pageCategoryMap } } : {}),
     };
   }
 
@@ -147,6 +148,7 @@ export function buildSyncPayload(
       sites: [...privateSites],
       categories: [...privateCats],
       activeCategoryId: safeContainer.profiles.private.activeCategoryId || 'all',
+      ...(safeContainer.profiles.private.pageCategoryMap ? { pageCategoryMap: { ...safeContainer.profiles.private.pageCategoryMap } } : {}),
       ...(safeContainer.profiles.private.settings ? { settings: { ...safeContainer.profiles.private.settings } } : {}),
       ...(safeContainer.profiles.private.wallpaper ? { wallpaper: { ...safeContainer.profiles.private.wallpaper } } : {}),
     };
@@ -191,6 +193,7 @@ function extractRemoteProfiles(remotePayload?: SyncPayload | null): Partial<Reco
         sites: Array.isArray(remotePayload.profiles.normal.sites) ? remotePayload.profiles.normal.sites : [],
         categories: Array.isArray(remotePayload.profiles.normal.categories) ? remotePayload.profiles.normal.categories : [],
         activeCategoryId: remotePayload.profiles.normal.activeCategoryId || 'all',
+        ...(remotePayload.profiles.normal.pageCategoryMap ? { pageCategoryMap: { ...remotePayload.profiles.normal.pageCategoryMap } } : {}),
         ...(remotePayload.profiles.normal.settings ? { settings: { ...remotePayload.profiles.normal.settings } } : {}),
         ...(remotePayload.profiles.normal.wallpaper ? { wallpaper: { ...remotePayload.profiles.normal.wallpaper } } : {}),
       };
@@ -200,6 +203,7 @@ function extractRemoteProfiles(remotePayload?: SyncPayload | null): Partial<Reco
         sites: Array.isArray(remotePayload.profiles.private.sites) ? remotePayload.profiles.private.sites : [],
         categories: Array.isArray(remotePayload.profiles.private.categories) ? remotePayload.profiles.private.categories : [],
         activeCategoryId: remotePayload.profiles.private.activeCategoryId || 'all',
+        ...(remotePayload.profiles.private.pageCategoryMap ? { pageCategoryMap: { ...remotePayload.profiles.private.pageCategoryMap } } : {}),
         ...(remotePayload.profiles.private.settings ? { settings: { ...remotePayload.profiles.private.settings } } : {}),
         ...(remotePayload.profiles.private.wallpaper ? { wallpaper: { ...remotePayload.profiles.private.wallpaper } } : {}),
       };

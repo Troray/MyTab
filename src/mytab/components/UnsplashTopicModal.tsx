@@ -163,15 +163,7 @@ export const UnsplashTopicModal: React.FC<UnsplashTopicModalProps> = ({
  key={cat.id}
  type="button"
  onClick={() => setActiveTab(cat.id)}
- className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer active:scale-95 select-none ${
- isTabActive
- ? isLight
- ? 'bg-white text-slate-900 shadow-sm font-semibold border border-black/10'
- : 'bg-white text-slate-950 shadow-sm font-semibold'
- : isLight
- ? 'bg-black/[0.03] hover:bg-black/[0.06] text-slate-700 border border-black/5'
- : 'bg-white/[0.05] hover:bg-white/10 text-white/70 border border-white/5'
- }`}
+ className={`glass-segment-item flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs whitespace-nowrap active:scale-95 select-none ${isTabActive ? "glass-segment-item-active" : ""}`}
  >
  {renderCategoryIcon(cat.icon, 'w-3.5 h-3.5 shrink-0')}
  <span className="whitespace-nowrap leading-none">{t(cat.nameKey as keyof Translation, language)}</span>
@@ -261,7 +253,7 @@ export const UnsplashTopicModal: React.FC<UnsplashTopicModalProps> = ({
  isSelected
  ? isLight
  ? 'bg-slate-900 border-slate-900 text-white'
- : 'bg-white border-white text-slate-950'
+ : 'bg-white/20 border-white/30 text-white'
  : isLight
  ? 'border-black/20 bg-black/5'
  : 'border-white/20 bg-white/5'
@@ -298,22 +290,14 @@ export const UnsplashTopicModal: React.FC<UnsplashTopicModalProps> = ({
  <button
  type="button"
  onClick={onClose}
- className={`px-4 py-2 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
- isLight
- ? 'border-black/10 hover:bg-black/5 text-slate-700'
- : 'border-white/10 hover:bg-white/10 text-white/80'
- }`}
+ className="glass-btn-ghost px-4 py-2 rounded-xl text-xs font-medium"
  >
  {t('cancel', language)}
  </button>
  <button
  type="button"
  onClick={handleSave}
- className={`px-5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-95 shadow-md flex items-center gap-1.5 ${
- isLight
- ? 'bg-slate-900 hover:bg-black text-white'
- : 'bg-white hover:bg-slate-100 text-slate-950'
- }`}
+ className="glass-btn-primary px-5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 active:scale-95"
  >
  <Check className="w-3.5 h-3.5" />
  <span>{t('unsplashSaveTopics', language)}</span>

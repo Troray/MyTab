@@ -24,10 +24,17 @@ import {
  ChevronDown,
  Search,
   Shield,
-  AlertTriangle
+  AlertTriangle,
+  LayoutGrid,
+  Columns3,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Folder,
+  Bookmark
 } from 'lucide-react';
 import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ProfileId, ProfileSyncSettings, ThemeSettings, WebdavConfig } from '../../types';
-import { PRESET_GRADIENTS, DEFAULT_SETTINGS, DEFAULT_PRIVATE_BACKGROUND_VALUE } from '../../utils/constants';
+import { PRESET_GRADIENTS, DEFAULT_SETTINGS, DEFAULT_PRIVATE_BACKGROUND_VALUE, isLightMode } from '../../utils/constants';
 import { WebdavSettings } from './WebdavSettings';
 import { GitSettings } from './GitSettings';
 import { exportAllData, importData, resetProfileSettings } from '../../services/storage';
@@ -49,6 +56,7 @@ interface SettingsDrawerProps {
   onUpdateSyncSettings?: (newPolicy: ProfileSyncSettings) => Promise<void> | void;
   onStateReload: () => void;
   onOpenColorCustomizer?: () => void;
+  onOpenBookmarkImport?: () => void;
 }
 
 export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
@@ -61,6 +69,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   onUpdateSyncSettings,
   onStateReload,
   onOpenColorCustomizer,
+  onOpenBookmarkImport,
 }) => {
   const settings: ThemeSettings = {
     ...DEFAULT_SETTINGS,
@@ -283,7 +292,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  reader.readAsText(file);
  };
 
- const isLight = settings.mode === 'light' || (settings.mode === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches);
+ const isLight = isLightMode(settings.mode);
   const isPrivate = appState.profileId === 'private';
 
  return (
@@ -447,9 +456,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  onClick={() => handleSettingsChange({ mode: 'system' })}
  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.mode === 'system'
  ? isLight
- ? 'bg-white text-slate-900 border-black/15 shadow-sm font-semibold'
- : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
- : isLight ? 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 text-slate-700' : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+                      ? 'bg-black/[0.08] text-slate-900 border-black/15 shadow-xs font-semibold'
+                      : 'bg-white/20 text-white border-white/25 shadow-sm font-semibold'
+                    : isLight ? 'bg-black/[0.03] hover:bg-black/[0.06] border-black/8 text-slate-700' : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
  }`}
  >
  <Monitor className="w-4 h-4" />
@@ -460,9 +469,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  onClick={() => handleSettingsChange({ mode: 'light' })}
  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.mode === 'light'
  ? isLight
- ? 'bg-white text-slate-900 border-black/15 shadow-sm font-semibold'
- : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
- : isLight ? 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 text-slate-700' : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+                      ? 'bg-black/[0.08] text-slate-900 border-black/15 shadow-xs font-semibold'
+                      : 'bg-white/20 text-white border-white/25 shadow-sm font-semibold'
+                    : isLight ? 'bg-black/[0.03] hover:bg-black/[0.06] border-black/8 text-slate-700' : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
  }`}
  >
  <Sun className="w-4 h-4" />
@@ -473,9 +482,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  onClick={() => handleSettingsChange({ mode: 'dark' })}
  className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.mode === 'dark'
  ? isLight
- ? 'bg-white text-slate-900 border-black/15 shadow-sm font-semibold'
- : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
- : isLight ? 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 text-slate-700' : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+                      ? 'bg-black/[0.08] text-slate-900 border-black/15 shadow-xs font-semibold'
+                      : 'bg-white/20 text-white border-white/25 shadow-sm font-semibold'
+                    : isLight ? 'bg-black/[0.03] hover:bg-black/[0.06] border-black/8 text-slate-700' : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
  }`}
  >
  <Moon className="w-4 h-4" />
@@ -484,7 +493,52 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  </div>
  </div>
 
- {/* Wallpaper Source */}
+ {/* Layout Mode */}
+        <div>
+          <label
+            className={`block text-xs font-medium mb-2 ${
+              isLight ? 'text-slate-800' : 'text-white/80'
+            }`}
+          >
+            {t('layoutMode', settings.language)}
+          </label>
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={() => handleSettingsChange({ layoutMode: 'grid' })}
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
+                (settings.layoutMode || 'grid') === 'grid'
+                  ? isLight
+                    ? 'bg-black/[0.08] text-slate-900 border-black/15 shadow-xs font-semibold'
+                    : 'bg-white/20 text-white border-white/25 shadow-sm font-semibold'
+                  : isLight
+                  ? 'bg-black/[0.03] hover:bg-black/[0.06] border-black/8 text-slate-700'
+                  : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+              }`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span>{t('layoutGrid', settings.language)}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSettingsChange({ layoutMode: 'board' })}
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${
+                settings.layoutMode === 'board'
+                  ? isLight
+                    ? 'bg-black/[0.08] text-slate-900 border-black/15 shadow-xs font-semibold'
+                    : 'bg-white/20 text-white border-white/25 shadow-sm font-semibold'
+                  : isLight
+                  ? 'bg-black/[0.03] hover:bg-black/[0.06] border-black/8 text-slate-700'
+                  : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+              }`}
+            >
+              <Columns3 className="w-4 h-4" />
+              <span>{t('layoutBoard', settings.language)}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Wallpaper Source */}
  <div>
  <label
  className={`block text-xs font-medium mb-2 ${isLight ? 'text-slate-800' : 'text-white/80'
@@ -532,9 +586,9 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  }}
  className={`py-2 px-3 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.backgroundType === bg.id
  ? isLight
- ? 'bg-white text-slate-900 border-black/15 shadow-sm font-semibold'
- : 'bg-white text-slate-950 border-white shadow-sm font-semibold'
- : isLight ? 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 text-slate-700' : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+                      ? 'bg-black/[0.08] text-slate-900 border-black/15 shadow-xs font-semibold'
+                      : 'bg-white/20 text-white border-white/25 shadow-sm font-semibold'
+                    : isLight ? 'bg-black/[0.03] hover:bg-black/[0.06] border-black/8 text-slate-700' : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
  }`}
  >
  {bg.label}
@@ -577,16 +631,10 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  value={settings.backgroundValue}
  onChange={(e) => handleSettingsChange({ backgroundValue: e.target.value, customBackgroundUrl: e.target.value })}
  placeholder={t('bgCustomPlaceholder', settings.language)}
- className={`flex-1 px-3 py-2 rounded-xl border outline-none text-xs ${isLight
- ? 'bg-black/5 border-black/15 text-slate-900 placeholder-slate-400 focus:border-black/30'
- : 'bg-white/10 border-white/15 text-white placeholder-white/40 focus:border-white/30'
- }`}
+ className="glass-input flex-1 px-3 py-2 rounded-xl text-xs"
  />
  <label
- className={`px-3 py-2 rounded-xl border cursor-pointer duration-0 flex items-center gap-1.5 text-xs shrink-0 ${isLight
- ? 'bg-black/5 hover:bg-black/10 border-black/15 text-slate-700 hover:text-slate-900'
- : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80 hover:text-white'
- }`}
+ className="glass-btn-secondary px-3 py-2 rounded-xl cursor-pointer duration-0 flex items-center gap-1.5 text-xs shrink-0"
  title={t('bgLocal', settings.language)}
  >
  <Upload className="w-3.5 h-3.5" />
@@ -623,8 +671,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  {/* Unsplash Custom Configuration Panel */}
  {settings.backgroundType === 'unsplash' && (
  <div
- className={`mt-2 p-3.5 rounded-2xl border space-y-3 animate-fade-in ${isLight ? 'bg-black/[0.02] border-black/10' : 'bg-white/[0.04] border-white/10'
- }`}
+ className="glass-card-subtle mt-2 p-3.5 rounded-2xl space-y-3 animate-fade-in"
  >
  {/* Access Key */}
  <div>
@@ -648,10 +695,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  value={settings.unsplashAccessKey || ''}
  onChange={(e) => handleSettingsChange({ unsplashAccessKey: e.target.value })}
  placeholder={t('unsplashAccessKeyPlaceholder', settings.language)}
- className={`w-full px-3.5 py-2.5 rounded-xl border outline-none text-xs duration-0 ${isLight
- ? 'bg-black/5 border-black/10 text-slate-900 placeholder-slate-400 focus:border-black/30'
- : 'bg-white/10 border-white/10 text-white placeholder-white/40 focus:border-white/30'
- }`}
+ className="glass-input w-full px-3.5 py-2.5 rounded-xl text-xs"
  />
  <p className={`text-[10px] mt-1.5 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
  {t('unsplashAccessKeyTip', settings.language)}
@@ -667,10 +711,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <button
  type="button"
  onClick={() => setIsUnsplashTopicModalOpen(true)}
- className={`px-2.5 py-1 rounded-lg text-xs font-medium border duration-0 cursor-pointer active:scale-95 ${isLight
- ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700'
- : 'bg-white/10 hover:bg-white/15 border-white/10 text-white/80'
- }`}
+ className="glass-btn-secondary px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer active:scale-95"
  >
  {t('edit', settings.language)}
  </button>
@@ -682,8 +723,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  : 'bg-white/[0.05] border-white/10 hover:bg-white/[0.08]'
  }`}
  >
- <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold ${isLight ? 'bg-slate-900 text-white' : 'bg-white text-slate-950'
- }`}>
+ <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${isLight ? 'bg-black/[0.08] text-slate-900 border-black/15 shadow-xs' : 'bg-white/20 text-white border-white/25 shadow-sm'}`}>
  {t((UNSPLASH_CATEGORIES.find(c => c.id === (settings.unsplashActiveTab || 'nature'))?.nameKey || 'topicNature') as keyof Translation, settings.language)}
  </span>
                 {(settings.unsplashKeywords && settings.unsplashKeywords.length > 0
@@ -697,7 +737,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       key={i}
                       title={full}
                       className={`px-2 py-0.5 rounded-md text-[11px] border max-w-[120px] truncate select-none ${isLight
-                          ? 'bg-white/80 border-black/10 text-slate-700'
+                          ? 'bg-black/[0.04] border-black/10 text-slate-700'
                           : 'bg-white/10 border-white/10 text-white/80'
                         }`}
                     >
@@ -719,10 +759,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  type="button"
  onClick={() => handleRefreshUnsplash()}
  disabled={isFetchingUnsplash}
- className={`flex-1 py-2.5 px-3 rounded-xl text-xs duration-0 cursor-pointer flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 ${isLight
- ? 'bg-slate-900 hover:bg-black text-white font-semibold shadow-sm'
- : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold shadow-sm'
- }`}
+ className="glass-btn-primary flex-1 py-2.5 px-3 rounded-xl text-xs duration-0 cursor-pointer flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
  >
  <RefreshCw className={`w-3.5 h-3.5 ${isFetchingUnsplash ? 'animate-spin' : ''}`} />
  <span>{isFetchingUnsplash ? t('unsplashFetching', settings.language) : t('unsplashRefresh', settings.language)}</span>
@@ -766,15 +803,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
         {/* Text & Colors Customization Card */}
         <div
-          className={`p-3.5 rounded-2xl border flex items-center justify-between duration-0 ${
-            isLight ? 'bg-slate-50 border-slate-200/90 shadow-xs' : 'bg-white/[0.04] border-white/10'
-          }`}
+          className="glass-card-subtle p-3.5 rounded-2xl flex items-center justify-between duration-0"
         >
           <div className="flex items-center gap-3">
             <div
               className={`p-2 rounded-xl border ${
                 isLight
-                  ? 'bg-white border-slate-200 text-amber-500 shadow-xs'
+                  ? 'bg-black/[0.04] border-black/5 text-amber-600'
                   : 'bg-white/10 border-white/10 text-amber-400'
               }`}
             >
@@ -806,11 +841,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           <button
             type="button"
             onClick={onOpenColorCustomizer}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm duration-0 cursor-pointer active:scale-95 ${
-              isLight
-                ? 'bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 hover:border-slate-400'
-                : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
-            }`}
+            className="glass-btn-secondary px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer active:scale-95"
           >
             {t('textColorSettingBtn', settings.language)}
           </button>
@@ -818,8 +849,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
  {/* Collapsible Card & Layout Sliders Accordion */}
  <div
- className={`rounded-2xl border duration-0 overflow-hidden ${isLight ? 'bg-black/[0.02] border-black/10' : 'bg-white/[0.04] border-white/10'
- }`}
+ className="glass-card-subtle rounded-2xl duration-0 overflow-hidden"
  >
  <button
  type="button"
@@ -840,9 +870,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <div className={`text-xs font-semibold ${isLight ? 'text-slate-800' : 'text-white'}`}>
  {t('cardLayoutAdvanced', settings.language)}
  </div>
- <div className={`text-[10px] mt-0.5 font-tabular ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
- {settings.cardSize || 110}px · {Math.round(settings.cardOpacity * 100)}% · {settings.maxCardsPerRow || 8}{t('cardsPerRowUnit', settings.language)}
- </div>
+                  <div className={`text-[10px] mt-0.5 font-tabular ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                    {settings.layoutMode === 'board'
+                      ? `${settings.boardColumnsPerRow || 5}${t('boardColumnsUnit', settings.language)} · ${settings.boardCardGap ?? 16}px · ${Math.round((settings.boardCardOpacity ?? 0.2) * 100)}%`
+                      : !settings.showCardBackground
+                      ? `${settings.cardSize || 110}px · ${settings.iconSpacing ?? 20}px · ${settings.maxCardsPerRow || 8}${t('cardsPerRowUnit', settings.language)}`
+                      : `${settings.cardSize || 110}px · ${Math.round(settings.cardOpacity * 100)}% · ${settings.maxCardsPerRow || 8}${t('cardsPerRowUnit', settings.language)}`}
+                  </div>
  </div>
  </div>
  <ChevronDown
@@ -853,10 +887,238 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
  {isCardLayoutExpanded && (
  <div
- className={`p-4 pt-3 space-y-5 border-t animate-fade-in ${isLight ? 'border-black/5 bg-white/40' : 'border-white/5 bg-black/20'
+ className={`p-4 pt-3 space-y-5 border-t animate-fade-in ${isLight ? 'border-black/5 bg-black/[0.015]' : 'border-white/5 bg-black/20'
  }`}
  >
- {/* Card Size Slider */}
+ {/* Board Layout Sliders (Shown when board layout is active) */}
+            {settings.layoutMode === 'board' ? (
+              <>
+                    {/* Board Show Card Background */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                          {t('showCardBackground', settings.language)}
+                        </div>
+                        <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                          {t('showCardBackgroundDesc', settings.language)}
+                        </div>
+                      </div>
+                      <ToggleSwitch
+                        checked={settings.boardShowCardBackground !== false}
+                        onChange={(checked) => handleSettingsChange({ boardShowCardBackground: checked })}
+                        isLight={isLight}
+                      />
+                    </div>
+
+                {/* Board Columns Per Row */}
+                <div>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('boardColumnsTitle', settings.language)}</span>
+                    <span className="font-tabular font-semibold">{settings.boardColumnsPerRow || 5} {t('boardColumnsUnit', settings.language)}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="2"
+                    max="8"
+                    step="1"
+                    value={settings.boardColumnsPerRow || 5}
+                    onChange={(e) => handleSettingsChange({ boardColumnsPerRow: parseInt(e.target.value, 10) })}
+                    className="range-slider"
+                  />
+                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                    <span>2 {t('boardColumnsUnit', settings.language)}</span>
+                    <span>5 {t('boardColumnsUnit', settings.language)}</span>
+                    <span>8 {t('boardColumnsUnit', settings.language)}</span>
+                  </div>
+                </div>
+
+                {/* Board Column Alignment */}
+                <div>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('boardAlignTitle', settings.language)}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5">
+                    {[
+                      { id: 'left', label: t('alignLeft', settings.language), icon: AlignLeft },
+                      { id: 'center', label: t('alignCenter', settings.language), icon: AlignCenter },
+                      { id: 'right', label: t('alignRight', settings.language), icon: AlignRight },
+                    ].map((item) => {
+                      const Icon = item.icon;
+                      const isSelected = (settings.boardAlign || 'left') === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => handleSettingsChange({ boardAlign: item.id as 'left' | 'center' | 'right' })}
+                          className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 ${
+                            isSelected
+                              ? isLight
+                                ? 'bg-white text-slate-900 shadow-xs border border-black/10 font-semibold'
+                                : 'bg-white/20 text-white shadow-sm border border-white/20 font-semibold'
+                              : isLight
+                              ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                              : 'text-white/60 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Board Card Gap */}
+                <div>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('boardGapTitle', settings.language)}</span>
+                    <span className="font-tabular font-semibold">{settings.boardCardGap ?? 16}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="8"
+                    max="32"
+                    step="2"
+                    value={settings.boardCardGap ?? 16}
+                    onChange={(e) => handleSettingsChange({ boardCardGap: parseInt(e.target.value, 10) })}
+                    className="range-slider"
+                  />
+                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                    <span>8px</span>
+                    <span>16px</span>
+                    <span>32px</span>
+                  </div>
+                </div>
+
+                {/* Board Title Font Size */}
+                <div>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('boardTitleSizeTitle', settings.language)}</span>
+                    <span className="font-tabular font-semibold">{settings.boardTitleSize || 15}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="12"
+                    max="22"
+                    step="1"
+                    value={settings.boardTitleSize || 15}
+                    onChange={(e) => handleSettingsChange({ boardTitleSize: parseInt(e.target.value, 10) })}
+                    className="range-slider"
+                  />
+                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                    <span>12px</span>
+                    <span>15px</span>
+                    <span>22px</span>
+                  </div>
+                </div>
+
+                {/* Board Item Spacing */}
+                <div>
+                  <div className="flex justify-between text-xs font-medium mb-1.5">
+                    <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('boardItemSpacingTitle', settings.language)}</span>
+                    <span className="font-tabular font-semibold">{settings.boardItemSpacing ?? 6}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="2"
+                    max="14"
+                    step="1"
+                    value={settings.boardItemSpacing ?? 6}
+                    onChange={(e) => handleSettingsChange({ boardItemSpacing: parseInt(e.target.value, 10) })}
+                    className="range-slider"
+                  />
+                  <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                    <span>2px ({t('boardItemSpacingCompact', settings.language)})</span>
+                    <span>6px</span>
+                    <span>14px</span>
+                  </div>
+                </div>
+
+                {/* Board Card Opacity */}
+                {settings.boardShowCardBackground !== false && (
+                  <div>
+                    <div className="flex justify-between text-xs font-medium mb-1.5">
+                      <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardOpacityTitle', settings.language)}</span>
+                      <span className="font-tabular font-semibold">{Math.round((settings.boardCardOpacity ?? 0.2) * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.05"
+                      max="0.95"
+                      step="0.05"
+                      value={settings.boardCardOpacity ?? 0.2}
+                      onChange={(e) => handleSettingsChange({ boardCardOpacity: parseFloat(e.target.value) })}
+                      className="range-slider"
+                    />
+                    <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                      <span>5%</span>
+                      <span>20%</span>
+                      <span>95%</span>
+                    </div>
+                  </div>
+                )}
+
+                    {/* Reset Board Layout Defaults Button */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSettingsChange({
+                          boardShowCardBackground: true,
+                          boardColumnsPerRow: 5,
+                          boardAlign: 'left',
+                          boardCardGap: 16,
+                          boardTitleSize: 15,
+                          boardItemSpacing: 6,
+                          boardCardOpacity: 0.20,
+                        })}
+                        className={`w-full py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                          isLight
+                            ? 'bg-black/[0.03] border-black/8 text-slate-600 hover:bg-black/[0.06] hover:text-slate-900'
+                            : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/[0.1] hover:text-white'
+                        }`}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>{t('resetCardLayout', settings.language)}</span>
+                      </button>
+                    </div>
+              </>
+            ) : (
+              <>
+                    {/* Toggle Show Card Background */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                          {t('showCardBackground', settings.language)}
+                        </div>
+                        <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                          {t('showCardBackgroundDesc', settings.language)}
+                        </div>
+                      </div>
+                      <ToggleSwitch
+                        checked={settings.showCardBackground ?? false}
+                        onChange={(checked) => handleSettingsChange({ showCardBackground: checked })}
+                        isLight={isLight}
+                      />
+                    </div>
+
+                    {/* Toggle Show Site Title */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                          {t('showSiteTitle', settings.language)}
+                        </div>
+                        <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                          {t('showSiteTitleDesc', settings.language)}
+                        </div>
+                      </div>
+                      <ToggleSwitch
+                        checked={settings.showSiteTitle !== false}
+                        onChange={(checked) => handleSettingsChange({ showSiteTitle: checked })}
+                        isLight={isLight}
+                      />
+                    </div>
+
+                {/* Card Size Slider */}
  <div>
  <div className="flex justify-between text-xs font-medium mb-1.5">
  <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardSizeTitle', settings.language)}</span>
@@ -878,40 +1140,66 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  </div>
  </div>
 
- {/* Card Opacity Slider */}
- <div>
- <div className="flex justify-between text-xs font-medium mb-1.5">
- <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardOpacityTitle', settings.language)}</span>
- <span className="font-tabular font-semibold">{Math.round(settings.cardOpacity * 100)}%</span>
- </div>
- <input
- type="range"
- min="0.05"
- max="0.9"
- step="0.05"
- value={settings.cardOpacity}
- onChange={(e) => handleSettingsChange({ cardOpacity: parseFloat(e.target.value) })}
- className="range-slider"
- />
- <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
- <span>{t('cardOpacityLow', settings.language)}</span>
- <span>{t('cardOpacityMed', settings.language)}</span>
- <span>{t('cardOpacityHigh', settings.language)}</span>
- </div>
- </div>
+                    {/* Card Opacity Slider (When Card Background is ON) */}
+                    {Boolean(settings.showCardBackground) && (
+                      <div>
+                        <div className="flex justify-between text-xs font-medium mb-1.5">
+                          <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardOpacityTitle', settings.language)}</span>
+                          <span className="font-tabular font-semibold">{Math.round(settings.cardOpacity * 100)}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.05"
+                          max="0.9"
+                          step="0.05"
+                          value={settings.cardOpacity}
+                          onChange={(e) => handleSettingsChange({ cardOpacity: parseFloat(e.target.value) })}
+                          className="range-slider"
+                        />
+                        <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                          <span>{t('cardOpacityLow', settings.language)}</span>
+                          <span>{t('cardOpacityMed', settings.language)}</span>
+                          <span>{t('cardOpacityHigh', settings.language)}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Icon Spacing Slider (When Card Background is OFF) */}
+                    {!settings.showCardBackground && (
+                      <div>
+                        <div className="flex justify-between text-xs font-medium mb-1.5">
+                          <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconSpacingTitle', settings.language)}</span>
+                          <span className="font-tabular font-semibold">{settings.iconSpacing ?? 20}px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="8"
+                          max="48"
+                          step="2"
+                          value={settings.iconSpacing ?? 20}
+                          onChange={(e) => handleSettingsChange({ iconSpacing: parseInt(e.target.value, 10) })}
+                          className="range-slider"
+                        />
+                        <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                          <span>{t('iconSpacingCompact', settings.language)}</span>
+                          <span>{t('iconSpacingDefault', settings.language)}</span>
+                          <span>{t('iconSpacingLoose', settings.language)}</span>
+                        </div>
+                      </div>
+                    )}
 
  {/* Card Icon Ratio Slider */}
  <div>
  <div className="flex justify-between text-xs font-medium mb-1.5">
  <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconSizeRatio', settings.language)}</span>
- <span className="font-tabular font-semibold">{Math.round((settings.iconSizeRatio || 0.42) * 100)}%</span>
+ <span className="font-tabular font-semibold">{Math.round((settings.iconSizeRatio ?? 0.55) * 100)}%</span>
  </div>
  <input
  type="range"
  min="0.28"
  max="0.65"
  step="0.01"
- value={settings.iconSizeRatio || 0.42}
+ value={settings.iconSizeRatio ?? 0.55}
  onChange={(e) => handleSettingsChange({ iconSizeRatio: parseFloat(e.target.value) })}
  className="range-slider"
  />
@@ -943,13 +1231,39 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <span>{t('cardsPerRowWide', settings.language)}</span>
  </div>
  </div>
- </div>
- )}
- </div>
- </div>
- )}
 
- {/* 2. 偏好 Tab */}
+                    {/* Reset Card Layout Defaults Button */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSettingsChange({
+                          showCardBackground: false,
+                          showSiteTitle: true,
+                          showCategories: true,
+                          cardSize: 110,
+                          cardOpacity: 0.20,
+                          iconSizeRatio: 0.55,
+                          maxCardsPerRow: 8,
+                          iconSpacing: 20,
+                        })}
+                        className={`w-full py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                          isLight
+                            ? 'bg-black/[0.03] border-black/8 text-slate-600 hover:bg-black/[0.06] hover:text-slate-900'
+                            : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/[0.1] hover:text-white'
+                        }`}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>{t('resetCardLayout', settings.language)}</span>
+                      </button>
+                    </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )}
+
  {activeTab === 'behavior' && (
  <div className="space-y-3">
  {/* Language */}
@@ -1022,7 +1336,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  type="button"
  onClick={() => handleSettingsChange({ timeFormat: '12h' })}
  className={`px-3 py-1 rounded-md text-[11px] font-medium duration-0 cursor-pointer ${settings.timeFormat === '12h'
- ? isLight ? 'bg-white text-slate-900 shadow-sm' : 'bg-white/20 text-white shadow-sm'
+ ? isLight ? 'bg-black/[0.08] text-slate-900 border border-black/10 shadow-xs font-semibold' : 'bg-white/20 text-white shadow-sm font-semibold'
  : isLight ? 'text-slate-500 hover:text-slate-800' : 'text-white/50 hover:text-white'
  }`}
  >
@@ -1032,7 +1346,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  type="button"
  onClick={() => handleSettingsChange({ timeFormat: '24h' })}
  className={`px-3 py-1 rounded-md text-[11px] font-medium duration-0 cursor-pointer ${(settings.timeFormat || '24h') === '24h'
- ? isLight ? 'bg-white text-slate-900 shadow-sm' : 'bg-white/20 text-white shadow-sm'
+ ? isLight ? 'bg-black/[0.08] text-slate-900 border border-black/10 shadow-xs font-semibold' : 'bg-white/20 text-white shadow-sm font-semibold'
  : isLight ? 'text-slate-500 hover:text-slate-800' : 'text-white/50 hover:text-white'
  }`}
  >
@@ -1080,22 +1394,82 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 </div>
 
                 {/* Show Search */}
- <div
- className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
- ? 'bg-black/[0.03] border-black/8 text-slate-900'
- : 'bg-white/[0.05] border-white/10 text-white'
- }`}
- >
- <div className="flex items-center gap-2.5">
- <Search className="w-4 h-4 opacity-70" />
- <span className="text-xs font-medium">{t('showSearchOnly', settings.language)}</span>
- </div>
- <ToggleSwitch
- checked={settings.showSearch ?? true}
- onChange={(checked) => handleSettingsChange({ showSearch: checked })}
- isLight={isLight}
- />
- </div>
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Search className="w-4 h-4 opacity-70" />
+                    <span className="text-xs font-medium">{t('showSearchOnly', settings.language)}</span>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.showSearch ?? true}
+                    onChange={(checked) => handleSettingsChange({ showSearch: checked })}
+                    isLight={isLight}
+                  />
+                </div>
+
+                {/* Show Categories */}
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Folder className="w-4 h-4 opacity-70" />
+                    <span className="text-xs font-medium">{t('showCategoriesOnly', settings.language)}</span>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.showCategories ?? true}
+                    onChange={(checked) => handleSettingsChange({ showCategories: checked })}
+                    isLight={isLight}
+                  />
+                </div>
+
+                {/* Max Categories on Navbar Setting */}
+                {(settings.showCategories ?? true) && (
+                  <div
+                    className={`p-3.5 rounded-2xl border duration-0 space-y-2.5 ${isLight
+                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                      : 'bg-white/[0.05] border-white/10 text-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-medium">{t('maxNavCategories', settings.language)}</div>
+                        <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                          {t('maxNavCategoriesDesc', settings.language)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-6 gap-1 p-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5">
+                      {[4, 6, 8, 10, 12, 0].map((num) => {
+                        const isSelected = (settings.maxNavCategories ?? 6) === num;
+                        return (
+                          <button
+                            key={num}
+                            type="button"
+                            onClick={() => handleSettingsChange({ maxNavCategories: num })}
+                            className={`py-1 px-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer text-center ${
+                              isSelected
+                                ? isLight
+                                  ? 'bg-white text-slate-900 shadow-xs border border-black/10 font-semibold'
+                                  : 'bg-white/20 text-white shadow-sm border border-white/20 font-semibold'
+                                : isLight
+                                ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                                : 'text-white/60 hover:text-white hover:bg-white/10'
+                            }`}
+                          >
+                            {num === 0 ? t('unlimited', settings.language) : num}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
  {/* Show Greeting & Custom Greetings Section */}
  <div
@@ -1141,10 +1515,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <div className="flex flex-wrap gap-2 pt-1">
  {/* Import Greetings Button */}
  <label
- className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer duration-0 ${isLight
- ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'
- : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
- }`}
+ className="glass-btn-secondary flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium cursor-pointer duration-0"
  >
  <Upload className="w-3.5 h-3.5" />
  <span>{t('importGreetings', settings.language)}</span>
@@ -1160,10 +1531,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <button
  type="button"
  onClick={handleDownloadGreetingTemplate}
- className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer ${isLight
- ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-800'
- : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
- }`}
+ className="glass-btn-secondary flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium duration-0 cursor-pointer"
  >
  <FileDown className="w-3.5 h-3.5" />
  <span>{t('downloadGreetingTemplate', settings.language)}</span>
@@ -1204,15 +1572,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <div className="space-y-4">
  {/* Sub-selector for Sync Method */}
  <div
- className={`flex p-1 rounded-2xl border gap-1 ${isLight ? 'bg-slate-100 border-slate-200/60' : 'bg-white/10 border-white/15'}`}
+ className={`flex p-1 rounded-2xl border gap-1 ${isLight ? 'bg-black/[0.03] border-black/8' : 'bg-white/10 border-white/15'}`}
  >
  <button
  type="button"
  onClick={() => setSyncProvider('webdav')}
  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${syncProvider === 'webdav'
- ? isLight
- ? 'bg-white text-slate-900 border border-black/15 shadow-sm font-semibold'
- : 'bg-white text-slate-950 shadow-sm font-semibold'
+ ? isLight ? 'bg-black/[0.08] text-slate-900 border border-black/10 shadow-xs font-semibold' : 'bg-white/20 text-white border border-white/25 shadow-sm font-semibold'
  : isLight
  ? 'text-slate-600 hover:text-slate-900'
  : 'text-white/70 hover:text-white'
@@ -1225,9 +1591,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  type="button"
  onClick={() => setSyncProvider('git')}
  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${syncProvider === 'git'
- ? isLight
- ? 'bg-white text-slate-900 border border-black/15 shadow-sm font-semibold'
- : 'bg-white text-slate-950 shadow-sm font-semibold'
+ ? isLight ? 'bg-black/[0.08] text-slate-900 border border-black/10 shadow-xs font-semibold' : 'bg-white/20 text-white border border-white/25 shadow-sm font-semibold'
  : isLight
  ? 'text-slate-600 hover:text-slate-900'
  : 'text-white/70 hover:text-white'
@@ -1260,9 +1624,46 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  {/* 4. 备份与迁移 Tab */}
  {activeTab === 'backup' && (
  <div className="space-y-4">
+        {/* Bookmark Import Card */}
+        <div
+          className={`p-4 rounded-2xl border space-y-3 ${
+            isLight ? 'bg-black/[0.02] border-black/10 text-slate-800' : 'bg-white/[0.04] border-white/10 text-white/70'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className={`p-2.5 rounded-xl border shrink-0 ${
+                isLight ? 'bg-black/5 border-black/10 text-slate-800' : 'bg-white/10 border-white/15 text-white'
+              }`}
+            >
+              <Bookmark className="w-4 h-4 text-blue-500" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-xs font-semibold text-slate-900 dark:text-white">
+                {t('importBookmarks', settings.language)}
+              </h4>
+              <p className="text-[11px] leading-relaxed text-slate-500 dark:text-white/50">
+                {t('importBookmarksDesc', settings.language)}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenBookmarkImport) {
+                onOpenBookmarkImport();
+              }
+            }}
+            className="glass-btn-primary flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs duration-0 cursor-pointer active:scale-95"
+          >
+            <Bookmark className="w-3.5 h-3.5" />
+            <span>{t('importBookmarks', settings.language)}</span>
+          </button>
+        </div>
+
  <div
- className={`p-4 rounded-2xl border space-y-3 ${isLight ? 'bg-slate-50 border-slate-200/80 text-slate-700'
- : 'bg-white/[0.05] border-white/10 text-white/70'
+ className={`p-4 rounded-2xl border space-y-3 ${isLight ? 'bg-black/[0.02] border-black/10 text-slate-800' : 'bg-white/[0.04] border-white/10 text-white/70'
  }`}
  >
  <div className="text-xs leading-relaxed">
@@ -1326,19 +1727,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <button
  type="button"
  onClick={handleExport}
- className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-medium duration-0 cursor-pointer active:scale-95 ${isLight
-                    ? 'bg-white hover:bg-slate-50 text-slate-800 hover:text-black border border-slate-200/90 shadow-sm font-semibold'
-                    : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
- }`}
+              className="glass-btn-primary flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs duration-0 cursor-pointer active:scale-95"
  >
  <Download className="w-4 h-4" />
  <span>{t('exportData', settings.language)}</span>
  </button>
 
  <label
- className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer ${isLight
- ? 'bg-white hover:bg-slate-50 border-black/10 text-slate-800 shadow-sm'
- : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
+ className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer ${isLight ? 'bg-black/[0.03] hover:bg-black/[0.07] border-black/10 text-slate-700 hover:text-slate-900' : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
  }`}
  >
  <Upload className="w-4 h-4" />

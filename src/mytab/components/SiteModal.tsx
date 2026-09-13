@@ -1,58 +1,80 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Sparkles, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
-import { SiteItem, ThemeSettings, Category } from '../../types';
+import { SiteItem, ThemeSettings, Category, GridPage } from '../../types';
 import { fetchSiteMetadata, generateFallbackIcon, normalizeUrl, fileToBase64Icon, urlToBase64Icon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
 import { CustomSelect } from './CustomSelect';
+import { isLightMode } from '../../utils/constants';
 
 interface SiteModalProps {
- isOpen: boolean;
- editingSite?: SiteItem | null;
- categories: Category[];
- activeCategoryId: string;
- settings: ThemeSettings;
- onClose: () => void;
- onSave: (siteData: Partial<SiteItem>) => void;
+  isOpen: boolean;
+  editingSite?: SiteItem | null;
+  categories: Category[];
+  activeCategoryId: string;
+  gridPages?: GridPage[];
+  activeGridPageId?: string;
+  settings: ThemeSettings;
+  onClose: () => void;
+  onSave: (siteData: Partial<SiteItem>) => void;
 }
 
 export const SiteModal: React.FC<SiteModalProps> = ({
- isOpen,
- editingSite,
- categories,
- activeCategoryId,
- settings,
- onClose,
- onSave,
+  isOpen,
+  editingSite,
+  categories,
+  activeCategoryId,
+  gridPages,
+  activeGridPageId,
+  settings,
+  onClose,
+  onSave,
 }) => {
- const availableCategories = useMemo(
-   () => categories.filter((c) => c.id !== 'all'),
-   [categories]
- );
- const defaultCategoryId = activeCategoryId !== 'all'
-   ? activeCategoryId
-   : (availableCategories[0]?.id || 'all');
+  const defaultPageId = activeGridPageId || gridPages?.[0]?.id || 'page-1';
 
- const [url, setUrl] = useState('');
- const [title, setTitle] = useState('');
- const [icon, setIcon] = useState('');
- const [categoryId, setCategoryId] = useState(defaultCategoryId);
- const [isFetching, setIsFetching] = useState(false);
- const [fetchMsg, setFetchMsg] = useState('');
+  const [url, setUrl] = useState('');
+  const [title, setTitle] = useState('');
+  const [icon, setIcon] = useState('');
+  const [pageId, setPageId] = useState(defaultPageId);
 
- useEffect(() => {
- if (editingSite) {
- setUrl(editingSite.url);
- setTitle(editingSite.title);
- setIcon(editingSite.icon || '');
- setCategoryId(editingSite.categoryId || 'all');
- } else {
- setUrl('');
- setTitle('');
- setIcon('');
- setCategoryId(defaultCategoryId);
- }
- setFetchMsg('');
- }, [editingSite, isOpen, defaultCategoryId]);
+  const availableCategories = useMemo(
+    () => categories.filter((c) => c.id !== 'all' && (c.pageId || defaultPageId) === pageId),
+    [categories, pageId, defaultPageId]
+  );
+
+  const defaultCategoryId =
+    activeCategoryId !== 'all' && activeCategoryId !== 'uncategorized' && availableCategories.some((c) => c.id === activeCategoryId)
+      ? activeCategoryId
+      : (availableCategories[0]?.id || 'all');
+
+  const [categoryId, setCategoryId] = useState(defaultCategoryId);
+  const [isFetching, setIsFetching] = useState(false);
+  const [fetchMsg, setFetchMsg] = useState('');
+
+  useEffect(() => {
+    if (editingSite) {
+      setUrl(editingSite.url);
+      setTitle(editingSite.title);
+      setIcon(editingSite.icon || '');
+      setCategoryId(editingSite.categoryId || 'all');
+      setPageId(editingSite.pageId || defaultPageId);
+    } else {
+      setUrl('');
+      setTitle('');
+      setIcon('');
+      setCategoryId(defaultCategoryId);
+      setPageId(defaultPageId);
+    }
+    setFetchMsg('');
+  }, [editingSite, isOpen, defaultCategoryId, defaultPageId]);
+
+  useEffect(() => {
+    if (availableCategories.length > 0 && !availableCategories.some((c) => c.id === categoryId)) {
+      setCategoryId(availableCategories[0].id);
+    } else if (availableCategories.length === 0 && categoryId !== 'all') {
+      setCategoryId('all');
+    }
+  }, [pageId, availableCategories, categoryId]);
 
  if (!isOpen) return null;
 
@@ -121,14 +143,14 @@ export const SiteModal: React.FC<SiteModalProps> = ({
  title: finalTitle,
  icon: finalIcon,
  categoryId: categoryId || 'all',
+ pageId: pageId || defaultPageId,
  });
  };
 
- const isLight = settings.mode === 'light';
+ const isLight = isLightMode(settings.mode);
  const previewIcon = icon.trim() || generateFallbackIcon(title.trim() || url.trim() || 'W');
-
- return (
- <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  const content = (
+  <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
  {/* Backdrop */}
  <div
  className={`fixed inset-0 transition-opacity ${isLight ? 'bg-black/25' : 'bg-black/60'}`}
@@ -183,21 +205,13 @@ export const SiteModal: React.FC<SiteModalProps> = ({
  onChange={(e) => setUrl(e.target.value)}
  onBlur={handleUrlBlur}
  placeholder={t('siteUrlPlaceholder', settings.language)}
- className={`flex-1 px-3.5 py-2.5 rounded-xl border outline-none text-sm transition-all ${
- isLight
- ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900 placeholder-slate-400'
- : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white placeholder-white/40'
- }`}
+ className="glass-input flex-1 px-3.5 py-2.5 rounded-xl text-sm"
  />
  <button
  type="button"
  onClick={handleAutoFetch}
  disabled={isFetching || !url.trim()}
- className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all shadow-sm cursor-pointer shrink-0 disabled:opacity-50 active:scale-95 ${
- isLight
- ? 'bg-slate-900 hover:bg-black text-white'
- : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
- }`}
+ className="glass-btn-secondary flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs shrink-0 active:scale-95 disabled:opacity-50"
  title={t('autoFetch', settings.language)}
  >
  {isFetching ? (
@@ -234,11 +248,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
  value={title}
  onChange={(e) => setTitle(e.target.value)}
  placeholder={t('siteTitlePlaceholder', settings.language)}
- className={`w-full px-3.5 py-2.5 rounded-xl border outline-none text-sm transition-all ${
- isLight
- ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900 placeholder-slate-400'
- : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white placeholder-white/40'
- }`}
+ className="glass-input w-full px-3.5 py-2.5 rounded-xl text-sm"
  />
  </div>
 
@@ -275,11 +285,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
  value={icon}
  onChange={(e) => setIcon(e.target.value)}
  placeholder={t('siteIconPlaceholder', settings.language)}
- className={`flex-1 px-3.5 py-2.5 rounded-xl border outline-none text-sm transition-all ${
- isLight
- ? 'bg-black/5 border-black/10 focus:border-black/30 focus:ring-2 focus:ring-black/10 text-slate-900 placeholder-slate-400'
- : 'bg-white/10 border-white/15 focus:border-white/30 focus:ring-2 focus:ring-white/20 text-white placeholder-white/40'
- }`}
+ className="glass-input flex-1 px-3.5 py-2.5 rounded-xl text-sm"
  />
 
  {/* Upload Local File */}
@@ -324,32 +330,48 @@ export const SiteModal: React.FC<SiteModalProps> = ({
           </div>
         )}
 
+        {/* Desktop Page Select (only shown if multiple desktop pages exist) */}
+        {gridPages && gridPages.length > 1 && (
+          <div>
+            <label
+              className={`block text-xs font-medium mb-1.5 ${
+                isLight ? 'text-slate-700' : 'text-white/80'
+              }`}
+            >
+              {t('siteDesktop', settings.language)}
+            </label>
+            <CustomSelect
+              value={pageId}
+              onChange={setPageId}
+              isLight={isLight}
+              options={gridPages.map((page, idx) => ({
+                value: page.id,
+                label: page.name || `${t('defaultDesktopName', settings.language)} ${idx + 1}`,
+              }))}
+            />
+          </div>
+        )}
+
  {/* Actions */}
  <div className="flex justify-end gap-3 pt-3">
  <button
  type="button"
  onClick={onClose}
- className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer ${
- isLight
- ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
- : 'text-white/70 hover:text-white hover:bg-white/10'
- }`}
+ className="glass-btn-ghost px-4 py-2 rounded-xl text-sm font-medium"
  >
  {t('cancel', settings.language)}
  </button>
  <button
  type="submit"
- className={`px-5 py-2 rounded-xl text-sm font-medium shadow-sm transition-all cursor-pointer active:scale-95 ${
- isLight
- ? 'bg-slate-900 hover:bg-black text-white'
- : 'bg-white hover:bg-slate-100 text-slate-950 font-semibold'
- }`}
+ className="glass-btn-primary px-5 py-2 rounded-xl text-sm font-medium active:scale-95"
  >
  {t('save', settings.language)}
  </button>
  </div>
  </form>
- </div>
- </div>
- );
+  </div>
+  </div>
+  );
+
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : content;
 };

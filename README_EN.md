@@ -15,14 +15,16 @@ A minimalist, aesthetic, and privacy-focused modern browser New Tab extension wi
 
 ## 🌟 Key Features
 
+- 📱 **Multi-Desktop Carousel & Gesture Swiping (v1.3.0)**: Newly introduced multi-desktop architecture powered by the physics-based Embla Carousel engine. Supports authentic touch/mouse drag momentum, keyboard arrow keys navigation, and a floating frosted-glass page indicator (● ○ ○). Features desktop renaming, safe page deletion with automatic site migration, independent per-page category memory, and cross-desktop category movement.
+- 🔖 **Native Browser Bookmarks Importer with Smart Deduplication (v1.3.0)**: One-click extraction of native bookmark trees (Bookmarks Bar, Other Bookmarks, Mobile Bookmarks) across Chrome, Edge, and Firefox, alongside Netscape HTML bookmark file import (compatible with Safari and all browsers). Offers interactive tree selection, tri-state checkboxes, smart folder flattening, real-time URL duplicate comparison, and live import preview stats.
 - 🔒 **Private Space Dual-Container (v1.2.0)**: Innovative Multi-Profile architecture providing physical separation between your daily browsing (Default Space) and sensitive browsing (Private Space). Each space maintains independent bookmarks, categories, and wallpapers. Automatically activated in Incognito / Private windows or accessible via `private.html`.
 - 📌 **One-Click Toolbar Quick Collector (Popup)**: While browsing any webpage, click the MyTab icon on your browser toolbar to instantly summon the bookmark modal. Automatically extracts the current page title, URL, and high-res Favicon with one-click classification into your chosen space and category, complete with duplicate URL detection.
-- 🎨 **Exquisite Aesthetics & Deep Color Customization**: Native frosted glass (Glassmorphism), adjustable card opacity and dimensions, icon scale slider, and seamless dark/light mode switching. Supports independent color customization across **6 major homepage elements** (Clock, Date, Greeting, Search Bar, Category Tabs, and Site Cards). Features a built-in **Canvas brightness partition detection engine** that dynamically computes contrast and applies subtle drop shadows in real time.
+- 🎨 **Clean App Icon View & Deep Customization (v1.3.0)**: Grid mode defaults to an uncluttered mobile-launcher-inspired clean icon layout, while still supporting frosted glass card containers, custom opacity, and size fine-tuning. Includes independent color customization across **6 major homepage elements** (Clock, Date, Greeting, Search Bar, Category Tabs, and Site Cards), real-time Canvas brightness ROI analysis, and dynamic drop shadows.
 - 📅 **Lunar Calendar & 24 Solar Terms (v1.2.0)**: Integrated lightweight lunar algorithm that gracefully displays lunar dates, zodiac years, and traditional 24 Solar Terms in the clock header, with an independent toggle setting.
 - 🖼️ **Curated Wallpapers & Ultra-Smooth Transitions**: Curated high-resolution wallpaper collection featuring daily Bing HD wallpapers and Unsplash art photography (accelerated via CDN). Utilizes a dual-buffer smooth fade transition engine to eliminate screen flicker, with a built-in anti-repetition memory pool.
 - ⚡ **Multi-Source Smart Favicon Fetching & Vector Fallback (v1.2.0)**: Aggregates domestic and international resolvers with DOM background detection to rapidly fetch icons for niche or overseas sites and cache them locally as Base64. When no icon is available, automatically extracts the domain initial to generate a colorful gradient SVG vector icon.
 - 🛡️ **Global Frosted Glass Error Boundary (ErrorBoundary)**: Intercepts unexpected runtime exceptions with an elegant frosted glass modal, offering instant reload and self-healing cache reset options to eliminate white-screen issues.
-- 🗂️ **Categories & Drag-and-Drop Reordering**: Multi-group management with smooth iOS-like drag-and-drop card reordering, quick creation, and inline editing.
+- 🗂️ **Categories & Drag-and-Drop Reordering**: Multi-group management with smooth and fluid drag-and-drop card reordering, quick creation, and inline editing.
 - 🔍 **Multi-Engine Smart Search**: Built-in switching between Google, Bing, Baidu, DuckDuckGo, Yandex, and GitHub. Press the `/` key anywhere on the page to immediately focus the search input.
 - 🐙 **Git Cloud Sync (GitHub / Gitee)**: Supports both **Secret Gist (one-click token binding)** and **Private Git Repository** modes. Directly reads and writes via official APIs, featuring automatic repo/gist creation, manual/scheduled backup, restore, and multi-device timestamp arbitration to prevent overwrite.
 - ☁️ **WebDAV Multi-Device Private Sync**: Connect seamlessly to private WebDAV services such as Synology NAS, Nextcloud, ownCloud, Alist, and Jianguoyun. Supports millisecond timestamp arbitration, bidirectional sync, and an independent toggle for Private Space synchronization.
@@ -200,6 +202,7 @@ Build outputs will be generated in the `dist/` directory:
 ## 🔒 Permissions & Privacy Statement
 
 - **`storage` / `unlimitedStorage`**: Used to securely store user bookmarks, custom categories, appearance preferences, and local Base64 icon caches.
+- **`bookmarks`**: Used on-demand to read browser native bookmark hierarchies for one-click import and intelligent categorization in MyTab. All parsing is done strictly locally and never transmitted to any third party.
 - **`alarms`**: Used to trigger periodic silent background synchronization (only active when auto-sync is enabled).
 - **`activeTab`**: Used when clicking the extension icon in the toolbar to safely capture the current tab's title, URL, and icon for one-click bookmarking.
 - **`host_permissions (<all_urls>)`**: Used to parse public web page titles and Favicons, and to connect directly to user-configured private WebDAV servers or Git APIs.
@@ -229,6 +232,7 @@ MyTab's creation and continuous growth are deeply indebted to the open-source co
 
 - ⚛️ **[React](https://react.dev/)**: The cornerstone for building modern, highly responsive, and declarative user interfaces.
 - ⚡ **[Vite](https://vitejs.dev/)**: Next-generation, lightning-fast frontend tooling and Hot Module Replacement (HMR).
+- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**: Lightweight, highly extensible, and physics-driven carousel engine for fluid gesture navigation.
 - 🎨 **[Lucide Icons](https://lucide.dev/)**: An aesthetically pleasing, elegant, and consistent open-source icon library.
 - 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**: High-performance, zero-dependency lunar calendar and 24 Solar Terms library created by [@6tail](https://github.com/6tail).
 - 🌈 **[Tailwind CSS](https://tailwindcss.com/)**: Highly flexible atomic CSS framework powering our frosted glass (Glassmorphism) and adaptive themes.

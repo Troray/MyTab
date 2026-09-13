@@ -16,11 +16,16 @@ export function normalizeUrl(input: string): string {
   return url;
 }
 
+const fallbackIconCache = new Map<string, string>();
+
 /**
  * Generate a dynamic high-aesthetic SVG Data URI as the ultimate fallback icon
  */
 export function generateFallbackIcon(text: string): string {
   const char = (text.trim()[0] || 'W').toUpperCase();
+  const cached = fallbackIconCache.get(char);
+  if (cached) return cached;
+
   // Generate consistent gradient colors based on char code
   const code = char.charCodeAt(0);
   const hue1 = (code * 47) % 360;
@@ -38,7 +43,9 @@ export function generateFallbackIcon(text: string): string {
   <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="64" font-weight="700" fill="#ffffff">${char}</text>
 </svg>`.trim();
 
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  const dataUri = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+  fallbackIconCache.set(char, dataUri);
+  return dataUri;
 }
 
 /**
