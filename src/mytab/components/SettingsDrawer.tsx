@@ -1411,64 +1411,68 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   />
                 </div>
 
-                {/* Show Categories */}
-                <div
-                  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
-                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
-                    : 'bg-white/[0.05] border-white/10 text-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Folder className="w-4 h-4 opacity-70" />
-                    <span className="text-xs font-medium">{t('showCategoriesOnly', settings.language)}</span>
-                  </div>
-                  <ToggleSwitch
-                    checked={settings.showCategories ?? true}
-                    onChange={(checked) => handleSettingsChange({ showCategories: checked })}
-                    isLight={isLight}
-                  />
-                </div>
+                {/* Show Categories (Grid mode only) */}
+                {settings.layoutMode !== 'board' && (
+                  <>
+                    <div
+                      className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+                        ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                        : 'bg-white/[0.05] border-white/10 text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Folder className="w-4 h-4 opacity-70" />
+                        <span className="text-xs font-medium">{t('showCategoriesOnly', settings.language)}</span>
+                      </div>
+                      <ToggleSwitch
+                        checked={settings.showCategories ?? true}
+                        onChange={(checked) => handleSettingsChange({ showCategories: checked })}
+                        isLight={isLight}
+                      />
+                    </div>
 
-                {/* Max Categories on Navbar Setting */}
-                {(settings.showCategories ?? true) && (
-                  <div
-                    className={`p-3.5 rounded-2xl border duration-0 space-y-2.5 ${isLight
-                      ? 'bg-black/[0.03] border-black/8 text-slate-900'
-                      : 'bg-white/[0.05] border-white/10 text-white'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-xs font-medium">{t('maxNavCategories', settings.language)}</div>
-                        <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
-                          {t('maxNavCategoriesDesc', settings.language)}
+                    {/* Max Categories on Navbar Setting */}
+                    {(settings.showCategories ?? true) && (
+                      <div
+                        className={`p-3.5 rounded-2xl border duration-0 space-y-2.5 ${isLight
+                          ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                          : 'bg-white/[0.05] border-white/10 text-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-xs font-medium">{t('maxNavCategories', settings.language)}</div>
+                            <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                              {t('maxNavCategoriesDesc', settings.language)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-6 gap-1 p-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5">
+                          {[4, 6, 8, 10, 12, 0].map((num) => {
+                            const isSelected = (settings.maxNavCategories ?? 6) === num;
+                            return (
+                              <button
+                                key={num}
+                                type="button"
+                                onClick={() => handleSettingsChange({ maxNavCategories: num })}
+                                className={`py-1 px-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer text-center ${
+                                  isSelected
+                                    ? isLight
+                                      ? 'bg-white text-slate-900 shadow-xs border border-black/10 font-semibold'
+                                      : 'bg-white/20 text-white shadow-sm border border-white/20 font-semibold'
+                                    : isLight
+                                    ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                                    : 'text-white/60 hover:text-white hover:bg-white/10'
+                                }`}
+                              >
+                                {num === 0 ? t('unlimited', settings.language) : num}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-6 gap-1 p-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5">
-                      {[4, 6, 8, 10, 12, 0].map((num) => {
-                        const isSelected = (settings.maxNavCategories ?? 6) === num;
-                        return (
-                          <button
-                            key={num}
-                            type="button"
-                            onClick={() => handleSettingsChange({ maxNavCategories: num })}
-                            className={`py-1 px-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer text-center ${
-                              isSelected
-                                ? isLight
-                                  ? 'bg-white text-slate-900 shadow-xs border border-black/10 font-semibold'
-                                  : 'bg-white/20 text-white shadow-sm border border-white/20 font-semibold'
-                                : isLight
-                                ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
-                                : 'text-white/60 hover:text-white hover:bg-white/10'
-                            }`}
-                          >
-                            {num === 0 ? t('unlimited', settings.language) : num}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                    )}
+                  </>
                 )}
 
  {/* Show Greeting & Custom Greetings Section */}
