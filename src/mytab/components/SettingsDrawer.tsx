@@ -873,7 +873,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   <div className={`text-[10px] mt-0.5 font-tabular ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                     {settings.layoutMode === 'board'
                       ? `${settings.boardColumnsPerRow || 5}${t('boardColumnsUnit', settings.language)} · ${settings.boardCardGap ?? 16}px · ${Math.round((settings.boardCardOpacity ?? 0.2) * 100)}%`
-                      : settings.showCardBackground === false
+                      : !settings.showCardBackground
                       ? `${settings.cardSize || 110}px · ${settings.iconSpacing ?? 20}px · ${settings.maxCardsPerRow || 8}${t('cardsPerRowUnit', settings.language)}`
                       : `${settings.cardSize || 110}px · ${Math.round(settings.cardOpacity * 100)}% · ${settings.maxCardsPerRow || 8}${t('cardsPerRowUnit', settings.language)}`}
                   </div>
@@ -1095,7 +1095,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         </div>
                       </div>
                       <ToggleSwitch
-                        checked={settings.showCardBackground !== false}
+                        checked={settings.showCardBackground ?? false}
                         onChange={(checked) => handleSettingsChange({ showCardBackground: checked })}
                         isLight={isLight}
                       />
@@ -1141,7 +1141,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  </div>
 
                     {/* Card Opacity Slider (When Card Background is ON) */}
-                    {settings.showCardBackground !== false && (
+                    {Boolean(settings.showCardBackground) && (
                       <div>
                         <div className="flex justify-between text-xs font-medium mb-1.5">
                           <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardOpacityTitle', settings.language)}</span>
@@ -1165,7 +1165,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     )}
 
                     {/* Icon Spacing Slider (When Card Background is OFF) */}
-                    {settings.showCardBackground === false && (
+                    {!settings.showCardBackground && (
                       <div>
                         <div className="flex justify-between text-xs font-medium mb-1.5">
                           <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconSpacingTitle', settings.language)}</span>
@@ -1192,14 +1192,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
  <div>
  <div className="flex justify-between text-xs font-medium mb-1.5">
  <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconSizeRatio', settings.language)}</span>
- <span className="font-tabular font-semibold">{Math.round((settings.iconSizeRatio || 0.42) * 100)}%</span>
+ <span className="font-tabular font-semibold">{Math.round((settings.iconSizeRatio ?? 0.55) * 100)}%</span>
  </div>
  <input
  type="range"
  min="0.28"
  max="0.65"
  step="0.01"
- value={settings.iconSizeRatio || 0.42}
+ value={settings.iconSizeRatio ?? 0.55}
  onChange={(e) => handleSettingsChange({ iconSizeRatio: parseFloat(e.target.value) })}
  className="range-slider"
  />
@@ -1237,12 +1237,12 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       <button
                         type="button"
                         onClick={() => handleSettingsChange({
-                          showCardBackground: true,
+                          showCardBackground: false,
                           showSiteTitle: true,
                           showCategories: true,
                           cardSize: 110,
                           cardOpacity: 0.20,
-                          iconSizeRatio: 0.42,
+                          iconSizeRatio: 0.55,
                           maxCardsPerRow: 8,
                           iconSpacing: 20,
                         })}

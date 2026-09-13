@@ -131,7 +131,7 @@ const CategoryTabItem: React.FC<CategoryTabItemProps> = React.memo(({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={customStyle}
-        className={`group flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs md:text-sm font-medium transition-all duration-150 cursor-pointer select-none active:scale-95 border backdrop-blur-md ${
+        className={`group flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs md:text-sm font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out cursor-pointer select-none active:scale-95 border backdrop-blur-md ${
           hasCustomColor
             ? isActive
               ? isDarkWallpaper
@@ -239,23 +239,16 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
     : !isLight;
 
   const prevPageIdRef = useRef(activeGridPageId);
-  const [slideDirection, setSlideDirection] = useState<'right' | 'left' | null>(null);
-  const [animKey, setAnimKey] = useState(0);
 
   useEffect(() => {
     if (prevPageIdRef.current && activeGridPageId && prevPageIdRef.current !== activeGridPageId) {
-      const prevIdx = gridPages?.findIndex((p) => p.id === prevPageIdRef.current) ?? -1;
-      const currentIdx = gridPages?.findIndex((p) => p.id === activeGridPageId) ?? -1;
-      const direction = currentIdx >= prevIdx ? 'right' : 'left';
-      setSlideDirection(direction);
-      setAnimKey((k) => k + 1);
       setIsMoreOpen(false);
       setActiveMenu(null);
       prevPageIdRef.current = activeGridPageId;
     } else if (activeGridPageId) {
       prevPageIdRef.current = activeGridPageId;
     }
-  }, [activeGridPageId, gridPages]);
+  }, [activeGridPageId]);
 
   useEffect(() => {
     if (!isMoreOpen) return;
@@ -379,16 +372,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
       id="mytab-tabs"
       className="flex items-center justify-center flex-wrap gap-2 px-4 mb-6 max-w-4xl mx-auto z-20"
     >
-      <div
-        key={animKey}
-        className={`flex items-center justify-center flex-wrap gap-2 ${
-          slideDirection === 'right'
-            ? 'animate-cat-tabs-right'
-            : slideDirection === 'left'
-            ? 'animate-cat-tabs-left'
-            : ''
-        }`}
-      >
+      <div className="flex items-center justify-center flex-wrap gap-2">
         {visibleCategories.map((cat) => {
           const isActive = activeCategoryId === cat.id;
           const count = siteCounts[cat.id] || 0;
@@ -425,7 +409,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
                   ? { color: resolvedColors.tabs }
                   : undefined
               }
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs md:text-sm font-medium transition-all duration-150 cursor-pointer select-none active:scale-95 border backdrop-blur-md ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs md:text-sm font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-out cursor-pointer select-none active:scale-95 border backdrop-blur-md ${
                 isOverflowActive
                   ? isDarkWallpaper
                     ? 'bg-white/20 text-white shadow-sm border-white/25 font-semibold'

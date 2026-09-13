@@ -1174,7 +1174,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       </header>
 
       {/* Center Main Section */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-start max-w-7xl mx-auto w-full pb-12">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-start max-w-7xl mx-auto w-full pb-6">
         {/* Clock & Greetings */}
         <ClockHeader settings={settings} resolvedColors={resolvedColors} isLight={isLight} />
 

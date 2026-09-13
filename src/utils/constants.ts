@@ -135,7 +135,7 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   backgroundValue: './wallpapers/default-wallpaper.jpg',
   cardOpacity: 0.20, // 默认卡片透明度 20%
   cardSize: 110,     // 默认卡片大小 110px
-  iconSizeRatio: 0.42, // 默认图标占比 42%
+  iconSizeRatio: 0.55, // 默认图标占比 55%
   maxCardsPerRow: 8, // 默认每行最多 8 个卡片
   activeEngineId: 'google',
   openInNewTab: true,
@@ -145,7 +145,7 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   showGreeting: true,
   showDate: true,
   showLunar: true,
-  showCardBackground: true,
+  showCardBackground: false, // 默认不显示卡片背景
   showSiteTitle: true,
   showCategories: true,
   maxNavCategories: 6,

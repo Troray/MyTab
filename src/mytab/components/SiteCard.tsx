@@ -74,7 +74,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
 
   const iconSrc = imgError || !site.icon ? generateFallbackIcon(site.title || site.url) : site.icon;
   const cardSize = settings.cardSize || 110;
-  const iconRatio = settings.iconSizeRatio || 0.42;
+  const iconRatio = settings.iconSizeRatio ?? 0.55;
   const isLight =
     propsIsLight !== undefined
       ? propsIsLight
@@ -151,7 +151,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
         : 'ios-jiggle-odd'
       : '';
 
-  const showCardBg = settings.showCardBackground !== false;
+  const showCardBg = settings.showCardBackground ?? false;
   const showTitle = settings.showSiteTitle !== false;
   const iconSpacing = settings.iconSpacing ?? 20;
 

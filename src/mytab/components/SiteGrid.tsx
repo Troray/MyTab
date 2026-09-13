@@ -253,10 +253,10 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
     }, 550);
   }, [draggingSiteId, onReorderSites]);
 
-  const showCardBg = settings.showCardBackground !== false;
+  const showCardBg = settings.showCardBackground ?? false;
   const showTitle = settings.showSiteTitle !== false;
   const iconSpacing = settings.iconSpacing ?? 20;
-  const iconRatio = settings.iconSizeRatio || 0.42;
+  const iconRatio = settings.iconSizeRatio ?? 0.55;
   const iconBoxSize = Math.max(24, Math.round(cardSize * iconRatio));
   const cellWidth = showCardBg
     ? cardSize
@@ -403,7 +403,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
       <div
         id="mytab-cards"
         ref={emblaRef}
-        className="relative flex-1 w-full max-w-7xl mx-auto px-4 pt-3 pb-28 min-h-[min(540px,calc(100vh-320px))] overflow-hidden cursor-default"
+        className="relative flex-1 w-full max-w-7xl mx-auto px-4 pt-2 pb-6 min-h-[140px] overflow-hidden cursor-default"
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
       >

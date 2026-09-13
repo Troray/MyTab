@@ -923,7 +923,7 @@ export function resolveTextColors(
   );
 
   // 2. 网格模式 (Grid Mode) 表面复合可读性推导
-  const showGridCardBg = settings.showCardBackground !== false;
+  const showGridCardBg = settings.showCardBackground ?? false;
   const gridOpacity = settings.cardOpacity ?? 0.20;
   const gridSurface = getCompositeSurfaceReadability(
     wallpaperLum,
