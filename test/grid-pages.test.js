@@ -47,7 +47,16 @@ const {
   saveCategories,
   saveSites,
   loadAppState,
+  exportAllData,
+  importData,
 } = await import('../src/services/storage.ts');
+
+const {
+  buildSyncPayload,
+  applyRemotePayload,
+  mergeSites,
+  mergeGridPages,
+} = await import('../src/services/syncController.ts');
 
 test('Grid Pages: DEFAULT_GRID_PAGES provides clean initial desktop page', () => {
   assert.equal(Array.isArray(DEFAULT_GRID_PAGES), true);
@@ -304,3 +313,140 @@ test('Grid Pages: pageCategoryMap is persisted per desktop and restored via load
   assert.equal(state.pageCategoryMap?.['page-1'], 'cat-work');
   assert.equal(state.pageCategoryMap?.['page-2'], undefined);
 });
+
+test('Grid Pages Sync: buildSyncPayload packages multi-desktop gridPages, activeGridPageId, and pageCategoryMap', () => {
+  const container = {
+    version: 2,
+    profiles: {
+      normal: {
+        sites: [{ id: 's1', title: 'GitHub', url: 'https://github.com', categoryId: 'cat-1', pageId: 'page-1' }],
+        categories: [{ id: 'cat-1', name: '开发', pageId: 'page-1' }, { id: 'cat-2', name: '设计', pageId: 'page-2' }],
+        activeCategoryId: 'cat-1',
+        gridPages: [
+          { id: 'page-1', name: '桌面 1', sortOrder: 0 },
+          { id: 'page-2', name: '桌面 2', sortOrder: 1 },
+        ],
+        activeGridPageId: 'page-2',
+        pageCategoryMap: { 'page-1': 'cat-1', 'page-2': 'cat-2' },
+      },
+      private: {
+        sites: [],
+        categories: [],
+        activeCategoryId: 'all',
+        gridPages: DEFAULT_GRID_PAGES,
+        activeGridPageId: 'page-1',
+        pageCategoryMap: { 'page-1': 'all' },
+      },
+    },
+  };
+
+  const payload = buildSyncPayload(container, {}, { normal: true, private: true });
+
+  assert.ok(payload.profiles?.normal);
+  assert.equal(payload.profiles.normal.gridPages?.length, 2);
+  assert.equal(payload.profiles.normal.gridPages[1].id, 'page-2');
+  assert.equal(payload.profiles.normal.activeGridPageId, 'page-2');
+  assert.equal(payload.profiles.normal.pageCategoryMap?.['page-2'], 'cat-2');
+
+  assert.ok(payload.profiles?.private);
+  assert.equal(payload.profiles.private.gridPages?.length, 1);
+});
+
+test('Grid Pages Sync: applyRemotePayload restores multi-desktop structure and deduplicates sites', () => {
+  const localContainer = {
+    version: 2,
+    profiles: {
+      normal: {
+        sites: [
+          { id: 'site-github', title: 'GitHub', url: 'https://github.com', categoryId: 'work', pageId: 'page-1', updatedAt: 1000 },
+        ],
+        categories: [{ id: 'work', name: '工作', pageId: 'page-1' }],
+        activeCategoryId: 'work',
+        gridPages: DEFAULT_GRID_PAGES,
+        activeGridPageId: 'page-1',
+        pageCategoryMap: { 'page-1': 'work' },
+      },
+      private: { sites: [], categories: [], activeCategoryId: 'all' },
+    },
+  };
+
+  const remotePayload = {
+    version: 2,
+    timestamp: Date.now(),
+    profiles: {
+      normal: {
+        sites: [
+          // Duplicate site with custom ID on remote, same URL, same category, same page
+          { id: 'site-custom-1', title: 'GitHub Pro', url: 'https://github.com/', categoryId: 'work', pageId: 'page-1', updatedAt: 2000 },
+          // Site on desktop 2
+          { id: 'site-figma', title: 'Figma', url: 'https://figma.com', categoryId: 'design', pageId: 'page-2', updatedAt: 2000 },
+        ],
+        categories: [
+          { id: 'work', name: '工作', pageId: 'page-1' },
+          { id: 'design', name: '设计与灵感', pageId: 'page-2' },
+        ],
+        activeCategoryId: 'design',
+        gridPages: [
+          { id: 'page-1', name: '工作台', sortOrder: 0 },
+          { id: 'page-2', name: '设计创作', sortOrder: 1 },
+        ],
+        activeGridPageId: 'page-2',
+        pageCategoryMap: { 'page-1': 'work', 'page-2': 'design' },
+      },
+    },
+    settings: {},
+  };
+
+  // Test 'remote' overwrite strategy
+  const resRemote = applyRemotePayload(localContainer, {}, remotePayload, { normal: true, private: false }, 'remote');
+  const normalProfile = resRemote.updatedContainer.profiles.normal;
+
+  assert.equal(normalProfile.gridPages?.length, 2);
+  assert.equal(normalProfile.gridPages[1].name, '设计创作');
+  assert.equal(normalProfile.activeGridPageId, 'page-2');
+  assert.equal(normalProfile.pageCategoryMap?.['page-2'], 'design');
+  assert.equal(normalProfile.categories.length, 2);
+  assert.equal(normalProfile.sites.length, 2); // No duplicate github shortcuts
+
+  // Test 'merge' strategy with site deduplication
+  const resMerge = applyRemotePayload(localContainer, {}, remotePayload, { normal: true, private: false }, 'merge');
+  const mergedNormal = resMerge.updatedContainer.profiles.normal;
+
+  assert.equal(mergedNormal.gridPages?.length, 2);
+  assert.equal(mergedNormal.pageCategoryMap?.['page-2'], 'design');
+  // Duplicate github.com should be merged into 1 site, not 2!
+  const githubSites = mergedNormal.sites.filter(s => s.url.includes('github.com'));
+  assert.equal(githubSites.length, 1);
+  assert.equal(githubSites[0].title, 'GitHub Pro'); // Kept newer title from remote
+});
+
+test('Grid Pages Backup: exportAllData & importData restore multi-desktop structure', async () => {
+  mockStorage.clear();
+
+  const pages = [
+    { id: 'page-1', name: '主桌面', sortOrder: 0 },
+    { id: 'page-2', name: '副桌面', sortOrder: 1 },
+  ];
+  await saveGridPages(pages, 'normal');
+  await saveActiveGridPageId('page-2', 'normal');
+  await savePageCategoryMap({ 'page-1': 'cat-1', 'page-2': 'cat-2' }, 'normal');
+
+  const jsonBackup = await exportAllData(['normal']);
+  assert.ok(jsonBackup.includes('副桌面'));
+
+  // Reset to single page
+  mockStorage.clear();
+  let state = await loadAppState('normal');
+  assert.equal(state.gridPages?.length, 1);
+
+  // Restore from JSON backup
+  const importRes = await importData(jsonBackup);
+  assert.equal(importRes.success, true);
+
+  state = await loadAppState('normal');
+  assert.equal(state.gridPages?.length, 2);
+  assert.equal(state.gridPages[1].name, '副桌面');
+  assert.equal(state.activeGridPageId, 'page-2');
+  assert.equal(state.pageCategoryMap?.['page-2'], 'cat-2');
+});
+

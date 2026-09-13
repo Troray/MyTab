@@ -18,8 +18,10 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_WEBDAV_CONFIG,
   DEFAULT_GIT_CONFIG,
-  DEFAULT_PRIVATE_BACKGROUND_VALUE
+  DEFAULT_PRIVATE_BACKGROUND_VALUE,
+  DEFAULT_GRID_PAGES
 } from '../utils/constants';
+export { DEFAULT_GRID_PAGES };
 import { getCurrentProfileId } from './profile';
 
 export const STORAGE_KEYS = {
@@ -123,9 +125,6 @@ export async function setItem<T>(key: string, value: T): Promise<void> {
   }
 }
 
-export const DEFAULT_GRID_PAGES: GridPage[] = [
-  { id: 'page-1', name: '桌面 1', sortOrder: 0 },
-];
 
 /**
  * Creates default data for the normal profile.
@@ -782,10 +781,20 @@ export async function importData(
             !p.activeCategoryId ||
             p.activeCategoryId === 'all' ||
             p.categories.some((c: Category) => c && c.id === p.activeCategoryId);
+
+          const restoredPages = Array.isArray(p.gridPages) && p.gridPages.length > 0
+            ? p.gridPages
+            : (currentContainer.profiles[destId]?.gridPages || DEFAULT_GRID_PAGES);
+          const preferredPageId = p.activeGridPageId || restoredPages[0]?.id || 'page-1';
+          const isValidPage = restoredPages.some((page: GridPage) => page && page.id === preferredPageId);
+
           updatedProfiles[destId] = {
             sites: p.sites,
             categories: p.categories,
             activeCategoryId: isValidCat ? (p.activeCategoryId || 'all') : 'all',
+            gridPages: restoredPages,
+            activeGridPageId: isValidPage ? preferredPageId : (restoredPages[0]?.id || 'page-1'),
+            pageCategoryMap: p.pageCategoryMap && typeof p.pageCategoryMap === 'object' ? p.pageCategoryMap : { 'page-1': 'all' },
             ...(p.settings ? { settings: p.settings } : {}),
             ...(p.wallpaper ? { wallpaper: p.wallpaper } : {}),
           };
@@ -833,11 +842,21 @@ export async function importData(
         !prev.activeCategoryId ||
         prev.activeCategoryId === 'all' ||
         newCats.some((c: Category) => c && c.id === prev.activeCategoryId);
+
+      const restoredPages = Array.isArray(data.gridPages) && data.gridPages.length > 0
+        ? data.gridPages
+        : (prev.gridPages || DEFAULT_GRID_PAGES);
+      const preferredPageId = prev.activeGridPageId || restoredPages[0]?.id || 'page-1';
+      const isValidPage = restoredPages.some((page: GridPage) => page && page.id === preferredPageId);
+
       return {
         ...prev,
         categories: newCats,
         sites: data.sites,
         activeCategoryId: isValidCat ? prev.activeCategoryId : 'all',
+        gridPages: restoredPages,
+        activeGridPageId: isValidPage ? preferredPageId : (restoredPages[0]?.id || 'page-1'),
+        pageCategoryMap: prev.pageCategoryMap || { 'page-1': 'all' },
       };
     });
 
