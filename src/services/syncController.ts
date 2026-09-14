@@ -383,6 +383,20 @@ export function applyRemotePayload(
         : (local.gridPages && local.gridPages.length > 0 ? local.gridPages : DEFAULT_GRID_PAGES);
       const preferredPageId = remote.activeGridPageId || local.activeGridPageId || remotePages[0]?.id || 'page-1';
       const isValidPage = remotePages.some((p) => p && p.id === preferredPageId);
+      const validRemotePageIds = new Set(remotePages.map((p) => p.id));
+      const fallbackPageId = isValidPage ? preferredPageId : (remotePages[0]?.id || 'page-1');
+      const cleanRemoteSites = remoteSites.map((s) => {
+        if (!s.pageId || !validRemotePageIds.has(s.pageId)) {
+          return { ...s, pageId: fallbackPageId };
+        }
+        return s;
+      });
+      const cleanRemoteCats = remoteCats.map((c) => {
+        if (!c.pageId || !validRemotePageIds.has(c.pageId)) {
+          return { ...c, pageId: fallbackPageId };
+        }
+        return c;
+      });
 
       const mergedPageCategoryMap = {
         ...(local.pageCategoryMap || {}),
@@ -390,11 +404,11 @@ export function applyRemotePayload(
       };
 
       updatedProfiles[pid] = {
-        sites: remoteSites,
-        categories: remoteCats,
+        sites: cleanRemoteSites,
+        categories: cleanRemoteCats,
         activeCategoryId: isValidCat ? preferredCat : 'all',
         gridPages: remotePages,
-        activeGridPageId: isValidPage ? preferredPageId : (remotePages[0]?.id || 'page-1'),
+        activeGridPageId: fallbackPageId,
         pageCategoryMap: mergedPageCategoryMap,
         settings: remote.settings !== undefined ? remote.settings : local.settings,
         wallpaper: remote.wallpaper !== undefined ? remote.wallpaper : local.wallpaper,
@@ -417,6 +431,21 @@ export function applyRemotePayload(
       const mergedPages = mergeGridPages(local.gridPages || DEFAULT_GRID_PAGES, remote.gridPages || []);
       const preferredPageId = local.activeGridPageId || remote.activeGridPageId || mergedPages[0]?.id || 'page-1';
       const isValidPage = mergedPages.some((p) => p && p.id === preferredPageId);
+      const validMergedPageIds = new Set(mergedPages.map((p) => p.id));
+      const fallbackPageId = isValidPage ? preferredPageId : (mergedPages[0]?.id || 'page-1');
+
+      const cleanSites = mergedSites.map((s) => {
+        if (!s.pageId || !validMergedPageIds.has(s.pageId)) {
+          return { ...s, pageId: fallbackPageId };
+        }
+        return s;
+      });
+      const cleanCats = mergedCats.map((c) => {
+        if (!c.pageId || !validMergedPageIds.has(c.pageId)) {
+          return { ...c, pageId: fallbackPageId };
+        }
+        return c;
+      });
 
       const mergedPageCategoryMap = {
         ...(local.pageCategoryMap || {}),
@@ -437,11 +466,11 @@ export function applyRemotePayload(
       const mergedWallpaper = remote.wallpaper !== undefined ? remote.wallpaper : local.wallpaper;
 
       updatedProfiles[pid] = {
-        sites: mergedSites,
-        categories: mergedCats,
+        sites: cleanSites,
+        categories: cleanCats,
         activeCategoryId: isValidCat ? preferredCat : 'all',
         gridPages: mergedPages,
-        activeGridPageId: isValidPage ? preferredPageId : (mergedPages[0]?.id || 'page-1'),
+        activeGridPageId: fallbackPageId,
         pageCategoryMap: mergedPageCategoryMap,
         settings: mergedSettings,
         wallpaper: mergedWallpaper,

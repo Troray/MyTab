@@ -455,6 +455,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
                         isJustDropped={justDroppedSiteId === site.id}
                         gridPages={gridPages}
                         activeGridPageId={activeGridPageId}
+                        currentPageId={page.id}
                         onEdit={onEditSite}
                         onDelete={onDeleteSite}
                         onMoveSiteToPage={onMoveSiteToPage}

@@ -37,20 +37,28 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   const [pageId, setPageId] = useState('');
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
+  const defaultPageId =
+    (activeGridPageId && gridPages?.some((p) => p.id === activeGridPageId) ? activeGridPageId : undefined) ||
+    gridPages?.[0]?.id ||
+    'page-1';
+
   useEffect(() => {
     if (category) {
       setName(category.name || '');
       setColor(category.color || '');
       setShowInAll(category.showInAll !== false);
-      setPageId(category.pageId || activeGridPageId || (gridPages && gridPages[0]?.id) || 'page-1');
+      const validCatPageId = (category.pageId && gridPages?.some((p) => p.id === category.pageId))
+        ? category.pageId
+        : defaultPageId;
+      setPageId(validCatPageId);
     } else {
       setName('');
       setColor('');
       setShowInAll(true);
-      setPageId(activeGridPageId || (gridPages && gridPages[0]?.id) || 'page-1');
+      setPageId(defaultPageId);
     }
     setIsConfirmingDelete(false);
-  }, [category, isOpen, activeGridPageId, gridPages]);
+  }, [category, isOpen, defaultPageId, gridPages]);
 
   if (!isOpen) return null;
 
