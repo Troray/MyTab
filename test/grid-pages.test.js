@@ -473,3 +473,92 @@ test('Grid Pages: moveSiteToGridPage moves single site to target desktop page', 
   assert.equal(site2.categoryId, 'cat-1');
 });
 
+test('Grid Pages: importData and loadAppState normalize legacy or dangling pageId', async () => {
+  mockStorage.clear();
+
+  // Simulated backup data with custom desktop IDs where sites have legacy pageId ('page-1' or undefined or dangling)
+  const legacyBackup = {
+    version: 2,
+    timestamp: Date.now(),
+    profiles: {
+      normal: {
+        gridPages: [
+          { id: 'page-custom-1', name: '工作桌面', sortOrder: 0 },
+          { id: 'page-custom-2', name: '娱乐桌面', sortOrder: 1 },
+        ],
+        activeGridPageId: 'page-custom-1',
+        categories: [
+          { id: 'cat-1', name: '工作分类', pageId: 'page-1' }, // Legacy pageId 'page-1' does not exist in gridPages
+          { id: 'cat-2', name: '娱乐分类', pageId: 'page-custom-2' },
+        ],
+        sites: [
+          { id: 's1', title: 'Site 1', url: 'https://1.com', categoryId: 'cat-1', pageId: 'page-1' }, // Legacy pageId 'page-1'
+          { id: 's2', title: 'Site 2', url: 'https://2.com', categoryId: 'cat-1' }, // Missing pageId
+          { id: 's3', title: 'Site 3', url: 'https://3.com', categoryId: 'cat-2', pageId: 'page-custom-2' },
+        ],
+        pageCategoryMap: { 'page-custom-1': 'cat-1', 'page-custom-2': 'cat-2' },
+      },
+    },
+  };
+
+  const res = await importData(JSON.stringify(legacyBackup));
+  assert.equal(res.success, true);
+
+  const state = await loadAppState('normal');
+  assert.equal(state.gridPages?.length, 2);
+  assert.equal(state.activeGridPageId, 'page-custom-1');
+
+  // s1 and s2 should have been normalized to page-custom-1, s3 remains on page-custom-2
+  const s1 = state.sites.find((s) => s.id === 's1');
+  const s2 = state.sites.find((s) => s.id === 's2');
+  const s3 = state.sites.find((s) => s.id === 's3');
+  assert.equal(s1?.pageId, 'page-custom-1');
+  assert.equal(s2?.pageId, 'page-custom-1');
+  assert.equal(s3?.pageId, 'page-custom-2');
+
+  // cat-1 should have been normalized to page-custom-1
+  const cat1 = state.categories.find((c) => c.id === 'cat-1');
+  const cat2 = state.categories.find((c) => c.id === 'cat-2');
+  assert.equal(cat1?.pageId, 'page-custom-1');
+  assert.equal(cat2?.pageId, 'page-custom-2');
+});
+
+test('Grid Pages: Desktop context menu never shows current desktop in Move To options', () => {
+  const gridPages = [
+    { id: 'page-custom-1', name: '桌面 1', sortOrder: 0 },
+    { id: 'page-custom-2', name: '桌面 2', sortOrder: 1 },
+  ];
+
+  // Helper simulating the filter logic used in SiteCard and CategoryTabs
+  function getMoveTargets(site, currentPageId, activeGridPageId) {
+    const currentDesktopId =
+      currentPageId ||
+      (site.pageId && gridPages.some((p) => p.id === site.pageId) ? site.pageId : undefined) ||
+      (activeGridPageId && gridPages.some((p) => p.id === activeGridPageId) ? activeGridPageId : undefined) ||
+      gridPages[0]?.id;
+    return gridPages.filter((p) => p.id !== currentDesktopId);
+  }
+
+  // Case 1: Site physically rendered on Desktop 1 (currentPageId = 'page-custom-1') with legacy pageId = 'page-1'
+  const siteWithLegacyPageId = { id: 's1', title: 'Test', url: 'https://test.com', pageId: 'page-1' };
+  const targets1 = getMoveTargets(siteWithLegacyPageId, 'page-custom-1', 'page-custom-1');
+  assert.equal(targets1.length, 1);
+  assert.equal(targets1[0].id, 'page-custom-2');
+  assert.equal(targets1.some((p) => p.id === 'page-custom-1'), false);
+
+  // Case 2: Site with missing pageId rendered on Desktop 1
+  const siteNoPageId = { id: 's2', title: 'Test', url: 'https://test.com' };
+  const targets2 = getMoveTargets(siteNoPageId, 'page-custom-1', 'page-custom-2');
+  assert.equal(targets2.length, 1);
+  assert.equal(targets2[0].id, 'page-custom-2');
+  assert.equal(targets2.some((p) => p.id === 'page-custom-1'), false);
+
+  // Case 3: Site rendered on Desktop 2
+  const siteOnPage2 = { id: 's3', title: 'Test', url: 'https://test.com', pageId: 'page-custom-2' };
+  const targets3 = getMoveTargets(siteOnPage2, 'page-custom-2', 'page-custom-1');
+  assert.equal(targets3.length, 1);
+  assert.equal(targets3[0].id, 'page-custom-1');
+  assert.equal(targets3.some((p) => p.id === 'page-custom-2'), false);
+});
+
+

@@ -17,6 +17,7 @@ interface SiteCardProps {
   isJustDropped?: boolean;
   gridPages?: GridPage[];
   activeGridPageId?: string;
+  currentPageId?: string;
   onEdit: (site: SiteItem) => void;
   onDelete: (siteId: string) => void;
   onMoveSiteToPage?: (siteId: string, targetPageId: string) => void;
@@ -37,6 +38,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
   isJustDropped,
   gridPages,
   activeGridPageId,
+  currentPageId,
   onEdit,
   onDelete,
   onMoveSiteToPage,
@@ -315,12 +317,19 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
             </button>
 
             {/* Move to another desktop options */}
-            {gridPages && gridPages.length > 1 && onMoveSiteToPage && (
-              <>
-                <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
-                {gridPages
-                  .filter((p) => p.id !== (site.pageId || activeGridPageId || (gridPages && gridPages[0]?.id)))
-                  .map((page) => {
+            {gridPages && gridPages.length > 1 && onMoveSiteToPage && (() => {
+              const currentDesktopId =
+                currentPageId ||
+                (site.pageId && gridPages.some((p) => p.id === site.pageId) ? site.pageId : undefined) ||
+                (activeGridPageId && gridPages.some((p) => p.id === activeGridPageId) ? activeGridPageId : undefined) ||
+                gridPages[0]?.id;
+              const targetPages = gridPages.filter((p) => p.id !== currentDesktopId);
+              if (targetPages.length === 0) return null;
+
+              return (
+                <>
+                  <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
+                  {targetPages.map((page) => {
                     const originalIdx = gridPages.findIndex((gp) => gp.id === page.id);
                     const pageDisplayName = page.name || `${t('defaultDesktopName', settings.language)} ${originalIdx + 1}`;
                     return (
@@ -345,9 +354,10 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
                       </button>
                     );
                   })}
-                <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
-              </>
-            )}
+                  <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
+                </>
+              );
+            })()}
 
             <button
               type="button"
