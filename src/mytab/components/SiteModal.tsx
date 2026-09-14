@@ -31,7 +31,10 @@ export const SiteModal: React.FC<SiteModalProps> = ({
   onSave,
 }) => {
   const isBoard = settings.layoutMode === 'board';
-  const defaultPageId = activeGridPageId || gridPages?.[0]?.id || 'page-1';
+  const defaultPageId =
+    (activeGridPageId && gridPages?.some((p) => p.id === activeGridPageId) ? activeGridPageId : undefined) ||
+    gridPages?.[0]?.id ||
+    'page-1';
 
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
@@ -45,8 +48,8 @@ export const SiteModal: React.FC<SiteModalProps> = ({
     () =>
       isBoard
         ? categories.filter((c) => c.id !== 'all')
-        : categories.filter((c) => c.id !== 'all' && (c.pageId || defaultPageId) === pageId),
-    [isBoard, categories, pageId, defaultPageId]
+        : categories.filter((c) => c.id !== 'all' && (c.pageId && gridPages?.some((p) => p.id === c.pageId) ? c.pageId : defaultPageId) === pageId),
+    [isBoard, categories, pageId, defaultPageId, gridPages]
   );
 
   // Initialize form fields only when modal opens or editingSite changes
@@ -57,7 +60,10 @@ export const SiteModal: React.FC<SiteModalProps> = ({
       setUrl(editingSite.url || '');
       setTitle(editingSite.title || '');
       setIcon(editingSite.icon || '');
-      setPageId(editingSite.pageId || defaultPageId);
+      const validSitePageId = (editingSite.pageId && gridPages?.some((p) => p.id === editingSite.pageId))
+        ? editingSite.pageId
+        : defaultPageId;
+      setPageId(validSitePageId);
       setCategoryId(editingSite.categoryId || 'all');
     } else {
       const initialPageId = defaultPageId;

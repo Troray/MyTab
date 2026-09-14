@@ -440,14 +440,33 @@ export async function loadAppState(targetProfileId?: ProfileId): Promise<AppStat
     }
   }
 
+  const effectiveGridPages = currentProfile.gridPages && currentProfile.gridPages.length > 0 ? currentProfile.gridPages : DEFAULT_GRID_PAGES;
+  const validPageIds = new Set(effectiveGridPages.map((p) => p.id));
+  const fallbackPageId = (currentProfile.activeGridPageId && validPageIds.has(currentProfile.activeGridPageId)
+    ? currentProfile.activeGridPageId
+    : effectiveGridPages[0]?.id) || 'page-1';
+
+  const normalizedSites = (currentProfile.sites || []).map((s) => {
+    if (!s.pageId || !validPageIds.has(s.pageId)) {
+      return { ...s, pageId: fallbackPageId };
+    }
+    return s;
+  });
+  const normalizedCategories = (currentProfile.categories || []).map((c) => {
+    if (!c.pageId || !validPageIds.has(c.pageId)) {
+      return { ...c, pageId: fallbackPageId };
+    }
+    return c;
+  });
+
   return {
     profileId,
-    sites: currentProfile.sites,
-    categories: currentProfile.categories,
+    sites: normalizedSites,
+    categories: normalizedCategories,
     activeCategoryId: currentProfile.activeCategoryId,
     pageCategoryMap: currentProfile.pageCategoryMap || {},
-    gridPages: currentProfile.gridPages && currentProfile.gridPages.length > 0 ? currentProfile.gridPages : DEFAULT_GRID_PAGES,
-    activeGridPageId: currentProfile.activeGridPageId || (currentProfile.gridPages?.[0]?.id) || 'page-1',
+    gridPages: effectiveGridPages,
+    activeGridPageId: fallbackPageId,
     settings: effectiveSettings,
     webdav: { ...DEFAULT_WEBDAV_CONFIG, ...webdav },
     git: normalizedGit,
@@ -812,14 +831,29 @@ export async function importData(
             : (currentContainer.profiles[destId]?.gridPages || DEFAULT_GRID_PAGES);
           const preferredPageId = p.activeGridPageId || restoredPages[0]?.id || 'page-1';
           const isValidPage = restoredPages.some((page: GridPage) => page && page.id === preferredPageId);
+          const validGridPageIds = new Set(restoredPages.map((page: GridPage) => page.id));
+          const fallbackPageId = isValidPage ? preferredPageId : (restoredPages[0]?.id || 'page-1');
+
+          const normalizedSites = p.sites.map((s: SiteItem) => {
+            if (!s.pageId || !validGridPageIds.has(s.pageId)) {
+              return { ...s, pageId: fallbackPageId };
+            }
+            return s;
+          });
+          const normalizedCats = p.categories.map((c: Category) => {
+            if (!c.pageId || !validGridPageIds.has(c.pageId)) {
+              return { ...c, pageId: fallbackPageId };
+            }
+            return c;
+          });
 
           updatedProfiles[destId] = {
-            sites: p.sites,
-            categories: p.categories,
+            sites: normalizedSites,
+            categories: normalizedCats,
             activeCategoryId: isValidCat ? (p.activeCategoryId || 'all') : 'all',
             gridPages: restoredPages,
-            activeGridPageId: isValidPage ? preferredPageId : (restoredPages[0]?.id || 'page-1'),
-            pageCategoryMap: p.pageCategoryMap && typeof p.pageCategoryMap === 'object' ? p.pageCategoryMap : { 'page-1': 'all' },
+            activeGridPageId: fallbackPageId,
+            pageCategoryMap: p.pageCategoryMap && typeof p.pageCategoryMap === 'object' ? p.pageCategoryMap : { [fallbackPageId]: 'all' },
             ...(p.settings ? { settings: p.settings } : {}),
             ...(p.wallpaper ? { wallpaper: p.wallpaper } : {}),
           };
@@ -873,15 +907,30 @@ export async function importData(
         : (prev.gridPages || DEFAULT_GRID_PAGES);
       const preferredPageId = prev.activeGridPageId || restoredPages[0]?.id || 'page-1';
       const isValidPage = restoredPages.some((page: GridPage) => page && page.id === preferredPageId);
+      const validGridPageIds = new Set(restoredPages.map((page: GridPage) => page.id));
+      const fallbackPageId = isValidPage ? preferredPageId : (restoredPages[0]?.id || 'page-1');
+
+      const normalizedSites = (data.sites || []).map((s: SiteItem) => {
+        if (!s.pageId || !validGridPageIds.has(s.pageId)) {
+          return { ...s, pageId: fallbackPageId };
+        }
+        return s;
+      });
+      const normalizedCats = newCats.map((c: Category) => {
+        if (!c.pageId || !validGridPageIds.has(c.pageId)) {
+          return { ...c, pageId: fallbackPageId };
+        }
+        return c;
+      });
 
       return {
         ...prev,
-        categories: newCats,
-        sites: data.sites,
+        categories: normalizedCats,
+        sites: normalizedSites,
         activeCategoryId: isValidCat ? prev.activeCategoryId : 'all',
         gridPages: restoredPages,
-        activeGridPageId: isValidPage ? preferredPageId : (restoredPages[0]?.id || 'page-1'),
-        pageCategoryMap: prev.pageCategoryMap || { 'page-1': 'all' },
+        activeGridPageId: fallbackPageId,
+        pageCategoryMap: prev.pageCategoryMap || { [fallbackPageId]: 'all' },
       };
     });
 

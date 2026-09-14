@@ -574,12 +574,22 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
             </button>
 
             {/* Move to another desktop options */}
-            {gridPages && gridPages.length > 1 && onMoveCategoryToPage && (
-              <>
-                <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
-                {gridPages
-                  .filter((p) => p.id !== (activeMenu.category.pageId || activeGridPageId || (gridPages && gridPages[0]?.id)))
-                  .map((page) => {
+            {gridPages && gridPages.length > 1 && onMoveCategoryToPage && (() => {
+              const currentCatPageId =
+                (activeMenu.category.pageId && gridPages.some((p) => p.id === activeMenu.category.pageId)
+                  ? activeMenu.category.pageId
+                  : undefined) ||
+                (activeGridPageId && gridPages.some((p) => p.id === activeGridPageId)
+                  ? activeGridPageId
+                  : undefined) ||
+                gridPages[0]?.id;
+              const targetPages = gridPages.filter((p) => p.id !== currentCatPageId);
+              if (targetPages.length === 0) return null;
+
+              return (
+                <>
+                  <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
+                  {targetPages.map((page) => {
                     const originalIdx = gridPages.findIndex((gp) => gp.id === page.id);
                     const pageDisplayName = page.name || `${t('defaultDesktopName', settings.language)} ${originalIdx + 1}`;
                     return (
@@ -605,9 +615,10 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
                       </button>
                     );
                   })}
-                <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
-              </>
-            )}
+                  <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
+                </>
+              );
+            })()}
 
             <button
               type="button"
