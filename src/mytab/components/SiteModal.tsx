@@ -36,21 +36,54 @@ export const SiteModal: React.FC<SiteModalProps> = ({
     gridPages?.[0]?.id ||
     'page-1';
 
-  const [url, setUrl] = useState('');
-  const [title, setTitle] = useState('');
-  const [icon, setIcon] = useState('');
-  const [pageId, setPageId] = useState(defaultPageId);
-  const [categoryId, setCategoryId] = useState('all');
+  const siteCategory = editingSite?.categoryId ? categories.find((c) => c.id === editingSite.categoryId) : undefined;
+  const initialPageId = editingSite
+    ? (editingSite.pageId && gridPages?.some((p) => p.id === editingSite.pageId)
+        ? editingSite.pageId
+        : (siteCategory?.pageId && gridPages?.some((p) => p.id === siteCategory.pageId)
+            ? siteCategory.pageId
+            : defaultPageId))
+    : defaultPageId;
+
+  const [url, setUrl] = useState(() => editingSite?.url || '');
+  const [title, setTitle] = useState(() => editingSite?.title || '');
+  const [icon, setIcon] = useState(() => editingSite?.icon || '');
+  const [pageId, setPageId] = useState(() => initialPageId);
+
+  const availableCategories = useMemo(() => {
+    if (isBoard) {
+      return categories.filter((c) => c.id !== 'all');
+    }
+    const pageCats = categories.filter(
+      (c) => c.id !== 'all' && (c.pageId && gridPages?.some((p) => p.id === c.pageId) ? c.pageId : defaultPageId) === pageId
+    );
+    // Ensure the site's current category is always present in options so it displays correctly
+    if (editingSite?.categoryId && editingSite.categoryId !== 'all' && !pageCats.some((c) => c.id === editingSite.categoryId)) {
+      const currentCat = categories.find((c) => c.id === editingSite.categoryId && c.id !== 'all');
+      if (currentCat) {
+        return [...pageCats, currentCat];
+      }
+    }
+    return pageCats;
+  }, [isBoard, categories, pageId, defaultPageId, gridPages, editingSite?.categoryId]);
+
+  const initialCategoryId = useMemo(() => {
+    if (editingSite?.categoryId) {
+      return editingSite.categoryId;
+    }
+    if (
+      activeCategoryId !== 'all' &&
+      activeCategoryId !== 'uncategorized' &&
+      availableCategories.some((c) => c.id === activeCategoryId)
+    ) {
+      return activeCategoryId;
+    }
+    return availableCategories[0]?.id || 'all';
+  }, [editingSite?.categoryId, activeCategoryId, availableCategories]);
+
+  const [categoryId, setCategoryId] = useState<string>(() => initialCategoryId);
   const [isFetching, setIsFetching] = useState(false);
   const [fetchMsg, setFetchMsg] = useState('');
-
-  const availableCategories = useMemo(
-    () =>
-      isBoard
-        ? categories.filter((c) => c.id !== 'all')
-        : categories.filter((c) => c.id !== 'all' && (c.pageId && gridPages?.some((p) => p.id === c.pageId) ? c.pageId : defaultPageId) === pageId),
-    [isBoard, categories, pageId, defaultPageId, gridPages]
-  );
 
   // Initialize form fields only when modal opens or editingSite changes
   useEffect(() => {
@@ -62,42 +95,48 @@ export const SiteModal: React.FC<SiteModalProps> = ({
       setIcon(editingSite.icon || '');
       const validSitePageId = (editingSite.pageId && gridPages?.some((p) => p.id === editingSite.pageId))
         ? editingSite.pageId
-        : defaultPageId;
+        : (siteCategory?.pageId && gridPages?.some((p) => p.id === siteCategory.pageId)
+            ? siteCategory.pageId
+            : defaultPageId);
       setPageId(validSitePageId);
       setCategoryId(editingSite.categoryId || 'all');
     } else {
-      const initialPageId = defaultPageId;
-      const initialAvailableCats = isBoard
+      const initialPage = defaultPageId;
+      const initialCats = isBoard
         ? categories.filter((c) => c.id !== 'all')
-        : categories.filter((c) => c.id !== 'all' && (c.pageId || defaultPageId) === initialPageId);
-      const initialCatId =
+        : categories.filter((c) => c.id !== 'all' && (c.pageId && gridPages?.some((p) => p.id === c.pageId) ? c.pageId : defaultPageId) === initialPage);
+      const initialCat =
         activeCategoryId !== 'all' &&
         activeCategoryId !== 'uncategorized' &&
-        initialAvailableCats.some((c) => c.id === activeCategoryId)
+        initialCats.some((c) => c.id === activeCategoryId)
           ? activeCategoryId
-          : (initialAvailableCats[0]?.id || 'all');
+          : (initialCats[0]?.id || 'all');
 
       setUrl('');
       setTitle('');
       setIcon('');
-      setPageId(initialPageId);
-      setCategoryId(initialCatId);
+      setPageId(initialPage);
+      setCategoryId(initialCat);
     }
     setFetchMsg('');
-  }, [editingSite, isOpen, defaultPageId, activeCategoryId, categories, isBoard]);
+  }, [editingSite, isOpen, defaultPageId, activeCategoryId, categories, isBoard, gridPages, siteCategory]);
 
-  // Keep category synchronized when the user switches desktop page inside modal (grid mode only)
-  useEffect(() => {
-    if (!isOpen || isBoard) return;
-
-    if (availableCategories.length > 0) {
-      if (!availableCategories.some((c) => c.id === categoryId)) {
-        setCategoryId(availableCategories[0].id);
+  // Keep category synchronized when the user explicitly switches desktop page inside modal (grid mode only)
+  const handlePageChange = (newPageId: string) => {
+    setPageId(newPageId);
+    if (!isBoard) {
+      const newAvailable = categories.filter(
+        (c) => c.id !== 'all' && (c.pageId && gridPages?.some((p) => p.id === c.pageId) ? c.pageId : defaultPageId) === newPageId
+      );
+      if (newAvailable.length > 0) {
+        if (!newAvailable.some((c) => c.id === categoryId)) {
+          setCategoryId(newAvailable[0].id);
+        }
+      } else {
+        setCategoryId('all');
       }
-    } else if (categoryId !== 'all') {
-      setCategoryId('all');
     }
-  }, [isOpen, isBoard, pageId, availableCategories, categoryId]);
+  };
 
  if (!isOpen) return null;
 
@@ -365,7 +404,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
             </label>
             <CustomSelect
               value={pageId}
-              onChange={setPageId}
+              onChange={handlePageChange}
               isLight={isLight}
               options={gridPages.map((page, idx) => ({
                 value: page.id,

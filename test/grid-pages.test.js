@@ -561,4 +561,60 @@ test('Grid Pages: Desktop context menu never shows current desktop in Move To op
   assert.equal(targets3.some((p) => p.id === 'page-custom-2'), false);
 });
 
+test('Grid Pages: SiteModal category resolution correctly preserves site categoryId', () => {
+  const categories = [
+    { id: 'cloud', name: 'Cloud', sortOrder: 0, pageId: 'page-1' },
+    { id: 'news', name: 'News', sortOrder: 1, pageId: 'page-1' },
+    { id: 'media', name: 'Media', sortOrder: 2, pageId: 'page-1' },
+  ];
+  const gridPages = [{ id: 'page-1', name: '桌面 1', sortOrder: 0 }];
+  const defaultPageId = 'page-1';
+
+  function resolveModalCategory(editingSite, activeCategoryId) {
+    const siteCategory = editingSite?.categoryId ? categories.find((c) => c.id === editingSite.categoryId) : undefined;
+    const initialPageId = editingSite
+      ? (editingSite.pageId && gridPages.some((p) => p.id === editingSite.pageId))
+        ? editingSite.pageId
+        : (siteCategory?.pageId && gridPages.some((p) => p.id === siteCategory.pageId))
+          ? siteCategory.pageId
+          : defaultPageId
+      : defaultPageId;
+
+    const pageCats = categories.filter(
+      (c) => c.id !== 'all' && (c.pageId && gridPages.some((p) => p.id === c.pageId) ? c.pageId : defaultPageId) === initialPageId
+    );
+    const availableCategories = (editingSite?.categoryId && editingSite.categoryId !== 'all' && !pageCats.some((c) => c.id === editingSite.categoryId))
+      ? [...pageCats, categories.find((c) => c.id === editingSite.categoryId && c.id !== 'all')].filter(Boolean)
+      : pageCats;
+
+    if (editingSite?.categoryId) {
+      return { resolvedCategoryId: editingSite.categoryId, availableCategories };
+    }
+    if (activeCategoryId !== 'all' && activeCategoryId !== 'uncategorized' && availableCategories.some((c) => c.id === activeCategoryId)) {
+      return { resolvedCategoryId: activeCategoryId, availableCategories };
+    }
+    return { resolvedCategoryId: availableCategories[0]?.id || 'all', availableCategories };
+  }
+
+  // Editing a site in "news" category MUST resolve to "news", never "cloud"
+  const newsSite = { id: 'site-news-1', title: 'BBC News', url: 'https://bbc.com', categoryId: 'news' };
+  const resNews = resolveModalCategory(newsSite, 'all');
+  assert.equal(resNews.resolvedCategoryId, 'news');
+  assert.ok(resNews.availableCategories.some((c) => c.id === 'news'));
+
+  // Editing a site in "media" category MUST resolve to "media", never "cloud"
+  const mediaSite = { id: 'site-media-1', title: 'YouTube', url: 'https://youtube.com', categoryId: 'media' };
+  const resMedia = resolveModalCategory(mediaSite, 'all');
+  assert.equal(resMedia.resolvedCategoryId, 'media');
+  assert.ok(resMedia.availableCategories.some((c) => c.id === 'media'));
+
+  // Adding a new site while on "media" tab defaults to "media"
+  const resAddOnMedia = resolveModalCategory(null, 'media');
+  assert.equal(resAddOnMedia.resolvedCategoryId, 'media');
+
+  // Adding a new site while on "All" tab defaults to first available category
+  const resAddOnAll = resolveModalCategory(null, 'all');
+  assert.equal(resAddOnAll.resolvedCategoryId, 'cloud');
+});
+
 
