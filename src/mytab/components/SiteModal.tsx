@@ -5,7 +5,7 @@ import { SiteItem, ThemeSettings, Category, GridPage } from '../../types';
 import { fetchSiteMetadata, generateFallbackIcon, normalizeUrl, fileToBase64Icon, urlToBase64Icon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
 import { CustomSelect } from './CustomSelect';
-import { isLightMode } from '../../utils/constants';
+import { isLightMode, getCategoryDisplayName, getGridPageDisplayName } from '../../utils/constants';
 
 interface SiteModalProps {
   isOpen: boolean;
@@ -347,7 +347,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
               isLight={isLight}
               options={availableCategories.map((cat) => ({
                 value: cat.id,
-                label: cat.name,
+                label: getCategoryDisplayName(cat, settings.language),
               }))}
             />
           </div>
@@ -369,7 +369,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
               isLight={isLight}
               options={gridPages.map((page, idx) => ({
                 value: page.id,
-                label: page.name || `${t('defaultDesktopName', settings.language)} ${idx + 1}`,
+                label: getGridPageDisplayName(page, idx, settings.language),
               }))}
             />
           </div>

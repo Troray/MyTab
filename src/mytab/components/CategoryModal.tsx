@@ -5,9 +5,8 @@ import { Category, GridPage, ThemeSettings } from '../../types';
 import { ConfirmModal } from './ConfirmModal';
 import { ToggleSwitch } from './ToggleSwitch';
 import { CustomSelect } from './CustomSelect';
-import { DEFAULT_CATEGORY_COLORS } from '../../utils/constants';
+import { DEFAULT_CATEGORY_COLORS, isLightMode, getGridPageDisplayName } from '../../utils/constants';
 import { t } from '../../utils/i18n';
-import { isLightMode } from '../../utils/constants';
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -241,7 +240,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   isLight={isLight}
                   options={gridPages.map((page, idx) => ({
                     value: page.id,
-                    label: page.name || `${t('defaultDesktopName', settings.language)} ${idx + 1}`,
+                    label: getGridPageDisplayName(page, idx, settings.language),
                   }))}
                 />
               </div>

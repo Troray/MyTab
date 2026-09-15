@@ -267,9 +267,10 @@ export const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
       duplicateStrategy,
       selectedFolderIds,
       targetProfileId: appState.profileId,
+      language,
     };
     return calculateImportPreview(rootNodes, options, appState.sites);
-  }, [rootNodes, strategy, duplicateStrategy, selectedFolderIds, appState.sites, appState.profileId]);
+  }, [rootNodes, strategy, duplicateStrategy, selectedFolderIds, appState.sites, appState.profileId, language]);
 
   // Execute import
   const handleExecuteImport = async () => {
@@ -281,6 +282,7 @@ export const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
       duplicateStrategy,
       selectedFolderIds,
       targetProfileId: appState.profileId,
+      language,
     };
 
     const result = await executeBookmarkImport(rootNodes, options);

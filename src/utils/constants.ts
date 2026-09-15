@@ -1,4 +1,5 @@
-import { Category, SiteItem, SearchEngine, ThemeSettings, WebdavConfig, GitSyncConfig, GitPlatformConfig, GridPage } from '../types';
+import { Category, SiteItem, SearchEngine, ThemeSettings, WebdavConfig, GitSyncConfig, GitPlatformConfig, GridPage, PresetGradient } from '../types';
+import { t, Locale } from '../locales';
 
 export const DEFAULT_SEARCH_ENGINES: SearchEngine[] = [
   {
@@ -14,6 +15,7 @@ export const DEFAULT_SEARCH_ENGINES: SearchEngine[] = [
   {
     id: 'baidu',
     name: '百度',
+    nameKey: 'engineBaidu',
     urlPattern: 'https://www.baidu.com/s?wd=%s',
   },
   {
@@ -34,10 +36,10 @@ export const DEFAULT_SEARCH_ENGINES: SearchEngine[] = [
 ];
 
 export const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'all', name: '全部', sortOrder: 0, isDefault: true },
-  { id: 'work', name: '工作与开发', sortOrder: 1 },
-  { id: 'tools', name: '常用工具', sortOrder: 2 },
-  { id: 'media', name: '设计与灵感', sortOrder: 3 },
+  { id: 'all', name: '全部', nameKey: 'allCategories', sortOrder: 0, isDefault: true },
+  { id: 'work', name: '工作与开发', nameKey: 'categoryWork', sortOrder: 1 },
+  { id: 'tools', name: '常用工具', nameKey: 'categoryTools', sortOrder: 2 },
+  { id: 'media', name: '设计与灵感', nameKey: 'categoryMedia', sortOrder: 3 },
 ];
 
 export const DEFAULT_GRID_PAGES: GridPage[] = [
@@ -68,6 +70,7 @@ export const DEFAULT_SITES: SiteItem[] = [
   {
     id: 'site-weibo',
     title: '微博',
+    titleKey: 'siteWeibo',
     url: 'https://weibo.com',
     icon: 'data:image/png;base64,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',
     categoryId: 'media',
@@ -78,8 +81,9 @@ export const DEFAULT_SITES: SiteItem[] = [
   {
     id: 'site-bilibili',
     title: '哔哩哔哩',
+    titleKey: 'siteBilibili',
     url: 'https://www.bilibili.com',
-    icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACVklEQVRYR+1WQWsTQRT+3jamKYqnCrb1IiKbBKGeVLwVT4meA0JMxJSiB+tv0YtSFJoYEHLW5mZvam8qks3Sgxdte/CiKGk02fFNN2mycbu7A2NrwTktu99873vfzrz3CAe8yDf+qojhU/MxHGRB4iWMIwvIn/2mpLW6fhzOryWAroDwAqeS85ijziiHv4CyVQTE8i6Y6BWMWCayiJ3gnTqEuDwISDdRTJUjCmjeApwnHnBUEb7BmYmMeRSSXk752tfWmohju7nqzUCi2YlEPIvcma+++/YMLvcl55Cjn9EckKhAMh8RqviekoEDO1nbtznr63zwzkHgmNKhCwMTvkPQB3bxGRLmo74broCaPYNW9zk/nQ/j0fT9LSbGriFnfibIzFvW2j4Gd3MgeofJ2EVC2brLV+6BpswUaWhRCnjNAi4N7azDQAk30puKbMHwp40pLmzyGmaGasMbQqXR5gMX331pYFp78D65K2JjSECbHWgIj/Ri2r826LJjJN4hEFC1M3B6ZdkwSsib9UAzwvDKDlSsDS5OU72rs4lCajpQQBheWYDqGQnDHz4Bw5YCWyim3d+x1wrDKztQsbMQXS4g1OWevoCCuRIsIASvLEDX/e/z/Bfw7zmwn82o9vEkWq1Bl+Up6c92TFhBYqKE3OktredPTl3b3SXuvNmRdtxchHDuaw0WlYyMe5zv+ji+dNa43s9G3acHR+9xInbhYIZSOQ8mjKvuUNpfcjht23fYiTyPaCn+V0f1ZNpjIfzgamrxMFrFuPnQO5ZrjaRG9nfHrwhafgPirzkOAcnEFwAAAABJRU5ErkJggg==',
+    icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACVklEQVRYR+1WQWsTQRT+3jamKYqnCrb1IiKbBKGeVLwVT4meA0JMxJSiB+tv0YtSFJoYEHLW5mZvam8qks3Sgxdte/CiKGk02fFNN2mycbu7A2NrwTktu99873vfzrz3CAe8yDf+qojhU/MxHGRB4iWMIwvIn/2mpLW6fhzOryWAroDwAqeS85ijziiHv4CyVQTE8i6Y6BWMWCayiJ3gnTqEuDwISDdRTJUjCmjeApwnHnBUEb7BmYmMeRSSXk752tfWmohju7nqzUCi2YlEPIvcma+++/YMLvcl55Cjn9EckKhAMh8RqviekoEDO1nbtznr63zwzkHgmNKhCwMTvkPQB3bxGRLmo74broCaPYNW9zk/nQ/j0fT9LSbGriFnfibIzFvW2j4Gd3MgeofJ2EVC2brLV+6BpswUaWhRCnjNAi4N7azDQAk30puKbMHwp40LmzyGmaGasMbQqXR5gMX331pYFp78D65K2JjSECbHWgIj/Ri2r826LJjJN4hEFC1M3B6ZdkwSsib9UAzwvDKDlSsDS5OU72rs4lCajpQQBheWYDqGQnDHz4Bw5YCWyim3d+x1wrDKztQsbMQXS4g1OWevoCCuRIsIASvLEDX/e/z/Bfw7zmwn82o9vEkWq1Bl+Up6c92TFhBYqKE3OktredPTl3b3SXuvNmRdtxchHDuaw0WlYyMe5zv+ji+dNa43s9G3acHR+9xInbhYIZSOQ8mjKvuUNpfcjht23fYiTyPaCn+V0f1ZNpjIfzgamrxMFrFuPnQO5ZrjaRG9nfHrwhafgPirzkOAcnEFwAAAABJRU5ErkJggg==',
     categoryId: 'media',
     sortOrder: 3,
     createdAt: Date.now(),
@@ -97,18 +101,73 @@ export const DEFAULT_SITES: SiteItem[] = [
   }
 ];
 
-export const PRESET_GRADIENTS = [
-  { name: '暗岩流沙', value: 'conic-gradient(from 210deg, #c5bbb8 0.000deg, #c5bbb8 24.000deg, #b8b5b8 calc(24.000deg + 0.1deg), #b8b5b8 48.000deg, #a9afb7 calc(48.000deg + 0.1deg), #a9afb7 72.000deg, #9aa8b5 calc(72.000deg + 0.1deg), #9aa8b5 96.000deg, #8ba1b3 calc(96.000deg + 0.1deg), #8ba1b3 120.000deg, #7d98af calc(120.000deg + 0.1deg), #7d98af 144.000deg, #7090ab calc(144.000deg + 0.1deg), #7090ab 168.000deg, #6587a6 calc(168.000deg + 0.1deg), #6587a6 192.000deg, #5c7ea1 calc(192.000deg + 0.1deg), #5c7ea1 216.000deg, #55759b calc(216.000deg + 0.1deg), #55759b 240.000deg, #516c94 calc(240.000deg + 0.1deg), #516c94 264.000deg, #4f638d calc(264.000deg + 0.1deg), #4f638d 288.000deg, #505a85 calc(288.000deg + 0.1deg), #505a85 312.000deg, #54537d calc(312.000deg + 0.1deg), #54537d 336.000deg, #5b4b74 calc(336.000deg + 0.1deg) 360.000deg)' },
-  { name: '琥珀金秋', value: 'conic-gradient(from 90deg, #bb7702 0.000deg, #bb7702 27.692deg, #ca861b calc(27.692deg + 0.1deg), #ca861b 55.385deg, #d29336 calc(55.385deg + 0.1deg), #d29336 83.077deg, #d29e4f calc(83.077deg + 0.1deg), #d29e4f 110.769deg, #cba566 calc(110.769deg + 0.1deg), #cba566 138.462deg, #bca979 calc(138.462deg + 0.1deg), #bca979 166.154deg, #a8aa88 calc(166.154deg + 0.1deg), #a8aa88 193.846deg, #92a690 calc(193.846deg + 0.1deg), #92a690 221.538deg, #7b9f92 calc(221.538deg + 0.1deg), #7b9f92 249.231deg, #67948d calc(249.231deg + 0.1deg), #67948d 276.923deg, #588782 calc(276.923deg + 0.1deg), #588782 304.615deg, #4f7871 calc(304.615deg + 0.1deg), #4f7871 332.308deg, #4f695c calc(332.308deg + 0.1deg) 360.000deg)' },
-  { name: '赤陶青瓷', value: 'linear-gradient(45deg, #c2615d 0.000%, #c2615d 7.692%, #c1625e calc(7.692% + 1px), #c1625e 15.385%, #bd6761 calc(15.385% + 1px), #bd6761 23.077%, #b76f66 calc(23.077% + 1px), #b76f66 30.769%, #ae796e calc(30.769% + 1px), #ae796e 38.462%, #a38478 calc(38.462% + 1px), #a38478 46.154%, #979184 calc(46.154% + 1px), #979184 53.846%, #8b9d90 calc(53.846% + 1px), #8b9d90 61.538%, #7fa99b calc(61.538% + 1px), #7fa99b 69.231%, #75b3a6 calc(69.231% + 1px), #75b3a6 76.923%, #6cbab0 calc(76.923% + 1px), #6cbab0 84.615%, #66bfb8 calc(84.615% + 1px), #66bfb8 92.308%, #62c0bd calc(92.308% + 1px) 100.000%)' },
-  { name: '霓虹琉璃', value: 'conic-gradient(from 45deg, #88deba 0.000deg, #88deba 27.692deg, #79dfc5 calc(27.692deg + 0.1deg), #79dfc5 55.385deg, #70d9d1 calc(55.385deg + 0.1deg), #70d9d1 83.077deg, #6dcfdc calc(83.077deg + 0.1deg), #6dcfdc 110.769deg, #72c1e5 calc(110.769deg + 0.1deg), #72c1e5 138.462deg, #7db1ea calc(138.462deg + 0.1deg), #7db1ea 166.154deg, #8ca1ea calc(166.154deg + 0.1deg), #8ca1ea 193.846deg, #9f93e6 calc(193.846deg + 0.1deg), #9f93e6 221.538deg, #b389de calc(221.538deg + 0.1deg), #b389de 249.231deg, #c683d3 calc(249.231deg + 0.1deg), #c683d3 276.923deg, #d584c7 calc(276.923deg + 0.1deg), #d584c7 304.615deg, #de89bc calc(304.615deg + 0.1deg), #de89bc 332.308deg, #e194b3 calc(332.308deg + 0.1deg) 360.000deg)' },
-  { name: '灰蓝晕影', value: 'radial-gradient(circle at 50% 50%, #c5bbb8 0.000%, #b8b5b8 7.143%, #a9afb7 14.286%, #9aa8b5 21.429%, #8ba1b3 28.571%, #7d98af 35.714%, #7090ab 42.857%, #6587a6 50.000%, #5c7ea1 57.143%, #55759b 64.286%, #516c94 71.429%, #4f638d 78.571%, #505a85 85.714%, #54537d 92.857%, #5b4b74 100.000%)' },
-  { name: '抹茶奶栗', value: 'radial-gradient(circle at 50% 50%, #dac5b3 0.000%, #acb6a4 25.000%, #799d8d 50.000%, #567f70 75.000%, #515f4f 100.000%)' },
-  { name: '鸢尾柔暮', value: 'radial-gradient(circle at 50% 50%, #989ecb 0.000%, #8ca4c6 16.667%, #92a9be 33.333%, #a7acb4 50.000%, #c4afa8 66.667%, #dfaf9d 83.333%, #eeae93 100.000%)' },
-  { name: '樱花冰沙', value: 'radial-gradient(circle at 50% 50%, #fcb8e2 0.000%, #ffc8ed 20.000%, #fbe8f9 40.000%, #e8f9ff 60.000%, #d0ecff 80.000%, #b8cdfa 100.000%)' },
-  { name: '黑耀星环', value: 'conic-gradient(from 90deg, #05050a 0.000deg, #090a0e 30.000deg, #0d0e12 60.000deg, #121316 90.000deg, #16171a 120.000deg, #1a1b1e 150.000deg, #1e1f22 180.000deg, #222326 210.000deg, #26272a 240.000deg, #292a2d 270.000deg, #2c2d30 300.000deg, #2e2f33 330.000deg, #303135 360.000deg)' },
-  { name: '深空灰烬', value: 'linear-gradient(135deg, #292832 0.000%, #272530 8.333%, #24222e 16.667%, #201f2b 25.000%, #1c1b27 33.333%, #181624 41.667%, #141220 50.000%, #100e1c 58.333%, #0c0a18 66.667%, #080614 75.000%, #050311 83.333%, #02000e 91.667%, #00000b 100.000%)' },
+export const PRESET_GRADIENTS: PresetGradient[] = [
+  { name: '暗岩流沙', nameKey: 'gradientDarkSand', value: 'conic-gradient(from 210deg, #c5bbb8 0.000deg, #c5bbb8 24.000deg, #b8b5b8 calc(24.000deg + 0.1deg), #b8b5b8 48.000deg, #a9afb7 calc(48.000deg + 0.1deg), #a9afb7 72.000deg, #9aa8b5 calc(72.000deg + 0.1deg), #9aa8b5 96.000deg, #8ba1b3 calc(96.000deg + 0.1deg), #8ba1b3 120.000deg, #7d98af calc(120.000deg + 0.1deg), #7d98af 144.000deg, #7090ab calc(144.000deg + 0.1deg), #7090ab 168.000deg, #6587a6 calc(168.000deg + 0.1deg), #6587a6 192.000deg, #5c7ea1 calc(192.000deg + 0.1deg), #5c7ea1 216.000deg, #55759b calc(216.000deg + 0.1deg), #55759b 240.000deg, #516c94 calc(240.000deg + 0.1deg), #516c94 264.000deg, #4f638d calc(264.000deg + 0.1deg), #4f638d 288.000deg, #505a85 calc(288.000deg + 0.1deg), #505a85 312.000deg, #54537d calc(312.000deg + 0.1deg), #54537d 336.000deg, #5b4b74 calc(336.000deg + 0.1deg) 360.000deg)' },
+  { name: '琥珀金秋', nameKey: 'gradientAmberAutumn', value: 'conic-gradient(from 90deg, #bb7702 0.000deg, #bb7702 27.692deg, #ca861b calc(27.692deg + 0.1deg), #ca861b 55.385deg, #d29336 calc(55.385deg + 0.1deg), #d29336 83.077deg, #d29e4f calc(83.077deg + 0.1deg), #d29e4f 110.769deg, #cba566 calc(110.769deg + 0.1deg), #cba566 138.462deg, #bca979 calc(138.462deg + 0.1deg), #bca979 166.154deg, #a8aa88 calc(166.154deg + 0.1deg), #a8aa88 193.846deg, #92a690 calc(193.846deg + 0.1deg), #92a690 221.538deg, #7b9f92 calc(221.538deg + 0.1deg), #7b9f92 249.231deg, #67948d calc(249.231deg + 0.1deg), #67948d 276.923deg, #588782 calc(276.923deg + 0.1deg), #588782 304.615deg, #4f7871 calc(304.615deg + 0.1deg), #4f7871 332.308deg, #4f695c calc(332.308deg + 0.1deg) 360.000deg)' },
+  { name: '赤陶青瓷', nameKey: 'gradientTerracottaCeladon', value: 'linear-gradient(45deg, #c2615d 0.000%, #c2615d 7.692%, #c1625e calc(7.692% + 1px), #c1625e 15.385%, #bd6761 calc(15.385% + 1px), #bd6761 23.077%, #b76f66 calc(23.077% + 1px), #b76f66 30.769%, #ae796e calc(30.769% + 1px), #ae796e 38.462%, #a38478 calc(38.462% + 1px), #a38478 46.154%, #979184 calc(46.154% + 1px), #979184 53.846%, #8b9d90 calc(53.846% + 1px), #8b9d90 61.538%, #7fa99b calc(61.538% + 1px), #7fa99b 69.231%, #75b3a6 calc(69.231% + 1px), #75b3a6 76.923%, #6cbab0 calc(76.923% + 1px), #6cbab0 84.615%, #66bfb8 calc(84.615% + 1px), #66bfb8 92.308%, #62c0bd calc(92.308% + 1px) 100.000%)' },
+  { name: '霓虹琉璃', nameKey: 'gradientNeonGlaze', value: 'conic-gradient(from 45deg, #88deba 0.000deg, #88deba 27.692deg, #79dfc5 calc(27.692deg + 0.1deg), #79dfc5 55.385deg, #70d9d1 calc(55.385deg + 0.1deg), #70d9d1 83.077deg, #6dcfdc calc(83.077deg + 0.1deg), #6dcfdc 110.769deg, #72c1e5 calc(110.769deg + 0.1deg), #72c1e5 138.462deg, #7db1ea calc(138.462deg + 0.1deg), #7db1ea 166.154deg, #8ca1ea calc(166.154deg + 0.1deg), #8ca1ea 193.846deg, #9f93e6 calc(193.846deg + 0.1deg), #9f93e6 221.538deg, #b389de calc(221.538deg + 0.1deg), #b389de 249.231deg, #c683d3 calc(249.231deg + 0.1deg), #c683d3 276.923deg, #d584c7 calc(276.923deg + 0.1deg), #d584c7 304.615deg, #de89bc calc(304.615deg + 0.1deg), #de89bc 332.308deg, #e194b3 calc(332.308deg + 0.1deg) 360.000deg)' },
+  { name: '灰蓝晕影', nameKey: 'gradientSlateVignette', value: 'radial-gradient(circle at 50% 50%, #c5bbb8 0.000%, #b8b5b8 7.143%, #a9afb7 14.286%, #9aa8b5 21.429%, #8ba1b3 28.571%, #7d98af 35.714%, #7090ab 42.857%, #6587a6 50.000%, #5c7ea1 57.143%, #55759b 64.286%, #516c94 71.429%, #4f638d 78.571%, #505a85 85.714%, #54537d 92.857%, #5b4b74 100.000%)' },
+  { name: '抹茶奶栗', nameKey: 'gradientMatchaChestnut', value: 'radial-gradient(circle at 50% 50%, #dac5b3 0.000%, #acb6a4 25.000%, #799d8d 50.000%, #567f70 75.000%, #515f4f 100.000%)' },
+  { name: '鸢尾柔暮', nameKey: 'gradientIrisDusk', value: 'radial-gradient(circle at 50% 50%, #989ecb 0.000%, #8ca4c6 16.667%, #92a9be 33.333%, #a7acb4 50.000%, #c4afa8 66.667%, #dfaf9d 83.333%, #eeae93 100.000%)' },
+  { name: '樱花冰沙', nameKey: 'gradientSakuraSmoothie', value: 'radial-gradient(circle at 50% 50%, #fcb8e2 0.000%, #ffc8ed 20.000%, #fbe8f9 40.000%, #e8f9ff 60.000%, #d0ecff 80.000%, #b8cdfa 100.000%)' },
+  { name: '黑耀星环', nameKey: 'gradientObsidianRing', value: 'conic-gradient(from 90deg, #05050a 0.000deg, #090a0e 30.000deg, #0d0e12 60.000deg, #121316 90.000deg, #16171a 120.000deg, #1a1b1e 150.000deg, #1e1f22 180.000deg, #222326 210.000deg, #26272a 240.000deg, #292a2d 270.000deg, #2c2d30 300.000deg, #2e2f33 330.000deg, #303135 360.000deg)' },
+  { name: '深空灰烬', nameKey: 'gradientDeepSpaceAsh', value: 'linear-gradient(135deg, #292832 0.000%, #272530 8.333%, #24222e 16.667%, #201f2b 25.000%, #1c1b27 33.333%, #181624 41.667%, #141220 50.000%, #100e1c 58.333%, #0c0a18 66.667%, #080614 75.000%, #050311 83.333%, #02000e 91.667%, #00000b 100.000%)' },
 ];
+
+/**
+ * Returns localized category name for display.
+ * If user has customized the name away from default, returns category.name.
+ */
+export function getCategoryDisplayName(cat: Category, lang: Locale = 'zh-CN'): string {
+  if (cat.nameKey) {
+    const translated = t(cat.nameKey, lang);
+    if (translated) return translated;
+  }
+  if (cat.id === 'all') {
+    return t('allCategories', lang) || 'All';
+  }
+  if (cat.id === 'work' && (!cat.name || cat.name === '工作与开发' || cat.name === 'Work & Dev')) {
+    return t('categoryWork', lang) || cat.name || 'Work & Dev';
+  }
+  if (cat.id === 'tools' && (!cat.name || cat.name === '常用工具' || cat.name === 'Tools')) {
+    return t('categoryTools', lang) || cat.name || 'Tools';
+  }
+  if (cat.id === 'media' && (!cat.name || cat.name === '设计与灵感' || cat.name === 'Design & Inspiration')) {
+    return t('categoryMedia', lang) || cat.name || 'Design & Inspiration';
+  }
+  return cat.name;
+}
+
+/**
+ * Returns localized grid page (desktop) name for display.
+ * If user has customized the name away from default, returns page.name.
+ */
+export function getGridPageDisplayName(page: GridPage, idx: number, lang: Locale = 'zh-CN'): string {
+  const defaultZh = `桌面 ${idx + 1}`;
+  const defaultEn = `Desktop ${idx + 1}`;
+  if (page.name && page.name !== defaultZh && page.name !== defaultEn && page.name !== '桌面 1' && page.name !== 'Desktop 1') {
+    return page.name;
+  }
+  return `${t('defaultDesktopName', lang)} ${idx + 1}`;
+}
+
+/**
+ * Returns localized site title for display.
+ * If user customized the site title, returns site.title.
+ */
+export function getSiteDisplayName(site: SiteItem, lang: Locale = 'zh-CN'): string {
+  if (site.titleKey) {
+    const translated = t(site.titleKey, lang);
+    if (translated) return translated;
+  }
+  if (site.id === 'site-weibo' && (!site.title || site.title === '微博' || site.title === 'Weibo')) {
+    return t('siteWeibo', lang) || site.title;
+  }
+  if (site.id === 'site-bilibili' && (!site.title || site.title === '哔哩哔哩' || site.title === 'Bilibili')) {
+    return t('siteBilibili', lang) || site.title;
+  }
+  return site.title || 'Untitled';
+}
 
 export const DEFAULT_PRIVATE_BACKGROUND_VALUE =
   'linear-gradient(135deg, #292832 0.000%, #272530 8.333%, #24222e 16.667%, #201f2b 25.000%, #1c1b27 33.333%, #181624 41.667%, #141220 50.000%, #100e1c 58.333%, #0c0a18 66.667%, #080614 75.000%, #050311 83.333%, #02000e 91.667%, #00000b 100.000%)';

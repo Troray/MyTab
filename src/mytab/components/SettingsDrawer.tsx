@@ -606,7 +606,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             }`}
                         >
                           <span className="text-[10px] font-medium text-white/90 drop-shadow">
-                            {p.name}
+                            {p.nameKey ? t(p.nameKey, settings.language) : p.name}
                           </span>
                           {settings.backgroundValue === p.value && (
                             <Check className="w-3.5 h-3.5 text-white absolute top-1.5 right-1.5" />

@@ -6,7 +6,7 @@ import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { CategoryModal } from './CategoryModal';
 import { ConfirmModal } from './ConfirmModal';
 import { t } from '../../utils/i18n';
-import { isLightMode } from '../../utils/constants';
+import { isLightMode, getCategoryDisplayName, getGridPageDisplayName } from '../../utils/constants';
 
 /**
  * Converts a hex color (#RGB, #RRGGBB, #RRGGBBAA) to an rgba() color string with custom alpha.
@@ -377,7 +377,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
         {visibleCategories.map((cat) => {
           const isActive = activeCategoryId === cat.id;
           const count = siteCounts[cat.id] || 0;
-          const displayName = cat.id === 'all' ? (t('allCategories', settings.language) || 'All') : cat.name;
+          const displayName = getCategoryDisplayName(cat, settings.language);
 
           return (
             <CategoryTabItem
@@ -422,7 +422,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
             >
               <span>
                 {isOverflowActive && activeOverflowCategory
-                  ? `${t('moreCategories', settings.language)}: ${activeOverflowCategory.name}`
+                  ? `${t('moreCategories', settings.language)}: ${getCategoryDisplayName(activeOverflowCategory, settings.language)}`
                   : t('moreCategories', settings.language)}
               </span>
               {isOverflowActive && activeOverflowCategory && (
@@ -495,7 +495,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
                               }`}
                             />
                           )}
-                          <span className="truncate">{cat.name}</span>
+                          <span className="truncate">{getCategoryDisplayName(cat, settings.language)}</span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span
@@ -593,7 +593,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
                   <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
                   {targetPages.map((page) => {
                     const originalIdx = gridPages.findIndex((gp) => gp.id === page.id);
-                    const pageDisplayName = page.name || `${t('defaultDesktopName', settings.language)} ${originalIdx + 1}`;
+                    const pageDisplayName = getGridPageDisplayName(page, originalIdx, settings.language);
                     return (
                       <button
                         key={page.id}
