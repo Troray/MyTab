@@ -156,7 +156,10 @@ async function buildExtension() {
       manifest.browser_specific_settings = {
         gecko: {
           id: 'mytab@addon.local',
-          strict_min_version: '109.0',
+          strict_min_version: '115.0',
+          data_collection_permissions: {
+            required: ['none'],
+          },
         },
       };
       manifest.web_accessible_resources = [

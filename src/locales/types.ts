@@ -25,6 +25,11 @@ export interface Translation {
   editCategory: string;
   deleteCategory: string;
   confirmDeleteCategory: string;
+  confirmDeleteCategorySimple: string;
+  deleteCategorySitesCheckbox: string;
+  deleteCategorySitesKeepNote: string;
+  deleteCategorySitesDeleteNote: string;
+  deleteCategoryAndSites: string;
   manageCategories: string;
   categoryName: string;
   showInAll: string;
@@ -502,6 +507,26 @@ export interface Translation {
   unlimited: string;
   categoryDesktop: string;
   moveToDesktop: string;
+  gradientDarkSand: string;
+  gradientAmberAutumn: string;
+  gradientTerracottaCeladon: string;
+  gradientNeonGlaze: string;
+  gradientSlateVignette: string;
+  gradientMatchaChestnut: string;
+  gradientIrisDusk: string;
+  gradientSakuraSmoothie: string;
+  gradientObsidianRing: string;
+  gradientDeepSpaceAsh: string;
+  categoryWork: string;
+  categoryTools: string;
+  categoryMedia: string;
+  siteWeibo: string;
+  siteBilibili: string;
+  defaultBookmarksFolder: string;
+  defaultBookmarkBar: string;
+  defaultCommonWebsites: string;
+  untitledBookmark: string;
+  engineBaidu: string;
 }
 
 export type TranslationKey = keyof Translation;

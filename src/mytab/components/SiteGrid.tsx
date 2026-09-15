@@ -281,7 +281,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
   const emblaOptions = useMemo(
     () => ({
       loop: false,
-      duration: 35,
+      duration: 26,
       skipSnaps: false,
       startIndex: initialIndexRef.current,
       watchDrag: (_emblaApi: any, evt: MouseEvent | TouchEvent) => {
@@ -335,6 +335,15 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
       if (!inner) return;
 
       const diffToTarget = Math.abs(scrollSnap - scrollProgress) * (pagesCount - 1);
+
+      // Clean deadband threshold: when within 1.2% of target snap, release to identity
+      // This completely eliminates subpixel font rasterization & antialiasing jitter in the final stopping frames
+      if (diffToTarget < 0.012) {
+        if (inner.style.transform !== '') inner.style.transform = '';
+        if (inner.style.opacity !== '') inner.style.opacity = '';
+        return;
+      }
+
       const normalizedDiff = Math.min(Math.max(diffToTarget, 0), 1);
       // Cosine easing creates smooth deceleration near 0
       const factor = Math.cos(normalizedDiff * Math.PI * 0.5);
@@ -342,8 +351,25 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
       const scale = 0.90 + 0.10 * factor;
       const opacity = 0.25 + 0.75 * factor;
 
-      inner.style.transform = `scale(${scale.toFixed(4)})`;
-      inner.style.opacity = opacity.toFixed(4);
+      inner.style.transform = `scale(${scale.toFixed(3)})`;
+      inner.style.opacity = opacity.toFixed(3);
+    });
+  }, [emblaApi]);
+
+  const onSettle = useCallback(() => {
+    if (!emblaApi) return;
+    const selectedIndex = emblaApi.selectedScrollSnap();
+    const slideNodes = emblaApi.slideNodes();
+    slideNodes?.forEach((node, index) => {
+      const inner = node.querySelector<HTMLElement>('.embla-slide-inner');
+      if (!inner) return;
+      if (index === selectedIndex) {
+        inner.style.transform = '';
+        inner.style.opacity = '';
+      } else {
+        inner.style.transform = 'scale(0.9)';
+        inner.style.opacity = '0.25';
+      }
     });
   }, [emblaApi]);
 
@@ -354,15 +380,15 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
     emblaApi.on('init', applyTween);
     emblaApi.on('scroll', applyTween);
     emblaApi.on('reInit', applyTween);
-    emblaApi.on('settle', applyTween);
+    emblaApi.on('settle', onSettle);
 
     return () => {
       emblaApi.off('init', applyTween);
       emblaApi.off('scroll', applyTween);
       emblaApi.off('reInit', applyTween);
-      emblaApi.off('settle', applyTween);
+      emblaApi.off('settle', onSettle);
     };
-  }, [emblaApi, applyTween]);
+  }, [emblaApi, applyTween, onSettle]);
 
   // Sync active page when user drags/swipes Embla to another slide
   const onSelect = useCallback(() => {
@@ -488,7 +514,7 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
       </div>
 
       {/* Multi-Page Indicator & Controls */}
-      {gridPages && gridPages.length > 0 && activeGridPageId && (
+      {gridPages && gridPages.length > 1 && activeGridPageId && (
         <GridPageIndicator
           gridPages={gridPages}
           activeGridPageId={activeGridPageId}

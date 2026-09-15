@@ -5,6 +5,7 @@ import { GridPage, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { ConfirmModal } from './ConfirmModal';
 import { t } from '../../utils/i18n';
+import { getGridPageDisplayName } from '../../utils/constants';
 
 interface GridPageIndicatorProps {
   gridPages: GridPage[];
@@ -70,8 +71,9 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
   };
 
   const startRename = (page: GridPage) => {
+    const pageIdx = gridPages.findIndex((p) => p.id === page.id);
     setRenamingPage(page);
-    setRenameInput(page.name);
+    setRenameInput(getGridPageDisplayName(page, pageIdx >= 0 ? pageIdx : 0, settings.language));
     setContextMenu(null);
   };
 
@@ -90,7 +92,7 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
     gridPages.findIndex((p) => p.id === activeGridPageId)
   );
 
-  if (typeof document === 'undefined') return null;
+  if (typeof document === 'undefined' || gridPages.length <= 1) return null;
 
   return (
     <>
@@ -137,7 +139,7 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
                     type="button"
                     onClick={() => onSelectPage(page.id)}
                     onContextMenu={(e) => handleContextMenu(e, page)}
-                    title={page.name || `${t('defaultDesktopName', settings.language)} ${idx + 1}`}
+                    title={getGridPageDisplayName(page, idx, settings.language)}
                     className="relative group p-1 transition-all duration-300 cursor-pointer focus:outline-none flex items-center justify-center"
                   >
                     <span
@@ -153,7 +155,7 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
                     />
                     {/* Active Tooltip */}
                     <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/95 text-white shadow-lg backdrop-blur-md z-50 border border-white/10">
-                      {page.name || `${t('defaultDesktopName', settings.language)} ${idx + 1}`}
+                      {getGridPageDisplayName(page, idx, settings.language)}
                     </span>
                   </button>
                 );
@@ -201,7 +203,10 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
             }`}
           >
             <div className={`px-3 py-1 text-[10px] font-semibold truncate ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
-              {contextMenu.page.name || `${t('defaultDesktopName', settings.language)}`}
+              {(() => {
+                const ctxIdx = gridPages.findIndex((p) => p.id === contextMenu.page.id);
+                return getGridPageDisplayName(contextMenu.page, ctxIdx >= 0 ? ctxIdx : 0, settings.language);
+              })()}
             </div>
 
             <button

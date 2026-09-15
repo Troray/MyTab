@@ -17,6 +17,7 @@ interface ConfirmModalProps {
  isLight?: boolean;
  onConfirm: () => void;
  onCancel: () => void;
+ children?: React.ReactNode;
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -30,6 +31,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
  isLight: propsIsLight,
  onConfirm,
  onCancel,
+ children,
 }) => {
  useEffect(() => {
  const handleKeyDown = (e: KeyboardEvent) => {
@@ -121,6 +123,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
  >
  {message}
  </p>
+ {children && <div className="mt-3">{children}</div>}
  </div>
  </div>
 

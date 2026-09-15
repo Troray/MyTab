@@ -1,3 +1,5 @@
+import { Locale, TranslationKey } from '../locales';
+
 export interface BookmarkSourceMeta {
   sourceId?: string;
   path?: string[];
@@ -11,9 +13,16 @@ export interface GridPage {
   sortOrder: number;
 }
 
+export interface PresetGradient {
+  name: string;
+  nameKey?: TranslationKey;
+  value: string;
+}
+
 export interface SiteItem {
   id: string;
   title: string;
+  titleKey?: TranslationKey;
   url: string;
   icon?: string;
   categoryId: string;
@@ -27,6 +36,7 @@ export interface SiteItem {
 export interface Category {
   id: string;
   name: string;
+  nameKey?: TranslationKey;
   sortOrder: number;
   color?: string;
   isDefault?: boolean;
@@ -43,6 +53,7 @@ export interface Category {
 export interface SearchEngine {
   id: string;
   name: string;
+  nameKey?: TranslationKey;
   urlPattern: string; // e.g. 'https://www.google.com/search?q=%s'
   icon?: string;
 }
@@ -60,10 +71,6 @@ export interface CustomTextColors {
   cards?: string;
   boardText?: string;
   boardTitle?: string;
-}
-
-import { Locale } from '../locales';
-
 export interface CustomGreetings {
   morning?: string[];
   noon?: string[];
@@ -102,7 +109,7 @@ export interface ThemeSettings {
   boardItemSpacing?: number; // Board site item vertical spacing (2 ~ 14px, default 6)
   boardShowCardBackground?: boolean; // Board view show card background (default true)
   boardCardOpacity?: number; // Board view card opacity (0.05 ~ 0.95, default 0.20)
-  boardAlign?: 'left' | 'center' | 'right'; // Board view column alignment when columns are fewer than max (default 'left')
+  boardAlign?: 'left' | 'center' | 'right'; // Board view column alignment when columns are fewer than max (default 'center')
   language: Locale;
   textColorMode?: TextColorMode;
   customTextColors?: CustomTextColors;
@@ -261,6 +268,7 @@ export interface BookmarkImportOptions {
   duplicateStrategy: BookmarkDuplicateStrategy;
   selectedFolderIds: string[];
   targetProfileId: ProfileId;
+  language?: Locale;
 }
 
 export interface BookmarkImportPreviewCategory {

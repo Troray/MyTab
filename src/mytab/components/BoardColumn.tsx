@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react';
 import { Category, SiteItem, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
-import { DEFAULT_CATEGORY_COLORS, BOARD_DARK_TEXT_TOKENS } from '../../utils/constants';
+import { DEFAULT_CATEGORY_COLORS, BOARD_DARK_TEXT_TOKENS, getCategoryDisplayName } from '../../utils/constants';
 import { t } from '../../utils/i18n';
 
 interface BoardColumnProps {
@@ -204,9 +204,9 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
               ? 'text-right flex-1'
               : 'text-left flex-1'
           }`}
-          title={category.name}
+          title={getCategoryDisplayName(category, settings.language)}
         >
-          {category.name}
+          {getCategoryDisplayName(category, settings.language)}
         </h3>
 
         {/* Category Actions: Only shown on hover during Edit Mode */}
