@@ -5,6 +5,7 @@ import { SiteItem, ThemeSettings, GridPage } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { generateFallbackIcon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
+import { getSiteDisplayName, getGridPageDisplayName } from '../../utils/constants';
 
 interface SiteCardProps {
   site: SiteItem;
@@ -255,7 +256,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
         >
           <img
             src={iconSrc}
-            alt={site.title}
+            alt={getSiteDisplayName(site, settings.language)}
             draggable={false}
             referrerPolicy="no-referrer"
             onError={() => setImgError(true)}
@@ -277,7 +278,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
               resolvedColors?.cardShadow || (isLight ? 'text-slate-800 group-hover:text-black' : 'text-white/90 group-hover:text-white drop-shadow')
             }`}
           >
-            {site.title || 'Untitled'}
+            {getSiteDisplayName(site, settings.language)}
           </span>
         )}
 
@@ -331,7 +332,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
                   <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
                   {targetPages.map((page) => {
                     const originalIdx = gridPages.findIndex((gp) => gp.id === page.id);
-                    const pageDisplayName = page.name || `${t('defaultDesktopName', settings.language)} ${originalIdx + 1}`;
+                    const pageDisplayName = getGridPageDisplayName(page, originalIdx, settings.language);
                     return (
                       <button
                         key={page.id}

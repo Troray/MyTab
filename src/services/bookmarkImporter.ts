@@ -1,3 +1,4 @@
+import '../utils/devPolyfill';
 import browser from 'webextension-polyfill';
 import {
   Category,
@@ -12,6 +13,7 @@ import {
 import { loadAppState, updateProfile } from './storage';
 import { generateFallbackIcon } from './metadata';
 import { isValidWebUrl } from './bookmarkHtmlParser';
+import { t } from '../locales';
 
 /**
  * Standardize URL for accurate duplicate comparison (protocol, hostname, trailing slashes, etc.)
@@ -133,6 +135,11 @@ export function transformBookmarkTree(
   const selectedSet = new Set(options.selectedFolderIds);
   const hasSelectionFilter = selectedSet.size > 0;
 
+  const fallbackBookmarks = (options.language ? t('defaultBookmarksFolder', options.language) : null) || '书签';
+  const fallbackBookmarkBar = (options.language ? t('defaultBookmarkBar', options.language) : null) || '书签栏';
+  const fallbackCommonWebsites = (options.language ? t('defaultCommonWebsites', options.language) : null) || '常用网址';
+  const fallbackUntitled = (options.language ? t('untitledBookmark', options.language) : null) || '未命名书签';
+
   // Helper: check if a node is selected
   function isNodeSelected(nodeId: string): boolean {
     if (!hasSelectionFilter) return true;
@@ -182,12 +189,12 @@ export function transformBookmarkTree(
       // If selected and has direct links, create a category for this folder
       if (selected && directLinks.length > 0) {
         groups.push({
-          categoryName: node.title || '书签',
+          categoryName: node.title || fallbackBookmarks,
           folderId: node.id,
           path: nextPath,
           bookmarks: directLinks.map((bm) => ({
             id: bm.id,
-            title: bm.title || bm.url || '未命名书签',
+            title: bm.title || bm.url || fallbackUntitled,
             url: bm.url!,
             icon: bm.icon,
             dateAdded: bm.dateAdded,
@@ -262,16 +269,16 @@ export function transformBookmarkTree(
       const directRootUrls = (root.children || []).filter((c) => c.url && isValidWebUrl(c.url));
       if (directRootUrls.length > 0 && (rootSelected || !hasSelectionFilter)) {
         groups.push({
-          categoryName: root.title || '书签栏',
+          categoryName: root.title || fallbackBookmarkBar,
           folderId: root.id,
-          path: [root.title || '书签栏'],
+          path: [root.title || fallbackBookmarkBar],
           bookmarks: directRootUrls.map((bm) => ({
             id: bm.id,
             title: bm.title || bm.url!,
             url: bm.url!,
             icon: bm.icon,
             dateAdded: bm.dateAdded,
-            path: [root.title || '书签栏'],
+            path: [root.title || fallbackBookmarkBar],
           })),
         });
       }
@@ -281,12 +288,12 @@ export function transformBookmarkTree(
         const childSelected = isNodeSelected(child.id);
         if (!childSelected && hasSelectionFilter) continue;
 
-        const allUrls = collectAllLinks(child, [root.title || '书签']);
+        const allUrls = collectAllLinks(child, [root.title || fallbackBookmarks]);
         if (allUrls.length > 0) {
           groups.push({
-            categoryName: child.title || '常用网址',
+            categoryName: child.title || fallbackCommonWebsites,
             folderId: child.id,
-            path: [root.title || '书签', child.title || '常用网址'],
+            path: [root.title || fallbackBookmarks, child.title || fallbackCommonWebsites],
             bookmarks: allUrls,
           });
         }
@@ -325,12 +332,12 @@ export function transformBookmarkTree(
 
       if (selected && directLinks.length > 0 && !hasActiveSubfolders) {
         groups.push({
-          categoryName: node.title || '书签',
+          categoryName: node.title || fallbackBookmarks,
           folderId: node.id,
           path: nextPath,
           bookmarks: directLinks.map((bm) => ({
             id: bm.id,
-            title: bm.title || bm.url || '未命名书签',
+            title: bm.title || bm.url || fallbackUntitled,
             url: bm.url!,
             icon: bm.icon,
             dateAdded: bm.dateAdded,
@@ -340,12 +347,12 @@ export function transformBookmarkTree(
       } else if (selected && directLinks.length > 0 && hasActiveSubfolders) {
         // Non-leaf but has direct links: preserve direct links in this folder
         groups.push({
-          categoryName: node.title || '书签',
+          categoryName: node.title || fallbackBookmarks,
           folderId: node.id,
           path: nextPath,
           bookmarks: directLinks.map((bm) => ({
             id: bm.id,
-            title: bm.title || bm.url || '未命名书签',
+            title: bm.title || bm.url || fallbackUntitled,
             url: bm.url!,
             icon: bm.icon,
             dateAdded: bm.dateAdded,
@@ -504,7 +511,7 @@ export async function executeBookmarkImport(
 
         const newSite: SiteItem = {
           id: siteId,
-          title: bm.title || '未命名书签',
+          title: bm.title || fallbackUntitled,
           url: bm.url,
           icon: fallbackIcon,
           categoryId,

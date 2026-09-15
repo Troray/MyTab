@@ -95,7 +95,7 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, resol
               !resolvedColors ? (isLight ? 'text-slate-800 hover:text-black' : 'text-white/80 hover:text-white') : ''
             }`}
           >
-            <span>{activeEngine.name}</span>
+            <span>{activeEngine.nameKey ? t(activeEngine.nameKey, settings.language) : activeEngine.name}</span>
             <ChevronDown className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
@@ -136,7 +136,7 @@ export const SearchBar: React.FC<SearchBarProps> = React.memo(({ settings, resol
                         : 'text-white/80 hover:bg-white/10 hover:text-white'
                     }`}
                   >
-                    <span>{engine.name}</span>
+                    <span>{engine.nameKey ? t(engine.nameKey, settings.language) : engine.name}</span>
                     {isSelected && (
                       <Check className={`w-3.5 h-3.5 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
                     )}
