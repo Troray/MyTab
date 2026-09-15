@@ -17,7 +17,8 @@ interface CategoryModalProps {
   activeGridPageId?: string;
   onClose: () => void;
   onSave: (catId: string | null, data: { name: string; showInAll: boolean; color?: string; pageId?: string }) => void;
-  onDelete?: (catId: string) => void;
+  onDelete?: (catId: string, deleteSites?: boolean) => void;
+  siteCount?: number;
 }
 
 export const CategoryModal: React.FC<CategoryModalProps> = ({
@@ -29,6 +30,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   onClose,
   onSave,
   onDelete,
+  siteCount = 0,
 }) => {
   const isEdit = Boolean(category);
   const [name, setName] = useState('');
@@ -36,6 +38,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   const [showInAll, setShowInAll] = useState(true);
   const [pageId, setPageId] = useState('');
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [deleteCategorySites, setDeleteCategorySites] = useState(false);
 
   const defaultPageId =
     (activeGridPageId && gridPages?.some((p) => p.id === activeGridPageId) ? activeGridPageId : undefined) ||
@@ -58,6 +61,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       setPageId(defaultPageId);
     }
     setIsConfirmingDelete(false);
+    setDeleteCategorySites(false);
   }, [category, isOpen, defaultPageId, gridPages]);
 
   if (!isOpen) return null;
@@ -77,8 +81,9 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
 
   const handleDelete = () => {
     if (category && onDelete) {
-      onDelete(category.id);
+      onDelete(category.id, deleteCategorySites);
       setIsConfirmingDelete(false);
+      setDeleteCategorySites(false);
       onClose();
     }
   };
@@ -317,12 +322,52 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         isOpen={isConfirmingDelete}
         type="danger"
         title={t('deleteCategory', settings.language)}
-        message={t('confirmDeleteCategory', settings.language)}
-        confirmText={t('deleteCategory', settings.language)}
+        message={t('confirmDeleteCategorySimple', settings.language)}
+        confirmText={
+          deleteCategorySites
+            ? t('deleteCategoryAndSites', settings.language)
+            : t('deleteCategory', settings.language)
+        }
         language={settings.language}
+        isLight={isLight}
         onConfirm={handleDelete}
-        onCancel={() => setIsConfirmingDelete(false)}
-      />
+        onCancel={() => {
+          setIsConfirmingDelete(false);
+          setDeleteCategorySites(false);
+        }}
+      >
+        {siteCount > 0 && (
+          <label
+            className={`flex items-start gap-2.5 p-3 rounded-2xl border cursor-pointer select-none transition-all ${
+              isLight
+                ? deleteCategorySites
+                  ? 'bg-red-500/[0.08] border-red-300 text-red-950'
+                  : 'bg-black/[0.03] border-black/10 hover:bg-black/[0.05] text-slate-800'
+                : deleteCategorySites
+                ? 'bg-red-500/15 border-red-500/40 text-red-100'
+                : 'bg-white/[0.05] border-white/10 hover:bg-white/[0.08] text-white'
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={deleteCategorySites}
+              onChange={(e) => setDeleteCategorySites(e.target.checked)}
+              className="mt-0.5 rounded border-slate-400 text-red-600 focus:ring-red-500/50 cursor-pointer"
+            />
+            <div className="space-y-0.5 text-xs">
+              <div className="font-medium flex items-center gap-1">
+                <span>{t('deleteCategorySitesCheckbox', settings.language)}</span>
+                <span className="font-semibold font-tabular">({siteCount})</span>
+              </div>
+              <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+                {deleteCategorySites
+                  ? t('deleteCategorySitesDeleteNote', settings.language)
+                  : t('deleteCategorySitesKeepNote', settings.language)}
+              </p>
+            </div>
+          </label>
+        )}
+      </ConfirmModal>
     </>
   );
 

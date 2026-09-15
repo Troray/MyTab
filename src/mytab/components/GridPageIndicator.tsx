@@ -90,7 +90,7 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
     gridPages.findIndex((p) => p.id === activeGridPageId)
   );
 
-  if (typeof document === 'undefined') return null;
+  if (typeof document === 'undefined' || gridPages.length <= 1) return null;
 
   return (
     <>

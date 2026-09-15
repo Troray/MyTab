@@ -136,7 +136,7 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   mode: 'dark',
   layoutMode: 'grid',
   backgroundType: 'custom',
-  backgroundValue: './wallpapers/default-wallpaper.jpg',
+  backgroundValue: './wallpapers/default-wallpaper.svg',
   cardOpacity: 0.20, // 默认卡片透明度 20%
   cardSize: 110,     // 默认卡片大小 110px
   iconSizeRatio: 0.55, // 默认图标占比 55%
@@ -161,7 +161,7 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   boardItemSpacing: 6,
   boardShowCardBackground: true,
   boardCardOpacity: 0.20,
-  boardAlign: 'left',
+  boardAlign: 'center',
   language: 'zh-CN',
   textColorMode: 'light',
   customTextColors: {},

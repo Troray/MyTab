@@ -201,7 +201,7 @@ interface CategoryTabsProps {
   onSelectCategory: (id: string) => void;
   onAddCategory: (data: { name: string; showInAll: boolean; color?: string; pageId?: string }) => void;
   onUpdateCategory: (id: string, updates: Partial<Category>) => void;
-  onDeleteCategory: (id: string) => void;
+  onDeleteCategory: (id: string, deleteSites?: boolean) => void;
   onMoveCategoryToPage?: (categoryId: string, targetPageId: string) => void;
   onOpenBookmarkImport?: () => void;
 }
@@ -229,6 +229,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
     y: number;
   } | null>(null);
   const [confirmDeleteCat, setConfirmDeleteCat] = useState<Category | null>(null);
+  const [deleteCategorySites, setDeleteCategorySites] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const moreDropdownRef = useRef<HTMLDivElement>(null);
@@ -534,6 +535,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
         onClose={() => setModalCategory(undefined)}
         onSave={handleSaveCategory}
         onDelete={onDeleteCategory}
+        siteCount={modalCategory ? (siteCounts[modalCategory.id] || 0) : 0}
       />
 
       {/* Right-click Context Menu Portaled to document.body */}
@@ -626,6 +628,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
                 const targetCat = activeMenu.category;
                 setActiveMenu(null);
                 setConfirmDeleteCat(targetCat);
+                setDeleteCategorySites(false);
               }}
               className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
                 isLight
@@ -641,23 +644,67 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
         )}
 
       {/* Delete Confirmation Modal for Direct Context Menu Deletion */}
-      {confirmDeleteCat && (
-        <ConfirmModal
-          isOpen={Boolean(confirmDeleteCat)}
-          type="danger"
-          title={t('deleteCategory', settings.language)}
-          message={t('confirmDeleteCategory', settings.language)}
-          confirmText={t('deleteCategory', settings.language)}
-          language={settings.language}
-          onConfirm={() => {
-            if (confirmDeleteCat) {
-              onDeleteCategory(confirmDeleteCat.id);
-              setConfirmDeleteCat(null);
+      {confirmDeleteCat && (() => {
+        const catSiteCount = siteCounts[confirmDeleteCat.id] || 0;
+        return (
+          <ConfirmModal
+            isOpen={Boolean(confirmDeleteCat)}
+            type="danger"
+            title={t('deleteCategory', settings.language)}
+            message={t('confirmDeleteCategorySimple', settings.language)}
+            confirmText={
+              deleteCategorySites
+                ? t('deleteCategoryAndSites', settings.language)
+                : t('deleteCategory', settings.language)
             }
-          }}
-          onCancel={() => setConfirmDeleteCat(null)}
-        />
-      )}
+            language={settings.language}
+            isLight={isLight}
+            onConfirm={() => {
+              if (confirmDeleteCat) {
+                onDeleteCategory(confirmDeleteCat.id, deleteCategorySites);
+                setConfirmDeleteCat(null);
+                setDeleteCategorySites(false);
+              }
+            }}
+            onCancel={() => {
+              setConfirmDeleteCat(null);
+              setDeleteCategorySites(false);
+            }}
+          >
+            {catSiteCount > 0 && (
+              <label
+                className={`flex items-start gap-2.5 p-3 rounded-2xl border cursor-pointer select-none transition-all ${
+                  isLight
+                    ? deleteCategorySites
+                      ? 'bg-red-500/[0.08] border-red-300 text-red-950'
+                      : 'bg-black/[0.03] border-black/10 hover:bg-black/[0.05] text-slate-800'
+                    : deleteCategorySites
+                    ? 'bg-red-500/15 border-red-500/40 text-red-100'
+                    : 'bg-white/[0.05] border-white/10 hover:bg-white/[0.08] text-white'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={deleteCategorySites}
+                  onChange={(e) => setDeleteCategorySites(e.target.checked)}
+                  className="mt-0.5 rounded border-slate-400 text-red-600 focus:ring-red-500/50 cursor-pointer"
+                />
+                <div className="space-y-0.5 text-xs">
+                  <div className="font-medium flex items-center gap-1">
+                    <span>{t('deleteCategorySitesCheckbox', settings.language)}</span>
+                    <span className="font-semibold font-tabular">({catSiteCount})</span>
+                  </div>
+                  <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-500' : 'text-white/60'}`}>
+                    {deleteCategorySites
+                      ? t('deleteCategorySitesDeleteNote', settings.language)
+                      : t('deleteCategorySitesKeepNote', settings.language)}
+                  </p>
+                </div>
+              </label>
+            )}
+          </ConfirmModal>
+        );
+      })()}
     </div>
   );
 });

@@ -236,13 +236,15 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       return { background: currentSettings.backgroundValue };
     }
     if (['bing', 'unsplash', 'custom'].includes(currentSettings.backgroundType)) {
-      const rawVal = currentSettings.backgroundValue || './wallpapers/default-wallpaper.jpg';
+      const rawVal = currentSettings.backgroundValue || './wallpapers/default-wallpaper.svg';
       const bgUrl =
         rawVal.startsWith('http') || rawVal.startsWith('data:')
           ? rawVal
           : typeof chrome !== 'undefined' && chrome.runtime?.getURL
             ? chrome.runtime.getURL(rawVal.replace(/^\.?\//, ''))
-            : rawVal;
+            : rawVal.startsWith('/')
+              ? rawVal
+              : '/' + rawVal.replace(/^\.?\//, '');
 
       return {
         backgroundImage: `url("${bgUrl}")`,
@@ -395,7 +397,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     if (gridPages.length > 0 && !gridPages.some((p) => p.id === activeGridPageId)) {
       const fallback = gridPages[0].id;
       setActiveGridPageId(fallback);
-      saveActiveGridPageId(fallback).catch(() => {});
+      saveActiveGridPageId(fallback).catch(() => { });
     }
   }, [gridPages, activeGridPageId]);
 
@@ -724,12 +726,12 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setAppState((prev) =>
       prev
         ? {
-            ...prev,
-            categories: updated,
-            sites: updatedSites,
-            activeCategoryId: isPageChanged && prev.activeCategoryId === id ? 'all' : prev.activeCategoryId,
-            pageCategoryMap: nextCategoryMap,
-          }
+          ...prev,
+          categories: updated,
+          sites: updatedSites,
+          activeCategoryId: isPageChanged && prev.activeCategoryId === id ? 'all' : prev.activeCategoryId,
+          pageCategoryMap: nextCategoryMap,
+        }
         : null
     );
   }, [categories, sites, defaultPageId, pageCategoryMap]);
@@ -762,12 +764,12 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setAppState((prev) =>
       prev
         ? {
-            ...prev,
-            categories: updatedCategories,
-            sites: updatedSites,
-            activeCategoryId: prev.activeCategoryId === categoryId ? 'all' : prev.activeCategoryId,
-            pageCategoryMap: nextCategoryMap,
-          }
+          ...prev,
+          categories: updatedCategories,
+          sites: updatedSites,
+          activeCategoryId: prev.activeCategoryId === categoryId ? 'all' : prev.activeCategoryId,
+          pageCategoryMap: nextCategoryMap,
+        }
         : null
     );
   }, [categories, sites, pageCategoryMap]);
@@ -790,7 +792,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setAppState((prev) => (prev ? { ...prev, sites: updatedSites } : null));
   }, [sites, categories, defaultPageId]);
 
-  const handleDeleteCategory = useCallback(async (catId: string) => {
+  const handleDeleteCategory = useCallback(async (catId: string, deleteSites: boolean = false) => {
     // Cannot delete default categories
     const target = categories.find((c) => c.id === catId);
     if (!target || target.isDefault) return;
@@ -798,11 +800,16 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     // Remove category
     const updatedCategories = categories.filter((c) => c.id !== catId);
 
-    // Reassign sites from deleted category to default category in the current profile
-    const fallbackCategoryId = categories.find((c) => c.isDefault && c.id !== 'all')?.id || categories.find((c) => c.id !== catId)?.id || 'all';
-    const updatedSites = sites.map((s) =>
-      s.categoryId === catId ? { ...s, categoryId: fallbackCategoryId, updatedAt: Date.now() } : s
-    );
+    // Either delete sites or reassign sites from deleted category to default category in the current profile
+    let updatedSites: SiteItem[];
+    if (deleteSites) {
+      updatedSites = sites.filter((s) => s.categoryId !== catId);
+    } else {
+      const fallbackCategoryId = categories.find((c) => c.isDefault && c.id !== 'all')?.id || categories.find((c) => c.id !== catId)?.id || 'all';
+      updatedSites = sites.map((s) =>
+        s.categoryId === catId ? { ...s, categoryId: fallbackCategoryId, updatedAt: Date.now() } : s
+      );
+    }
 
     let nextCategoryMap = pageCategoryMap;
     let mapChanged = false;
@@ -822,6 +829,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       categories: updatedCategories,
       sites: updatedSites,
       pageCategoryMap: nextCategoryMap,
+      ...(activeCategoryId === catId ? { activeCategoryId: 'all' } : {}),
     });
 
     // If active category was deleted, switch back to 'all'
@@ -836,7 +844,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         }
         : null
     );
-  }, [categories, sites, pageCategoryMap]);
+  }, [categories, sites, pageCategoryMap, activeCategoryId]);
 
   const handleSelectCategory = useCallback(async (catId: string) => {
     const nextCategoryMap = {
@@ -971,11 +979,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       <header className="relative z-10 w-full flex items-center justify-between p-5 md:px-8">
         <div className="flex items-center gap-2">
           <span
-            className={`text-xs font-medium tracking-wider px-2.5 py-0.5 rounded-full border transition-colors ${
-              isLight
+            className={`text-xs font-medium tracking-wider px-2.5 py-0.5 rounded-full border transition-colors ${isLight
                 ? 'text-slate-500 bg-white/50 border-black/5'
                 : 'text-white/60 bg-white/5 border-white/5'
-            }`}
+              }`}
           >
             MyTab
           </span>
@@ -1001,11 +1008,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                   layoutMode: settings.layoutMode === 'board' ? 'grid' : 'board',
                 });
               }}
-              className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
-                isLight
+              className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isLight
                   ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
-              }`}
+                }`}
             >
               {settings.layoutMode === 'board' ? (
                 <LayoutGrid className="w-4 h-4" />
@@ -1028,11 +1034,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           >
             {/* Import Bookmarks Button (reveals on hover) */}
             <div
-              className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${
-                isAddHovered
+              className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${isAddHovered
                   ? 'w-8 opacity-100 mr-1'
                   : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
-              }`}
+                }`}
             >
               <button
                 onClick={() => {
@@ -1040,11 +1045,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                   setIsBookmarkImportModalOpen(true);
                 }}
                 tabIndex={isAddHovered ? 0 : -1}
-                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
-                  isLight
+                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isLight
                     ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
                     : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
+                  }`}
               >
                 <Bookmark className="w-4 h-4" />
               </button>
@@ -1058,11 +1062,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             {/* Add Desktop Page Button (only in Grid mode, reveals on hover) */}
             {settings.layoutMode === 'grid' && (
               <div
-                className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${
-                  isAddHovered
+                className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${isAddHovered
                     ? 'w-8 opacity-100 mr-1'
                     : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
-                }`}
+                  }`}
               >
                 <button
                   onClick={() => {
@@ -1070,11 +1073,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                     handleAddGridPage();
                   }}
                   tabIndex={isAddHovered ? 0 : -1}
-                  className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
-                    isLight
+                  className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isLight
                       ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
                       : 'text-white/80 hover:text-white hover:bg-white/10'
-                  }`}
+                    }`}
                 >
                   <SquarePlus className="w-4 h-4" />
                 </button>
@@ -1088,11 +1090,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
 
             {/* Add Category Button (reveals on hover) */}
             <div
-              className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${
-                isAddHovered
+              className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${isAddHovered
                   ? 'w-8 opacity-100 mr-1'
                   : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
-              }`}
+                }`}
             >
               <button
                 onClick={() => {
@@ -1100,11 +1101,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                   setIsCategoryModalOpen(true);
                 }}
                 tabIndex={isAddHovered ? 0 : -1}
-                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
-                  isLight
+                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isLight
                     ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
                     : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
+                  }`}
               >
                 <FolderPlus className="w-4 h-4" />
               </button>
@@ -1118,22 +1118,20 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             {/* Board Edit Mode Toggle (only in board layout mode, reveals on hover or while editing) */}
             {settings.layoutMode === 'board' && (
               <div
-                className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${
-                  isBoardEditing || isAddHovered
+                className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${isBoardEditing || isAddHovered
                     ? 'w-8 opacity-100 mr-1'
                     : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
-                }`}
+                  }`}
               >
                 <button
                   onClick={() => setIsBoardEditing((prev) => !prev)}
                   tabIndex={isBoardEditing || isAddHovered ? 0 : -1}
-                  className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
-                    isBoardEditing
+                  className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isBoardEditing
                       ? 'bg-amber-500/15 text-amber-500 dark:text-amber-400'
                       : isLight
-                      ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
-                      : 'text-white/80 hover:text-white hover:bg-white/10'
-                  }`}
+                        ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+                        : 'text-white/80 hover:text-white hover:bg-white/10'
+                    }`}
                 >
                   {isBoardEditing ? (
                     <Check className="w-4 h-4" />
@@ -1159,11 +1157,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                   setEditingSite(null);
                   setIsSiteModalOpen(true);
                 }}
-                className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
-                  isLight
+                className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isLight
                     ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
                     : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
+                  }`}
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -1177,11 +1174,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           <div className="relative group/tooltip flex items-center justify-center">
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
-                isLight
+              className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isLight
                   ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
-              }`}
+                }`}
             >
               <SettingsIcon className="w-4 h-4" />
             </button>
@@ -1277,9 +1273,8 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               href={`${settings.unsplashAuthorUrl}?utm_source=MyTab&utm_medium=referral`}
               target="_blank"
               rel="noreferrer"
-              className={`pointer-events-auto inline-flex items-center gap-1 transition-colors ${
-                isLight ? 'text-slate-600 hover:text-black' : 'text-white/50 hover:text-white'
-              }`}
+              className={`pointer-events-auto inline-flex items-center gap-1 transition-colors ${isLight ? 'text-slate-600 hover:text-black' : 'text-white/50 hover:text-white'
+                }`}
             >
               <span>Photo by</span>
               <span className="underline decoration-dotted underline-offset-2">
@@ -1299,11 +1294,10 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               href="https://github.com/Troray/MyTab"
               target="_blank"
               rel="noreferrer"
-              className={`transition-colors underline decoration-dotted underline-offset-2 ${
-                isLight
+              className={`transition-colors underline decoration-dotted underline-offset-2 ${isLight
                   ? 'hover:text-black decoration-slate-400'
                   : 'hover:text-white decoration-white/30'
-              }`}
+                }`}
             >
               Troray
             </a>

@@ -102,7 +102,7 @@ export interface ThemeSettings {
   boardItemSpacing?: number; // Board site item vertical spacing (2 ~ 14px, default 6)
   boardShowCardBackground?: boolean; // Board view show card background (default true)
   boardCardOpacity?: number; // Board view card opacity (0.05 ~ 0.95, default 0.20)
-  boardAlign?: 'left' | 'center' | 'right'; // Board view column alignment when columns are fewer than max (default 'left')
+  boardAlign?: 'left' | 'center' | 'right'; // Board view column alignment when columns are fewer than max (default 'center')
   language: Locale;
   textColorMode?: TextColorMode;
   customTextColors?: CustomTextColors;

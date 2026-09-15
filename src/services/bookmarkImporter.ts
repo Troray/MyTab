@@ -1,3 +1,4 @@
+import '../utils/devPolyfill';
 import browser from 'webextension-polyfill';
 import {
   Category,

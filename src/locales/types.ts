@@ -25,6 +25,11 @@ export interface Translation {
   editCategory: string;
   deleteCategory: string;
   confirmDeleteCategory: string;
+  confirmDeleteCategorySimple: string;
+  deleteCategorySitesCheckbox: string;
+  deleteCategorySitesKeepNote: string;
+  deleteCategorySitesDeleteNote: string;
+  deleteCategoryAndSites: string;
   manageCategories: string;
   categoryName: string;
   showInAll: string;
