@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react';
 import { Category, SiteItem, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { DEFAULT_CATEGORY_COLORS, BOARD_DARK_TEXT_TOKENS, getCategoryDisplayName } from '../../utils/constants';
+import { generateFallbackIcon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
 
 interface BoardColumnProps {
@@ -364,6 +365,20 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                 {isEditing && (
                   <GripVertical className="w-3.5 h-3.5 -ml-1 mr-1 flex-shrink-0 opacity-25 group-hover/item:opacity-75 transition-opacity pointer-events-none" />
                 )}
+
+                {/* Site Icon: Option 1 - reserved placeholder with smooth hover fade-in */}
+                <div className="w-4 h-4 mr-1.5 shrink-0 flex items-center justify-center pointer-events-none">
+                  <img
+                    src={site.icon || generateFallbackIcon(site.title || site.url)}
+                    alt=""
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    className="w-3.5 h-3.5 object-contain rounded-[3px] opacity-0 scale-90 group-hover/item:opacity-100 group-hover/item:scale-100 transition-all duration-150"
+                    onError={(e) => {
+                      (e.target as HTMLElement).setAttribute('src', generateFallbackIcon(site.title || site.url));
+                    }}
+                  />
+                </div>
 
                 {/* Site Title */}
                 <span
