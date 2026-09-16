@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Cloud, CheckCircle, AlertCircle, RefreshCw, Radio, Lock, UploadCloud, DownloadCloud, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Cloud, CheckCircle, AlertCircle, RefreshCw, Radio, Lock, UploadCloud, DownloadCloud, Eye, EyeOff, X } from 'lucide-react';
 import { AppState, WebdavConfig } from '../../types';
 import { uploadToWebdav, restoreFromWebdav, WebdavClient } from '../../services/webdav';
 import { ConfirmModal } from './ConfirmModal';
@@ -32,8 +32,18 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
   const [showPullConfirm, setShowPullConfirm] = useState(false);
-  const [syncMsg, setSyncMsg] = useState('');
+  const [syncMsg, setSyncMsg] = useState<{ success: boolean; text: string } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const testTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear timers on unmount
+  useEffect(() => {
+    return () => {
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+      if (testTimerRef.current) clearTimeout(testTimerRef.current);
+    };
+  }, []);
 
   const handleChange = (fields: Partial<WebdavConfig>) => {
     const updated = { ...config, ...fields };
@@ -42,12 +52,18 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
   };
 
   const handleTest = async () => {
+    if (testTimerRef.current) clearTimeout(testTimerRef.current);
     setIsTesting(true);
     setTestResult(null);
     try {
       const client = new WebdavClient(config, settings.language);
       const res = await client.testConnection(settings.language);
       setTestResult(res);
+      if (res.success) {
+        testTimerRef.current = setTimeout(() => {
+          setTestResult(null);
+        }, 3500);
+      }
     } catch (err: any) {
       setTestResult({ success: false, message: err.message || t('webdavConnectionFailed', settings.language) });
     } finally {
@@ -57,18 +73,22 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
 
   // 1. Upload Local to WebDAV
   const handleUpload = async () => {
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     setIsUploading(true);
-    setSyncMsg('');
+    setSyncMsg(null);
     try {
       const res = await uploadToWebdav({ ...appState, webdav: config });
       if (res.success) {
-        setSyncMsg(res.message || t('uploadBackup', settings.language));
+        setSyncMsg({ success: true, text: res.message || t('uploadBackup', settings.language) });
+        syncTimerRef.current = setTimeout(() => {
+          setSyncMsg(null);
+        }, 3500);
         onStateReload();
       } else {
-        setSyncMsg(`${res.message}`);
+        setSyncMsg({ success: false, text: `${res.message}` });
       }
     } catch (err: any) {
-      setSyncMsg(`${err.message}`);
+      setSyncMsg({ success: false, text: `${err.message}` });
     } finally {
       setIsUploading(false);
     }
@@ -76,19 +96,23 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
 
   // 2. Pull Remote from WebDAV to Local
   const handlePullExecute = async () => {
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     setShowPullConfirm(false);
     setIsPulling(true);
-    setSyncMsg('');
+    setSyncMsg(null);
     try {
       const res = await restoreFromWebdav({ ...appState, webdav: config });
       if (res.success) {
-        setSyncMsg(res.message || t('pullRestore', settings.language));
+        setSyncMsg({ success: true, text: res.message || t('pullRestore', settings.language) });
+        syncTimerRef.current = setTimeout(() => {
+          setSyncMsg(null);
+        }, 3500);
         onStateReload();
       } else {
-        setSyncMsg(`${res.message}`);
+        setSyncMsg({ success: false, text: `${res.message}` });
       }
     } catch (err: any) {
-      setSyncMsg(`${err.message}`);
+      setSyncMsg({ success: false, text: `${err.message}` });
     } finally {
       setIsPulling(false);
     }
@@ -286,7 +310,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
           {/* Test Results */}
           {testResult && (
             <div
-              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
+              className={`p-2.5 rounded-xl text-xs flex items-center justify-between gap-2 animate-fade-in ${
                 testResult.success
                   ? isLight
                     ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
@@ -296,26 +320,58 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                     : 'bg-red-500/20 text-red-300 border border-red-500/30'
               }`}
             >
-              {testResult.success ? (
-                <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
-              ) : (
-                <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+              <div className="flex items-center gap-2 min-w-0">
+                {testResult.success ? (
+                  <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+                )}
+                <span className="break-words">{testResult.message}</span>
+              </div>
+              {!testResult.success && (
+                <button
+                  type="button"
+                  onClick={() => setTestResult(null)}
+                  className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
+                  title={t('close', settings.language) || 'Close'}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               )}
-              <span>{testResult.message}</span>
             </div>
           )}
 
           {/* Sync Msg */}
           {syncMsg && (
             <div
-              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
-                isLight
-                  ? 'bg-black/5 border border-black/10 text-slate-800'
-                  : 'bg-white/10 border border-white/15 text-white'
+              className={`p-2.5 rounded-xl text-xs flex items-center justify-between gap-2 animate-fade-in ${
+                syncMsg.success
+                  ? isLight
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : isLight
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : 'bg-red-500/20 text-red-300 border border-red-500/30'
               }`}
             >
-              <RefreshCw className="w-4 h-4 shrink-0" />
-              <span>{syncMsg}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                {syncMsg.success ? (
+                  <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+                )}
+                <span className="break-words">{syncMsg.text}</span>
+              </div>
+              {!syncMsg.success && (
+                <button
+                  type="button"
+                  onClick={() => setSyncMsg(null)}
+                  className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
+                  title={t('close', settings.language) || 'Close'}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           )}
 

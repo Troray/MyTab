@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react';
 import { Category, SiteItem, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { DEFAULT_CATEGORY_COLORS, BOARD_DARK_TEXT_TOKENS, getCategoryDisplayName } from '../../utils/constants';
+import { generateFallbackIcon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
 
 interface BoardColumnProps {
@@ -332,7 +333,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                   paddingTop: `${Math.max(1, itemSpacing / 2)}px`,
                   paddingBottom: `${Math.max(1, itemSpacing / 2)}px`,
                 }}
-                className={`group/item relative flex items-center justify-between px-2 -mx-1 rounded-lg duration-0 transition-colors ${
+                className={`group/item board-site-row relative flex items-center justify-between px-2 -mx-1 rounded-lg duration-0 transition-colors ${
                   isBeingDragged ? 'opacity-30' : 'opacity-100'
                 } ${
                   isEditing
@@ -364,6 +365,20 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                 {isEditing && (
                   <GripVertical className="w-3.5 h-3.5 -ml-1 mr-1 flex-shrink-0 opacity-25 group-hover/item:opacity-75 transition-opacity pointer-events-none" />
                 )}
+
+                {/* Site Icon: Dynamic slide-out & spring zoom on hover */}
+                <div className="board-site-icon-box">
+                  <img
+                    src={site.icon || generateFallbackIcon(site.title || site.url)}
+                    alt=""
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    className="board-site-icon-img"
+                    onError={(e) => {
+                      (e.target as HTMLElement).setAttribute('src', generateFallbackIcon(site.title || site.url));
+                    }}
+                  />
+                </div>
 
                 {/* Site Title */}
                 <span

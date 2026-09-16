@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   GitBranch,
   CheckCircle,
@@ -15,7 +15,8 @@ import {
   Code2,
   Eye,
   EyeOff,
-  ChevronDown
+  ChevronDown,
+  X
 } from 'lucide-react';
 import { AppState, GitSyncConfig, GitPlatformConfig, GitProvider } from '../../types';
 import { uploadToGit, restoreFromGit, GitClient, autoSetupGist, autoSetupRepo, isTokenLike, GitCommitHistory } from '../../services/git';
@@ -154,13 +155,23 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
   const [showPullConfirm, setShowPullConfirm] = useState(false);
-  const [syncMsg, setSyncMsg] = useState('');
+  const [syncMsg, setSyncMsg] = useState<{ success: boolean; text: string } | null>(null);
   const [showToken, setShowToken] = useState(false);
   const [showAdvancedRestore, setShowAdvancedRestore] = useState(false);
   const [customSha, setCustomSha] = useState('');
   const [commits, setCommits] = useState<GitCommitHistory[]>([]);
   const [isLoadingCommits, setIsLoadingCommits] = useState(false);
   const [showCommitList, setShowCommitList] = useState(false);
+  const connectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear timers on unmount
+  useEffect(() => {
+    return () => {
+      if (connectTimerRef.current) clearTimeout(connectTimerRef.current);
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    };
+  }, []);
 
   // Sync external appState to local state if updated
   useEffect(() => {
@@ -303,7 +314,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
     setConfig(nextConfig);
     setConnectResult(null);
-    setSyncMsg('');
+    setSyncMsg(null);
     setShowCommitList(false);
     setCommits([]);
     setCustomSha('');
@@ -341,6 +352,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
       return;
     }
 
+    if (connectTimerRef.current) clearTimeout(connectTimerRef.current);
     setIsConnecting(true);
     setConnectResult(null);
 
@@ -355,6 +367,9 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           lastSyncError: undefined,
         });
         setConnectResult({ success: true, message: res.message, owner: res.owner });
+        connectTimerRef.current = setTimeout(() => {
+          setConnectResult(null);
+        }, 3500);
       } else {
         setConnectResult({ success: false, message: res.message });
       }
@@ -372,6 +387,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
       return;
     }
 
+    if (connectTimerRef.current) clearTimeout(connectTimerRef.current);
     setIsTestingRepo(true);
     setConnectResult(null);
 
@@ -396,6 +412,9 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
         });
         setRepoInput(`${finalOwner}/${finalRepo}`);
         setConnectResult({ success: true, message: res.message, owner: finalOwner });
+        connectTimerRef.current = setTimeout(() => {
+          setConnectResult(null);
+        }, 3500);
       } else {
         setConnectResult({ success: false, message: res.message });
       }
@@ -408,18 +427,22 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
   // 3. Upload Local to Git
   const handleUpload = async () => {
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     setIsUploading(true);
-    setSyncMsg('');
+    setSyncMsg(null);
     try {
       const res = await uploadToGit({ ...appState, git: config });
       if (res.success) {
-        setSyncMsg(res.message || t('gitBackupSuccess', settings.language));
+        setSyncMsg({ success: true, text: res.message || t('gitBackupSuccess', settings.language) });
+        syncTimerRef.current = setTimeout(() => {
+          setSyncMsg(null);
+        }, 3500);
         onStateReload();
       } else {
-        setSyncMsg(`${t('gitUploadFailedPrefix', settings.language)}: ${res.message}`);
+        setSyncMsg({ success: false, text: `${t('gitUploadFailedPrefix', settings.language)}: ${res.message}` });
       }
     } catch (err: any) {
-      setSyncMsg(`${t('gitUploadErrorPrefix', settings.language)}: ${err.message}`);
+      setSyncMsg({ success: false, text: `${t('gitUploadErrorPrefix', settings.language)}: ${err.message}` });
     } finally {
       setIsUploading(false);
     }
@@ -427,19 +450,23 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
   // 4. Pull Remote from Git to Local
   const handlePullExecute = async () => {
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     setShowPullConfirm(false);
     setIsPulling(true);
-    setSyncMsg('');
+    setSyncMsg(null);
     try {
       const res = await restoreFromGit({ ...appState, git: config }, customSha.trim() || undefined);
       if (res.success) {
-        setSyncMsg(res.message || t('gitRestoreSuccess', settings.language));
+        setSyncMsg({ success: true, text: res.message || t('gitRestoreSuccess', settings.language) });
+        syncTimerRef.current = setTimeout(() => {
+          setSyncMsg(null);
+        }, 3500);
         onStateReload();
       } else {
-        setSyncMsg(`${t('gitRestoreFailedPrefix', settings.language)}: ${res.message}`);
+        setSyncMsg({ success: false, text: `${t('gitRestoreFailedPrefix', settings.language)}: ${res.message}` });
       }
     } catch (err: any) {
-      setSyncMsg(`${t('gitRestoreErrorPrefix', settings.language)}: ${err.message}`);
+      setSyncMsg({ success: false, text: `${t('gitRestoreErrorPrefix', settings.language)}: ${err.message}` });
     } finally {
       setIsPulling(false);
     }
@@ -447,7 +474,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
   const handleFetchCommits = async () => {
     if (!config.token.trim()) {
-      setSyncMsg(t('gitTokenPlaceholderRepo', settings.language));
+      setSyncMsg({ success: false, text: t('gitTokenPlaceholderRepo', settings.language) });
       return;
     }
     setIsLoadingCommits(true);
@@ -457,7 +484,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
       const data = await client.getCommitHistory(10);
       setCommits(data);
     } catch (err: any) {
-      setSyncMsg(err.message || t('gitFetchCommitsFailed', settings.language));
+      setSyncMsg({ success: false, text: err.message || t('gitFetchCommitsFailed', settings.language) });
     } finally {
       setIsLoadingCommits(false);
     }
@@ -861,7 +888,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           {/* Test / Connect Result Message */}
           {connectResult && (
             <div
-              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${connectResult.success
+              className={`p-2.5 rounded-xl text-xs flex items-center justify-between gap-2 animate-fade-in ${connectResult.success
                 ? isLight
                   ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                   : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
@@ -870,12 +897,24 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                   : 'bg-red-500/20 text-red-300 border border-red-500/30'
                 }`}
             >
-              {connectResult.success ? (
-                <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />
-              ) : (
-                <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+              <div className="flex items-center gap-2 min-w-0">
+                {connectResult.success ? (
+                  <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+                )}
+                <span className="break-words">{connectResult.message}</span>
+              </div>
+              {!connectResult.success && (
+                <button
+                  type="button"
+                  onClick={() => setConnectResult(null)}
+                  className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
+                  title={t('close', settings.language) || 'Close'}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               )}
-              <span>{connectResult.message}</span>
             </div>
           )}
 
@@ -934,13 +973,34 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           {/* Sync Result Feedback */}
           {syncMsg && (
             <div
-              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${isLight
-                ? 'bg-black/5 border border-black/10 text-slate-800'
-                : 'bg-white/10 border border-white/15 text-white'
-                }`}
+              className={`p-2.5 rounded-xl text-xs flex items-center justify-between gap-2 animate-fade-in ${
+                syncMsg.success
+                  ? isLight
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : isLight
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : 'bg-red-500/20 text-red-300 border border-red-500/30'
+              }`}
             >
-              <RefreshCw className="w-4 h-4 shrink-0" />
-              <span>{syncMsg}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                {syncMsg.success ? (
+                  <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+                )}
+                <span className="break-words">{syncMsg.text}</span>
+              </div>
+              {!syncMsg.success && (
+                <button
+                  type="button"
+                  onClick={() => setSyncMsg(null)}
+                  className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
+                  title={t('close', settings.language) || 'Close'}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           )}
 
