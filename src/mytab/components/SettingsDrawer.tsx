@@ -100,10 +100,22 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   };
   const activeFetchIdRef = useRef<number>(0);
   const lastRefreshTimeRef = useRef<number>(0);
+  const importTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const greetingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear timers on unmount
+  useEffect(() => {
+    return () => {
+      if (importTimerRef.current) clearTimeout(importTimerRef.current);
+      if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
+    };
+  }, []);
 
   // Reset transient UI states every time the drawer is opened
   useEffect(() => {
     if (isOpen) {
+      if (importTimerRef.current) clearTimeout(importTimerRef.current);
+      if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
       setImportStatus(null);
       setGreetingStatus(null);
       setUnsplashError(null);
@@ -196,9 +208,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           throw new Error('No valid greetings arrays');
         }
 
+        if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
         handleSettingsChange({ customGreetings: cleaned });
         setGreetingStatus({ success: true, text: t('importGreetingsSuccess', settings.language) });
+        greetingTimerRef.current = setTimeout(() => {
+          setGreetingStatus(null);
+        }, 3500);
       } catch {
+        if (greetingTimerRef.current) clearTimeout(greetingTimerRef.current);
         setGreetingStatus({ success: false, text: t('importGreetingsFailed', settings.language) });
       }
     };
@@ -282,9 +299,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
     const reader = new FileReader();
     reader.onload = async () => {
       if (typeof reader.result === 'string') {
+        if (importTimerRef.current) clearTimeout(importTimerRef.current);
         const res = await importData(reader.result);
         if (res.success) {
           setImportStatus({ success: true, text: t('importSuccess', settings.language) });
+          importTimerRef.current = setTimeout(() => {
+            setImportStatus(null);
+          }, 3500);
           onStateReload();
         } else {
           setImportStatus({
@@ -1558,7 +1579,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       {/* Import Status Message */}
                       {greetingStatus && (
                         <div
-                          className={`text-xs p-2.5 rounded-xl flex items-center gap-2 animate-fade-in ${greetingStatus.success
+                          className={`text-xs p-2.5 rounded-xl flex items-center justify-between gap-2 animate-fade-in ${greetingStatus.success
                             ? isLight
                               ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                               : 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30'
@@ -1567,12 +1588,24 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               : 'bg-red-500/15 text-red-200 border border-red-500/30'
                             }`}
                         >
-                          {greetingStatus.success ? (
-                            <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                          ) : (
-                            <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+                          <div className="flex items-center gap-2 min-w-0">
+                            {greetingStatus.success ? (
+                              <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                            ) : (
+                              <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+                            )}
+                            <span className="break-words">{greetingStatus.text}</span>
+                          </div>
+                          {!greetingStatus.success && (
+                            <button
+                              type="button"
+                              onClick={() => setGreetingStatus(null)}
+                              className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
+                              title={t('close', settings.language) || 'Close'}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
                           )}
-                          <span>{greetingStatus.text}</span>
                         </div>
                       )}
                     </div>
@@ -1761,7 +1794,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                   {importStatus && (
                     <div
-                      className={`p-2.5 rounded-xl text-xs flex items-center gap-2 animate-fade-in ${importStatus.success
+                      className={`p-2.5 rounded-xl text-xs flex items-center justify-between gap-2 animate-fade-in ${importStatus.success
                         ? isLight
                           ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                           : 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30'
@@ -1770,12 +1803,24 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           : 'bg-red-500/15 text-red-200 border border-red-500/30'
                         }`}
                     >
-                      {importStatus.success ? (
-                        <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+                      <div className="flex items-center gap-2 min-w-0">
+                        {importStatus.success ? (
+                          <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+                        )}
+                        <span className="break-words">{importStatus.text}</span>
+                      </div>
+                      {!importStatus.success && (
+                        <button
+                          type="button"
+                          onClick={() => setImportStatus(null)}
+                          className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
+                          title={t('close', settings.language) || 'Close'}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       )}
-                      <span>{importStatus.text}</span>
                     </div>
                   )}
                 </div>

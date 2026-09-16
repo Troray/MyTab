@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Sparkles, Image as ImageIcon, Upload, Loader2, Check, AlertCircle } from 'lucide-react';
 import { SiteItem, ThemeSettings, Category, GridPage } from '../../types';
@@ -84,6 +84,14 @@ export const SiteModal: React.FC<SiteModalProps> = ({
   const [categoryId, setCategoryId] = useState<string>(() => initialCategoryId);
   const [isFetching, setIsFetching] = useState(false);
   const [fetchMsg, setFetchMsg] = useState<{ success: boolean; text: string } | null>(null);
+  const fetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear timer on unmount
+  useEffect(() => {
+    return () => {
+      if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current);
+    };
+  }, []);
 
   // Initialize form fields only when modal opens or editingSite changes
   useEffect(() => {
@@ -118,6 +126,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
       setPageId(initialPage);
       setCategoryId(initialCat);
     }
+    if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current);
     setFetchMsg(null);
   }, [editingSite, isOpen, defaultPageId, activeCategoryId, categories, isBoard, gridPages, siteCategory]);
 
@@ -142,6 +151,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
 
   const handleAutoFetch = async () => {
     if (!url.trim()) return;
+    if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current);
     setIsFetching(true);
     setFetchMsg(null);
 
@@ -152,6 +162,9 @@ export const SiteModal: React.FC<SiteModalProps> = ({
       }
       setIcon(meta.icon);
       setFetchMsg({ success: true, text: t('fetchSuccess', settings.language) });
+      fetchTimerRef.current = setTimeout(() => {
+        setFetchMsg(null);
+      }, 3500);
     } catch {
       setFetchMsg({ success: false, text: t('fetchFailed', settings.language) });
       if (!icon) {
@@ -286,7 +299,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
             </div>
             {fetchMsg && (
               <div
-                className={`text-[11px] mt-2 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 animate-fade-in ${
+                className={`text-[11px] mt-2 px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-1.5 animate-fade-in ${
                   fetchMsg.success
                     ? isLight
                       ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
@@ -296,12 +309,24 @@ export const SiteModal: React.FC<SiteModalProps> = ({
                       : 'bg-amber-500/15 text-amber-200 border border-amber-500/30'
                 }`}
               >
-                {fetchMsg.success ? (
-                  <Check className="w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                ) : (
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {fetchMsg.success ? (
+                    <Check className="w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  ) : (
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                  )}
+                  <span className="break-words">{fetchMsg.text}</span>
+                </div>
+                {!fetchMsg.success && (
+                  <button
+                    type="button"
+                    onClick={() => setFetchMsg(null)}
+                    className="p-0.5 rounded opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
+                    title={t('close', settings.language) || 'Close'}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 )}
-                <span>{fetchMsg.text}</span>
               </div>
             )}
           </div>
