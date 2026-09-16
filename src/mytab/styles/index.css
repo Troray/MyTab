@@ -533,4 +533,47 @@ body {
   will-change: transform, opacity;
 }
 
+/* ==========================================================================
+   Kanban Board Site List Item - Dynamic Favicon Hover Zoom Animation
+   ========================================================================== */
+
+.board-site-icon-box {
+  width: 0;
+  height: 20px;
+  margin-right: 0;
+  opacity: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transition: width 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              margin-right 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.board-site-icon-img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  border-radius: 3px;
+  flex-shrink: 0;
+  transform: scale(0.3);
+  transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.group\/item:hover .board-site-icon-box,
+.board-site-row:hover .board-site-icon-box {
+  width: 20px;
+  margin-right: 7px;
+  opacity: 1;
+}
+
+.group\/item:hover .board-site-icon-img,
+.board-site-row:hover .board-site-icon-img {
+  transform: scale(1.2);
+}
+
+
 

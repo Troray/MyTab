@@ -439,7 +439,7 @@ export class GitClient {
    */
   async getData(customSha?: string): Promise<{ payload: SyncPayload | null; sha?: string }> {
     if (this.isGistMode()) {
-      return this.getGistData();
+      return this.getGistData(customSha);
     }
     return this.getFile(customSha);
   }
@@ -455,9 +455,48 @@ export class GitClient {
   }
 
   /**
+   * Helper to fetch raw Gist file content
+   */
+  private async fetchRawGistContent(rawUrl: string): Promise<string | null> {
+    const { provider, token } = this.config;
+    let fetchUrl = rawUrl;
+    // Add cache-busting timestamp
+    fetchUrl += (fetchUrl.includes('?') ? '&' : '?') + `_t=${Date.now()}`;
+    if (provider === 'gitee' && token && !fetchUrl.includes('access_token')) {
+      fetchUrl += `&access_token=${token}`;
+    }
+
+    try {
+      // First attempt: fetch directly (GitHub Gist raw_url includes the secret commit hash and is served directly by raw CDN)
+      const res = await fetch(fetchUrl, {
+        method: 'GET',
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        return await res.text();
+      }
+
+      // If direct fetch returns 401 or 403, retry with Authorization header if token is present
+      if ((res.status === 401 || res.status === 403) && token && provider === 'github') {
+        const authRes = await fetch(fetchUrl, {
+          method: 'GET',
+          headers: getHeaders(token, provider),
+          cache: 'no-store',
+        });
+        if (authRes.ok) {
+          return await authRes.text();
+        }
+      }
+    } catch (e) {
+      console.warn('[Git Sync] Failed to fetch raw Gist content:', e);
+    }
+    return null;
+  }
+
+  /**
    * Gist: Read payload from Gist
    */
-  private async getGistData(): Promise<{ payload: SyncPayload | null; sha?: string }> {
+  private async getGistData(customSha?: string): Promise<{ payload: SyncPayload | null; sha?: string }> {
     let { provider, gistId, token } = this.config;
     if (!gistId) {
       if (!token) return { payload: null };
@@ -467,7 +506,9 @@ export class GitClient {
     }
 
     const baseUrl = getApiBaseUrl(provider);
-    let url = `${baseUrl}/gists/${gistId}?_t=${Date.now()}`;
+    let url = customSha
+      ? `${baseUrl}/gists/${gistId}/${customSha}?_t=${Date.now()}`
+      : `${baseUrl}/gists/${gistId}?_t=${Date.now()}`;
     if (provider === 'gitee') {
       url += `&access_token=${token}`;
     }
@@ -488,14 +529,41 @@ export class GitClient {
 
     const data = await res.json();
     const file = data.files && (data.files[GIST_FILENAME] || Object.values(data.files)[0]);
-    if (!file || !file.content) {
+    if (!file || (!file.content && !file.raw_url)) {
+      return { payload: null };
+    }
+
+    let rawText = file.content;
+
+    // GitHub/Gitee truncates file content when it exceeds 1MB (or inline limit), setting truncated: true.
+    // In such cases (or if content is missing), fetch the complete un-truncated content from raw_url.
+    if ((file.truncated || !rawText) && file.raw_url) {
+      const fetchedRaw = await this.fetchRawGistContent(file.raw_url);
+      if (fetchedRaw) {
+        rawText = fetchedRaw;
+      }
+    }
+
+    if (!rawText) {
       return { payload: null };
     }
 
     try {
-      const payload = JSON.parse(file.content) as SyncPayload;
-      return { payload };
+      const payload = JSON.parse(rawText) as SyncPayload;
+      return { payload, sha: data.history?.[0]?.version };
     } catch {
+      // Fallback: If JSON parsing failed (e.g. content was cut off but truncated flag was false), try raw_url
+      if (file.raw_url && rawText === file.content) {
+        const fetchedRaw = await this.fetchRawGistContent(file.raw_url);
+        if (fetchedRaw) {
+          try {
+            const payload = JSON.parse(fetchedRaw) as SyncPayload;
+            return { payload, sha: data.history?.[0]?.version };
+          } catch {
+            return { payload: null };
+          }
+        }
+      }
       return { payload: null };
     }
   }
@@ -572,16 +640,41 @@ export class GitClient {
     }
 
     const data = await res.json().catch(() => null);
-    if (!data || !data.content) {
-      return { payload: null, sha: data?.sha };
+    if (!data) {
+      return { payload: null };
+    }
+
+    let jsonString: string | null = null;
+
+    if (data.content) {
+      jsonString = base64ToUtf8(data.content);
+    } else if (data.download_url) {
+      // When file > 1MB, GitHub omits content and provides download_url
+      let downloadUrl = data.download_url;
+      downloadUrl += (downloadUrl.includes('?') ? '&' : '?') + `_t=${Date.now()}`;
+      if (provider === 'gitee' && token && !downloadUrl.includes('access_token')) {
+        downloadUrl += `&access_token=${token}`;
+      }
+      try {
+        const dlRes = await fetch(downloadUrl, {
+          method: 'GET',
+          headers: getHeaders(token, provider),
+          cache: 'no-store',
+        });
+        if (dlRes.ok) {
+          jsonString = await dlRes.text();
+        }
+      } catch (e) {
+        console.warn('[Git Sync] Error fetching repo file from download_url:', e);
+      }
+    }
+
+    if (!jsonString || !jsonString.trim()) {
+      return { payload: null, sha: data.sha };
     }
 
     try {
-      const decoded = base64ToUtf8(data.content);
-      if (!decoded.trim()) {
-        return { payload: null, sha: data.sha };
-      }
-      const payload = JSON.parse(decoded) as SyncPayload;
+      const payload = JSON.parse(jsonString) as SyncPayload;
       return { payload, sha: data.sha };
     } catch {
       return { payload: null, sha: data.sha };
