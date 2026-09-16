@@ -366,14 +366,14 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                   <GripVertical className="w-3.5 h-3.5 -ml-1 mr-1 flex-shrink-0 opacity-25 group-hover/item:opacity-75 transition-opacity pointer-events-none" />
                 )}
 
-                {/* Site Icon: Option 1 - reserved placeholder with smooth hover fade-in */}
-                <div className="w-4 h-4 mr-1.5 shrink-0 flex items-center justify-center pointer-events-none">
+                {/* Site Icon: Option 2 - Dynamic slide-out & scale zoom on hover */}
+                <div className="w-0 mr-0 opacity-0 scale-50 overflow-hidden shrink-0 flex items-center justify-center pointer-events-none group-hover/item:w-4.5 group-hover/item:mr-1.5 group-hover/item:opacity-100 group-hover/item:scale-100 transition-all duration-200 ease-out">
                   <img
                     src={site.icon || generateFallbackIcon(site.title || site.url)}
                     alt=""
                     loading="lazy"
                     referrerPolicy="no-referrer"
-                    className="w-3.5 h-3.5 object-contain rounded-[3px] opacity-0 scale-90 group-hover/item:opacity-100 group-hover/item:scale-100 transition-all duration-150"
+                    className="w-4 h-4 object-contain rounded-[3px] shrink-0"
                     onError={(e) => {
                       (e.target as HTMLElement).setAttribute('src', generateFallbackIcon(site.title || site.url));
                     }}
