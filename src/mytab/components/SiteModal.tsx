@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Sparkles, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
+import { X, Sparkles, Image as ImageIcon, Upload, Loader2, Check, AlertCircle } from 'lucide-react';
 import { SiteItem, ThemeSettings, Category, GridPage } from '../../types';
 import { fetchSiteMetadata, generateFallbackIcon, normalizeUrl, fileToBase64Icon, urlToBase64Icon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
@@ -83,7 +83,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
 
   const [categoryId, setCategoryId] = useState<string>(() => initialCategoryId);
   const [isFetching, setIsFetching] = useState(false);
-  const [fetchMsg, setFetchMsg] = useState('');
+  const [fetchMsg, setFetchMsg] = useState<{ success: boolean; text: string } | null>(null);
 
   // Initialize form fields only when modal opens or editingSite changes
   useEffect(() => {
@@ -118,7 +118,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
       setPageId(initialPage);
       setCategoryId(initialCat);
     }
-    setFetchMsg('');
+    setFetchMsg(null);
   }, [editingSite, isOpen, defaultPageId, activeCategoryId, categories, isBoard, gridPages, siteCategory]);
 
   // Keep category synchronized when the user explicitly switches desktop page inside modal (grid mode only)
@@ -138,237 +138,248 @@ export const SiteModal: React.FC<SiteModalProps> = ({
     }
   };
 
- if (!isOpen) return null;
+  if (!isOpen) return null;
 
- const handleAutoFetch = async () => {
- if (!url.trim()) return;
- setIsFetching(true);
- setFetchMsg('');
+  const handleAutoFetch = async () => {
+    if (!url.trim()) return;
+    setIsFetching(true);
+    setFetchMsg(null);
 
- try {
- const meta = await fetchSiteMetadata(url);
- if (!title.trim() || !editingSite) {
- setTitle(meta.title);
- }
- setIcon(meta.icon);
- setFetchMsg(t('fetchSuccess', settings.language));
- } catch {
- setFetchMsg(t('fetchFailed', settings.language));
- if (!icon) {
- setIcon(generateFallbackIcon(title || url));
- }
- } finally {
- setIsFetching(false);
- }
- };
+    try {
+      const meta = await fetchSiteMetadata(url);
+      if (!title.trim() || !editingSite) {
+        setTitle(meta.title);
+      }
+      setIcon(meta.icon);
+      setFetchMsg({ success: true, text: t('fetchSuccess', settings.language) });
+    } catch {
+      setFetchMsg({ success: false, text: t('fetchFailed', settings.language) });
+      if (!icon) {
+        setIcon(generateFallbackIcon(title || url));
+      }
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
- const handleUrlBlur = () => {
- if (url.trim() && !title.trim() && !editingSite) {
- handleAutoFetch();
- }
- };
+  const handleUrlBlur = () => {
+    if (url.trim() && !title.trim() && !editingSite) {
+      handleAutoFetch();
+    }
+  };
 
- const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
- const file = e.target.files?.[0];
- if (!file) return;
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
- try {
- const base64 = await fileToBase64Icon(file, 128);
- setIcon(base64);
- } catch {
- // ignore
- }
- };
+    try {
+      const base64 = await fileToBase64Icon(file, 128);
+      setIcon(base64);
+    } catch {
+      // ignore
+    }
+  };
 
- const handleSubmit = async (e: React.FormEvent) => {
- e.preventDefault();
- const finalUrl = normalizeUrl(url);
- if (!finalUrl) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const finalUrl = normalizeUrl(url);
+    if (!finalUrl) return;
 
- const finalTitle = title.trim() || new URL(finalUrl).hostname.replace(/^www\./i, '');
- let finalIcon = icon.trim() || generateFallbackIcon(finalTitle);
+    const finalTitle = title.trim() || new URL(finalUrl).hostname.replace(/^www\./i, '');
+    let finalIcon = icon.trim() || generateFallbackIcon(finalTitle);
 
- // If icon is remote http(s) URL, try to cache as Base64 to prevent future CORS/offline issues
- if (finalIcon && (finalIcon.startsWith('http://') || finalIcon.startsWith('https://'))) {
- try {
- const base64 = await urlToBase64Icon(finalIcon, 128);
- if (base64 && base64.startsWith('data:image/')) {
- finalIcon = base64;
- }
- } catch {
- // keep remote url as fallback
- }
- }
+    // If icon is remote http(s) URL, try to cache as Base64 to prevent future CORS/offline issues
+    if (finalIcon && (finalIcon.startsWith('http://') || finalIcon.startsWith('https://'))) {
+      try {
+        const base64 = await urlToBase64Icon(finalIcon, 128);
+        if (base64 && base64.startsWith('data:image/')) {
+          finalIcon = base64;
+        }
+      } catch {
+        // keep remote url as fallback
+      }
+    }
 
- onSave({
- url: finalUrl,
- title: finalTitle,
- icon: finalIcon,
- categoryId: categoryId || 'all',
- pageId: pageId || defaultPageId,
- });
- };
+    onSave({
+      url: finalUrl,
+      title: finalTitle,
+      icon: finalIcon,
+      categoryId: categoryId || 'all',
+      pageId: pageId || defaultPageId,
+    });
+  };
 
- const isLight = isLightMode(settings.mode);
- const previewIcon = icon.trim() || generateFallbackIcon(title.trim() || url.trim() || 'W');
+  const isLight = isLightMode(settings.mode);
+  const previewIcon = icon.trim() || generateFallbackIcon(title.trim() || url.trim() || 'W');
   const content = (
-  <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
- {/* Backdrop */}
- <div
- className={`fixed inset-0 transition-opacity ${isLight ? 'bg-black/25' : 'bg-black/60'}`}
- onClick={onClose}
- />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 transition-opacity ${isLight ? 'bg-black/25' : 'bg-black/60'}`}
+        onClick={onClose}
+      />
 
- {/* Modal Container */}
- <div
- className={`glass-modal relative z-10 w-full max-w-md rounded-3xl p-6 border shadow-2xl transition-all ${
- isLight
- ? 'border-black/10 shadow-black/15 text-slate-900'
- : 'border-white/15 shadow-black/80 text-white'
- }`}
- >
- {/* Header */}
- <div className={`flex items-center justify-between pb-4 mb-4 border-b ${
- isLight ? 'border-black/10' : 'border-white/10'
- }`}>
- <h3 className="text-base font-semibold tracking-tight">
- {editingSite ? t('editSite', settings.language) : t('addSite', settings.language)}
- </h3>
- <button
- type="button"
- onClick={onClose}
- className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
- isLight
- ? 'text-slate-500 hover:text-black hover:bg-black/5'
- : 'text-white/60 hover:text-white hover:bg-white/10'
- }`}
- >
- <X className="w-4.5 h-4.5" />
- </button>
- </div>
+      {/* Modal Container */}
+      <div
+        className={`glass-modal relative z-10 w-full max-w-md rounded-3xl p-6 border shadow-2xl transition-all ${
+          isLight
+            ? 'border-black/10 shadow-black/15 text-slate-900'
+            : 'border-white/15 shadow-black/80 text-white'
+        }`}
+      >
+        {/* Header */}
+        <div className={`flex items-center justify-between pb-4 mb-4 border-b ${
+          isLight ? 'border-black/10' : 'border-white/10'
+        }`}>
+          <h3 className="text-base font-semibold tracking-tight">
+            {editingSite ? t('editSite', settings.language) : t('addSite', settings.language)}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
+              isLight
+                ? 'text-slate-500 hover:text-black hover:bg-black/5'
+                : 'text-white/60 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <X className="w-4.5 h-4.5" />
+          </button>
+        </div>
 
- {/* Form */}
- <form onSubmit={handleSubmit} className="space-y-4">
- {/* URL Input with Auto Fetch Button */}
- <div>
- <label
- className={`block text-xs font-medium mb-1.5 ${
- isLight ? 'text-slate-700' : 'text-white/80'
- }`}
- >
- {t('siteUrl', settings.language)} <span className="text-red-500">*</span>
- </label>
- <div className="flex gap-2">
- <input
- type="text"
- required
- autoFocus
- value={url}
- onChange={(e) => setUrl(e.target.value)}
- onBlur={handleUrlBlur}
- placeholder={t('siteUrlPlaceholder', settings.language)}
- className="glass-input flex-1 px-3.5 py-2.5 rounded-xl text-sm"
- />
- <button
- type="button"
- onClick={handleAutoFetch}
- disabled={isFetching || !url.trim()}
- className="glass-btn-secondary flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs shrink-0 active:scale-95 disabled:opacity-50"
- title={t('autoFetch', settings.language)}
- >
- {isFetching ? (
- <Loader2 className="w-4 h-4 animate-spin" />
- ) : (
- <Sparkles className="w-4 h-4" />
- )}
- <span>{t('autoFetch', settings.language)}</span>
- </button>
- </div>
- {fetchMsg && (
- <p
- className={`text-[11px] mt-1.5 ${
- isLight ? 'text-amber-700 font-medium' : 'text-amber-300'
- }`}
- >
- {fetchMsg}
- </p>
- )}
- </div>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* URL Input with Auto Fetch Button */}
+          <div>
+            <label
+              className={`block text-xs font-medium mb-1.5 ${
+                isLight ? 'text-slate-700' : 'text-white/80'
+              }`}
+            >
+              {t('siteUrl', settings.language)} <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                required
+                autoFocus
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                onBlur={handleUrlBlur}
+                placeholder={t('siteUrlPlaceholder', settings.language)}
+                className="glass-input flex-1 px-3.5 py-2.5 rounded-xl text-sm"
+              />
+              <button
+                type="button"
+                onClick={handleAutoFetch}
+                disabled={isFetching || !url.trim()}
+                className="glass-btn-secondary flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs shrink-0 active:scale-95 disabled:opacity-50"
+                title={t('autoFetch', settings.language)}
+              >
+                {isFetching ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+                <span>{t('autoFetch', settings.language)}</span>
+              </button>
+            </div>
+            {fetchMsg && (
+              <div
+                className={`text-[11px] mt-2 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 animate-fade-in ${
+                  fetchMsg.success
+                    ? isLight
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      : 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30'
+                    : isLight
+                      ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                      : 'bg-amber-500/15 text-amber-200 border border-amber-500/30'
+                }`}
+              >
+                {fetchMsg.success ? (
+                  <Check className="w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                )}
+                <span>{fetchMsg.text}</span>
+              </div>
+            )}
+          </div>
 
- {/* Title Input */}
- <div>
- <label
- className={`block text-xs font-medium mb-1.5 ${
- isLight ? 'text-slate-700' : 'text-white/80'
- }`}
- >
- {t('siteTitle', settings.language)} <span className="text-red-500">*</span>
- </label>
- <input
- type="text"
- required
- value={title}
- onChange={(e) => setTitle(e.target.value)}
- placeholder={t('siteTitlePlaceholder', settings.language)}
- className="glass-input w-full px-3.5 py-2.5 rounded-xl text-sm"
- />
- </div>
+          {/* Title Input */}
+          <div>
+            <label
+              className={`block text-xs font-medium mb-1.5 ${
+                isLight ? 'text-slate-700' : 'text-white/80'
+              }`}
+            >
+              {t('siteTitle', settings.language)} <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t('siteTitlePlaceholder', settings.language)}
+              className="glass-input w-full px-3.5 py-2.5 rounded-xl text-sm"
+            />
+          </div>
 
- {/* Icon Input & Preview */}
- <div>
- <label
- className={`block text-xs font-medium mb-1.5 ${
- isLight ? 'text-slate-700' : 'text-white/80'
- }`}
- >
- {t('siteIcon', settings.language)}
- </label>
- <div className="flex items-center gap-3">
- {/* Live Preview */}
- <div
- className={`w-11 h-11 rounded-xl border flex items-center justify-center overflow-hidden shrink-0 shadow-inner ${
- isLight ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/20'
- }`}
- >
- <img
- src={previewIcon}
- alt="Preview"
- referrerPolicy="no-referrer"
- className="w-7 h-7 object-contain rounded"
- onError={(e) => {
- (e.target as HTMLElement).setAttribute('src', generateFallbackIcon(title || 'W'));
- }}
- />
- </div>
+          {/* Icon Input & Preview */}
+          <div>
+            <label
+              className={`block text-xs font-medium mb-1.5 ${
+                isLight ? 'text-slate-700' : 'text-white/80'
+              }`}
+            >
+              {t('siteIcon', settings.language)}
+            </label>
+            <div className="flex items-center gap-3">
+              {/* Live Preview */}
+              <div
+                className={`w-11 h-11 rounded-xl border flex items-center justify-center overflow-hidden shrink-0 shadow-inner ${
+                  isLight ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/20'
+                }`}
+              >
+                <img
+                  src={previewIcon}
+                  alt="Preview"
+                  referrerPolicy="no-referrer"
+                  className="w-7 h-7 object-contain rounded"
+                  onError={(e) => {
+                    (e.target as HTMLElement).setAttribute('src', generateFallbackIcon(title || 'W'));
+                  }}
+                />
+              </div>
 
- {/* Icon URL Input */}
- <input
- type="text"
- value={icon}
- onChange={(e) => setIcon(e.target.value)}
- placeholder={t('siteIconPlaceholder', settings.language)}
- className="glass-input flex-1 px-3.5 py-2.5 rounded-xl text-sm"
- />
+              {/* Icon URL Input */}
+              <input
+                type="text"
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                placeholder={t('siteIconPlaceholder', settings.language)}
+                className="glass-input flex-1 px-3.5 py-2.5 rounded-xl text-sm"
+              />
 
- {/* Upload Local File */}
- <label
- className={`p-2.5 rounded-xl border cursor-pointer transition-colors shrink-0 ${
- isLight
- ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700 hover:text-slate-900'
- : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80 hover:text-white'
- }`}
- title={t('uploadIcon', settings.language)}
- >
- <Upload className="w-4 h-4" />
- <input
- type="file"
- accept="image/*"
- onChange={handleFileUpload}
- className="hidden"
- />
- </label>
- </div>
- </div>
+              {/* Upload Local File */}
+              <label
+                className={`p-2.5 rounded-xl border cursor-pointer transition-colors shrink-0 ${
+                  isLight
+                    ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700 hover:text-slate-900'
+                    : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80 hover:text-white'
+                }`}
+                title={t('uploadIcon', settings.language)}
+              >
+                <Upload className="w-4 h-4" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
 
         {/* Category Select (only shown if categories exist) */}
         {availableCategories.length > 0 && (

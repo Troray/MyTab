@@ -25,6 +25,8 @@ import {
   Search,
   Shield,
   AlertTriangle,
+  CheckCircle,
+  AlertCircle,
   LayoutGrid,
   Columns3,
   AlignLeft,
@@ -79,7 +81,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   };
   const [activeTab, setActiveTab] = useState<'appearance' | 'behavior' | 'sync' | 'backup'>('appearance');
   const [syncProvider, setSyncProvider] = useState<'webdav' | 'git'>(() => resolveBestSyncProvider(appState.webdav, appState.git));
-  const [importStatus, setImportStatus] = useState<string>('');
+  const [importStatus, setImportStatus] = useState<{ success: boolean; text: string } | null>(null);
   const [greetingStatus, setGreetingStatus] = useState<{ success?: boolean; text: string } | null>(null);
   const [isCardLayoutExpanded, setIsCardLayoutExpanded] = useState(false);
   const [isUnsplashTopicModalOpen, setIsUnsplashTopicModalOpen] = useState(false);
@@ -102,7 +104,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   // Reset transient UI states every time the drawer is opened
   useEffect(() => {
     if (isOpen) {
-      setImportStatus('');
+      setImportStatus(null);
       setGreetingStatus(null);
       setUnsplashError(null);
       setSyncProvider(resolveBestSyncProvider(appState.webdav, appState.git));
@@ -282,14 +284,18 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
       if (typeof reader.result === 'string') {
         const res = await importData(reader.result);
         if (res.success) {
-          setImportStatus(t('importSuccess', settings.language));
+          setImportStatus({ success: true, text: t('importSuccess', settings.language) });
           onStateReload();
         } else {
-          setImportStatus(`${t('importFailed', settings.language)}: ${res.error}`);
+          setImportStatus({
+            success: false,
+            text: `${t('importFailed', settings.language)}${res.error ? `: ${res.error}` : ''}`
+          });
         }
       }
     };
     reader.readAsText(file);
+    e.target.value = '';
   };
 
   const isLight = isLightMode(settings.mode);
@@ -761,9 +767,15 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       </div>
 
                       {unsplashError && (
-                        <p className="text-[10px] text-amber-500 font-medium">
-                          ⚠️ {unsplashError}
-                        </p>
+                        <div
+                          className={`p-2.5 rounded-xl text-xs flex items-center gap-2 animate-fade-in ${isLight
+                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                            : 'bg-amber-500/15 text-amber-200 border border-amber-500/30'
+                            }`}
+                        >
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                          <span>{unsplashError}</span>
+                        </div>
                       )}
 
                       {/* Author Credit */}
@@ -1546,11 +1558,20 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       {/* Import Status Message */}
                       {greetingStatus && (
                         <div
-                          className={`text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 animate-fade-in ${greetingStatus.success
-                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                            : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                          className={`text-xs p-2.5 rounded-xl flex items-center gap-2 animate-fade-in ${greetingStatus.success
+                            ? isLight
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                              : 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30'
+                            : isLight
+                              ? 'bg-red-50 text-red-700 border border-red-200'
+                              : 'bg-red-500/15 text-red-200 border border-red-500/30'
                             }`}
                         >
+                          {greetingStatus.success ? (
+                            <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          ) : (
+                            <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+                          )}
                           <span>{greetingStatus.text}</span>
                         </div>
                       )}
@@ -1740,12 +1761,21 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                   {importStatus && (
                     <div
-                      className={`p-2.5 rounded-xl text-xs text-center ${isLight
-                        ? 'bg-black/5 text-slate-800 border border-black/10'
-                        : 'bg-white/10 text-white'
+                      className={`p-2.5 rounded-xl text-xs flex items-center gap-2 animate-fade-in ${importStatus.success
+                        ? isLight
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                          : 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30'
+                        : isLight
+                          ? 'bg-red-50 text-red-700 border border-red-200'
+                          : 'bg-red-500/15 text-red-200 border border-red-500/30'
                         }`}
                     >
-                      {importStatus}
+                      {importStatus.success ? (
+                        <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+                      )}
+                      <span>{importStatus.text}</span>
                     </div>
                   )}
                 </div>

@@ -154,7 +154,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
   const [showPullConfirm, setShowPullConfirm] = useState(false);
-  const [syncMsg, setSyncMsg] = useState('');
+  const [syncMsg, setSyncMsg] = useState<{ success: boolean; text: string } | null>(null);
   const [showToken, setShowToken] = useState(false);
   const [showAdvancedRestore, setShowAdvancedRestore] = useState(false);
   const [customSha, setCustomSha] = useState('');
@@ -303,7 +303,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
     setConfig(nextConfig);
     setConnectResult(null);
-    setSyncMsg('');
+    setSyncMsg(null);
     setShowCommitList(false);
     setCommits([]);
     setCustomSha('');
@@ -409,17 +409,17 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
   // 3. Upload Local to Git
   const handleUpload = async () => {
     setIsUploading(true);
-    setSyncMsg('');
+    setSyncMsg(null);
     try {
       const res = await uploadToGit({ ...appState, git: config });
       if (res.success) {
-        setSyncMsg(res.message || t('gitBackupSuccess', settings.language));
+        setSyncMsg({ success: true, text: res.message || t('gitBackupSuccess', settings.language) });
         onStateReload();
       } else {
-        setSyncMsg(`${t('gitUploadFailedPrefix', settings.language)}: ${res.message}`);
+        setSyncMsg({ success: false, text: `${t('gitUploadFailedPrefix', settings.language)}: ${res.message}` });
       }
     } catch (err: any) {
-      setSyncMsg(`${t('gitUploadErrorPrefix', settings.language)}: ${err.message}`);
+      setSyncMsg({ success: false, text: `${t('gitUploadErrorPrefix', settings.language)}: ${err.message}` });
     } finally {
       setIsUploading(false);
     }
@@ -429,17 +429,17 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
   const handlePullExecute = async () => {
     setShowPullConfirm(false);
     setIsPulling(true);
-    setSyncMsg('');
+    setSyncMsg(null);
     try {
       const res = await restoreFromGit({ ...appState, git: config }, customSha.trim() || undefined);
       if (res.success) {
-        setSyncMsg(res.message || t('gitRestoreSuccess', settings.language));
+        setSyncMsg({ success: true, text: res.message || t('gitRestoreSuccess', settings.language) });
         onStateReload();
       } else {
-        setSyncMsg(`${t('gitRestoreFailedPrefix', settings.language)}: ${res.message}`);
+        setSyncMsg({ success: false, text: `${t('gitRestoreFailedPrefix', settings.language)}: ${res.message}` });
       }
     } catch (err: any) {
-      setSyncMsg(`${t('gitRestoreErrorPrefix', settings.language)}: ${err.message}`);
+      setSyncMsg({ success: false, text: `${t('gitRestoreErrorPrefix', settings.language)}: ${err.message}` });
     } finally {
       setIsPulling(false);
     }
@@ -447,7 +447,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
 
   const handleFetchCommits = async () => {
     if (!config.token.trim()) {
-      setSyncMsg(t('gitTokenPlaceholderRepo', settings.language));
+      setSyncMsg({ success: false, text: t('gitTokenPlaceholderRepo', settings.language) });
       return;
     }
     setIsLoadingCommits(true);
@@ -457,7 +457,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
       const data = await client.getCommitHistory(10);
       setCommits(data);
     } catch (err: any) {
-      setSyncMsg(err.message || t('gitFetchCommitsFailed', settings.language));
+      setSyncMsg({ success: false, text: err.message || t('gitFetchCommitsFailed', settings.language) });
     } finally {
       setIsLoadingCommits(false);
     }
@@ -934,13 +934,22 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
           {/* Sync Result Feedback */}
           {syncMsg && (
             <div
-              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${isLight
-                ? 'bg-black/5 border border-black/10 text-slate-800'
-                : 'bg-white/10 border border-white/15 text-white'
-                }`}
+              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 animate-fade-in ${
+                syncMsg.success
+                  ? isLight
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : isLight
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : 'bg-red-500/20 text-red-300 border border-red-500/30'
+              }`}
             >
-              <RefreshCw className="w-4 h-4 shrink-0" />
-              <span>{syncMsg}</span>
+              {syncMsg.success ? (
+                <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+              )}
+              <span>{syncMsg.text}</span>
             </div>
           )}
 

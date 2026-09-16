@@ -32,7 +32,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isPulling, setIsPulling] = useState(false);
   const [showPullConfirm, setShowPullConfirm] = useState(false);
-  const [syncMsg, setSyncMsg] = useState('');
+  const [syncMsg, setSyncMsg] = useState<{ success: boolean; text: string } | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (fields: Partial<WebdavConfig>) => {
@@ -58,17 +58,17 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
   // 1. Upload Local to WebDAV
   const handleUpload = async () => {
     setIsUploading(true);
-    setSyncMsg('');
+    setSyncMsg(null);
     try {
       const res = await uploadToWebdav({ ...appState, webdav: config });
       if (res.success) {
-        setSyncMsg(res.message || t('uploadBackup', settings.language));
+        setSyncMsg({ success: true, text: res.message || t('uploadBackup', settings.language) });
         onStateReload();
       } else {
-        setSyncMsg(`${res.message}`);
+        setSyncMsg({ success: false, text: `${res.message}` });
       }
     } catch (err: any) {
-      setSyncMsg(`${err.message}`);
+      setSyncMsg({ success: false, text: `${err.message}` });
     } finally {
       setIsUploading(false);
     }
@@ -78,17 +78,17 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
   const handlePullExecute = async () => {
     setShowPullConfirm(false);
     setIsPulling(true);
-    setSyncMsg('');
+    setSyncMsg(null);
     try {
       const res = await restoreFromWebdav({ ...appState, webdav: config });
       if (res.success) {
-        setSyncMsg(res.message || t('pullRestore', settings.language));
+        setSyncMsg({ success: true, text: res.message || t('pullRestore', settings.language) });
         onStateReload();
       } else {
-        setSyncMsg(`${res.message}`);
+        setSyncMsg({ success: false, text: `${res.message}` });
       }
     } catch (err: any) {
-      setSyncMsg(`${err.message}`);
+      setSyncMsg({ success: false, text: `${err.message}` });
     } finally {
       setIsPulling(false);
     }
@@ -308,14 +308,22 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
           {/* Sync Msg */}
           {syncMsg && (
             <div
-              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
-                isLight
-                  ? 'bg-black/5 border border-black/10 text-slate-800'
-                  : 'bg-white/10 border border-white/15 text-white'
+              className={`p-2.5 rounded-xl text-xs flex items-center gap-2 animate-fade-in ${
+                syncMsg.success
+                  ? isLight
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : isLight
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : 'bg-red-500/20 text-red-300 border border-red-500/30'
               }`}
             >
-              <RefreshCw className="w-4 h-4 shrink-0" />
-              <span>{syncMsg}</span>
+              {syncMsg.success ? (
+                <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+              )}
+              <span>{syncMsg.text}</span>
             </div>
           )}
 
