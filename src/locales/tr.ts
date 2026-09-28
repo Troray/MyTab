@@ -8,7 +8,7 @@ export const tr: Translation = {
   siteTitle: 'Site Başlığı',
   siteTitlePlaceholder: 'ör. GitHub',
   siteUrl: 'Site URL\'si',
-  siteUrlPlaceholder: 'https://ornek.com',
+  siteUrlPlaceholder: 'https://example.com',
   siteIcon: 'Simge URL\'si (İsteğe bağlı)',
   siteIconPlaceholder: 'Boş bırakılırsa otomatik getirilir',
   siteCategory: 'Kategori',

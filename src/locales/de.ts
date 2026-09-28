@@ -8,7 +8,7 @@ export const de: Translation = {
   siteTitle: 'Webseitentitel',
   siteTitlePlaceholder: 'z. B. GitHub',
   siteUrl: 'Webseiten-URL',
-  siteUrlPlaceholder: 'https://beispiel.de',
+  siteUrlPlaceholder: 'https://example.com',
   siteIcon: 'Symbol-URL (optional)',
   siteIconPlaceholder: 'Automatisch abrufen, falls leer',
   siteCategory: 'Kategorie',

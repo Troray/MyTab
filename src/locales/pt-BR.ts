@@ -8,7 +8,7 @@ export const ptBR: Translation = {
   siteTitle: 'Título do site',
   siteTitlePlaceholder: 'ex.: GitHub',
   siteUrl: 'URL do site',
-  siteUrlPlaceholder: 'https://exemplo.com.br',
+  siteUrlPlaceholder: 'https://example.com',
   siteIcon: 'URL do ícone (opcional)',
   siteIconPlaceholder: 'Obtido automaticamente se vazio',
   siteCategory: 'Categoria',
