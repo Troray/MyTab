@@ -1,17 +1,17 @@
 <div align="right">
-  <a href="../../README.md"><img src="../../img/flags/cn.svg" width="16" height="12" valign="middle" alt="简体中文"/> 简体中文</a> |
-  <strong><img src="../../img/flags/tw.svg" width="16" height="12" valign="middle" alt="繁體中文"/> 繁體中文</strong> |
-  <a href="../../README_EN.md"><img src="../../img/flags/us.svg" width="16" height="12" valign="middle" alt="English"/> English</a> |
-  <a href="./README_ja.md"><img src="../../img/flags/jp.svg" width="16" height="12" valign="middle" alt="日本語"/> 日本語</a> |
-  <a href="./README_ko.md"><img src="../../img/flags/kr.svg" width="16" height="12" valign="middle" alt="한국어"/> 한국어</a> |
-  <a href="./README_de.md"><img src="../../img/flags/de.svg" width="16" height="12" valign="middle" alt="Deutsch"/> Deutsch</a> |
-  <a href="./README_es.md"><img src="../../img/flags/es.svg" width="16" height="12" valign="middle" alt="Español"/> Español</a> |
-  <a href="./README_fr.md"><img src="../../img/flags/fr.svg" width="16" height="12" valign="middle" alt="Français"/> Français</a> |
-  <a href="./README_it.md"><img src="../../img/flags/it.svg" width="16" height="12" valign="middle" alt="Italiano"/> Italiano</a> |
-  <a href="./README_pl.md"><img src="../../img/flags/pl.svg" width="16" height="12" valign="middle" alt="Polski"/> Polski</a> |
-  <a href="./README_pt_BR.md"><img src="../../img/flags/br.svg" width="16" height="12" valign="middle" alt="Português"/> Português</a> |
-  <a href="./README_ru.md"><img src="../../img/flags/ru.svg" width="16" height="12" valign="middle" alt="Русский"/> Русский</a> |
-  <a href="./README_tr.md"><img src="../../img/flags/tr.svg" width="16" height="12" valign="middle" alt="Türkçe"/> Türkçe</a>
+  <a href="../../README.md">🇨🇳 简体中文</a> |
+  <strong>🇹🇼 繁體中文</strong> |
+  <a href="../../README_EN.md">🇺🇸 English</a> |
+  <a href="./README_ja.md">🇯🇵 日本語</a> |
+  <a href="./README_ko.md">🇰🇷 한국어</a> |
+  <a href="./README_de.md">🇩🇪 Deutsch</a> |
+  <a href="./README_es.md">🇪🇸 Español</a> |
+  <a href="./README_fr.md">🇫🇷 Français</a> |
+  <a href="./README_it.md">🇮🇹 Italiano</a> |
+  <a href="./README_pl.md">🇵🇱 Polski</a> |
+  <a href="./README_pt_BR.md">🇧🇷 Português</a> |
+  <a href="./README_ru.md">🇷🇺 Русский</a> |
+  <a href="./README_tr.md">🇹🇷 Türkçe</a>
 </div>
 
 # MyTab ✨ 高顏值新分頁擴充功能 (支援 WebDAV / Git 多端雲同步)
