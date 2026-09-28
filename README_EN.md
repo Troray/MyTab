@@ -1,5 +1,17 @@
 <div align="right">
-  <a href="./README.md">简体中文</a> | <strong>English</strong>
+  <a href="./README.md"><img src="./img/flags/cn.svg" width="16" height="12" valign="middle" alt="简体中文"/> 简体中文</a> |
+  <a href="./docs/readme/README_zh_TW.md"><img src="./img/flags/tw.svg" width="16" height="12" valign="middle" alt="繁體中文"/> 繁體中文</a> |
+  <strong><img src="./img/flags/us.svg" width="16" height="12" valign="middle" alt="English"/> English</strong> |
+  <a href="./docs/readme/README_ja.md"><img src="./img/flags/jp.svg" width="16" height="12" valign="middle" alt="日本語"/> 日本語</a> |
+  <a href="./docs/readme/README_ko.md"><img src="./img/flags/kr.svg" width="16" height="12" valign="middle" alt="한국어"/> 한국어</a> |
+  <a href="./docs/readme/README_de.md"><img src="./img/flags/de.svg" width="16" height="12" valign="middle" alt="Deutsch"/> Deutsch</a> |
+  <a href="./docs/readme/README_es.md"><img src="./img/flags/es.svg" width="16" height="12" valign="middle" alt="Español"/> Español</a> |
+  <a href="./docs/readme/README_fr.md"><img src="./img/flags/fr.svg" width="16" height="12" valign="middle" alt="Français"/> Français</a> |
+  <a href="./docs/readme/README_it.md"><img src="./img/flags/it.svg" width="16" height="12" valign="middle" alt="Italiano"/> Italiano</a> |
+  <a href="./docs/readme/README_pl.md"><img src="./img/flags/pl.svg" width="16" height="12" valign="middle" alt="Polski"/> Polski</a> |
+  <a href="./docs/readme/README_pt_BR.md"><img src="./img/flags/br.svg" width="16" height="12" valign="middle" alt="Português"/> Português</a> |
+  <a href="./docs/readme/README_ru.md"><img src="./img/flags/ru.svg" width="16" height="12" valign="middle" alt="Русский"/> Русский</a> |
+  <a href="./docs/readme/README_tr.md"><img src="./img/flags/tr.svg" width="16" height="12" valign="middle" alt="Türkçe"/> Türkçe</a>
 </div>
 
 # MyTab ✨ Aesthetic New Tab Extension (with WebDAV & Git Multi-Cloud Sync)
@@ -29,7 +41,7 @@ A minimalist, aesthetic, and privacy-focused modern browser New Tab extension wi
 - 🐙 **Git Cloud Sync (GitHub / Gitee)**: Supports both **Secret Gist (one-click token binding)** and **Private Git Repository** modes. Directly reads and writes via official APIs, featuring automatic repo/gist creation, manual/scheduled backup, restore, and multi-device timestamp arbitration to prevent overwrite.
 - ☁️ **WebDAV Multi-Device Private Sync**: Connect seamlessly to private WebDAV services such as Synology NAS, Nextcloud, ownCloud, Alist, and Jianguoyun. Supports millisecond timestamp arbitration, bidirectional sync, and an independent toggle for Private Space synchronization.
 - 🔐 **Secure Redacted Backup & Migration**: One-click JSON export and import for all settings and bookmarks. During export, sensitive WebDAV/Git tokens and Private Space bookmarks are automatically redacted by default to prevent credential leakage.
-- 🌐 **Comprehensive Multi-Language Support**: Fully localized in 7 languages: Simplified Chinese, Traditional Chinese, English, Japanese (日本語), Korean (한국어), French (Français), and Russian (Русский). Automatically follows browser system language or can be switched manually.
+- 🌐 **Comprehensive Multi-Language Support**: Fully localized in 13 languages: Simplified Chinese, Traditional Chinese, English, Japanese (日本語), Korean (한국어), German (Deutsch), Spanish (Español), French (Français), Italian (Italiano), Polish (Polski), Portuguese (Português), Russian (Русский), and Turkish (Türkçe). Automatically follows browser system language or can be switched manually.
 
 ---
 

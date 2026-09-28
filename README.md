@@ -1,5 +1,17 @@
 <div align="right">
-  <strong>简体中文</strong> | <a href="./README_EN.md">English</a>
+  <strong><img src="./img/flags/cn.svg" width="16" height="12" valign="middle" alt="简体中文"/> 简体中文</strong> |
+  <a href="./docs/readme/README_zh_TW.md"><img src="./img/flags/tw.svg" width="16" height="12" valign="middle" alt="繁體中文"/> 繁體中文</a> |
+  <a href="./README_EN.md"><img src="./img/flags/us.svg" width="16" height="12" valign="middle" alt="English"/> English</a> |
+  <a href="./docs/readme/README_ja.md"><img src="./img/flags/jp.svg" width="16" height="12" valign="middle" alt="日本語"/> 日本語</a> |
+  <a href="./docs/readme/README_ko.md"><img src="./img/flags/kr.svg" width="16" height="12" valign="middle" alt="한국어"/> 한국어</a> |
+  <a href="./docs/readme/README_de.md"><img src="./img/flags/de.svg" width="16" height="12" valign="middle" alt="Deutsch"/> Deutsch</a> |
+  <a href="./docs/readme/README_es.md"><img src="./img/flags/es.svg" width="16" height="12" valign="middle" alt="Español"/> Español</a> |
+  <a href="./docs/readme/README_fr.md"><img src="./img/flags/fr.svg" width="16" height="12" valign="middle" alt="Français"/> Français</a> |
+  <a href="./docs/readme/README_it.md"><img src="./img/flags/it.svg" width="16" height="12" valign="middle" alt="Italiano"/> Italiano</a> |
+  <a href="./docs/readme/README_pl.md"><img src="./img/flags/pl.svg" width="16" height="12" valign="middle" alt="Polski"/> Polski</a> |
+  <a href="./docs/readme/README_pt_BR.md"><img src="./img/flags/br.svg" width="16" height="12" valign="middle" alt="Português"/> Português</a> |
+  <a href="./docs/readme/README_ru.md"><img src="./img/flags/ru.svg" width="16" height="12" valign="middle" alt="Русский"/> Русский</a> |
+  <a href="./docs/readme/README_tr.md"><img src="./img/flags/tr.svg" width="16" height="12" valign="middle" alt="Türkçe"/> Türkçe</a>
 </div>
 
 # MyTab ✨ 高颜值新标签页扩展 (支持 WebDAV / Git 多端云同步)
@@ -29,7 +41,7 @@
 - 🐙 **Git 云端备份 (GitHub / Gitee)**：支持 **私密 Gist 代码片段（仅需 Token 一键全自动同步）** 与 **私有 Git 仓库** 双模式，原生通过 GitHub / Gitee API 读写，支持「自动识别建仓/建 Gist」、「上传备份」、「拉取恢复」与多设备智能版本合并防覆盖。
 - ☁️ **WebDAV 多端私有同步**：无缝对接坚果云、Nextcloud、ownCloud、Alist、群晖 NAS 等私有 WebDAV 服务，支持毫秒级时间戳智能版本仲裁与双向同步，提供私密空间是否同步的精细化开关。
 - 🔐 **安全脱敏备份与恢复**：支持全量配置与网址数据的 JSON 一键导出与导入；导出时默认对 WebDAV/Git Token 与私密空间数据进行安全脱敏，避免凭据泄漏。
-- 🌐 **多语言国际化**：完整支持简体中文、繁体中文、英语 (English)、日语 (日本語)、韩语 (한국어)、法语 (Français)、俄语 (Русский) 7 种语言，界面全量原生适配，支持自动跟随浏览器系统语言或手动切换。
+- 🌐 **多语言国际化**：完整支持简体中文、繁体中文、英语 (English)、日语 (日本語)、韩语 (한국어)、德语 (Deutsch)、西班牙语 (Español)、法语 (Français)、意大利语 (Italiano)、波兰语 (Polski)、葡萄牙语 (Português)、俄语 (Русский)、土耳其语 (Türkçe) 13 种语言，界面全量原生适配，支持自动跟随浏览器系统语言或手动切换。
 
 ---
 
