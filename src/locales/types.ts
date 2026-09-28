@@ -530,4 +530,4 @@ export interface Translation {
 }
 
 export type TranslationKey = keyof Translation;
-export type Locale = 'zh-CN' | 'zh-TW' | 'en' | 'ja' | 'ko' | 'fr' | 'ru' | string;
+export type Locale = 'zh-CN' | 'zh-TW' | 'en' | 'ja' | 'ko' | 'fr' | 'ru' | 'de' | 'es' | 'pt-BR' | 'it' | 'pl' | 'tr' | string;

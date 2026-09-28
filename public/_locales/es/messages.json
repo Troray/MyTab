@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "MyTab - Nueva Pestaña Estética y Minimalista",
+    "description": "The name of the extension."
+  },
+  "extensionDescription": {
+    "message": "Extensión de Nueva Pestaña elegante y minimalista con sincronización WebDAV y Git, y temas personalizables.",
+    "description": "The description of the extension."
+  },
+  "commandOpenMyTab": {
+    "message": "Abrir la página de MyTab",
+    "description": "Shortcut command description"
+  }
+}

@@ -1304,7 +1304,8 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     value={settings.language}
                     onChange={(val) => handleSettingsChange({ language: val as Locale })}
                     isLight={isLight}
-                    className="w-36"
+                    className="w-44"
+                    columns={2}
                     options={supportedLocales.map((loc) => ({
                       value: loc.code,
                       label: loc.label,
