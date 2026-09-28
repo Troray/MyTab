@@ -32,19 +32,19 @@ export const translations: Record<string, Translation> = {
 };
 
 export const supportedLocales = [
-  { code: 'zh-CN', label: '🇨🇳 简体中文' },
-  { code: 'zh-TW', label: '🇹🇼 繁體中文' },
-  { code: 'en', label: '🇺🇸 English' },
-  { code: 'ja', label: '🇯🇵 日本語' },
-  { code: 'ko', label: '🇰🇷 한국어' },
-  { code: 'fr', label: '🇫🇷 Français' },
-  { code: 'ru', label: '🇷🇺 Русский' },
-  { code: 'de', label: '🇩🇪 Deutsch' },
-  { code: 'es', label: '🇪🇸 Español' },
-  { code: 'pt-BR', label: '🇧🇷 Português' },
-  { code: 'it', label: '🇮🇹 Italiano' },
-  { code: 'pl', label: '🇵🇱 Polski' },
-  { code: 'tr', label: '🇹🇷 Türkçe' },
+  { code: 'zh-CN', label: '简体中文', flag: '🇨🇳' },
+  { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼' },
+  { code: 'en', label: 'English', flag: '🇺🇸' },
+  { code: 'ja', label: '日本語', flag: '🇯🇵' },
+  { code: 'ko', label: '한국어', flag: '🇰🇷' },
+  { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
+  { code: 'pt-BR', label: 'Português', flag: '🇧🇷' },
+  { code: 'it', label: 'Italiano', flag: '🇮🇹' },
+  { code: 'pl', label: 'Polski', flag: '🇵🇱' },
+  { code: 'tr', label: 'Türkçe', flag: '🇹🇷' },
 ] as const;
 
 /**
