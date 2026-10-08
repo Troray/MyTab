@@ -1,5 +1,34 @@
 <div align="right">
-  <a href="./README.md">简体中文</a> | <strong>English</strong>
+  <details>
+    <summary>🌐 <strong>Translations / Languages (13) ▾</strong></summary>
+    <br>
+    <table width="100%">
+      <tr>
+        <td align="left"><a href="./README.md">🇨🇳 简体中文</a></td>
+        <td align="left">🇺🇸 <strong>English</strong></td>
+        <td align="left"><a href="./docs/readme/README_zh_TW.md">🇹🇼 繁體中文</a></td>
+        <td align="left"><a href="./docs/readme/README_ja.md">🇯🇵 日本語</a></td>
+      </tr>
+      <tr>
+        <td align="left"><a href="./docs/readme/README_ko.md">🇰🇷 한국어</a></td>
+        <td align="left"><a href="./docs/readme/README_de.md">🇩🇪 Deutsch</a></td>
+        <td align="left"><a href="./docs/readme/README_es.md">🇪🇸 Español</a></td>
+        <td align="left"><a href="./docs/readme/README_fr.md">🇫🇷 Français</a></td>
+      </tr>
+      <tr>
+        <td align="left"><a href="./docs/readme/README_it.md">🇮🇹 Italiano</a></td>
+        <td align="left"><a href="./docs/readme/README_pl.md">🇵🇱 Polski</a></td>
+        <td align="left"><a href="./docs/readme/README_pt_BR.md">🇧🇷 Português</a></td>
+        <td align="left"><a href="./docs/readme/README_ru.md">🇷🇺 Русский</a></td>
+      </tr>
+      <tr>
+        <td align="left"><a href="./docs/readme/README_tr.md">🇹🇷 Türkçe</a></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </table>
+  </details>
 </div>
 
 # MyTab ✨ Aesthetic New Tab Extension (with WebDAV & Git Multi-Cloud Sync)
@@ -29,7 +58,7 @@ A minimalist, aesthetic, and privacy-focused modern browser New Tab extension wi
 - 🐙 **Git Cloud Sync (GitHub / Gitee)**: Supports both **Secret Gist (one-click token binding)** and **Private Git Repository** modes. Directly reads and writes via official APIs, featuring automatic repo/gist creation, manual/scheduled backup, restore, and multi-device timestamp arbitration to prevent overwrite.
 - ☁️ **WebDAV Multi-Device Private Sync**: Connect seamlessly to private WebDAV services such as Synology NAS, Nextcloud, ownCloud, Alist, and Jianguoyun. Supports millisecond timestamp arbitration, bidirectional sync, and an independent toggle for Private Space synchronization.
 - 🔐 **Secure Redacted Backup & Migration**: One-click JSON export and import for all settings and bookmarks. During export, sensitive WebDAV/Git tokens and Private Space bookmarks are automatically redacted by default to prevent credential leakage.
-- 🌐 **Comprehensive Multi-Language Support**: Fully localized in 7 languages: Simplified Chinese, Traditional Chinese, English, Japanese (日本語), Korean (한국어), French (Français), and Russian (Русский). Automatically follows browser system language or can be switched manually.
+- 🌐 **Comprehensive Multi-Language Support**: Fully localized in 13 languages: Simplified Chinese, Traditional Chinese, English, Japanese (日本語), Korean (한국어), German (Deutsch), Spanish (Español), French (Français), Italian (Italiano), Polish (Polski), Portuguese (Português), Russian (Русский), and Turkish (Türkçe). Automatically follows browser system language or can be switched manually.
 
 ---
 

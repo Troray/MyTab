@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "MyTab - Nova Guia Estética e Minimalista",
+    "description": "The name of the extension."
+  },
+  "extensionDescription": {
+    "message": "Extensão elegante de Nova Guia com sincronização em nuvem via WebDAV e Git, organização de favoritos e temas.",
+    "description": "The description of the extension."
+  },
+  "commandOpenMyTab": {
+    "message": "Abrir a página do MyTab",
+    "description": "Shortcut command description"
+  }
+}

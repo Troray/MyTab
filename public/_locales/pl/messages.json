@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "MyTab - Estetyczna Minimalistyczna Nowa Karta",
+    "description": "The name of the extension."
+  },
+  "extensionDescription": {
+    "message": "Elegancka nowa karta z synchronizacją w chmurze WebDAV i Git, organizacją zakładek oraz motywami.",
+    "description": "The description of the extension."
+  },
+  "commandOpenMyTab": {
+    "message": "Otwórz stronę MyTab",
+    "description": "Shortcut command description"
+  }
+}

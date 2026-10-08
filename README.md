@@ -1,5 +1,34 @@
 <div align="right">
-  <strong>简体中文</strong> | <a href="./README_EN.md">English</a>
+  <details>
+    <summary>🌐 <strong>Translations / 多语言 (13) ▾</strong></summary>
+    <br>
+    <table width="100%">
+      <tr>
+        <td align="left">🇨🇳 <strong>简体中文</strong></td>
+        <td align="left"><a href="./README_EN.md">🇺🇸 English</a></td>
+        <td align="left"><a href="./docs/readme/README_zh_TW.md">🇹🇼 繁體中文</a></td>
+        <td align="left"><a href="./docs/readme/README_ja.md">🇯🇵 日本語</a></td>
+      </tr>
+      <tr>
+        <td align="left"><a href="./docs/readme/README_ko.md">🇰🇷 한국어</a></td>
+        <td align="left"><a href="./docs/readme/README_de.md">🇩🇪 Deutsch</a></td>
+        <td align="left"><a href="./docs/readme/README_es.md">🇪🇸 Español</a></td>
+        <td align="left"><a href="./docs/readme/README_fr.md">🇫🇷 Français</a></td>
+      </tr>
+      <tr>
+        <td align="left"><a href="./docs/readme/README_it.md">🇮🇹 Italiano</a></td>
+        <td align="left"><a href="./docs/readme/README_pl.md">🇵🇱 Polski</a></td>
+        <td align="left"><a href="./docs/readme/README_pt_BR.md">🇧🇷 Português</a></td>
+        <td align="left"><a href="./docs/readme/README_ru.md">🇷🇺 Русский</a></td>
+      </tr>
+      <tr>
+        <td align="left"><a href="./docs/readme/README_tr.md">🇹🇷 Türkçe</a></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </table>
+  </details>
 </div>
 
 # MyTab ✨ 高颜值新标签页扩展 (支持 WebDAV / Git 多端云同步)
@@ -29,7 +58,7 @@
 - 🐙 **Git 云端备份 (GitHub / Gitee)**：支持 **私密 Gist 代码片段（仅需 Token 一键全自动同步）** 与 **私有 Git 仓库** 双模式，原生通过 GitHub / Gitee API 读写，支持「自动识别建仓/建 Gist」、「上传备份」、「拉取恢复」与多设备智能版本合并防覆盖。
 - ☁️ **WebDAV 多端私有同步**：无缝对接坚果云、Nextcloud、ownCloud、Alist、群晖 NAS 等私有 WebDAV 服务，支持毫秒级时间戳智能版本仲裁与双向同步，提供私密空间是否同步的精细化开关。
 - 🔐 **安全脱敏备份与恢复**：支持全量配置与网址数据的 JSON 一键导出与导入；导出时默认对 WebDAV/Git Token 与私密空间数据进行安全脱敏，避免凭据泄漏。
-- 🌐 **多语言国际化**：完整支持简体中文、繁体中文、英语 (English)、日语 (日本語)、韩语 (한국어)、法语 (Français)、俄语 (Русский) 7 种语言，界面全量原生适配，支持自动跟随浏览器系统语言或手动切换。
+- 🌐 **多语言国际化**：完整支持简体中文、繁体中文、英语 (English)、日语 (日本語)、韩语 (한국어)、德语 (Deutsch)、西班牙语 (Español)、法语 (Français)、意大利语 (Italiano)、波兰语 (Polski)、葡萄牙语 (Português)、俄语 (Русский)、土耳其语 (Türkçe) 13 种语言，界面全量原生适配，支持自动跟随浏览器系统语言或手动切换。
 
 ---
 

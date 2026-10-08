@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "MyTab - Ästhetischer Minimaler Neuer Tab",
+    "description": "The name of the extension."
+  },
+  "extensionDescription": {
+    "message": "Eleganter, minimaler Neuer Tab mit WebDAV- & Git-Cloud-Sync, Lesezeichenverwaltung und anpassbaren Themes.",
+    "description": "The description of the extension."
+  },
+  "commandOpenMyTab": {
+    "message": "MyTab-Seite öffnen",
+    "description": "Shortcut command description"
+  }
+}

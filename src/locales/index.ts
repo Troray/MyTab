@@ -5,6 +5,12 @@ import { ja } from './ja';
 import { ko } from './ko';
 import { fr } from './fr';
 import { ru } from './ru';
+import { de } from './de';
+import { es } from './es';
+import { ptBR } from './pt-BR';
+import { it } from './it';
+import { pl } from './pl';
+import { tr } from './tr';
 import { Translation, TranslationKey, Locale } from './types';
 
 export * from './types';
@@ -17,16 +23,28 @@ export const translations: Record<string, Translation> = {
   'ko': ko,
   'fr': fr,
   'ru': ru,
+  'de': de,
+  'es': es,
+  'pt-BR': ptBR,
+  'it': it,
+  'pl': pl,
+  'tr': tr,
 };
 
 export const supportedLocales = [
-  { code: 'zh-CN', label: '简体中文' },
-  { code: 'zh-TW', label: '繁體中文' },
-  { code: 'en', label: 'English' },
-  { code: 'ja', label: '日本語' },
-  { code: 'ko', label: '한국어' },
-  { code: 'fr', label: 'Français' },
-  { code: 'ru', label: 'Русский' },
+  { code: 'zh-CN', label: '简体中文', flag: '🇨🇳' },
+  { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼' },
+  { code: 'en', label: 'English', flag: '🇺🇸' },
+  { code: 'ja', label: '日本語', flag: '🇯🇵' },
+  { code: 'ko', label: '한국어', flag: '🇰🇷' },
+  { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
+  { code: 'pt-BR', label: 'Português', flag: '🇧🇷' },
+  { code: 'it', label: 'Italiano', flag: '🇮🇹' },
+  { code: 'pl', label: 'Polski', flag: '🇵🇱' },
+  { code: 'tr', label: 'Türkçe', flag: '🇹🇷' },
 ] as const;
 
 /**
