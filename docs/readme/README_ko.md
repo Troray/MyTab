@@ -1,17 +1,34 @@
 <div align="right">
-  <a href="../../README.md">🇨🇳 简体中文</a> |
-  <a href="./README_zh_TW.md">🇹🇼 繁體中文</a> |
-  <a href="../../README_EN.md">🇺🇸 English</a> |
-  <a href="./README_ja.md">🇯🇵 日本語</a> |
-  <strong>🇰🇷 한국어</strong> |
-  <a href="./README_de.md">🇩🇪 Deutsch</a> |
-  <a href="./README_es.md">🇪🇸 Español</a> |
-  <a href="./README_fr.md">🇫🇷 Français</a> |
-  <a href="./README_it.md">🇮🇹 Italiano</a> |
-  <a href="./README_pl.md">🇵🇱 Polski</a> |
-  <a href="./README_pt_BR.md">🇧🇷 Português</a> |
-  <a href="./README_ru.md">🇷🇺 Русский</a> |
-  <a href="./README_tr.md">🇹🇷 Türkçe</a>
+  <details>
+    <summary>🌐 <strong>Translations / 언어 선택 (13) ▾</strong></summary>
+    <br>
+    <table width="100%">
+      <tr>
+        <td align="left"><a href="../../README.md">🇨🇳 简体中文</a></td>
+        <td align="left"><a href="../../README_EN.md">🇺🇸 English</a></td>
+        <td align="left"><a href="./README_zh_TW.md">🇹🇼 繁體中文</a></td>
+        <td align="left"><a href="./README_ja.md">🇯🇵 日本語</a></td>
+      </tr>
+      <tr>
+        <td align="left">🇰🇷 <strong>한국어</strong></td>
+        <td align="left"><a href="./README_de.md">🇩🇪 Deutsch</a></td>
+        <td align="left"><a href="./README_es.md">🇪🇸 Español</a></td>
+        <td align="left"><a href="./README_fr.md">🇫🇷 Français</a></td>
+      </tr>
+      <tr>
+        <td align="left"><a href="./README_it.md">🇮🇹 Italiano</a></td>
+        <td align="left"><a href="./README_pl.md">🇵🇱 Polski</a></td>
+        <td align="left"><a href="./README_pt_BR.md">🇧🇷 Português</a></td>
+        <td align="left"><a href="./README_ru.md">🇷🇺 Русский</a></td>
+      </tr>
+      <tr>
+        <td align="left"><a href="./README_tr.md">🇹🇷 Türkçe</a></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </table>
+  </details>
 </div>
 
 # MyTab ✨ 미려한 감성의 새 탭 확장 프로그램 (WebDAV & Git 클라우드 동기화 지원)
@@ -19,23 +36,28 @@
 미니멀하고 세련된 반투명 글래스모피즘(Glassmorphism)과 다크/라이트 모드를 지원하는 개인정보 중심의 브라우저 새 탭(New Tab) 확장 프로그램입니다. **Google Chrome (MV3)**, **Microsoft Edge**, **Mozilla Firefox** 및 주요 Chromium 기반 브라우저와 완벽하게 호환됩니다.
 
 - 🔗 **GitHub 저장소**: [https://github.com/Troray/MyTab](https://github.com/Troray/MyTab)
-- 🦊 **Firefox Add-ons 공식 스토어**: [Firefox Add-ons](https://addons.mozilla.org/zh-CN/firefox/addon/mytab-%E6%9E%81%E7%AE%80%E6%96%B0%E6%A0%87%E7%AD%BE%E9%A1%B5/)
-- 🌐 **Microsoft Edge Add-ons 공식 스토어**: [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/bchchngjdocafdpnnoiolnbfdnkngfjn)
+- 🦊 **Firefox Add-ons 공식 스토어**: [Firefox Add-ons 공식 스토어](https://addons.mozilla.org/zh-CN/firefox/addon/mytab-%E6%9E%81%E7%AE%80%E6%96%B0%E6%A0%87%E7%AD%BE%E9%A1%B5/)
+- 🌐 **Microsoft Edge Add-ons 공식 스토어**: [Edge Add-ons 공식 스토어](https://microsoftedge.microsoft.com/addons/detail/bchchngjdocafdpnnoiolnbfdnkngfjn)
 - 🐛 **이슈 및 기능 제안 (Issues)**: [Issues](https://github.com/Troray/MyTab/issues)
 
 ---
 
 ## 🌟 주요 기능
 
-- 📱 **멀티 데스크톱 캐러셀 & 스와이프 제스처 (v1.3.0)**: 물리 관성 기반의 Embla Carousel 엔진을 탑재하여 마우스 드래그나 키보드 좌우 방향키로 부드럽게 화면을 전환할 수 있습니다. 데스크톱 이름 변경, 사이트 자동 이동을 통한 안전한 삭제, 데스크톱별 독립적인 카테고리 기억 기능을 제공합니다.
-- 🔖 **브라우저 북마크 원클릭 가져오기 및 중복 제거 (v1.3.0)**: Chrome, Edge, Firefox 등의 기본 북마크 트리와 Safari 등의 HTML 북마크 파일을 빠르게 읽어옵니다. 트리 다중 선택, 지능형 폴더 평탄화, 실시간 중복 URL 비교 및 가져오기 통계 미리보기를 지원합니다.
-- 🔒 **프라이빗 공간 듀얼 컨테이너 (v1.2.0)**: 혁신적인 듀얼 컨테이너 구조로 일상 업무용 공간(`default`)과 민감한 개인용 공간(`private`)을 물리적으로 완벽히 격리합니다. 시크릿 모드(Incognito)나 전용 페이지(`private.html`) 접속 시 자동 활성화됩니다.
+- 📱 **멀티 데스크톱 캐러셀 & 스와이프 제스처 (Multi-Desktop Carousel, v1.3.0)**: 물리 관성 기반의 Embla Carousel 엔진을 탑재하여 마우스 드래그나 키보드 좌우 방향키로 부드럽게 화면을 전환할 수 있습니다. 데스크톱 이름 변경, 사이트 자동 이동을 통한 안전한 삭제, 데스크톱별 독립적인 카테고리 기억 기능을 제공합니다.
+- 🔖 **브라우저 북마크 원클릭 가져오기 및 중복 제거 (Bookmarks Importer, v1.3.0)**: Chrome, Edge, Firefox 등의 기본 북마크 트리와 Safari 등의 HTML 북마크 파일을 빠르게 읽어옵니다. 트리 다중 선택, 지능형 폴더 평탄화, 실시간 중복 URL 비교 및 가져오기 통계 미리보기를 지원합니다.
+- 🔒 **프라이빗 공간 듀얼 컨테이너 (Private Space, v1.2.0)**: 혁신적인 듀얼 컨테이너 구조로 일상 업무용 공간(`default`)과 민감한 개인용 공간(`private`)을 물리적으로 완벽히 격리합니다. 시크릿 모드(Incognito)나 전용 페이지(`private.html`) 접속 시 자동 활성화됩니다.
 - 📌 **툴바 원클릭 빠른 추가 (Popup)**: 웹서핑 중 툴바 아이콘 클릭 한 번으로 현재 페이지의 제목, URL, 고화질 파비콘을 자동 추출하여 원하는 공간과 카테고리에 즉시 저장합니다. 중복 추가 방지 안내 제공.
 - 🎨 **깔끔한 앱 아이콘 뷰 & 세밀한 커스터마이징 (v1.3.0)**: 모바일 홈 화면처럼 깔끔한 아이콘 모드를 지원하며 시계, 날짜, 인사말, 검색창, 카테고리 탭, 사이트 카드 등 **6대 요소의 색상을 개별 설정**할 수 있습니다. Canvas 배경 밝기를 자동 감지하여 최적의 그림자 효과를 적용합니다.
+- 📅 **음력 달력 및 24절기 (v1.2.0)**: 가벼운 음력 알고리즘을 탑재하여 시계 상단에 음력 일자, 간지, 24절기를 미려하게 표시하며 개별 토글 설정을 지원합니다.
 - 🖼️ **엄선된 배경화면 & 부드러운 전환**: Bing 오늘의 고화질 배경화면과 Unsplash 사진(CDN 가속)을 지원하며 듀얼 버퍼 페이드 전환 효과로 화면 깜빡임 없이 부드럽게 전환됩니다.
 - ⚡ **스마트 파비콘 자동 추출 & 벡터 대체 아이콘**: 다중 소스 추출 엔진을 통해 아이콘을 가져오며, 없을 경우 도메인 첫 글자를 기반으로 세련된 그라데이션 SVG 벡터 아이콘을 자동 생성합니다.
+- 🛡️ **반투명 에러 바운더리 (ErrorBoundary)**: 예기치 못한 런타임 오류를 글래스모피즘 모달로 가로채어 원클릭 새로고침 및 캐시 재설정 복구 옵션을 제공합니다.
+- 🗂️ **카테고리 관리 & 드래그 앤 드롭 정렬**: 여러 그룹의 카테고리 관리, 부드러운 드래그 앤 드롭 카드 재정렬 및 인라인 편집을 지원합니다.
+- 🔍 **다중 검색 엔진 빠른 전환**: Google, Bing, Baidu, DuckDuckGo, Yandex, GitHub를 빠르게 전환할 수 있으며, 어디서든 `/` 키를 누르면 즉시 검색창에 포커스됩니다.
 - 🐙 **Git 클라우드 동기화 (GitHub / Gitee)**: **비밀 Gist(토큰 입력만으로 전자동 동기화)** 및 **비공개 Git 저장소** 모드를 모두 지원하여 다중 기기 간 타임스탬프 기반 스마트 병합을 수행합니다.
-- ☁️ **WebDAV 프라이빗 클라우드 동기화**: Synology NAS, Nextcloud, ownCloud, Alist 등 다양한 WebDAV 서비스와 연결하여 양방향 동기화를 지원합니다.
+- ☁️ **WebDAV 프라이빗 클라우드 동기화**: Synology NAS, Nextcloud, ownCloud, Alist, Jianguoyun 등 다양한 WebDAV 서비스와 연결하여 양방향 동기화를 지원합니다.
+- 🔐 **안전한 마스킹 백업 및 마이그레이션**: 전체 설정과 북마크를 JSON으로 원클릭 내보내기/가져오기 할 수 있으며, 민감한 토큰과 프라이빗 공간은 자동으로 마스킹됩니다.
 - 🌐 **13개 언어 완벽 지원**: 한국어, 영어, 일본어, 중국어(간체/번체), 독일어, 프랑스어, 스페인어, 포르투갈어, 이탈리아어, 폴란드어, 러시아어, 튀르키예어를 기본 지원합니다.
 
 ---
@@ -55,7 +77,7 @@
 
 ### 방법 2: 오프라인 설치 (Chrome 및 Chromium 계열 브라우저)
 
-1. [GitHub Releases 페이지](https://github.com/Troray/MyTab/releases)에서 최신 버전의 `chrome.zip`을 다운로드하고 로컬 폴더에 압축을 풉니다.
+1. [GitHub Releases 페이지](https://github.com/Troray/MyTab/releases)에서 최신 버전의 `chrome.zip`을 다운로드하고 로컬 고정 폴더에 압축을 풉니다.
 2. 브라우저를 열고 주소창에 확장 프로그램 관리 페이지를 입력합니다:
    - **Chrome**: `chrome://extensions/`
    - **Edge**: `edge://extensions/`
@@ -75,13 +97,124 @@
 
 ---
 
-## 🔒 시크릿 모드(프라이빗 공간) 활성화 설정
+## ☁️ 클라우드 동기화 및 백업 가이드
 
-Chromium 브라우저 보안 규정상, 설치 직후에는 시크릿 창에서의 확장 프로그램 실행이 비활성화되어 있습니다:
-1. `chrome://extensions/` 페이지로 이동합니다.
-2. **MyTab**의 **'세부정보'**를 클릭합니다.
-3. 아래로 스크롤하여 **'시크릿 모드에서 허용'** 스위치를 켭니다.
-4. 이제 시크릿 창을 열고 단축키 **`Alt + M`**(Mac: **`Option + M`**)을 누르거나 툴바 아이콘을 클릭하면 프라이빗 공간이 즉시 열립니다!
+MyTab은 탈중앙화되고 개인정보를 존중하는 두 가지 클라우드 동기화 방식을 지원합니다:
+
+### 1. WebDAV 동기화 (Synology NAS / Nextcloud / Alist / Jianguoyun)
+
+| 공급자 | 서버 URL 예시 | 사용자 이름 | 비밀번호 / 앱 토큰 |
+| :--- | :--- | :--- | :--- |
+| **Nextcloud / ownCloud** | `https://your-domain.com/remote.php/dav/files/USER/` | 사용자 이름 | 비밀번호 또는 앱 토큰 |
+| **Synology NAS WebDAV** | `https://nas-ip:5006/` | NAS 계정 | NAS 비밀번호 |
+| **Alist** | `https://your-alist-domain.com/dav` | Alist 계정 | Alist 비밀번호 |
+| **Jianguoyun** | `https://dav.jianguoyun.com/dav/` | 등록 이메일 | 전용 앱 비밀번호 |
+
+- '⚙️ 설정 -> 동기화 -> WebDAV'를 열고 정보를 입력한 후 **'연결 테스트'**를 클릭합니다.
+- 언제든 **'⬆️ 백업 업로드'** 또는 **'⬇️ 복원 가져오기'**를 수행할 수 있으며, '데이터 변경 시 자동 동기화'를 켤 수도 있습니다.
+
+### 2. Git 클라우드 동기화 (GitHub / Gitee)
+
+#### 모드 A: 시크릿 Gist 동기화 (초간편)
+토큰 하나만 입력하면 저장소 생성 없이 완전 자동 동기화됩니다:
+1. **토큰 발급**:
+   - **GitHub**: 설정 페이지의 바로가기를 통해 **`gist`** 권한의 토큰을 생성합니다.
+   - **Gitee**: 설정 페이지 바로가기를 통해 **`gists`** 권한의 개인 토큰을 생성합니다.
+2. **자동 설정**:
+   - '⚙️ 설정 -> 동기화 -> Git 동기화'에서 플랫폼을 선택하고 토큰을 붙여넣습니다.
+   - **'연결 테스트 / 자동 구성'**을 누르면 전용 시크릿 Gist(`mytab-backup.json`)가 자동 생성되어 연결됩니다.
+
+#### 모드 B: 독립 비공개 저장소 동기화 (Repo 모드)
+1. **토큰 발급**: **`repo`** (GitHub) 또는 **`projects`** (Gitee) 권한의 토큰을 준비합니다.
+2. **자동 저장소 생성**:
+   - 저장소 이름을 입력하고 **'인증 및 연결'**을 누릅니다. 저장소가 없으면 API를 통해 원격에 **자동으로 새 비공개 저장소를 생성**합니다.
+
+---
+
+## 🔒 시크릿 공간 (Private Space) 완벽 가이드
+
+업무 환경과 개인 사생활의 완벽한 분리를 위해 **듀얼 컨테이너 물리 격리**를 제공합니다:
+
+| 구분 | 기본 공간 (Default) | 프라이빗 공간 (Private) |
+| :--- | :--- | :--- |
+| **주요 용도** | 일상 업무, 학업, 공공 화면 공유 | 민감한 즐겨찾기, 개인 웹사이트 |
+| **실행 방법** | 일반 창의 새 탭 (New Tab) | **단축키 `Alt + M`** (Mac: `Option + M`) 또는 툴바 아이콘 |
+| **데이터 저장** | 로컬 `default` 격리 저장소 | 로컬 `private` 격리 저장소 |
+| **배경화면** | 독립적인 배경화면 및 카드 배치 | 완전 독립적인 배경화면 및 배치 |
+| **클라우드 동기화**| WebDAV / Git 자동/수동 동기화 | **안전 제어**: 동기화 설정에서 개별 제어 가능 |
+| **백업 내보내기** | 정상 내보내기 | **기본 제외**: '프라이빗 공간 포함' 체크 시에만 내보냄 |
+
+---
+
+### ⚙️ 필수 설정: 시크릿 창 실행 권한 활성화
+
+- **Google Chrome / Microsoft Edge / Brave**:
+  1. `chrome://extensions/` 페이지로 이동합니다.
+  2. **MyTab**의 **'세부정보'**를 클릭합니다.
+  3. 아래로 스크롤하여 **'시크릿 모드에서 허용'** 스위치를 켭니다.
+- **Mozilla Firefox**:
+  1. `about:addons`로 이동하여 **MyTab**을 클릭합니다.
+  2. '사생활 보호 창에서 실행' 옵션에서 **'허용'**을 선택합니다.
+
+---
+
+## 🛠️ 로컬 개발 및 빌드
+
+```bash
+# 1. 저장소 클론 및 패키지 설치
+git clone https://github.com/Troray/MyTab.git
+cd MyTab
+npm install
+
+# 2. 로컬 개발 서버 실행
+npm run dev
+
+# 3. 확장 프로그램 빌드
+npm run build
+npm run package # (선택사항) 배포용 zip 압축파일 생성
+```
+
+빌드 후 `dist/` 디렉터리에 브라우저별 빌드 결과물이 생성됩니다:
+- `dist/chrome/`: Chrome, Edge, Brave 등 Chromium 브라우저용
+- `dist/firefox/`: Firefox 브라우저용
+
+---
+
+## 🔒 권한 및 개인정보 보호 정책
+
+- **`storage` / `unlimitedStorage`**: 북마크, 분류, 설정 및 오프라인 아이콘 로컬 캐싱.
+- **`bookmarks`**: 브라우저 기본 북마크 가져오기 시 로컬 읽기 전용 (외부 전송 절대 없음).
+- **`alarms`**: 백그라운드 자동 동기화 트리거.
+- **`activeTab`**: 툴바 클릭 시 현재 탭의 제목 및 URL 캡처.
+- **`host_permissions (<all_urls>)`**: 파비콘 가져오기 및 사용자가 지정한 WebDAV/Git API 직접 통신.
+- **개인정보 보호 원칙**: 어떠한 사용자 데이터도 수집하거나 추적하지 않습니다. 자세한 내용은 [PRIVACY.md](../../PRIVACY.md)를 참조하세요.
+
+---
+
+## ❤️ 프로젝트 후원
+
+1. ⭐ GitHub 저장소에 Star 누르기
+2. 📢 친구들과 프로젝트 공유하기
+3. ☕ 개발자에게 시원한 음료 한 잔 후원하기
+
+<div align="center">
+<img src="../../img/wechat.jpg" alt="WeChat" height="400">
+<img src="../../img/alipay.jpg" alt="Alipay" height="400" style="margin-right: 20px">
+</div>
+
+---
+
+## 🙏 감사의 글 (Acknowledgements)
+
+- ⚛️ **[React](https://react.dev/)**
+- ⚡ **[Vite](https://vitejs.dev/)**
+- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
+- 🎨 **[Lucide Icons](https://lucide.dev/)**
+- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
+- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**
+- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**
+- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**
+- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**
 
 ---
 

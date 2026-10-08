@@ -1,17 +1,34 @@
 <div align="right">
-  <strong>🇨🇳 简体中文</strong> |
-  <a href="./docs/readme/README_zh_TW.md">🇹🇼 繁體中文</a> |
-  <a href="./README_EN.md">🇺🇸 English</a> |
-  <a href="./docs/readme/README_ja.md">🇯🇵 日本語</a> |
-  <a href="./docs/readme/README_ko.md">🇰🇷 한국어</a> |
-  <a href="./docs/readme/README_de.md">🇩🇪 Deutsch</a> |
-  <a href="./docs/readme/README_es.md">🇪🇸 Español</a> |
-  <a href="./docs/readme/README_fr.md">🇫🇷 Français</a> |
-  <a href="./docs/readme/README_it.md">🇮🇹 Italiano</a> |
-  <a href="./docs/readme/README_pl.md">🇵🇱 Polski</a> |
-  <a href="./docs/readme/README_pt_BR.md">🇧🇷 Português</a> |
-  <a href="./docs/readme/README_ru.md">🇷🇺 Русский</a> |
-  <a href="./docs/readme/README_tr.md">🇹🇷 Türkçe</a>
+  <details>
+    <summary>🌐 <strong>Translations / 多语言 (13) ▾</strong></summary>
+    <br>
+    <table width="100%">
+      <tr>
+        <td align="left">🇨🇳 <strong>简体中文</strong></td>
+        <td align="left"><a href="./README_EN.md">🇺🇸 English</a></td>
+        <td align="left"><a href="./docs/readme/README_zh_TW.md">🇹🇼 繁體中文</a></td>
+        <td align="left"><a href="./docs/readme/README_ja.md">🇯🇵 日本語</a></td>
+      </tr>
+      <tr>
+        <td align="left"><a href="./docs/readme/README_ko.md">🇰🇷 한국어</a></td>
+        <td align="left"><a href="./docs/readme/README_de.md">🇩🇪 Deutsch</a></td>
+        <td align="left"><a href="./docs/readme/README_es.md">🇪🇸 Español</a></td>
+        <td align="left"><a href="./docs/readme/README_fr.md">🇫🇷 Français</a></td>
+      </tr>
+      <tr>
+        <td align="left"><a href="./docs/readme/README_it.md">🇮🇹 Italiano</a></td>
+        <td align="left"><a href="./docs/readme/README_pl.md">🇵🇱 Polski</a></td>
+        <td align="left"><a href="./docs/readme/README_pt_BR.md">🇧🇷 Português</a></td>
+        <td align="left"><a href="./docs/readme/README_ru.md">🇷🇺 Русский</a></td>
+      </tr>
+      <tr>
+        <td align="left"><a href="./docs/readme/README_tr.md">🇹🇷 Türkçe</a></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </table>
+  </details>
 </div>
 
 # MyTab ✨ 高颜值新标签页扩展 (支持 WebDAV / Git 多端云同步)
