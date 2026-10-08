@@ -694,9 +694,9 @@ test('SyncController: applyRemotePayload safely falls back orphan activeCategory
   assert.equal(res.updatedContainer.profiles.normal.activeCategoryId, 'all');
 });
 
-test('ErrorBoundary: i18n keys are translated across all 7 locales', async () => {
+test('ErrorBoundary: i18n keys are translated across all 13 locales', async () => {
   const { translations } = await import('../src/locales/index.ts');
-  const locales = ['zh-CN', 'zh-TW', 'en', 'ja', 'ko', 'fr', 'ru'];
+  const locales = ['zh-CN', 'zh-TW', 'en', 'ja', 'ko', 'fr', 'ru', 'de', 'es', 'pt-BR', 'it', 'pl', 'tr'];
   for (const loc of locales) {
     const dict = translations[loc];
     assert.ok(dict, `Locale ${loc} dictionary must exist`);
@@ -706,9 +706,9 @@ test('ErrorBoundary: i18n keys are translated across all 7 locales', async () =>
   }
 });
 
-test('i18n: All 7 locales have identical keys without any missing translations', async () => {
+test('i18n: All 13 locales have identical keys without any missing translations', async () => {
   const { translations } = await import('../src/locales/index.ts');
-  const locales = ['zh-CN', 'zh-TW', 'en', 'ja', 'ko', 'fr', 'ru'];
+  const locales = ['zh-CN', 'zh-TW', 'en', 'ja', 'ko', 'fr', 'ru', 'de', 'es', 'pt-BR', 'it', 'pl', 'tr'];
   const baseKeys = Object.keys(translations['zh-CN']);
 
   for (const loc of locales) {

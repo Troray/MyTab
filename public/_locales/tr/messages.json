@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "MyTab - Estetik Minimalist Yeni Sekme",
+    "description": "The name of the extension."
+  },
+  "extensionDescription": {
+    "message": "WebDAV ve Git bulut senkronizasyonu, yer işareti düzenleyici ve özel temalar içeren zarif Yeni Sekme.",
+    "description": "The description of the extension."
+  },
+  "commandOpenMyTab": {
+    "message": "MyTab sayfasını aç",
+    "description": "Shortcut command description"
+  }
+}

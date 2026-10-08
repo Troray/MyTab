@@ -42,6 +42,7 @@ import { GitSettings } from './GitSettings';
 import { exportAllData, importData, resetProfileSettings } from '../../services/storage';
 import { t, supportedLocales, Translation, Locale } from '../../utils/i18n';
 import { CustomSelect } from './CustomSelect';
+import { FlagIcon } from './FlagIcon';
 import { UNSPLASH_CATEGORIES, getUnsplashTagDisplay, getUnsplashTagFull } from '../../utils/unsplashTopics';
 import { resolveBestSyncProvider } from '../../utils/syncHelper';
 import { UnsplashTopicModal } from './UnsplashTopicModal';
@@ -1304,10 +1305,12 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     value={settings.language}
                     onChange={(val) => handleSettingsChange({ language: val as Locale })}
                     isLight={isLight}
-                    className="w-36"
+                    className="w-44"
+                    columns={2}
                     options={supportedLocales.map((loc) => ({
                       value: loc.code,
                       label: loc.label,
+                      icon: <FlagIcon code={loc.code} className="w-4 h-4 shrink-0" />,
                     }))}
                   />
                 </div>

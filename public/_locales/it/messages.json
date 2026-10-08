@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "MyTab - Nuova Scheda Estetica e Minimalista",
+    "description": "The name of the extension."
+  },
+  "extensionDescription": {
+    "message": "Elegante e minimale Nuova Scheda con sincronizzazione cloud WebDAV e Git, gestione segnalibri e temi unici.",
+    "description": "The description of the extension."
+  },
+  "commandOpenMyTab": {
+    "message": "Apri la pagina MyTab",
+    "description": "Shortcut command description"
+  }
+}
