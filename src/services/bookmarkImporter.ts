@@ -472,6 +472,7 @@ export async function executeBookmarkImport(
     const newSites: SiteItem[] = [];
     let skippedDuplicatesCount = 0;
     const now = Date.now();
+    const fallbackUntitled = (options.language ? t('untitledBookmark', options.language) : null) || '未命名书签';
 
     // Map each group to a Category and its SiteItems
     for (let i = 0; i < groups.length; i++) {

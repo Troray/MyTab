@@ -29,6 +29,7 @@ import {
   AlertCircle,
   LayoutGrid,
   Columns3,
+  LayoutList,
   AlignLeft,
   AlignCenter,
   AlignRight,
@@ -450,7 +451,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           ? 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-900'
                           : 'bg-amber-500/25 hover:bg-amber-500/35 text-amber-100'
                         }`}
-                      title={t('privateSettingsResetInherit', settings.language)}
+                      aria-label={t('privateSettingsResetInherit', settings.language)}
                     >
                       <RotateCcw className="w-3 h-3" />
                       <span>{resetSuccess ? t('privateSettingsResetSuccess', settings.language) : t('privateSettingsResetInherit', settings.language)}</span>
@@ -526,11 +527,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   >
                     {t('layoutMode', settings.language)}
                   </label>
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-3 gap-2">
                     <button
                       type="button"
                       onClick={() => handleSettingsChange({ layoutMode: 'grid' })}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${(settings.layoutMode || 'grid') === 'grid'
+                      className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${(settings.layoutMode || 'grid') === 'grid'
                           ? isLight
                             ? 'bg-black/[0.08] text-slate-900 border-black/15 shadow-xs font-semibold'
                             : 'bg-white/20 text-white border-white/25 shadow-sm font-semibold'
@@ -539,13 +540,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
                         }`}
                     >
-                      <LayoutGrid className="w-4 h-4" />
+                      <LayoutGrid className="w-3.5 h-3.5" />
                       <span>{t('layoutGrid', settings.language)}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleSettingsChange({ layoutMode: 'board' })}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.layoutMode === 'board'
+                      className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.layoutMode === 'board'
                           ? isLight
                             ? 'bg-black/[0.08] text-slate-900 border-black/15 shadow-xs font-semibold'
                             : 'bg-white/20 text-white border-white/25 shadow-sm font-semibold'
@@ -554,8 +555,23 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
                         }`}
                     >
-                      <Columns3 className="w-4 h-4" />
+                      <Columns3 className="w-3.5 h-3.5" />
                       <span>{t('layoutBoard', settings.language)}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSettingsChange({ layoutMode: 'list' })}
+                      className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-medium duration-0 cursor-pointer active:scale-95 ${settings.layoutMode === 'list'
+                          ? isLight
+                            ? 'bg-black/[0.08] text-slate-900 border-black/15 shadow-xs font-semibold'
+                            : 'bg-white/20 text-white border-white/25 shadow-sm font-semibold'
+                          : isLight
+                            ? 'bg-black/[0.03] hover:bg-black/[0.06] border-black/8 text-slate-700'
+                            : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/10'
+                        }`}
+                    >
+                      <LayoutList className="w-3.5 h-3.5" />
+                      <span>{t('layoutList', settings.language)}</span>
                     </button>
                   </div>
                 </div>
@@ -657,7 +673,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         />
                         <label
                           className="glass-btn-secondary px-3 py-2 rounded-xl cursor-pointer duration-0 flex items-center gap-1.5 text-xs shrink-0"
-                          title={t('bgLocal', settings.language)}
+                          aria-label={t('bgLocal', settings.language)}
                         >
                           <Upload className="w-3.5 h-3.5" />
                           <span>{t('bgLocal', settings.language)}</span>
@@ -757,7 +773,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             return (
                               <span
                                 key={i}
-                                title={full}
+                                data-tooltip={full}
                                 className={`px-2 py-0.5 rounded-md text-[11px] border max-w-[120px] truncate select-none ${isLight
                                   ? 'bg-black/[0.04] border-black/10 text-slate-700'
                                   : 'bg-white/10 border-white/10 text-white/80'
@@ -898,11 +914,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           {t('cardLayoutAdvanced', settings.language)}
                         </div>
                         <div className={`text-[10px] mt-0.5 font-tabular ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
-                          {settings.layoutMode === 'board'
-                            ? `${settings.boardColumnsPerRow || 5}${t('boardColumnsUnit', settings.language)} · ${settings.boardCardGap ?? 16}px · ${Math.round((settings.boardCardOpacity ?? 0.2) * 100)}%`
-                            : !settings.showCardBackground
-                              ? `${settings.cardSize || 110}px · ${settings.iconSpacing ?? 20}px · ${settings.maxCardsPerRow || 8}${t('cardsPerRowUnit', settings.language)}`
-                              : `${settings.cardSize || 110}px · ${Math.round(settings.cardOpacity * 100)}% · ${settings.maxCardsPerRow || 8}${t('cardsPerRowUnit', settings.language)}`}
+                          {settings.layoutMode === 'list'
+                            ? `${settings.listCardWidth || 180}px · ${settings.listCardHeight || 48}px · ${Math.round((settings.listCardOpacity ?? 0.25) * 100)}%`
+                            : settings.layoutMode === 'board'
+                              ? `${settings.boardColumnsPerRow || 5}${t('boardColumnsUnit', settings.language)} · ${settings.boardCardGap ?? 16}px · ${Math.round((settings.boardCardOpacity ?? 0.2) * 100)}%`
+                              : !settings.showCardBackground
+                                ? `${settings.cardSize || 110}px · ${settings.gridGapX ?? settings.iconSpacing ?? 20}px · ${settings.maxCardsPerRow || 8}${t('cardsPerRowUnit', settings.language)}`
+                                : `${settings.cardSize || 110}px · ${Math.round(settings.cardOpacity * 100)}% · ${settings.maxCardsPerRow || 8}${t('cardsPerRowUnit', settings.language)}`}
                         </div>
                       </div>
                     </div>
@@ -927,12 +945,29 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                 {t('showCardBackground', settings.language)}
                               </div>
                               <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
-                                {t('showCardBackgroundDesc', settings.language)}
+                                {t('boardShowCardBackgroundDesc', settings.language)}
                               </div>
                             </div>
                             <ToggleSwitch
                               checked={settings.boardShowCardBackground !== false}
                               onChange={(checked) => handleSettingsChange({ boardShowCardBackground: checked })}
+                              isLight={isLight}
+                            />
+                          </div>
+
+                          {/* Board Always Show Icons */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                                {t('boardAlwaysShowIcons', settings.language)}
+                              </div>
+                              <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                                {t('boardAlwaysShowIconsDesc', settings.language)}
+                              </div>
+                            </div>
+                            <ToggleSwitch
+                              checked={settings.boardAlwaysShowIcons ?? false}
+                              onChange={(checked) => handleSettingsChange({ boardAlwaysShowIcons: checked })}
                               isLight={isLight}
                             />
                           </div>
@@ -1025,7 +1060,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             <input
                               type="range"
                               min="12"
-                              max="22"
+                              max="30"
                               step="1"
                               value={settings.boardTitleSize || 15}
                               onChange={(e) => handleSettingsChange({ boardTitleSize: parseInt(e.target.value, 10) })}
@@ -1033,8 +1068,74 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             />
                             <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
                               <span>12px</span>
-                              <span>15px</span>
-                              <span>22px</span>
+                              <span>20px</span>
+                              <span>30px</span>
+                            </div>
+                          </div>
+
+                          {/* Board Site Font Size */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('boardFontSizeTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.boardSiteFontSize || 13}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="10"
+                              max="30"
+                              step="1"
+                              value={settings.boardSiteFontSize || 13}
+                              onChange={(e) => handleSettingsChange({ boardSiteFontSize: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>10px</span>
+                              <span>18px</span>
+                              <span>30px</span>
+                            </div>
+                          </div>
+
+                          {/* Board Icon Size */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('boardIconSizeTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.boardIconSize || 18}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="14"
+                              max="32"
+                              step="1"
+                              value={settings.boardIconSize || 18}
+                              onChange={(e) => handleSettingsChange({ boardIconSize: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>14px</span>
+                              <span>18px</span>
+                              <span>32px</span>
+                            </div>
+                          </div>
+
+                          {/* Board Icon-to-Text Gap */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('boardIconTextGapTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.boardIconTextGap ?? 8}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="4"
+                              max="20"
+                              step="1"
+                              value={settings.boardIconTextGap ?? 8}
+                              onChange={(e) => handleSettingsChange({ boardIconTextGap: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>4px</span>
+                              <span>8px</span>
+                              <span>20px</span>
                             </div>
                           </div>
 
@@ -1089,13 +1190,285 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             <button
                               type="button"
                               onClick={() => handleSettingsChange({
+                                boardAlwaysShowIcons: false,
                                 boardShowCardBackground: true,
                                 boardColumnsPerRow: 5,
                                 boardAlign: 'center',
                                 boardCardGap: 16,
                                 boardTitleSize: 15,
+                                boardSiteFontSize: 13,
+                                boardIconSize: 18,
+                                boardIconTextGap: 8,
                                 boardItemSpacing: 6,
                                 boardCardOpacity: 0.20,
+                              })}
+                              className={`w-full py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${isLight
+                                  ? 'bg-black/[0.03] border-black/8 text-slate-600 hover:bg-black/[0.06] hover:text-slate-900'
+                                  : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/[0.1] hover:text-white'
+                                }`}
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              <span>{t('resetCardLayout', settings.language)}</span>
+                            </button>
+                          </div>
+                        </>
+                      ) : settings.layoutMode === 'list' ? (
+                        <>
+                          {/* List Show Card Background */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                                {t('showCardBackground', settings.language)}
+                              </div>
+                              <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                                {t('listShowCardBackgroundDesc', settings.language)}
+                              </div>
+                            </div>
+                            <ToggleSwitch
+                              checked={Boolean(settings.listShowCardBackground)}
+                              onChange={(checked) => handleSettingsChange({ listShowCardBackground: checked })}
+                              isLight={isLight}
+                            />
+                          </div>
+
+                          {/* List Card Opacity (When Background is ON) */}
+                          {Boolean(settings.listShowCardBackground) && (
+                            <div>
+                              <div className="flex justify-between text-xs font-medium mb-1.5">
+                                <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardOpacityTitle', settings.language)}</span>
+                                <span className="font-tabular font-semibold">{Math.round((settings.listCardOpacity ?? 0.25) * 100)}%</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0.05"
+                                max="0.95"
+                                step="0.05"
+                                value={settings.listCardOpacity ?? 0.25}
+                                onChange={(e) => handleSettingsChange({ listCardOpacity: parseFloat(e.target.value) })}
+                                className="range-slider"
+                              />
+                              <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                                <span>5%</span>
+                                <span>25%</span>
+                                <span>95%</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* List Card Min Width */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('listCardWidthTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.listCardWidth || 200}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="140"
+                              max="320"
+                              step="10"
+                              value={settings.listCardWidth || 200}
+                              onChange={(e) => handleSettingsChange({ listCardWidth: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>140px</span>
+                              <span>200px</span>
+                              <span>320px</span>
+                            </div>
+                          </div>
+
+                          {/* List Card Height */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('listCardHeightTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.listCardHeight || 50}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="36"
+                              max="80"
+                              step="2"
+                              value={settings.listCardHeight || 50}
+                              onChange={(e) => handleSettingsChange({ listCardHeight: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>36px</span>
+                              <span>50px</span>
+                              <span>80px</span>
+                            </div>
+                          </div>
+
+                          {/* List Icon Size */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('listIconSizeTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.listIconSize || 40}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="16"
+                              max="65"
+                              step="1"
+                              value={settings.listIconSize || 40}
+                              onChange={(e) => handleSettingsChange({ listIconSize: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>16px</span>
+                              <span>40px</span>
+                              <span>65px</span>
+                            </div>
+                          </div>
+
+                          {/* List Title Font Size */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('listTitleFontSizeTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.listTitleFontSize || 16}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="11"
+                              max="30"
+                              step="1"
+                              value={settings.listTitleFontSize || 16}
+                              onChange={(e) => handleSettingsChange({ listTitleFontSize: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>11px</span>
+                              <span>16px</span>
+                              <span>30px</span>
+                            </div>
+                          </div>
+
+                          {/* List Desc / Notes Font Size */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('listDescFontSizeTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.listDescFontSize || 14}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="9"
+                              max="30"
+                              step="1"
+                              value={settings.listDescFontSize || 14}
+                              onChange={(e) => handleSettingsChange({ listDescFontSize: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>9px</span>
+                              <span>14px</span>
+                              <span>30px</span>
+                            </div>
+                          </div>
+
+                          {/* List Category Font Size */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('listCategoryFontSizeTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.listCategoryFontSize || 18}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="12"
+                              max="30"
+                              step="1"
+                              value={settings.listCategoryFontSize || 18}
+                              onChange={(e) => handleSettingsChange({ listCategoryFontSize: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>12px</span>
+                              <span>18px</span>
+                              <span>30px</span>
+                            </div>
+                          </div>
+
+                          {/* List Gap X (Horizontal) */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('gapHorizontalTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.listGapX ?? 10}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="6"
+                              max="32"
+                              step="2"
+                              value={settings.listGapX ?? 10}
+                              onChange={(e) => handleSettingsChange({ listGapX: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>6px</span>
+                              <span>10px</span>
+                              <span>32px</span>
+                            </div>
+                          </div>
+
+                          {/* List Gap Y (Vertical) */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('gapVerticalTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.listGapY ?? 12}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="6"
+                              max="32"
+                              step="2"
+                              value={settings.listGapY ?? 12}
+                              onChange={(e) => handleSettingsChange({ listGapY: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>6px</span>
+                              <span>12px</span>
+                              <span>32px</span>
+                            </div>
+                          </div>
+
+                          {/* List Icon-to-Text Gap */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconTextGapTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.listIconTextGap ?? 10}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="4"
+                              max="24"
+                              step="2"
+                              value={settings.listIconTextGap ?? 10}
+                              onChange={(e) => handleSettingsChange({ listIconTextGap: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>4px</span>
+                              <span>10px</span>
+                              <span>24px</span>
+                            </div>
+                          </div>
+
+                          {/* Reset List Layout Defaults Button */}
+                          <div className="pt-2">
+                            <button
+                              type="button"
+                              onClick={() => handleSettingsChange({
+                                listShowCardBackground: false,
+                                listCardOpacity: 0.25,
+                                listCardWidth: 200,
+                                listCardHeight: 50,
+                                listIconSize: 40,
+                                listTitleFontSize: 16,
+                                listDescFontSize: 14,
+                                listCategoryFontSize: 18,
+                                listGapX: 10,
+                                listGapY: 12,
+                                listIconTextGap: 10,
                               })}
                               className={`w-full py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${isLight
                                   ? 'bg-black/[0.03] border-black/8 text-slate-600 hover:bg-black/[0.06] hover:text-slate-900'
@@ -1189,29 +1562,49 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             </div>
                           )}
 
-                          {/* Icon Spacing Slider (When Card Background is OFF) */}
-                          {!settings.showCardBackground && (
-                            <div>
-                              <div className="flex justify-between text-xs font-medium mb-1.5">
-                                <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconSpacingTitle', settings.language)}</span>
-                                <span className="font-tabular font-semibold">{settings.iconSpacing ?? 20}px</span>
-                              </div>
-                              <input
-                                type="range"
-                                min="8"
-                                max="48"
-                                step="2"
-                                value={settings.iconSpacing ?? 20}
-                                onChange={(e) => handleSettingsChange({ iconSpacing: parseInt(e.target.value, 10) })}
-                                className="range-slider"
-                              />
-                              <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                                <span>{t('iconSpacingCompact', settings.language)}</span>
-                                <span>{t('iconSpacingDefault', settings.language)}</span>
-                                <span>{t('iconSpacingLoose', settings.language)}</span>
-                              </div>
+                          {/* Grid Gap X (Horizontal) */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('gapHorizontalTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.gridGapX ?? settings.iconSpacing ?? 20}px</span>
                             </div>
-                          )}
+                            <input
+                              type="range"
+                              min="8"
+                              max="48"
+                              step="2"
+                              value={settings.gridGapX ?? settings.iconSpacing ?? 20}
+                              onChange={(e) => handleSettingsChange({ gridGapX: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>8px</span>
+                              <span>20px</span>
+                              <span>48px</span>
+                            </div>
+                          </div>
+
+                          {/* Grid Gap Y (Vertical) */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('gapVerticalTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.gridGapY ?? settings.iconSpacing ?? 20}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="8"
+                              max="48"
+                              step="2"
+                              value={settings.gridGapY ?? settings.iconSpacing ?? 20}
+                              onChange={(e) => handleSettingsChange({ gridGapY: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>8px</span>
+                              <span>20px</span>
+                              <span>48px</span>
+                            </div>
+                          </div>
 
                           {/* Card Icon Ratio Slider */}
                           <div>
@@ -1234,6 +1627,76 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               <span>{t('iconRatioHigh', settings.language)}</span>
                             </div>
                           </div>
+
+                          {/* Grid Site Title Font Size */}
+                          {settings.showSiteTitle !== false && (
+                            <div>
+                              <div className="flex justify-between text-xs font-medium mb-1.5">
+                                <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('listTitleFontSizeTitle', settings.language)}</span>
+                                <span className="font-tabular font-semibold">{settings.gridTitleFontSize || 12}px</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="10"
+                                max="30"
+                                step="1"
+                                value={settings.gridTitleFontSize || 12}
+                                onChange={(e) => handleSettingsChange({ gridTitleFontSize: parseInt(e.target.value, 10) })}
+                                className="range-slider"
+                              />
+                              <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                                <span>10px</span>
+                                <span>18px</span>
+                                <span>30px</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Grid Category Font Size */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('listCategoryFontSizeTitle', settings.language)}</span>
+                              <span className="font-tabular font-semibold">{settings.gridCategoryFontSize || 14}px</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="11"
+                              max="30"
+                              step="1"
+                              value={settings.gridCategoryFontSize || 14}
+                              onChange={(e) => handleSettingsChange({ gridCategoryFontSize: parseInt(e.target.value, 10) })}
+                              className="range-slider"
+                            />
+                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                              <span>11px</span>
+                              <span>20px</span>
+                              <span>30px</span>
+                            </div>
+                          </div>
+
+                          {/* Grid Icon to Text Gap */}
+                          {settings.showSiteTitle !== false && (
+                            <div>
+                              <div className="flex justify-between text-xs font-medium mb-1.5">
+                                <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconTextGapTitle', settings.language)}</span>
+                                <span className="font-tabular font-semibold">{settings.gridIconTextGap ?? 8}px</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="2"
+                                max="24"
+                                step="2"
+                                value={settings.gridIconTextGap ?? 8}
+                                onChange={(e) => handleSettingsChange({ gridIconTextGap: parseInt(e.target.value, 10) })}
+                                className="range-slider"
+                              />
+                              <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                                <span>2px</span>
+                                <span>8px</span>
+                                <span>24px</span>
+                              </div>
+                            </div>
+                          )}
 
                           {/* Max Cards Per Row Slider */}
                           <div>
@@ -1270,6 +1733,11 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                 iconSizeRatio: 0.55,
                                 maxCardsPerRow: 8,
                                 iconSpacing: 20,
+                                gridGapX: 20,
+                                gridGapY: 20,
+                                gridTitleFontSize: 12,
+                                gridCategoryFontSize: 14,
+                                gridIconTextGap: 8,
                               })}
                               className={`w-full py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${isLight
                                   ? 'bg-black/[0.03] border-black/8 text-slate-600 hover:bg-black/[0.06] hover:text-slate-900'
@@ -1438,7 +1906,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 </div>
 
                 {/* Show Categories (Grid mode only) */}
-                {settings.layoutMode !== 'board' && (
+                {(settings.layoutMode || 'grid') === 'grid' && (
                   <>
                     <div
                       className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
@@ -1604,7 +2072,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               type="button"
                               onClick={() => setGreetingStatus(null)}
                               className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
-                              title={t('close', settings.language) || 'Close'}
+                              aria-label={t('close', settings.language) || 'Close'}
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -1819,7 +2287,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           type="button"
                           onClick={() => setImportStatus(null)}
                           className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
-                          title={t('close', settings.language) || 'Close'}
+                          aria-label={t('close', settings.language) || 'Close'}
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>

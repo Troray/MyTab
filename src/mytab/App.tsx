@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
-import { Settings as SettingsIcon, Plus, Lock, Pencil, Check, LayoutGrid, Columns3, FolderPlus, Bookmark, SquarePlus } from 'lucide-react';
+import { Settings as SettingsIcon, Plus, Lock, Pencil, Check, LayoutGrid, Columns3, LayoutList, Globe, Home, FolderPlus, Bookmark, SquarePlus } from 'lucide-react';
 import { t } from '../locales';
 import { AppState, Category, GitSyncConfig, GridPage, ProfileSyncSettings, SiteItem, ThemeSettings, WebdavConfig } from '../types';
 import {
@@ -26,6 +26,8 @@ import { SearchBar } from './components/SearchBar';
 import { CategoryTabs } from './components/CategoryTabs';
 import { SiteGrid } from './components/SiteGrid';
 import { CategoryBoard } from './components/CategoryBoard';
+import { CategoryList } from './components/CategoryList';
+import { Tooltip } from './components/Tooltip';
 import { urlToBase64Icon } from '../services/metadata';
 import { DEFAULT_SETTINGS, isLightMode } from '../utils/constants';
 import { analyzeWallpaperLuminance, resolveTextColors, WallpaperLuminance, DEFAULT_LUMINANCE } from '../utils/wallpaperAnalyzer';
@@ -47,6 +49,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const [isSiteModalOpen, setIsSiteModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isBookmarkImportModalOpen, setIsBookmarkImportModalOpen] = useState(false);
+  const [siteModalTargetCategoryId, setSiteModalTargetCategoryId] = useState<string | null>(null);
   const [isAddHovered, setIsAddHovered] = useState(false);
   const addHoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [editingSite, setEditingSite] = useState<SiteItem | null>(null);
@@ -676,7 +679,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     const newCat: Category = {
       id: `cat-${now}`,
       name: data.name || '',
-      color: data.color,
+      color: data.color || undefined,
       pageId: targetPageId,
       isDefault: false,
       showInAll: data.showInAll ?? true,
@@ -934,6 +937,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   }, [settings.openInNewTab]);
 
   const handleAddSiteToCategory = useCallback((categoryId: string) => {
+    setSiteModalTargetCategoryId(categoryId);
     setAppState((prev) => prev ? { ...prev, activeCategoryId: categoryId } : null);
     setEditingSite(null);
     setIsSiteModalOpen(true);
@@ -997,32 +1001,77 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Quick Layout Switcher (Grid <-> Board) */}
+          {/* Global Network Mode Switcher (WAN 🌐 <-> LAN 🏠) */}
+          <div className="relative group/tooltip flex items-center justify-center">
+            <button
+              onClick={() => {
+                const nextNetMode = settings.networkMode === 'lan' ? 'wan' : 'lan';
+                handleUpdateSettings({ networkMode: nextNetMode });
+              }}
+              className={`px-2 py-1.5 rounded-lg transition-all duration-150 cursor-pointer active:scale-95 outline-none flex items-center gap-1.5 text-xs font-semibold ${
+                settings.networkMode === 'lan'
+                  ? isLight
+                    ? 'bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 border border-emerald-500/30'
+                    : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40'
+                  : isLight
+                    ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
+              }`}
+              aria-label={settings.networkMode === 'lan' ? t('networkModeLan', settings.language) : t('networkModeWan', settings.language)}
+            >
+              {settings.networkMode === 'lan' ? (
+                <Home className="w-3.5 h-3.5 text-emerald-500" />
+              ) : (
+                <Globe className="w-3.5 h-3.5 opacity-70" />
+              )}
+              <span className="text-[10px] tracking-tight font-bold uppercase">
+                {settings.networkMode === 'lan' ? 'LAN' : 'WAN'}
+              </span>
+            </button>
+            <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
+              {settings.networkMode === 'lan'
+                ? `${t('networkModeLan', settings.language)} · ${t('networkModeSwitchTooltip', settings.language)}`
+                : `${t('networkModeWan', settings.language)} · ${t('networkModeSwitchTooltip', settings.language)}`}
+            </span>
+          </div>
+
+          {/* Quick Layout Switcher (Grid <-> Board <-> List) */}
           <div className="relative group/tooltip flex items-center justify-center">
             <button
               onClick={() => {
                 if (settings.layoutMode === 'board' && isBoardEditing) {
                   setIsBoardEditing(false);
                 }
+                const nextMode =
+                  settings.layoutMode === 'grid'
+                    ? 'board'
+                    : settings.layoutMode === 'board'
+                    ? 'list'
+                    : 'grid';
                 handleUpdateSettings({
-                  layoutMode: settings.layoutMode === 'board' ? 'grid' : 'board',
+                  layoutMode: nextMode,
                 });
               }}
-              className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isLight
+              className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                isLight
                   ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
+              }`}
             >
               {settings.layoutMode === 'board' ? (
-                <LayoutGrid className="w-4 h-4" />
-              ) : (
                 <Columns3 className="w-4 h-4" />
+              ) : settings.layoutMode === 'list' ? (
+                <LayoutList className="w-4 h-4" />
+              ) : (
+                <LayoutGrid className="w-4 h-4" />
               )}
             </button>
             <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
               {settings.layoutMode === 'board'
-                ? t('layoutGrid', settings.language)
-                : t('layoutBoard', settings.language)}
+                ? t('layoutBoard', settings.language)
+                : settings.layoutMode === 'list'
+                ? t('layoutList', settings.language)
+                : t('layoutGrid', settings.language)}
             </span>
           </div>
 
@@ -1154,6 +1203,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               <button
                 onClick={() => {
                   setIsAddHovered(false);
+                  setSiteModalTargetCategoryId(null);
                   setEditingSite(null);
                   setIsSiteModalOpen(true);
                 }}
@@ -1204,7 +1254,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           />
         )}
 
-        {/* Content View: Category Board vs Icon Grid */}
+        {/* Content View: Category Board vs Sun-Panel List vs Icon Grid */}
         {settings.layoutMode === 'board' ? (
           <CategoryBoard
             categories={categories}
@@ -1213,6 +1263,22 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             resolvedColors={resolvedColors}
             isLight={isLight}
             isEditing={isBoardEditing}
+            onOpenSite={handleOpenSite}
+            onEditSite={handleOpenEditSite}
+            onDeleteSite={handleDeleteSite}
+            onAddSiteToCategory={handleAddSiteToCategory}
+            onAddCategory={handleAddCategory}
+            onUpdateCategory={handleUpdateCategory}
+            onDeleteCategory={handleDeleteCategory}
+            onReorderSites={handleReorderSites}
+          />
+        ) : settings.layoutMode === 'list' ? (
+          <CategoryList
+            categories={categories}
+            sites={sites}
+            settings={settings}
+            resolvedColors={resolvedColors}
+            isLight={isLight}
             onOpenSite={handleOpenSite}
             onEditSite={handleOpenEditSite}
             onDeleteSite={handleDeleteSite}
@@ -1312,13 +1378,15 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             isOpen={isSiteModalOpen}
             editingSite={editingSite}
             categories={categories}
-            activeCategoryId={effectiveActiveCategoryId}
+            targetCategoryId={siteModalTargetCategoryId || undefined}
+            activeCategoryId={siteModalTargetCategoryId || (settings.layoutMode === 'grid' ? effectiveActiveCategoryId : activeCategoryId)}
             gridPages={gridPages}
             activeGridPageId={activeGridPageId}
             settings={settings}
             onClose={() => {
               setIsSiteModalOpen(false);
               setEditingSite(null);
+              setSiteModalTargetCategoryId(null);
             }}
             onSave={handleSaveSite}
           />
@@ -1400,6 +1468,9 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           />
         )}
       </Suspense>
+
+      {/* Universal Borderless Dark Pill Tooltip */}
+      <Tooltip />
     </div>
   );
 };

@@ -161,7 +161,7 @@ export const App: React.FC = () => {
             window.close();
           }}
           className="text-xs text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 cursor-pointer duration-150 px-2 py-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
-          title={profileId === 'private' ? t('popupOpenPrivateSpace', language) : t('popupOpenHome', language)}
+          aria-label={profileId === 'private' ? t('popupOpenPrivateSpace', language) : t('popupOpenHome', language)}
         >
           <span>{profileId === 'private' ? t('popupPrivateSpace', language) : t('popupHome', language)}</span>
           <span className="text-[10px]">↗</span>

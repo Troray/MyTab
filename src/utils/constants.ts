@@ -227,7 +227,27 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   textColorModeLight: 'auto',
   customTextColorsLight: {},
   textColorModeDark: 'light',
-  customTextColorsDark: {},
+  networkMode: 'wan',
+  gridGapX: 20,
+  gridGapY: 20,
+  gridTitleFontSize: 12,
+  gridCategoryFontSize: 14,
+  gridIconTextGap: 8,
+  boardAlwaysShowIcons: false,
+  boardIconSize: 18,
+  boardSiteFontSize: 13,
+  boardIconTextGap: 8,
+  listCardWidth: 200,
+  listCardHeight: 50,
+  listIconSize: 40,
+  listTitleFontSize: 16,
+  listDescFontSize: 14,
+  listCategoryFontSize: 18,
+  listGapX: 10,
+  listGapY: 12,
+  listIconTextGap: 10,
+  listCardOpacity: 0.25,
+  listShowCardBackground: false,
   unsplashActiveTab: 'nature',
   unsplashKeywords: ['nature', 'landscape'],
   gradientLastValue: PRESET_GRADIENTS[0].value,
@@ -288,4 +308,15 @@ export function isLightMode(mode?: string): boolean {
     if (document.documentElement.classList.contains('dark')) return false;
   }
   return false;
+}
+
+/**
+ * Resolves the target URL for a site according to the current network mode (WAN vs LAN).
+ * Gracefully falls back to the other URL if the preferred one is not set.
+ */
+export function resolveSiteUrl(site: SiteItem, networkMode: 'wan' | 'lan' = 'wan'): string {
+  if (networkMode === 'lan') {
+    return site.urlLan?.trim() || site.url?.trim() || '';
+  }
+  return site.url?.trim() || site.urlLan?.trim() || '';
 }

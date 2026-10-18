@@ -38,6 +38,7 @@ interface CategoryTabItemProps {
   displayName: string;
   isDarkWallpaper: boolean;
   resolvedColors?: ResolvedTextColors;
+  categoryFontSize?: number;
   onSelect: (id: string) => void;
   onContextMenu: (e: React.MouseEvent, cat: Category) => void;
 }
@@ -49,6 +50,7 @@ const CategoryTabItem: React.FC<CategoryTabItemProps> = React.memo(({
   displayName,
   isDarkWallpaper,
   resolvedColors,
+  categoryFontSize,
   onSelect,
   onContextMenu,
 }) => {
@@ -58,11 +60,13 @@ const CategoryTabItem: React.FC<CategoryTabItemProps> = React.memo(({
 
   // Compute translucent dynamic styles when custom category color exists
   const customStyle = useMemo<React.CSSProperties | undefined>(() => {
+    const fontStyle: React.CSSProperties = categoryFontSize ? { fontSize: `${categoryFontSize}px` } : {};
+
     if (!hasCustomColor || !color) {
       if (!isActive && resolvedColors?.tabs) {
-        return { color: resolvedColors.tabs };
+        return { color: resolvedColors.tabs, ...fontStyle };
       }
-      return undefined;
+      return Object.keys(fontStyle).length > 0 ? fontStyle : undefined;
     }
 
     if (isActive) {
@@ -71,6 +75,7 @@ const CategoryTabItem: React.FC<CategoryTabItemProps> = React.memo(({
       const glowOpacity = isDarkWallpaper ? 0.40 : 0.28;
 
       return {
+        ...fontStyle,
         backgroundColor: hexToRgba(color, bgOpacity),
         borderColor: hexToRgba(color, borderOpacity),
         boxShadow: `0 3px 14px -2px ${hexToRgba(color, glowOpacity)}, inset 0 1px 0 rgba(255, 255, 255, ${
@@ -95,6 +100,7 @@ const CategoryTabItem: React.FC<CategoryTabItemProps> = React.memo(({
       const shadowOpacity = isHovered ? 0.25 : 0.08;
 
       const style: React.CSSProperties = {
+        ...fontStyle,
         backgroundColor: hexToRgba(color, bgOpacity),
         borderColor: hexToRgba(color, borderOpacity),
         boxShadow: `0 2px 6px -1px ${hexToRgba(color, shadowOpacity)}`,
@@ -105,7 +111,7 @@ const CategoryTabItem: React.FC<CategoryTabItemProps> = React.memo(({
       }
       return style;
     }
-  }, [hasCustomColor, color, isActive, isHovered, isDarkWallpaper, resolvedColors?.tabs]);
+  }, [hasCustomColor, color, isActive, isHovered, isDarkWallpaper, resolvedColors?.tabs, categoryFontSize]);
 
   // Compute count badge style
   const badgeStyle = useMemo<React.CSSProperties | undefined>(() => {
@@ -388,6 +394,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
               displayName={displayName}
               isDarkWallpaper={isDarkWallpaper}
               resolvedColors={resolvedColors}
+              categoryFontSize={settings.gridCategoryFontSize}
               onSelect={onSelectCategory}
               onContextMenu={handleContextMenu}
             />
@@ -608,7 +615,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = React.memo(({
                             ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
                             : 'text-white/80 hover:bg-white/10 hover:text-white'
                         }`}
-                        title={`${t('moveToDesktop', settings.language)}: ${pageDisplayName}`}
+                        aria-label={`${t('moveToDesktop', settings.language)}: ${pageDisplayName}`}
                       >
                         <FolderInput className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                         <span className="truncate">

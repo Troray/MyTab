@@ -139,7 +139,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             type="button"
             onClick={onFinish}
             className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium text-white/60 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer active:scale-95"
-            title={t('onboardingSkip', settings.language)}
+            aria-label={t('onboardingSkip', settings.language)}
           >
             <span>{t('onboardingSkip', settings.language)}</span>
             <X className="w-3 h-3" />
@@ -165,7 +165,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                   ? 'w-6 bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.45)]'
                   : 'w-1.5 bg-white/20 hover:bg-white/40'
               }`}
-              title={`${idx + 1} / ${totalSteps}`}
+              aria-label={`${idx + 1} / ${totalSteps}`}
             />
           ))}
         </div>
