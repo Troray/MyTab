@@ -146,7 +146,7 @@ export interface ThemeSettings {
   listGapY?: number; // Vertical gap between cards (6 ~ 32px, default 12)
   listIconTextGap?: number; // Gap between icon and text block (4 ~ 24px, default 10)
   listCardOpacity?: number; // Card opacity (0.05 ~ 0.95, default 0.22)
-  listShowCardBackground?: boolean; // Show card background (default false)
+  listShowCardBackground?: boolean; // Show card background (default true)
   language: Locale;
   textColorMode?: TextColorMode;
   customTextColors?: CustomTextColors;

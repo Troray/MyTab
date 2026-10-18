@@ -247,7 +247,7 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   listGapY: 12,
   listIconTextGap: 10,
   listCardOpacity: 0.25,
-  listShowCardBackground: false,
+  listShowCardBackground: true,
   unsplashActiveTab: 'nature',
   unsplashKeywords: ['nature', 'landscape'],
   gradientLastValue: PRESET_GRADIENTS[0].value,

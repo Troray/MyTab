@@ -949,7 +949,7 @@ export function resolveTextColors(
   );
 
   // 3. 列表模式 (List Mode) 表面复合可读性推导
-  const showListCardBg = Boolean(settings.listShowCardBackground);
+  const showListCardBg = settings.listShowCardBackground !== false;
   const listOpacity = settings.listCardOpacity ?? 0.25;
   const listSurface = getCompositeSurfaceReadability(
     wallpaperLum,

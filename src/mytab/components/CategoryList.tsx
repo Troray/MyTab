@@ -158,7 +158,7 @@ export const CategoryList: React.FC<CategoryListProps> = React.memo(({
   const gapX = settings.listGapX ?? 10;
   const gapY = settings.listGapY ?? 12;
   const iconTextGap = settings.listIconTextGap ?? 10;
-  const showCardBg = Boolean(settings.listShowCardBackground);
+  const showCardBg = settings.listShowCardBackground !== false;
   const cardOpacity = settings.listCardOpacity ?? 0.25;
 
   // Resolved text colors

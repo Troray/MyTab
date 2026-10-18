@@ -1225,14 +1225,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               </div>
                             </div>
                             <ToggleSwitch
-                              checked={Boolean(settings.listShowCardBackground)}
+                              checked={settings.listShowCardBackground !== false}
                               onChange={(checked) => handleSettingsChange({ listShowCardBackground: checked })}
                               isLight={isLight}
                             />
                           </div>
 
                           {/* List Card Opacity (When Background is ON) */}
-                          {Boolean(settings.listShowCardBackground) && (
+                          {settings.listShowCardBackground !== false && (
                             <div>
                               <div className="flex justify-between text-xs font-medium mb-1.5">
                                 <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardOpacityTitle', settings.language)}</span>
@@ -1458,7 +1458,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             <button
                               type="button"
                               onClick={() => handleSettingsChange({
-                                listShowCardBackground: false,
+                                listShowCardBackground: true,
                                 listCardOpacity: 0.25,
                                 listCardWidth: 200,
                                 listCardHeight: 50,
