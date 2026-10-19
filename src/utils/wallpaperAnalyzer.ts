@@ -56,6 +56,9 @@ export interface ResolvedTextColors {
   cards: string;
   boardText: string;
   boardTitle: string;
+  listCategory?: string;
+  listTitle?: string;
+  listDesc?: string;
   clockShadow: string;
   dateShadow: string;
   greetingShadow: string;
@@ -762,6 +765,9 @@ export function resolveTextColors(
       cards: '#ffffff',
       boardText: '#ffffff',
       boardTitle: '#ffffff',
+      listCategory: '#ffffff',
+      listTitle: '#ffffff',
+      listDesc: 'rgba(255, 255, 255, 0.80)',
       clockShadow: 'drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]',
       dateShadow: 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]',
       greetingShadow: 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]',
@@ -797,6 +803,9 @@ export function resolveTextColors(
       cards: '#0f172a',
       boardText: '#334155',
       boardTitle: '#0f172a',
+      listCategory: '#0f172a',
+      listTitle: '#0f172a',
+      listDesc: '#64748b',
       clockShadow: 'drop-shadow-sm',
       dateShadow: 'drop-shadow-none',
       greetingShadow: 'drop-shadow-none',
@@ -832,6 +841,9 @@ export function resolveTextColors(
     const cardsColor = custom.cards || defaultColor;
     const boardTextColor = custom.boardText || defaultColor;
     const boardTitleColor = custom.boardTitle || defaultColor;
+    const listCategoryColor = custom.listCategory || defaultColor;
+    const listTitleColor = custom.listTitle || defaultColor;
+    const listDescColor = custom.listDesc || (activeThemeMode === 'light' ? '#64748b' : 'rgba(255, 255, 255, 0.70)');
 
     const isClockDark = parseHexLuminance(clockColor) < 135;
     const isDateDark = parseHexLuminance(dateColor) < 135;
@@ -849,6 +861,9 @@ export function resolveTextColors(
       cards: cardsColor,
       boardText: boardTextColor,
       boardTitle: boardTitleColor,
+      listCategory: listCategoryColor,
+      listTitle: listTitleColor,
+      listDesc: listDescColor,
       clockShadow: isClockDark ? 'drop-shadow-none' : 'drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]',
       dateShadow: isDateDark ? 'drop-shadow-none' : 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]',
       greetingShadow: isGreetingDark ? 'drop-shadow-none' : 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]',
@@ -933,6 +948,17 @@ export function resolveTextColors(
     cards
   );
 
+  // 3. 列表模式 (List Mode) 表面复合可读性推导
+  const showListCardBg = settings.listShowCardBackground !== false;
+  const listOpacity = settings.listCardOpacity ?? 0.25;
+  const listSurface = getCompositeSurfaceReadability(
+    wallpaperLum,
+    isLightMode,
+    listOpacity,
+    showListCardBg,
+    cards
+  );
+
   return {
     clock: clock.recommendedColor,
     date: clock.recommendedColor === '#ffffff' ? 'rgba(255, 255, 255, 0.95)' : '#334155',
@@ -942,6 +968,9 @@ export function resolveTextColors(
     cards: gridSurface.textColor,
     boardText: boardSurface.textColor === '#0f172a' ? '#334155' : 'rgba(255, 255, 255, 0.90)',
     boardTitle: boardSurface.textColor,
+    listCategory: clock.recommendedColor,
+    listTitle: listSurface.textColor,
+    listDesc: listSurface.textColor === '#0f172a' ? '#64748b' : 'rgba(255, 255, 255, 0.70)',
     clockShadow: getAdaptiveShadow(clock, 'large'),
     dateShadow: getAdaptiveShadow(date, 'medium'),
     greetingShadow: getAdaptiveShadow(greeting, 'medium'),

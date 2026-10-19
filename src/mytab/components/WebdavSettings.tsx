@@ -206,7 +206,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                     className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg duration-0 cursor-pointer ${
                       isLight ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5' : 'text-white/40 hover:text-white hover:bg-white/10'
                     }`}
-                    title={showPassword ? t('hide', settings.language) : t('show', settings.language)}
+                    aria-label={showPassword ? t('hide', settings.language) : t('show', settings.language)}
                   >
                     {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
@@ -270,7 +270,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                 onClick={handleUpload}
                 disabled={isUploading || isPulling || !config.url}
                 className="glass-btn-primary flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs disabled:opacity-40 disabled:pointer-events-none active:scale-95"
-                title={t('uploadBackup', settings.language)}
+                aria-label={t('uploadBackup', settings.language)}
               >
                 {isUploading ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -285,7 +285,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                 onClick={() => setShowPullConfirm(true)}
                 disabled={isUploading || isPulling || !config.url}
                 className="glass-btn-secondary flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs disabled:opacity-40 disabled:pointer-events-none active:scale-95"
-                title={t('pullRestore', settings.language)}
+                aria-label={t('pullRestore', settings.language)}
               >
                 {isPulling ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -333,7 +333,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                   type="button"
                   onClick={() => setTestResult(null)}
                   className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
-                  title={t('close', settings.language) || 'Close'}
+                  aria-label={t('close', settings.language) || 'Close'}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -367,7 +367,7 @@ export const WebdavSettings: React.FC<WebdavSettingsProps> = ({
                   type="button"
                   onClick={() => setSyncMsg(null)}
                   className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
-                  title={t('close', settings.language) || 'Close'}
+                  aria-label={t('close', settings.language) || 'Close'}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>

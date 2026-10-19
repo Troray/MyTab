@@ -111,21 +111,27 @@ body {
 }
 
 .glass-tooltip {
-  background: rgba(15, 23, 42, 0.88) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: #2d2d2d !important;
   color: #ffffff !important;
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45) !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  font-weight: 500 !important;
 }
 
 .light .glass-tooltip {
-  background: rgba(255, 255, 255, 0.94) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  color: #0f172a !important;
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.10) !important;
+  background: #2d2d2d !important;
+  color: #ffffff !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.30) !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  font-weight: 500 !important;
 }
 
 /* ==========================================================================

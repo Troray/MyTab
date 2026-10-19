@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, FolderPlus, FolderEdit, Check, Trash2, RotateCcw } from 'lucide-react';
+import { X, FolderPlus, FolderEdit, Check, Trash2, RotateCcw, Ban } from 'lucide-react';
 import { Category, GridPage, ThemeSettings } from '../../types';
 import { ConfirmModal } from './ConfirmModal';
 import { ToggleSwitch } from './ToggleSwitch';
@@ -125,6 +125,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             </div>
             <button
               onClick={onClose}
+              aria-label={t('close', settings.language) || 'Close'}
               className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
                 isLight
                   ? 'hover:bg-black/5 text-slate-500 hover:text-black'
@@ -170,6 +171,28 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                 )}
               </div>
               <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                {/* Default / No Color Option */}
+                <div className="relative group/tooltip flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setColor('')}
+                    aria-label={t('reset', settings.language)}
+                    className={`w-7 h-7 rounded-full transition-all cursor-pointer relative flex items-center justify-center border ${
+                      !color
+                        ? isLight
+                          ? 'border-slate-800 ring-2 ring-offset-2 ring-slate-800 shadow-sm'
+                          : 'border-white ring-2 ring-offset-2 ring-white dark:ring-offset-slate-900 shadow-sm'
+                        : isLight
+                        ? 'border-black/15 hover:border-black/35 hover:scale-105 opacity-70 hover:opacity-100'
+                        : 'border-white/20 hover:border-white/50 hover:scale-105 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <Ban className="w-3.5 h-3.5 text-slate-400 dark:text-white/40" />
+                  </button>
+                  <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
+                    {t('reset', settings.language)}
+                  </span>
+                </div>
                 {DEFAULT_CATEGORY_COLORS.map((preset) => {
                   const isSelected = color?.toLowerCase() === preset.toLowerCase();
                   const isWhite = preset.toLowerCase() === '#ffffff' || preset.toLowerCase() === '#fff';
@@ -204,28 +227,33 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   );
                 })}
                 {/* Custom Color Input */}
-                <label
-                  title={t('categoryColorCustom', settings.language)}
-                  className={`w-7 h-7 rounded-full border border-dashed flex items-center justify-center cursor-pointer transition-all relative overflow-hidden ${
-                    isLight ? 'border-slate-400 hover:border-slate-700' : 'border-white/40 hover:border-white/80'
-                  }`}
-                >
-                  <input
-                    type="color"
-                    value={color || '#f43f5e'}
-                    onChange={(e) => setColor(e.target.value)}
-                    className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
-                  />
-                  <div
-                    className="w-3.5 h-3.5 rounded-full"
-                    style={{ backgroundColor: color || 'transparent' }}
-                  />
-                </label>
+                <div className="relative group/tooltip flex items-center justify-center">
+                  <label
+                    aria-label={t('categoryColorCustom', settings.language)}
+                    className={`w-7 h-7 rounded-full border border-dashed flex items-center justify-center cursor-pointer transition-all relative overflow-hidden ${
+                      isLight ? 'border-slate-400 hover:border-slate-700' : 'border-white/40 hover:border-white/80'
+                    }`}
+                  >
+                    <input
+                      type="color"
+                      value={color || '#f43f5e'}
+                      onChange={(e) => setColor(e.target.value)}
+                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                    />
+                    <div
+                      className="w-3.5 h-3.5 rounded-full"
+                      style={{ backgroundColor: color || 'transparent' }}
+                    />
+                  </label>
+                  <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
+                    {t('categoryColorCustom', settings.language)}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Desktop Page Select (only shown in grid layout and if multiple desktop pages exist) */}
-            {settings.layoutMode !== 'board' && gridPages && gridPages.length > 1 && (
+            {settings.layoutMode === 'grid' && gridPages && gridPages.length > 1 && (
               <div>
                 <label
                   className={`block text-xs font-medium mb-1.5 ${

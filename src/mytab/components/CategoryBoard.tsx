@@ -474,7 +474,7 @@ export const CategoryBoard: React.FC<CategoryBoardProps> = React.memo(({
                           ? 'border-black/15 hover:border-black/30 hover:bg-white/50 text-slate-500 hover:text-slate-900'
                           : 'border-white/15 hover:border-white/30 hover:bg-white/[0.05] text-white/40 hover:text-white'
                       }`}
-                      title={t('addCategory', settings.language)}
+                      aria-label={t('addCategory', settings.language)}
                     >
                       <div
                         className={`p-3 rounded-full border transition-transform duration-200 group-hover/add:scale-110 ${

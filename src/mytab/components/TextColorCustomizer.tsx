@@ -11,7 +11,7 @@ interface TextColorCustomizerProps {
   onClose: () => void;
 }
 
-type ElementTarget = 'all' | 'clock' | 'date' | 'greeting' | 'search' | 'tabs' | 'cards' | 'boardTitle' | 'boardText';
+type ElementTarget = 'all' | 'clock' | 'date' | 'greeting' | 'search' | 'tabs' | 'cards' | 'boardTitle' | 'boardText' | 'listCategory' | 'listTitle' | 'listDesc';
 
 interface PaletteItem {
   labelKey: TranslationKey;
@@ -106,6 +106,9 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
     if (target === 'cards') return customColors.cards || defaultColor;
     if (target === 'boardTitle') return customColors.boardTitle || defaultColor;
     if (target === 'boardText') return customColors.boardText || defaultColor;
+    if (target === 'listCategory') return customColors.listCategory || defaultColor;
+    if (target === 'listTitle') return customColors.listTitle || defaultColor;
+    if (target === 'listDesc') return customColors.listDesc || defaultColor;
     return defaultColor;
   };
 
@@ -120,6 +123,9 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
         cards: hex,
         boardTitle: hex,
         boardText: hex,
+        listCategory: hex,
+        listTitle: hex,
+        listDesc: hex,
       });
     } else {
       const nextColors: CustomTextColors = {
@@ -131,6 +137,9 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
         cards: customColors.cards || defaultColor,
         boardTitle: customColors.boardTitle || defaultColor,
         boardText: customColors.boardText || defaultColor,
+        listCategory: customColors.listCategory || defaultColor,
+        listTitle: customColors.listTitle || defaultColor,
+        listDesc: customColors.listDesc || defaultColor,
         ...customColors,
         [activeTarget]: hex,
       };
@@ -152,6 +161,9 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
     { id: 'cards', labelKey: 'textColorTargetCards' },
     { id: 'boardTitle', labelKey: 'textColorTargetBoardTitle' },
     { id: 'boardText', labelKey: 'textColorTargetBoard' },
+    { id: 'listCategory', labelKey: 'textColorTargetListCategory' },
+    { id: 'listTitle', labelKey: 'textColorTargetListTitle' },
+    { id: 'listDesc', labelKey: 'textColorTargetListDesc' },
   ];
 
   return (
@@ -297,7 +309,8 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
                       key={c.value}
                       type="button"
                       onClick={() => handleColorChange(c.value)}
-                      title={t(c.labelKey, settings.language)}
+                      aria-label={t(c.labelKey, settings.language)}
+                      data-tooltip={t(c.labelKey, settings.language)}
                       className={`w-6 h-6 rounded-full border cursor-pointer duration-0 active:scale-95 transition-transform flex items-center justify-center ${
                         isSelected
                           ? 'ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-slate-900 scale-110'

@@ -123,7 +123,8 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
                 className={`p-1 rounded-full transition-all cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed ${
                   isLight ? 'hover:bg-black/5' : 'hover:bg-white/10'
                 }`}
-                title={t('prevPage', settings.language)}
+                aria-label={t('prevPage', settings.language)}
+                data-tooltip={t('prevPage', settings.language)}
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
@@ -139,7 +140,7 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
                     type="button"
                     onClick={() => onSelectPage(page.id)}
                     onContextMenu={(e) => handleContextMenu(e, page)}
-                    title={getGridPageDisplayName(page, idx, settings.language)}
+                    aria-label={getGridPageDisplayName(page, idx, settings.language)}
                     className="relative group p-1 transition-all duration-300 cursor-pointer focus:outline-none flex items-center justify-center"
                   >
                     <span
@@ -175,7 +176,8 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
                 className={`p-1 rounded-full transition-all cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed ${
                   isLight ? 'hover:bg-black/5' : 'hover:bg-white/10'
                 }`}
-                title={t('nextPage', settings.language)}
+                aria-label={t('nextPage', settings.language)}
+                data-tooltip={t('nextPage', settings.language)}
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>

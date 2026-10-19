@@ -12,6 +12,7 @@ interface SiteModalProps {
   editingSite?: SiteItem | null;
   categories: Category[];
   activeCategoryId: string;
+  targetCategoryId?: string;
   gridPages?: GridPage[];
   activeGridPageId?: string;
   settings: ThemeSettings;
@@ -24,13 +25,14 @@ export const SiteModal: React.FC<SiteModalProps> = ({
   editingSite,
   categories,
   activeCategoryId,
+  targetCategoryId,
   gridPages,
   activeGridPageId,
   settings,
   onClose,
   onSave,
 }) => {
-  const isBoard = settings.layoutMode === 'board';
+  const isMultiCategoryView = settings.layoutMode === 'board' || settings.layoutMode === 'list';
   const defaultPageId =
     (activeGridPageId && gridPages?.some((p) => p.id === activeGridPageId) ? activeGridPageId : undefined) ||
     gridPages?.[0]?.id ||
@@ -46,12 +48,14 @@ export const SiteModal: React.FC<SiteModalProps> = ({
     : defaultPageId;
 
   const [url, setUrl] = useState(() => editingSite?.url || '');
+  const [urlLan, setUrlLan] = useState(() => editingSite?.urlLan || '');
+  const [description, setDescription] = useState(() => editingSite?.description || '');
   const [title, setTitle] = useState(() => editingSite?.title || '');
   const [icon, setIcon] = useState(() => editingSite?.icon || '');
   const [pageId, setPageId] = useState(() => initialPageId);
 
   const availableCategories = useMemo(() => {
-    if (isBoard) {
+    if (isMultiCategoryView) {
       return categories.filter((c) => c.id !== 'all');
     }
     const pageCats = categories.filter(
@@ -65,21 +69,23 @@ export const SiteModal: React.FC<SiteModalProps> = ({
       }
     }
     return pageCats;
-  }, [isBoard, categories, pageId, defaultPageId, gridPages, editingSite?.categoryId]);
+  }, [isMultiCategoryView, categories, pageId, defaultPageId, gridPages, editingSite?.categoryId]);
 
   const initialCategoryId = useMemo(() => {
     if (editingSite?.categoryId) {
       return editingSite.categoryId;
     }
+    const preferredCatId = targetCategoryId || activeCategoryId;
     if (
-      activeCategoryId !== 'all' &&
-      activeCategoryId !== 'uncategorized' &&
-      availableCategories.some((c) => c.id === activeCategoryId)
+      preferredCatId &&
+      preferredCatId !== 'all' &&
+      preferredCatId !== 'uncategorized' &&
+      categories.some((c) => c.id === preferredCatId)
     ) {
-      return activeCategoryId;
+      return preferredCatId;
     }
     return availableCategories[0]?.id || 'all';
-  }, [editingSite?.categoryId, activeCategoryId, availableCategories]);
+  }, [editingSite?.categoryId, targetCategoryId, activeCategoryId, categories, availableCategories]);
 
   const [categoryId, setCategoryId] = useState<string>(() => initialCategoryId);
   const [isFetching, setIsFetching] = useState(false);
@@ -99,6 +105,8 @@ export const SiteModal: React.FC<SiteModalProps> = ({
 
     if (editingSite) {
       setUrl(editingSite.url || '');
+      setUrlLan(editingSite.urlLan || '');
+      setDescription(editingSite.description || '');
       setTitle(editingSite.title || '');
       setIcon(editingSite.icon || '');
       const validSitePageId = (editingSite.pageId && gridPages?.some((p) => p.id === editingSite.pageId))
@@ -109,18 +117,27 @@ export const SiteModal: React.FC<SiteModalProps> = ({
       setPageId(validSitePageId);
       setCategoryId(editingSite.categoryId || 'all');
     } else {
-      const initialPage = defaultPageId;
-      const initialCats = isBoard
+      const preferredCatId = targetCategoryId || activeCategoryId;
+      const targetCatObj = preferredCatId ? categories.find((c) => c.id === preferredCatId) : undefined;
+      const initialPage = (targetCatObj?.pageId && gridPages?.some((p) => p.id === targetCatObj.pageId))
+        ? targetCatObj.pageId
+        : defaultPageId;
+
+      const initialCats = isMultiCategoryView
         ? categories.filter((c) => c.id !== 'all')
         : categories.filter((c) => c.id !== 'all' && (c.pageId && gridPages?.some((p) => p.id === c.pageId) ? c.pageId : defaultPageId) === initialPage);
+
       const initialCat =
-        activeCategoryId !== 'all' &&
-        activeCategoryId !== 'uncategorized' &&
-        initialCats.some((c) => c.id === activeCategoryId)
-          ? activeCategoryId
+        preferredCatId &&
+        preferredCatId !== 'all' &&
+        preferredCatId !== 'uncategorized' &&
+        categories.some((c) => c.id === preferredCatId)
+          ? preferredCatId
           : (initialCats[0]?.id || 'all');
 
       setUrl('');
+      setUrlLan('');
+      setDescription('');
       setTitle('');
       setIcon('');
       setPageId(initialPage);
@@ -128,12 +145,12 @@ export const SiteModal: React.FC<SiteModalProps> = ({
     }
     if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current);
     setFetchMsg(null);
-  }, [editingSite, isOpen, defaultPageId, activeCategoryId, categories, isBoard, gridPages, siteCategory]);
+  }, [editingSite, isOpen, defaultPageId, activeCategoryId, targetCategoryId, categories, isMultiCategoryView, gridPages, siteCategory]);
 
   // Keep category synchronized when the user explicitly switches desktop page inside modal (grid mode only)
   const handlePageChange = (newPageId: string) => {
     setPageId(newPageId);
-    if (!isBoard) {
+    if (!isMultiCategoryView) {
       const newAvailable = categories.filter(
         (c) => c.id !== 'all' && (c.pageId && gridPages?.some((p) => p.id === c.pageId) ? c.pageId : defaultPageId) === newPageId
       );
@@ -150,13 +167,14 @@ export const SiteModal: React.FC<SiteModalProps> = ({
   if (!isOpen) return null;
 
   const handleAutoFetch = async () => {
-    if (!url.trim()) return;
+    const rawTarget = url.trim() || urlLan.trim();
+    if (!rawTarget) return;
     if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current);
     setIsFetching(true);
     setFetchMsg(null);
 
     try {
-      const meta = await fetchSiteMetadata(url);
+      const meta = await fetchSiteMetadata(rawTarget);
       if (!title.trim() || !editingSite) {
         setTitle(meta.title);
       }
@@ -168,7 +186,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
     } catch {
       setFetchMsg({ success: false, text: t('fetchFailed', settings.language) });
       if (!icon) {
-        setIcon(generateFallbackIcon(title || url));
+        setIcon(generateFallbackIcon(title || rawTarget));
       }
     } finally {
       setIsFetching(false);
@@ -176,7 +194,8 @@ export const SiteModal: React.FC<SiteModalProps> = ({
   };
 
   const handleUrlBlur = () => {
-    if (url.trim() && !title.trim() && !editingSite) {
+    const rawTarget = url.trim() || urlLan.trim();
+    if (rawTarget && !title.trim() && !editingSite) {
       handleAutoFetch();
     }
   };
@@ -195,10 +214,29 @@ export const SiteModal: React.FC<SiteModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const finalUrl = normalizeUrl(url);
-    if (!finalUrl) return;
+    const rawUrl = url.trim();
+    const rawUrlLan = urlLan.trim();
 
-    const finalTitle = title.trim() || new URL(finalUrl).hostname.replace(/^www\./i, '');
+    if (!rawUrl && !rawUrlLan) {
+      setFetchMsg({
+        success: false,
+        text: t('siteUrlValidationEmpty', settings.language),
+      });
+      return;
+    }
+
+    const finalUrl = rawUrl ? normalizeUrl(rawUrl) : '';
+    const finalUrlLan = rawUrlLan ? normalizeUrl(rawUrlLan) : undefined;
+    const primaryUrl = finalUrl || finalUrlLan || '';
+
+    let host = '';
+    try {
+      host = new URL(primaryUrl).hostname.replace(/^www\./i, '');
+    } catch {
+      host = primaryUrl;
+    }
+
+    const finalTitle = title.trim() || host;
     let finalIcon = icon.trim() || generateFallbackIcon(finalTitle);
 
     // If icon is remote http(s) URL, try to cache as Base64 to prevent future CORS/offline issues
@@ -215,6 +253,8 @@ export const SiteModal: React.FC<SiteModalProps> = ({
 
     onSave({
       url: finalUrl,
+      urlLan: finalUrlLan,
+      description: description.trim() || undefined,
       title: finalTitle,
       icon: finalIcon,
       categoryId: categoryId || 'all',
@@ -223,7 +263,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
   };
 
   const isLight = isLightMode(settings.mode);
-  const previewIcon = icon.trim() || generateFallbackIcon(title.trim() || url.trim() || 'W');
+  const previewIcon = icon.trim() || generateFallbackIcon(title.trim() || url.trim() || urlLan.trim() || 'W');
   const content = (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -269,12 +309,14 @@ export const SiteModal: React.FC<SiteModalProps> = ({
                 isLight ? 'text-slate-700' : 'text-white/80'
               }`}
             >
-              {t('siteUrl', settings.language)} <span className="text-red-500">*</span>
+              {t('siteUrlWan', settings.language)}{' '}
+              <span className="text-[10px] font-normal opacity-60">
+                ({t('siteUrlRequiredHint', settings.language)})
+              </span>
             </label>
             <div className="flex gap-2">
               <input
                 type="text"
-                required
                 autoFocus
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -285,9 +327,9 @@ export const SiteModal: React.FC<SiteModalProps> = ({
               <button
                 type="button"
                 onClick={handleAutoFetch}
-                disabled={isFetching || !url.trim()}
+                disabled={isFetching || (!url.trim() && !urlLan.trim())}
                 className="glass-btn-secondary flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs shrink-0 active:scale-95 disabled:opacity-50"
-                title={t('autoFetch', settings.language)}
+                aria-label={t('autoFetch', settings.language)}
               >
                 {isFetching ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -302,11 +344,11 @@ export const SiteModal: React.FC<SiteModalProps> = ({
                 className={`text-[11px] mt-2 px-2.5 py-1.5 rounded-lg flex items-center justify-between gap-1.5 animate-fade-in ${
                   fetchMsg.success
                     ? isLight
-                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                      : 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30'
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30'
                     : isLight
-                      ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                      : 'bg-amber-500/15 text-amber-200 border border-amber-500/30'
+                    ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                    : 'bg-amber-500/15 text-amber-200 border border-amber-500/30'
                 }`}
               >
                 <div className="flex items-center gap-1.5 min-w-0">
@@ -322,13 +364,35 @@ export const SiteModal: React.FC<SiteModalProps> = ({
                     type="button"
                     onClick={() => setFetchMsg(null)}
                     className="p-0.5 rounded opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
-                    title={t('close', settings.language) || 'Close'}
+                    aria-label={t('close', settings.language) || 'Close'}
                   >
                     <X className="w-3 h-3" />
                   </button>
                 )}
               </div>
             )}
+          </div>
+
+          {/* LAN URL Input */}
+          <div>
+            <label
+              className={`block text-xs font-medium mb-1.5 ${
+                isLight ? 'text-slate-700' : 'text-white/80'
+              }`}
+            >
+              {t('siteUrlLan', settings.language)}{' '}
+              <span className="text-[10px] font-normal opacity-60">
+                ({t('siteUrlLanHint', settings.language)})
+              </span>
+            </label>
+            <input
+              type="text"
+              value={urlLan}
+              onChange={(e) => setUrlLan(e.target.value)}
+              onBlur={handleUrlBlur}
+              placeholder={t('siteUrlLanPlaceholder', settings.language)}
+              className="glass-input w-full px-3.5 py-2.5 rounded-xl text-sm"
+            />
           </div>
 
           {/* Title Input */}
@@ -346,6 +410,27 @@ export const SiteModal: React.FC<SiteModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('siteTitlePlaceholder', settings.language)}
+              className="glass-input w-full px-3.5 py-2.5 rounded-xl text-sm"
+            />
+          </div>
+
+          {/* Description / Remarks Input */}
+          <div>
+            <label
+              className={`block text-xs font-medium mb-1.5 ${
+                isLight ? 'text-slate-700' : 'text-white/80'
+              }`}
+            >
+              {t('siteDescription', settings.language)}{' '}
+              <span className="text-[10px] font-normal opacity-60">
+                ({t('optional', settings.language)})
+              </span>
+            </label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t('siteDescriptionPlaceholder', settings.language)}
               className="glass-input w-full px-3.5 py-2.5 rounded-xl text-sm"
             />
           </div>
@@ -387,22 +472,27 @@ export const SiteModal: React.FC<SiteModalProps> = ({
               />
 
               {/* Upload Local File */}
-              <label
-                className={`p-2.5 rounded-xl border cursor-pointer transition-colors shrink-0 ${
-                  isLight
-                    ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700 hover:text-slate-900'
-                    : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80 hover:text-white'
-                }`}
-                title={t('uploadIcon', settings.language)}
-              >
-                <Upload className="w-4 h-4" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
+              <div className="relative group/tooltip flex items-center justify-center shrink-0">
+                <label
+                  aria-label={t('uploadIcon', settings.language)}
+                  className={`p-2.5 rounded-xl border cursor-pointer transition-colors ${
+                    isLight
+                      ? 'bg-black/5 hover:bg-black/10 border-black/10 text-slate-700 hover:text-slate-900'
+                      : 'bg-white/10 hover:bg-white/20 border-white/15 text-white/80 hover:text-white'
+                  }`}
+                >
+                  <Upload className="w-4 h-4" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
+                <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
+                  {t('uploadIcon', settings.language)}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -429,7 +519,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
         )}
 
         {/* Desktop Page Select (only shown in grid layout and if multiple desktop pages exist) */}
-        {!isBoard && gridPages && gridPages.length > 1 && (
+        {!isMultiCategoryView && gridPages && gridPages.length > 1 && (
           <div>
             <label
               className={`block text-xs font-medium mb-1.5 ${

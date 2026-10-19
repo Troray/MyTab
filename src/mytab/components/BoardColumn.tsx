@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, GripVertical, ExternalLink, Globe, Home } from 'lucide-react';
 import { Category, SiteItem, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
-import { DEFAULT_CATEGORY_COLORS, BOARD_DARK_TEXT_TOKENS, getCategoryDisplayName } from '../../utils/constants';
+import { DEFAULT_CATEGORY_COLORS, BOARD_DARK_TEXT_TOKENS, getCategoryDisplayName, resolveSiteUrl } from '../../utils/constants';
 import { generateFallbackIcon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
 
@@ -135,6 +135,10 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
   const titleAlign = settings.boardTitleAlign || 'left';
   const titleSize = settings.boardTitleSize ?? 15;
   const itemSpacing = settings.boardItemSpacing ?? 6;
+  const alwaysShowIcons = settings.boardAlwaysShowIcons ?? false;
+  const iconSize = settings.boardIconSize || 16;
+  const siteFontSize = settings.boardSiteFontSize || 13;
+  const iconTextGap = settings.boardIconTextGap || 7;
 
   const showCardBg = settings.boardShowCardBackground !== false;
   const boardOpacity = settings.boardCardOpacity ?? 0.20;
@@ -205,7 +209,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
               ? 'text-right flex-1'
               : 'text-left flex-1'
           }`}
-          title={getCategoryDisplayName(category, settings.language)}
+          data-tooltip={getCategoryDisplayName(category, settings.language)}
         >
           {getCategoryDisplayName(category, settings.language)}
         </h3>
@@ -229,7 +233,8 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                     ? 'hover:bg-black/5 text-slate-400 hover:text-slate-800'
                     : 'hover:bg-white/10 text-white/40 hover:text-white'
                 }`}
-                title={t('editCategory', settings.language)}
+                aria-label={t('editCategory', settings.language)}
+                data-tooltip={t('editCategory', settings.language)}
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
@@ -242,7 +247,8 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                     ? 'text-slate-400 hover:text-red-600 hover:bg-red-500/10'
                     : 'text-white/40 hover:text-red-400 hover:bg-red-500/10'
                 }`}
-                title={t('deleteCategory', settings.language)}
+                aria-label={t('deleteCategory', settings.language)}
+                data-tooltip={t('deleteCategory', settings.language)}
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -287,6 +293,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
           </div>
         ) : (
           sites.map((site, siteIdx) => {
+            const targetUrl = resolveSiteUrl(site, settings.networkMode);
             const isBeingDragged = draggingSiteId === site.id;
             // Visual indicator conditions for drop target
             const showLineAbove = isThisColTarget && dropTarget?.index === siteIdx && !isBeingDragged;
@@ -333,6 +340,11 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                   paddingTop: `${Math.max(1, itemSpacing / 2)}px`,
                   paddingBottom: `${Math.max(1, itemSpacing / 2)}px`,
                 }}
+                data-tooltip={
+                  site.description?.trim()
+                    ? site.description
+                    : targetUrl
+                }
                 className={`group/item board-site-row relative flex items-center justify-between px-2 -mx-1 rounded-lg duration-0 transition-colors ${
                   isBeingDragged ? 'opacity-30' : 'opacity-100'
                 } ${
@@ -346,7 +358,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                 }`}
                 onClick={() => {
                   if (!isEditing) {
-                    onOpenSite(site.url);
+                    onOpenSite(targetUrl);
                   }
                 }}
               >
@@ -366,25 +378,40 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                   <GripVertical className="w-3.5 h-3.5 -ml-1 mr-1 flex-shrink-0 opacity-25 group-hover/item:opacity-75 transition-opacity pointer-events-none" />
                 )}
 
-                {/* Site Icon: Dynamic slide-out & spring zoom on hover */}
-                <div className="board-site-icon-box">
+                {/* Site Icon */}
+                <div
+                  className="board-site-icon-box"
+                  style={alwaysShowIcons ? {
+                    width: `${iconSize + 4}px`,
+                    height: `${iconSize + 4}px`,
+                    opacity: 1,
+                    marginRight: `${iconTextGap}px`,
+                  } : undefined}
+                >
                   <img
-                    src={site.icon || generateFallbackIcon(site.title || site.url)}
+                    src={site.icon || generateFallbackIcon(site.title || targetUrl)}
                     alt=""
                     loading="lazy"
                     referrerPolicy="no-referrer"
                     className="board-site-icon-img"
+                    style={{
+                      width: `${iconSize}px`,
+                      height: `${iconSize}px`,
+                      ...(alwaysShowIcons ? { transform: 'scale(1)' } : {}),
+                    }}
                     onError={(e) => {
-                      (e.target as HTMLElement).setAttribute('src', generateFallbackIcon(site.title || site.url));
+                      (e.target as HTMLElement).setAttribute('src', generateFallbackIcon(site.title || targetUrl));
                     }}
                   />
                 </div>
 
                 {/* Site Title */}
                 <span
-                  style={{ color: siteTextColor }}
-                  className="text-[13px] font-medium tracking-tight truncate min-w-0 flex-1 select-none pr-2 transition-colors leading-tight pointer-events-none"
-                  title={`${site.title} (${site.url})`}
+                  style={{
+                    color: siteTextColor,
+                    fontSize: `${siteFontSize}px`,
+                  }}
+                  className="font-medium tracking-tight truncate min-w-0 flex-1 select-none pr-2 transition-colors leading-tight pointer-events-none"
                 >
                   {site.title}
                 </span>
@@ -402,7 +429,8 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                           ? 'text-slate-400 hover:text-slate-800 hover:bg-black/5'
                           : 'text-white/40 hover:text-white hover:bg-white/10'
                       }`}
-                      title={t('editSite', settings.language)}
+                      aria-label={t('editSite', settings.language)}
+                      data-tooltip={t('editSite', settings.language)}
                     >
                       <Pencil className="w-3 h-3" />
                     </button>
@@ -413,7 +441,8 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                           ? 'text-slate-400 hover:text-red-600 hover:bg-red-500/10'
                           : 'text-white/40 hover:text-red-400 hover:bg-red-500/10'
                       }`}
-                      title={t('deleteSite', settings.language)}
+                      aria-label={t('deleteSite', settings.language)}
+                      data-tooltip={t('deleteSite', settings.language)}
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -435,7 +464,8 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                 ? 'text-slate-400 hover:text-slate-800 hover:bg-black/[0.05] active:scale-95'
                 : 'text-white/40 hover:text-white hover:bg-white/10 active:scale-95'
             }`}
-            title={t('addSiteToCategory', settings.language)}
+            aria-label={t('addSiteToCategory', settings.language)}
+            data-tooltip={t('addSiteToCategory', settings.language)}
           >
             <Plus className="w-4 h-4 transition-transform duration-150 group-hover/add-site:scale-110" />
           </button>
@@ -455,7 +485,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
             top: `${activeMenu.y}px`,
             left: `${activeMenu.x}px`,
           }}
-          className={`glass-dropdown fixed w-32 py-1.5 rounded-xl border shadow-2xl z-[9999] animate-scale-in text-xs font-medium overflow-hidden select-none ${
+          className={`glass-dropdown fixed min-w-[170px] max-w-[220px] py-1.5 rounded-xl border shadow-2xl z-[9999] animate-scale-in text-xs font-medium overflow-hidden select-none ${
             isLight
               ? 'border-black/10 shadow-black/15 text-slate-800'
               : 'border-white/15 shadow-black/50 text-white'
@@ -463,6 +493,63 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
         >
           {activeMenu.type === 'site' ? (
             <>
+              <button
+                type="button"
+                onClick={() => {
+                  const targetUrl = resolveSiteUrl(activeMenu.site, settings.networkMode);
+                  setActiveMenu(null);
+                  window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                }}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+                  isLight
+                    ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                    : 'text-white/80 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>{t('openInNewTab', settings.language)}</span>
+              </button>
+
+              {activeMenu.site.url && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const wan = activeMenu.site.url;
+                    setActiveMenu(null);
+                    window.open(wan, '_blank', 'noopener,noreferrer');
+                  }}
+                  className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+                    isLight
+                      ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                      : 'text-white/80 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <Globe className="w-3.5 h-3.5 text-blue-500" />
+                  <span className="truncate">{t('openWanUrl', settings.language)}</span>
+                </button>
+              )}
+
+              {activeMenu.site.urlLan && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const lan = activeMenu.site.urlLan!;
+                    setActiveMenu(null);
+                    window.open(lan, '_blank', 'noopener,noreferrer');
+                  }}
+                  className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+                    isLight
+                      ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                      : 'text-white/80 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <Home className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="truncate">{t('openLanUrl', settings.language)}</span>
+                </button>
+              )}
+
+              <div className={`my-1 border-t ${isLight ? 'border-black/5' : 'border-white/10'}`} />
+
               <button
                 type="button"
                 onClick={() => {
