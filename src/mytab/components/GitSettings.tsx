@@ -636,7 +636,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                           ? 'text-slate-400 hover:text-slate-700 hover:bg-black/5'
                           : 'text-white/40 hover:text-white hover:bg-white/10'
                           }`}
-                        title={showToken ? t('hide', settings.language) : t('show', settings.language)}
+                        aria-label={showToken ? t('hide', settings.language) : t('show', settings.language)}
                       >
                         {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
@@ -718,7 +718,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                         ? 'text-slate-400 hover:text-slate-700 hover:bg-black/5'
                         : 'text-white/40 hover:text-white hover:bg-white/10'
                         }`}
-                      title={showToken ? t('hide', settings.language) : t('show', settings.language)}
+                      aria-label={showToken ? t('hide', settings.language) : t('show', settings.language)}
                     >
                       {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </button>
@@ -796,7 +796,8 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                     onClick={() => setShowAdvancedRestore(!showAdvancedRestore)}
                     className={`p-1.5 mb-[1px] shrink-0 rounded-lg transition-colors duration-200 ${isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-white/40 hover:text-white hover:bg-white/10'
                       }`}
-                    title={t('gitAdvancedRestoreTitle', settings.language)}
+                    aria-label={t('gitAdvancedRestoreTitle', settings.language)}
+                    data-tooltip={t('gitAdvancedRestoreTitle', settings.language)}
                   >
                     <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showAdvancedRestore ? 'rotate-180' : ''}`} />
                   </button>
@@ -910,7 +911,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                   type="button"
                   onClick={() => setConnectResult(null)}
                   className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
-                  title={t('close', settings.language) || 'Close'}
+                  aria-label={t('close', settings.language) || 'Close'}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -943,7 +944,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                 onClick={handleUpload}
                 disabled={isUploading || isPulling || !config.token}
                 className="glass-btn-primary flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs shrink-0 active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
-                title={t('uploadBackup', settings.language)}
+                aria-label={t('uploadBackup', settings.language)}
               >
                 {isUploading ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -958,7 +959,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                 onClick={() => setShowPullConfirm(true)}
                 disabled={isUploading || isPulling || !config.token}
                 className="glass-btn-secondary flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs shrink-0 active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
-                title={t('pullRestore', settings.language)}
+                aria-label={t('pullRestore', settings.language)}
               >
                 {isPulling ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -996,7 +997,7 @@ export const GitSettings: React.FC<GitSettingsProps> = ({
                   type="button"
                   onClick={() => setSyncMsg(null)}
                   className="p-1 rounded-lg opacity-60 hover:opacity-100 transition-opacity shrink-0 cursor-pointer"
-                  title={t('close', settings.language) || 'Close'}
+                  aria-label={t('close', settings.language) || 'Close'}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>

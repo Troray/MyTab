@@ -265,9 +265,11 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
     : showTitle
     ? Math.max(iconBoxSize + 16, Math.min(cardSize, Math.round(iconBoxSize + 8 + iconSpacing * 0.9)))
     : iconBoxSize + 16;
-  const gap = showCardBg ? Math.max(12, Math.round(cardSize * 0.14)) : iconSpacing;
+  const defaultGap = showCardBg ? Math.max(12, Math.round(cardSize * 0.14)) : iconSpacing;
+  const gapX = settings.gridGapX ?? defaultGap;
+  const gapY = settings.gridGapY ?? defaultGap;
   const maxPerRow = settings.maxCardsPerRow || 8;
-  const gridMaxWidth = maxPerRow * cellWidth + (maxPerRow - 1) * gap;
+  const gridMaxWidth = maxPerRow * cellWidth + (maxPerRow - 1) * gapX;
 
   // Embla Carousel Integration for authentic mobile-grade momentum & spring swipe
   const initialIndexRef = useRef(activePageIndex);
@@ -457,7 +459,8 @@ export const SiteGrid: React.FC<SiteGridProps> = React.memo(({
                   <div
                     className="flex flex-wrap justify-center items-center mx-auto w-full"
                     style={{
-                      gap: `${gap}px`,
+                      columnGap: `${gapX}px`,
+                      rowGap: `${gapY}px`,
                       maxWidth: `${gridMaxWidth}px`,
                     }}
                   >

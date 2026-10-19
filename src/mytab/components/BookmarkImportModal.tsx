@@ -931,7 +931,7 @@ export const BookmarkImportModal: React.FC<BookmarkImportModalProps> = ({
                                   ? 'bg-black/[0.04] text-slate-600'
                                   : 'bg-white/[0.06] text-white/60'
                               }`}
-                              title={site.title}
+                              data-tooltip={site.title}
                             >
                               {site.title}
                             </span>
@@ -1131,7 +1131,7 @@ const FolderTreeNodeItem: React.FC<{
                 onToggleExpand(node.id);
               }}
               className="p-0.5 -ml-1 rounded hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer text-slate-400 hover:text-slate-700 dark:text-white/40 dark:hover:text-white transition-colors"
-              title={isExpanded ? 'Collapse' : 'Expand'}
+              aria-label={isExpanded ? 'Collapse' : 'Expand'}
             >
               <ChevronRight
                 className={`w-3.5 h-3.5 transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}
@@ -1150,7 +1150,7 @@ const FolderTreeNodeItem: React.FC<{
             className="rounded accent-blue-500 cursor-pointer w-3.5 h-3.5 shrink-0"
           />
           <Folder className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-          <span className="text-xs font-medium truncate max-w-[260px]" title={node.title || 'Folder'}>
+          <span className="text-xs font-medium truncate max-w-[260px]" data-tooltip={node.title || 'Folder'}>
             {node.title || 'Folder'}
           </span>
         </div>

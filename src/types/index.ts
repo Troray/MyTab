@@ -24,6 +24,8 @@ export interface SiteItem {
   title: string;
   titleKey?: TranslationKey;
   url: string;
+  urlLan?: string; // LAN / internal network URL
+  description?: string; // Remarks / notes
   icon?: string;
   categoryId: string;
   sortOrder: number;
@@ -61,6 +63,7 @@ export interface SearchEngine {
 export type ThemeMode = 'system' | 'dark' | 'light';
 export type BackgroundType = 'gradient' | 'bing' | 'unsplash' | 'custom' | 'color';
 export type TextColorMode = 'auto' | 'light' | 'dark' | 'custom';
+export type NetworkMode = 'wan' | 'lan';
 
 export interface CustomTextColors {
   clock?: string;
@@ -71,6 +74,13 @@ export interface CustomTextColors {
   cards?: string;
   boardText?: string;
   boardTitle?: string;
+  listCategory?: string;
+  listTitle?: string;
+  listDesc?: string;
+  gridCategory?: string;
+  gridTitle?: string;
+}
+
 export interface CustomGreetings {
   morning?: string[];
   noon?: string[];
@@ -81,7 +91,8 @@ export interface CustomGreetings {
 
 export interface ThemeSettings {
   mode: ThemeMode;
-  layoutMode?: 'grid' | 'board';
+  layoutMode?: 'grid' | 'board' | 'list';
+  networkMode?: NetworkMode;
   backgroundType: BackgroundType;
   backgroundValue: string;
   cardBlur?: number; // 废弃：保留可选兼容旧版存储
@@ -102,6 +113,15 @@ export interface ThemeSettings {
   showCategories?: boolean;
   maxNavCategories?: number; // Max categories shown on navbar before folding to 'More' (0 means unlimited, default 6)
   iconSpacing?: number; // Spacing/compactness between icons in icon-only mode (8 ~ 48px, default 20)
+
+  // Grid Mode fine-tuning
+  gridGapX?: number; // Horizontal gap between cards (8 ~ 40px, default 16)
+  gridGapY?: number; // Vertical gap between cards (8 ~ 40px, default 16)
+  gridTitleFontSize?: number; // Title font size (11 ~ 18px, default 12)
+  gridCategoryFontSize?: number; // Category tabs font size (12 ~ 22px, default 14)
+  gridIconTextGap?: number; // Distance between icon and title (2 ~ 16px, default 8)
+
+  // Board Mode
   boardColumnsPerRow?: number; // Board view columns per row (2 ~ 8, default 5)
   boardCardGap?: number; // Board view gap between cards (8 ~ 32px, default 16)
   boardTitleAlign?: 'left' | 'center' | 'right'; // Board category title alignment (default 'left')
@@ -110,6 +130,23 @@ export interface ThemeSettings {
   boardShowCardBackground?: boolean; // Board view show card background (default true)
   boardCardOpacity?: number; // Board view card opacity (0.05 ~ 0.95, default 0.20)
   boardAlign?: 'left' | 'center' | 'right'; // Board view column alignment when columns are fewer than max (default 'center')
+  boardAlwaysShowIcons?: boolean; // Always show site icons without waiting for hover
+  boardIconSize?: number; // Board site icon size (14 ~ 28px, default 16)
+  boardSiteFontSize?: number; // Board site text font size (11 ~ 18px, default 13)
+  boardIconTextGap?: number; // Gap between icon and title in board item (4 ~ 16px, default 7)
+
+  // List Mode (Sun-Panel layout)
+  listCardWidth?: number; // Min width of each pill card in px (140 ~ 320px, default 200)
+  listCardHeight?: number; // Card height in px (36 ~ 80px, default 50)
+  listIconSize?: number; // Icon size (16 ~ 65px, default 40)
+  listTitleFontSize?: number; // Title font size (11 ~ 30px, default 16)
+  listDescFontSize?: number; // Description / remark font size (9 ~ 30px, default 14)
+  listCategoryFontSize?: number; // Category title font size (12 ~ 30px, default 18)
+  listGapX?: number; // Horizontal gap between cards (6 ~ 32px, default 10)
+  listGapY?: number; // Vertical gap between cards (6 ~ 32px, default 12)
+  listIconTextGap?: number; // Gap between icon and text block (4 ~ 24px, default 10)
+  listCardOpacity?: number; // Card opacity (0.05 ~ 0.95, default 0.22)
+  listShowCardBackground?: boolean; // Show card background (default true)
   language: Locale;
   textColorMode?: TextColorMode;
   customTextColors?: CustomTextColors;

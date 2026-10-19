@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Edit2, Trash2, FolderInput } from 'lucide-react';
+import { Edit2, Trash2, FolderInput, Globe, Home } from 'lucide-react';
 import { SiteItem, ThemeSettings, GridPage } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { generateFallbackIcon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
-import { getSiteDisplayName, getGridPageDisplayName } from '../../utils/constants';
+import { getSiteDisplayName, getGridPageDisplayName, resolveSiteUrl } from '../../utils/constants';
 
 interface SiteCardProps {
   site: SiteItem;
@@ -81,7 +81,8 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
     };
   }, [menuPos]);
 
-  const iconSrc = imgError || !site.icon ? generateFallbackIcon(site.title || site.url) : site.icon;
+  const targetUrl = resolveSiteUrl(site, settings.networkMode);
+  const iconSrc = imgError || !site.icon ? generateFallbackIcon(site.title || targetUrl) : site.icon;
   const cardSize = settings.cardSize || 110;
   const iconRatio = settings.iconSizeRatio ?? 0.55;
   const isLight =
@@ -103,9 +104,9 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
     }
 
     if (settings.openInNewTab) {
-      window.open(site.url, '_blank', 'noopener,noreferrer');
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
     } else {
-      window.location.href = site.url;
+      window.location.href = targetUrl;
     }
   };
 
@@ -216,6 +217,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
             : `rgba(255, 255, 255, ${settings.cardOpacity})`,
           padding: showCardBg ? `${paddingPx}px` : '5px 3px',
         }}
+        data-tooltip={site.description?.trim() ? site.description : undefined}
         className={`group relative flex flex-col items-center justify-center rounded-2xl border duration-0 transition-all h-full w-full ${jiggleClass} ${
           isDragging
             ? 'ios-dragged border-amber-500/60 ring-2 ring-amber-500/30'
@@ -241,10 +243,12 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
 
         {/* Icon Inset Container */}
         <div
-          style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px` }}
+          style={{
+            width: `${iconBoxSize}px`,
+            height: `${iconBoxSize}px`,
+            marginBottom: showTitle ? `${settings.gridIconTextGap ?? 8}px` : '0px',
+          }}
           className={`rounded-xl flex items-center justify-center overflow-hidden shrink-0 pointer-events-none duration-0 transition-all ${
-            showTitle ? 'mb-2' : ''
-          } ${
             showCardBg
               ? isLight
                 ? 'bg-white/60 border border-black/[0.05] shadow-sm group-hover:bg-white group-hover:border-black/15 group-hover:shadow-md group-hover:shadow-black/[0.08]'
@@ -271,7 +275,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
           <span
             draggable={false}
             style={{
-              fontSize: cardSize < 95 ? '11px' : cardSize > 130 ? '14px' : '12px',
+              fontSize: settings.gridTitleFontSize ? `${settings.gridTitleFontSize}px` : cardSize < 95 ? '11px' : cardSize > 130 ? '14px' : '12px',
               color: resolvedColors?.cards,
             }}
             className={`font-medium truncate max-w-full text-center tracking-wide px-1 select-none pointer-events-none duration-0 ${
@@ -295,7 +299,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
               top: `${menuPos.y}px`,
               left: `${menuPos.x}px`,
             }}
-            className={`glass-dropdown fixed min-w-[160px] max-w-[220px] py-1.5 rounded-xl border shadow-2xl z-[9999] animate-scale-in text-xs font-medium overflow-hidden select-none ${
+            className={`glass-dropdown fixed min-w-[170px] max-w-[230px] py-1.5 rounded-xl border shadow-2xl z-[9999] animate-scale-in text-xs font-medium overflow-hidden select-none ${
               isLight
                 ? 'border-black/10 shadow-black/15 text-slate-800'
                 : 'border-white/15 shadow-black/50 text-white'
@@ -316,6 +320,44 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
               <Edit2 className="w-3.5 h-3.5 shrink-0" />
               <span>{t('editSite', settings.language)}</span>
             </button>
+
+            {/* Open WAN URL option */}
+            {site.url && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuPos(null);
+                  window.open(site.url, '_blank', 'noopener,noreferrer');
+                }}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+                  isLight
+                    ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                    : 'text-white/80 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                <span className="truncate">{t('openWanUrl', settings.language)}</span>
+              </button>
+            )}
+
+            {/* Open LAN URL option */}
+            {site.urlLan && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuPos(null);
+                  window.open(site.urlLan, '_blank', 'noopener,noreferrer');
+                }}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-left transition-colors cursor-pointer ${
+                  isLight
+                    ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
+                    : 'text-white/80 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Home className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                <span className="truncate">{t('openLanUrl', settings.language)}</span>
+              </button>
+            )}
 
             {/* Move to another desktop options */}
             {gridPages && gridPages.length > 1 && onMoveSiteToPage && (() => {
@@ -346,7 +388,7 @@ export const SiteCard = React.memo(React.forwardRef<HTMLDivElement, SiteCardProp
                             ? 'text-slate-700 hover:bg-black/5 hover:text-slate-900'
                             : 'text-white/80 hover:bg-white/10 hover:text-white'
                         }`}
-                        title={`${t('moveToDesktop', settings.language)}: ${pageDisplayName}`}
+                        aria-label={`${t('moveToDesktop', settings.language)}: ${pageDisplayName}`}
                       >
                         <FolderInput className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                         <span className="truncate">
