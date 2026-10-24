@@ -44,7 +44,7 @@ Un'estensione moderna, minimale e attenta alla privacy per la pagina Nuova Sched
 
 ## 🌟 Funzionalità Principali
 
-- 📱 **Carosello Multi-Desktop & Gesti di Scorrimento (v1.3.0)**: Nuova architettura multi-desktop basata sul motore fisico Embla Carousel. Supporta lo scorrimento fluido con trascinamento del mouse, i tasti freccia della tastiera e indicatori di pagina galleggianti in vetro satinato. Permette di rinominare i desktop, eliminare pagine migrando automaticamente i collegamenti e memorizzare categorie indipendenti per desktop.
+- 📱 **Multi-Desktop & Layout Libero**: Architettura multi-desktop basata sul motore GridStack. Supporta trascinamento libero, navigazione con frecce, indicatori galleggianti e widget completamente indipendenti per ciascun desktop.
 - 🔖 **Importazione Nativa dei Segnalibri con Deduplicazione Intelligente (v1.3.0)**: Lettura istantanea dei segnalibri nativi da Chrome, Edge e Firefox, oltre al supporto per file HTML standard (Safari, ecc.). Selezione visiva ad albero, appiattimento intelligente delle cartelle, confronto dei duplicati in tempo reale e anteprima delle statistiche.
 - 🔒 **Spazio Privato a Doppio Contenitore (v1.2.0)**: Innovativa architettura multi-profilo che separa fisicamente la navigazione quotidiana (Spazio Predefinito) da quella riservata (Spazio Privato). Si attiva automaticamente nelle finestre in incognito o tramite `private.html`.
 - 📌 **Aggiunta Rapida con un Clic dalla Barra degli Strumenti (Popup)**: Durante la navigazione, fai clic sull'icona della barra degli strumenti per estrarre istantaneamente titolo, URL e favicon ad alta risoluzione e salvarli nello spazio e categoria desiderati.
@@ -202,7 +202,7 @@ I pacchetti compilati saranno disponibili nella cartella `dist/`:
 
 - ⚛️ **[React](https://react.dev/)**
 - ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
+- 🔲 **[GridStack](https://gridstackjs.com/)**
 - 🎨 **[Lucide Icons](https://lucide.dev/)**
 - 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
 - 🌈 **[Tailwind CSS](https://tailwindcss.com/)**

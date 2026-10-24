@@ -44,7 +44,7 @@ Minimalistyczne, stylowe i dbające o prywatność rozszerzenie Nowej Karty (New
 
 ## 🌟 Główne Funkcje
 
-- 📱 **Karuzela Wielu Pulpitów i Gesty Przesuwania (v1.3.0)**: Architektura wielu pulpitów napędzana silnikiem fizyki Embla Carousel. Płynne przewijanie przeciąganiem myszy lub strzałkami klawiatury z pływającymi wskaźnikami stron. Zmiana nazw pulpitów, bezpieczne usuwanie z automatyczną migracją zakładek i niezależna pamięć kategorii.
+- 📱 **Wiele Pulpitów i Swobodny Układ**: Architektura wielu pulpitów oparta na nowoczesnym silniku GridStack. Płynne przeciąganie i upuszczanie, zmiana pulpitów strzałkami klawiatury i w pełni niezależne widżety na każdym pulpicie.
 - 🔖 **Natywny Import Zakładek z Inteligentną Deduplikacją (v1.3.0)**: Błyskawiczny odczyt drzew zakładek z przeglądarek Chrome, Edge i Firefox oraz plików HTML Netscape (Safari itp.). Wizualny wybór drzewa, inteligentne spłaszczanie folderów, porównywanie duplikatów w czasie rzeczywistym i podgląd statystyk.
 - 🔒 **Przestrzeń Prywatna w Podwójnym Kontenerze (v1.2.0)**: Fizyczne rozdzielenie przeglądania codziennego (Przestrzeń Domyślna) od stron poufnych (Przestrzeń Prywatna). Uruchamia się automatycznie w trybie incognito lub pod adresem `private.html`.
 - 📌 **Szybkie Zapisywanie z Paska Narzędzi (Popup)**: Podczas przeglądania dowolnej witryny kliknij ikonę na pasku, aby przechwycić tytuł, URL i favicon w wysokiej rozdzielczości i natychmiast zapisać je w wybranej przestrzeni.
@@ -202,7 +202,7 @@ Pliki wynikowe znajdziesz w folderze `dist/`:
 
 - ⚛️ **[React](https://react.dev/)**
 - ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
+- 🔲 **[GridStack](https://gridstackjs.com/)**
 - 🎨 **[Lucide Icons](https://lucide.dev/)**
 - 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
 - 🌈 **[Tailwind CSS](https://tailwindcss.com/)**

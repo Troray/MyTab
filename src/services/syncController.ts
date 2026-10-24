@@ -219,6 +219,7 @@ export function buildSyncPayload(
       pageCategoryMap: safeContainer.profiles.normal.pageCategoryMap
         ? { ...safeContainer.profiles.normal.pageCategoryMap }
         : { 'page-1': 'all' },
+      ...(safeContainer.profiles.normal.freeLayouts ? { freeLayouts: safeContainer.profiles.normal.freeLayouts } : {}),
     };
   }
 
@@ -241,6 +242,7 @@ export function buildSyncPayload(
       pageCategoryMap: safeContainer.profiles.private.pageCategoryMap
         ? { ...safeContainer.profiles.private.pageCategoryMap }
         : { 'page-1': 'all' },
+      ...(safeContainer.profiles.private.freeLayouts ? { freeLayouts: safeContainer.profiles.private.freeLayouts } : {}),
       ...(safeContainer.profiles.private.settings ? { settings: { ...safeContainer.profiles.private.settings } } : {}),
       ...(safeContainer.profiles.private.wallpaper ? { wallpaper: { ...safeContainer.profiles.private.wallpaper } } : {}),
     };
@@ -255,6 +257,7 @@ export function buildSyncPayload(
     categories: profilesPayload.normal?.categories || [],
     sites: profilesPayload.normal?.sites || [],
     gridPages: profilesPayload.normal?.gridPages || [...DEFAULT_GRID_PAGES],
+    freeLayouts: profilesPayload.normal?.freeLayouts || safeContainer.profiles.normal?.freeLayouts || {},
   };
 
   return payload;
@@ -290,6 +293,7 @@ function extractRemoteProfiles(remotePayload?: SyncPayload | null): Partial<Reco
         gridPages: Array.isArray(norm.gridPages) && norm.gridPages.length > 0 ? norm.gridPages : undefined,
         activeGridPageId: typeof norm.activeGridPageId === 'string' ? norm.activeGridPageId : undefined,
         pageCategoryMap: norm.pageCategoryMap && typeof norm.pageCategoryMap === 'object' ? { ...norm.pageCategoryMap } : undefined,
+        ...(norm.freeLayouts && typeof norm.freeLayouts === 'object' ? { freeLayouts: { ...norm.freeLayouts } } : {}),
         ...(norm.settings ? { settings: { ...norm.settings } } : {}),
         ...(norm.wallpaper ? { wallpaper: { ...norm.wallpaper } } : {}),
       };
@@ -303,6 +307,7 @@ function extractRemoteProfiles(remotePayload?: SyncPayload | null): Partial<Reco
         gridPages: Array.isArray(priv.gridPages) && priv.gridPages.length > 0 ? priv.gridPages : undefined,
         activeGridPageId: typeof priv.activeGridPageId === 'string' ? priv.activeGridPageId : undefined,
         pageCategoryMap: priv.pageCategoryMap && typeof priv.pageCategoryMap === 'object' ? { ...priv.pageCategoryMap } : undefined,
+        ...(priv.freeLayouts && typeof priv.freeLayouts === 'object' ? { freeLayouts: { ...priv.freeLayouts } } : {}),
         ...(priv.settings ? { settings: { ...priv.settings } } : {}),
         ...(priv.wallpaper ? { wallpaper: { ...priv.wallpaper } } : {}),
       };
@@ -317,6 +322,7 @@ function extractRemoteProfiles(remotePayload?: SyncPayload | null): Partial<Reco
       categories: Array.isArray(remotePayload.categories) ? remotePayload.categories : [],
       activeCategoryId: 'all',
       gridPages: Array.isArray(remotePayload.gridPages) && remotePayload.gridPages.length > 0 ? remotePayload.gridPages : undefined,
+      ...(remotePayload.freeLayouts && typeof remotePayload.freeLayouts === 'object' ? { freeLayouts: { ...remotePayload.freeLayouts } } : {}),
     };
   }
 
@@ -410,6 +416,7 @@ export function applyRemotePayload(
         gridPages: remotePages,
         activeGridPageId: fallbackPageId,
         pageCategoryMap: mergedPageCategoryMap,
+        freeLayouts: remote.freeLayouts !== undefined ? remote.freeLayouts : local.freeLayouts,
         settings: remote.settings !== undefined ? remote.settings : local.settings,
         wallpaper: remote.wallpaper !== undefined ? remote.wallpaper : local.wallpaper,
       };
@@ -420,6 +427,7 @@ export function applyRemotePayload(
         gridPages: local.gridPages && local.gridPages.length > 0 ? local.gridPages : DEFAULT_GRID_PAGES,
         activeGridPageId: local.activeGridPageId || 'page-1',
         pageCategoryMap: local.pageCategoryMap || { 'page-1': 'all' },
+        freeLayouts: local.freeLayouts,
       };
     } else {
       // 'merge' strategy
@@ -452,6 +460,18 @@ export function applyRemotePayload(
         ...(remote.pageCategoryMap || {}),
       };
 
+      const mergedFreeLayouts: Record<string, any> = {};
+      const allLayoutPageIds = new Set([
+        ...Object.keys(local.freeLayouts || {}),
+        ...Object.keys(remote.freeLayouts || {}),
+      ]);
+      for (const pageKey of allLayoutPageIds) {
+        mergedFreeLayouts[pageKey] = {
+          ...(local.freeLayouts?.[pageKey] || {}),
+          ...(remote.freeLayouts?.[pageKey] || {}),
+        };
+      }
+
       // Timestamp-based arbitration for private profile settings
       let mergedSettings = local.settings;
       if (remote.settings && !local.settings) {
@@ -472,6 +492,7 @@ export function applyRemotePayload(
         gridPages: mergedPages,
         activeGridPageId: fallbackPageId,
         pageCategoryMap: mergedPageCategoryMap,
+        freeLayouts: mergedFreeLayouts,
         settings: mergedSettings,
         wallpaper: mergedWallpaper,
       };

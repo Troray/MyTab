@@ -44,7 +44,7 @@
 
 ## 🌟 主な機能
 
-- 📱 **マルチデスクトップ＆スワイプジェスチャー (Multi-Desktop Carousel, v1.3.0)**：物理慣性エンジン（Embla Carousel）を搭載したマルチデスクトップ構造。マウスドラッグやキーボードの左右矢印キーで軽快にページ切り替えが可能。デスクトップの名前変更、サイト自動移行を伴う安全な削除、デスクトップごとの独立したカテゴリ記憶に対応。
+- 📱 **マルチデスクトップ＆自由配置レイアウト**：モダンな GridStack エンジンを搭載したマルチデスクトップ構造。直感的なドラッグ＆ドロップ、矢印キーでの切り替え、各デスクトップで完全に独立したウィジェット配置に対応。
 - 🔖 **ブラウザ標準ブックマークインポート＆重複排除 (Bookmarks Importer, v1.3.0)**：Chrome、Edge、Firefox などの標準ブックマークツリー（ブックマークバー、その他のブックマーク）をワンクリックで高速読み込み。Safari 等の HTML ブックマークファイルにも対応。視覚的なツリー選択、スマートフォルダ展開、重複 URL のリアルタイム照合、インポート前プレビューを完備。
 - 🔒 **プライベートスペース独立コンテナ (Private Space, v1.2.0)**：革新的なデュアルコンテナ構造により、「通常スペース (`default`)」と「プライベートスペース (`private`)」を物理的に完全分離。シークレットモード（Incognito）またはプライベートページ（`private.html`）を開くと自動的に起動し、個人のプライバシーを保護。
 - 📌 **ツールバーからワンクリック追加 (Popup)**：任意のウェブサイト閲覧中にツールバーのアイコンをクリックするだけで、現在のタイトル・URL・高解像度ファビコンを自動抽出し、指定のスペースとカテゴリに一発保存。重複登録の警告機能付き。
@@ -219,7 +219,7 @@ npm run package
 
 - ⚛️ **[React](https://react.dev/)**
 - ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
+- 🔲 **[GridStack](https://gridstackjs.com/)**
 - 🎨 **[Lucide Icons](https://lucide.dev/)**
 - 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
 - 🌈 **[Tailwind CSS](https://tailwindcss.com/)**

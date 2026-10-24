@@ -1,4 +1,5 @@
-import { Category, SiteItem, SearchEngine, ThemeSettings, WebdavConfig, GitSyncConfig, GitPlatformConfig, GridPage, PresetGradient } from '../types';
+import React from 'react';
+import { Category, SiteItem, SearchEngine, ThemeSettings, WebdavConfig, GitSyncConfig, GitPlatformConfig, GridPage, PresetGradient, IconBgType } from '../types';
 import { t, Locale } from '../locales';
 
 export const DEFAULT_SEARCH_ENGINES: SearchEngine[] = [
@@ -69,7 +70,7 @@ export const DEFAULT_SITES: SiteItem[] = [
   },
   {
     id: 'site-weibo',
-    title: '微博',
+    title: 'Weibo',
     titleKey: 'siteWeibo',
     url: 'https://weibo.com',
     icon: 'data:image/png;base64,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',
@@ -79,23 +80,12 @@ export const DEFAULT_SITES: SiteItem[] = [
     updatedAt: Date.now(),
   },
   {
-    id: 'site-bilibili',
-    title: '哔哩哔哩',
-    titleKey: 'siteBilibili',
-    url: 'https://www.bilibili.com',
-    icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACVklEQVRYR+1WQWsTQRT+3jamKYqnCrb1IiKbBKGeVLwVT4meA0JMxJSiB+tv0YtSFJoYEHLW5mZvam8qks3Sgxdte/CiKGk02fFNN2mycbu7A2NrwTktu99873vfzrz3CAe8yDf+qojhU/MxHGRB4iWMIwvIn/2mpLW6fhzOryWAroDwAqeS85ijziiHv4CyVQTE8i6Y6BWMWCayiJ3gnTqEuDwISDdRTJUjCmjeApwnHnBUEb7BmYmMeRSSXk752tfWmohju7nqzUCi2YlEPIvcma+++/YMLvcl55Cjn9EckKhAMh8RqviekoEDO1nbtznr63zwzkHgmNKhCwMTvkPQB3bxGRLmo74broCaPYNW9zk/nQ/j0fT9LSbGriFnfibIzFvW2j4Gd3MgeofJ2EVC2brLV+6BpswUaWhRCnjNAi4N7azDQAk30puKbMHwp40LmzyGmaGasMbQqXR5gMX331pYFp78D65K2JjSECbHWgIj/Ri2r826LJjJN4hEFC1M3B6ZdkwSsib9UAzwvDKDlSsDS5OU72rs4lCajpQQBheWYDqGQnDHz4Bw5YCWyim3d+x1wrDKztQsbMQXS4g1OWevoCCuRIsIASvLEDX/e/z/Bfw7zmwn82o9vEkWq1Bl+Up6c92TFhBYqKE3OktredPTl3b3SXuvNmRdtxchHDuaw0WlYyMe5zv+ji+dNa43s9G3acHR+9xInbhYIZSOQ8mjKvuUNpfcjht23fYiTyPaCn+V0f1ZNpjIfzgamrxMFrFuPnQO5ZrjaRG9nfHrwhafgPirzkOAcnEFwAAAABJRU5ErkJggg==',
-    categoryId: 'media',
-    sortOrder: 3,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  },
-  {
     id: 'site-youtube',
     title: 'YouTube',
     url: 'https://youtube.com',
     icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAMFBMVEVHcEz/ADP/ADP/ADP/ADP/ADP/ADP/ADP/ADP/////hpT/2uH/Smj/s8D/JEv/b4eB3bNwAAAACHRSTlMAQB+z1GXri3bBstgAAAKRSURBVHic7ZrpduMwCIUrGW1xMn3/t602J25s59RARGeG+zd1+Y4QaLsfHyqVSqVSqVSqv0C2yCxyxh0r/9pVP7L4kKaGCSFMVTBBke+KO/Jx+bX+af6kKP+HUMnMD2mscSVmC7YXB6UKVXCceYlhQonLFnYXBSCYo/DTW0OvNO0h2GHhK8ImE/a9I7+RfxoEMzj+M4GB0fFjhBXB2PwvWs2DIBE/xiCZgKJ7EoQGIEbXZ4DQAOQhaLPASMWP0chmoOdApgabghWdAn0SWLn4MVrZOdhmoZMEcLJF0LqxYBHkBSkDCBZBLoMMMHwrspbPAJLxY0S1geuVD8Bi2sBlvv2RBUgpfTIBGEwfKgBp5smDQwOkdONAcJhG2AHSfKEjBApAQaADIDrxA4Ceh4kKkIglSQcg5mHCrEVPAKSSBBaAPBWweeACSOmCQwDMarwLkOZPDILnA8h5QCwQHrMdOALIJXl+NrICYEqSGeB8SbIDnC3JNwCcGwR+gJOLAzvA2UL4t6pgRvRj1k6IWBQZW/HtilsLuFZD5EGBazlGb4qAYUtG2pmy7AkpxzSGXTFyK8QFQD8XkE5GmD3Qd5GOZrhd4DMA/nRMS34X/nh+Y4heAXA3JKTSW8vg7ojIp/K7rPwtmfg9ofxNqfhdsfhtufh7gfiLifibkeSrmf8d74bSL6fib8fyr+dyOVhcJNIOCjkPyd1GI9QMlwH4BT4ikWYE3/xso71sWzfbcDfd1lk5tBjDJnydioNGwe86KitCmADeSuEBpkNPaWMwzcsLnPbWbqotDt/XrtoHRjUyd2dx9xYDPKzFR3EWU3HzFN9Nxa4ZnX8UeheneavX9upXst1VXT5Dx1SpVCqVSqX6j/QFgvdUtSxW0v0AAAAASUVORK5CYII=',
     categoryId: 'media',
-    sortOrder: 4,
+    sortOrder: 3,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }
@@ -163,9 +153,6 @@ export function getSiteDisplayName(site: SiteItem, lang: Locale = 'zh-CN'): stri
   if (site.id === 'site-weibo' && (!site.title || site.title === '微博' || site.title === 'Weibo')) {
     return t('siteWeibo', lang) || site.title;
   }
-  if (site.id === 'site-bilibili' && (!site.title || site.title === '哔哩哔哩' || site.title === 'Bilibili')) {
-    return t('siteBilibili', lang) || site.title;
-  }
   return site.title || 'Untitled';
 }
 
@@ -198,7 +185,7 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   backgroundValue: './wallpapers/default-wallpaper.svg',
   cardOpacity: 0.20, // 默认卡片透明度 20%
   cardSize: 110,     // 默认卡片大小 110px
-  iconSizeRatio: 0.55, // 默认图标占比 55%
+  iconSizeRatio: 0.60, // 默认图标占比 60%
   maxCardsPerRow: 8, // 默认每行最多 8 个卡片
   activeEngineId: 'google',
   openInNewTab: true,
@@ -210,9 +197,13 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   showLunar: true,
   showCardBackground: false, // 默认不显示卡片背景
   showSiteTitle: true,
-  showCategories: true,
+  showCategories: false, // 默认关闭分类/分组功能
+  categoryDisplayMode: 'groups', // 开启时默认使用分组容器模式
   maxNavCategories: 6,
   iconSpacing: 20,
+  gridShowTooltip: true,
+  boardShowTooltip: true,
+  listShowTooltip: true,
   boardColumnsPerRow: 5,
   boardCardGap: 16,
   boardTitleAlign: 'left',
@@ -227,12 +218,27 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   textColorModeLight: 'auto',
   customTextColorsLight: {},
   textColorModeDark: 'light',
+  customTextColorsDark: {},
+  gridTextColorMode: 'auto',
+  gridTextColorModeLight: 'auto',
+  gridTextColorModeDark: 'light',
+  boardTextColorMode: 'auto',
+  boardTextColorModeLight: 'auto',
+  boardTextColorModeDark: 'light',
+  listTextColorMode: 'auto',
+  listTextColorModeLight: 'auto',
+  listTextColorModeDark: 'light',
   networkMode: 'wan',
+  showNetworkBadge: true,
   gridGapX: 20,
   gridGapY: 20,
-  gridTitleFontSize: 12,
+  gridTitleFontSize: 14,
+  gridIconSize: 48,
   gridCategoryFontSize: 14,
   gridIconTextGap: 8,
+  gridTextLineGap: 2,
+  gridIconBgType: 'frosted',
+  gridIconBgColor: '#ffffff',
   boardAlwaysShowIcons: false,
   boardIconSize: 18,
   boardSiteFontSize: 13,
@@ -248,6 +254,10 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
   listIconTextGap: 10,
   listCardOpacity: 0.25,
   listShowCardBackground: true,
+  listIconBgType: 'frosted',
+  listIconBgColor: '#ffffff',
+  freeLayoutAllowOverlap: true,
+  freeLayoutSnapGrid: 0,
   unsplashActiveTab: 'nature',
   unsplashKeywords: ['nature', 'landscape'],
   gradientLastValue: PRESET_GRADIENTS[0].value,
@@ -319,4 +329,193 @@ export function resolveSiteUrl(site: SiteItem, networkMode: 'wan' | 'lan' = 'wan
     return site.urlLan?.trim() || site.url?.trim() || '';
   }
   return site.url?.trim() || site.urlLan?.trim() || '';
+}
+
+/**
+ * Bootstrap Breakpoint System for Responsive Icon & Grid Scaling:
+ * - xxl (>= 1400px): default icon size ~65px
+ * - xl (1200px - 1399px): default icon size ~60px
+ * - lg (992px - 1199px): default icon size ~55px
+ * - md (768px - 991px): default icon size ~50px
+ * - sm (576px - 767px): default icon size ~48px
+ * - xs (< 576px): default icon size ~45px
+ */
+export type BootstrapBreakpoint = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+
+export interface BootstrapBreakpointConfig {
+  name: BootstrapBreakpoint;
+  minWidth: number;
+  maxWidth?: number;
+  defaultIconSize: number;
+  cellHeight: number;
+  scaleFactor: number;
+}
+
+export const BOOTSTRAP_BREAKPOINTS: Record<BootstrapBreakpoint, BootstrapBreakpointConfig> = {
+  xxl: {
+    name: 'xxl',
+    minWidth: 1400,
+    defaultIconSize: 65,
+    cellHeight: 22,
+    scaleFactor: 1.0,
+  },
+  xl: {
+    name: 'xl',
+    minWidth: 1200,
+    maxWidth: 1399,
+    defaultIconSize: 60,
+    cellHeight: 20,
+    scaleFactor: 60 / 65,
+  },
+  lg: {
+    name: 'lg',
+    minWidth: 992,
+    maxWidth: 1199,
+    defaultIconSize: 55,
+    cellHeight: 19,
+    scaleFactor: 55 / 65,
+  },
+  md: {
+    name: 'md',
+    minWidth: 768,
+    maxWidth: 991,
+    defaultIconSize: 50,
+    cellHeight: 18,
+    scaleFactor: 50 / 65,
+  },
+  sm: {
+    name: 'sm',
+    minWidth: 576,
+    maxWidth: 767,
+    defaultIconSize: 48,
+    cellHeight: 17,
+    scaleFactor: 48 / 65,
+  },
+  xs: {
+    name: 'xs',
+    minWidth: 0,
+    maxWidth: 575,
+    defaultIconSize: 45,
+    cellHeight: 16,
+    scaleFactor: 45 / 65,
+  },
+};
+
+export function getBootstrapBreakpoint(width: number): BootstrapBreakpointConfig {
+  if (width >= 1400) return BOOTSTRAP_BREAKPOINTS.xxl;
+  if (width >= 1200) return BOOTSTRAP_BREAKPOINTS.xl;
+  if (width >= 992) return BOOTSTRAP_BREAKPOINTS.lg;
+  if (width >= 768) return BOOTSTRAP_BREAKPOINTS.md;
+  if (width >= 576) return BOOTSTRAP_BREAKPOINTS.sm;
+  return BOOTSTRAP_BREAKPOINTS.xs;
+}
+
+export function getEffectiveIconSize(
+  viewportWidth: number,
+  settings: { gridIconSize?: number; iconSizeRatio?: number }
+): number {
+  if (settings.gridIconSize !== undefined) {
+    return Math.max(20, settings.gridIconSize);
+  }
+  if (settings.iconSizeRatio !== undefined && settings.iconSizeRatio !== 0.60) {
+    const customBaseline = Math.round(65 * (settings.iconSizeRatio / 0.60));
+    return Math.max(20, customBaseline);
+  }
+  const bp = getBootstrapBreakpoint(viewportWidth);
+  return bp.defaultIconSize;
+}
+
+/**
+ * Calculates whether a hex color string is dark (perceived luminance < 140).
+ */
+export function isColorDark(color?: string): boolean {
+  if (!color || typeof color !== 'string') return false;
+  const hex = color.trim().replace(/^#/, '');
+  if (hex.length === 3) {
+    const r = parseInt(hex[0] + hex[0], 16);
+    const g = parseInt(hex[1] + hex[1], 16);
+    const b = parseInt(hex[2] + hex[2], 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) < 140;
+  }
+  if (hex.length === 6) {
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) < 140;
+  }
+  return false;
+}
+
+export interface EffectiveIconBgResult {
+  type: IconBgType;
+  className: string;
+  style: React.CSSProperties;
+}
+
+export function getEffectiveIconBg(
+  site: Partial<SiteItem> | undefined,
+  settings: Partial<ThemeSettings> | undefined,
+  isLight: boolean,
+  mode: 'grid' | 'list' = 'grid'
+): EffectiveIconBgResult {
+  const globalType: IconBgType = (mode === 'list'
+    ? (settings?.listIconBgType || 'frosted')
+    : (settings?.gridIconBgType || 'frosted'));
+
+  const globalColor = (mode === 'list'
+    ? (settings?.listIconBgColor || '#ffffff')
+    : (settings?.gridIconBgColor || '#ffffff'));
+
+  const siteType = site?.iconBgType;
+  const effectiveType: IconBgType = (siteType && siteType !== 'inherit')
+    ? siteType
+    : globalType;
+
+  const customColor = (siteType && siteType !== 'inherit' && site?.iconBgColor)
+    ? site.iconBgColor
+    : globalColor;
+
+  if (effectiveType === 'white') {
+    return {
+      type: 'white',
+      className: 'bg-white border border-black/[0.08] shadow-md shadow-black/15 group-hover:shadow-xl group-hover:border-black/15 transition-all',
+      style: { backgroundColor: '#ffffff' },
+    };
+  }
+
+  if (effectiveType === 'dark') {
+    return {
+      type: 'dark',
+      className: 'bg-slate-900 border border-white/15 shadow-md shadow-black/40 group-hover:bg-slate-800 group-hover:border-white/25 transition-all',
+      style: { backgroundColor: '#0f172a' },
+    };
+  }
+
+  if (effectiveType === 'transparent') {
+    return {
+      type: 'transparent',
+      className: 'bg-transparent border border-transparent shadow-none transition-all',
+      style: { backgroundColor: 'transparent' },
+    };
+  }
+
+  if (effectiveType === 'custom') {
+    return {
+      type: 'custom',
+      className: 'border shadow-md transition-all',
+      style: {
+        backgroundColor: customColor,
+        borderColor: isLight ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.20)',
+      },
+    };
+  }
+
+  // Default: 'frosted'
+  return {
+    type: 'frosted',
+    className: isLight
+      ? 'bg-white/85 border border-black/[0.08] shadow-md shadow-black/10 group-hover:bg-white group-hover:shadow-xl group-hover:border-black/20 group-active:bg-white/95 backdrop-blur-md transition-all'
+      : 'bg-white/[0.14] border border-white/15 shadow-md shadow-black/30 group-hover:bg-white/[0.25] group-hover:border-white/35 group-active:bg-white/[0.30] backdrop-blur-md transition-all',
+    style: {},
+  };
 }

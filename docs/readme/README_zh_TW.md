@@ -44,7 +44,7 @@
 
 ## 🌟 核心特性
 
-- 📱 **多桌面輪播與手勢滑動 (Multi-Desktop Carousel, v1.3.0)**：新增分屏桌面架構，整合 Embla 物理動能引擎，支援滑鼠拖曳橫滑、鍵盤左右鍵快速切換與底部毛玻璃指示點跳轉；支援桌面重新命名、刪除與網站自動遷移，具備桌面獨立分類記憶與跨桌面快速歸類能力。
+- 📱 **多桌面與自由拖曳佈局 (Multi-Desktop & Free Layout)**：基於現代化 GridStack 拖曳網格架構，支援滑鼠手勢切換、鍵盤左右鍵切換與底部毛玻璃指示點跳轉；支援桌面重新命名、刪除與網站自動遷移，各桌面具備完全獨立的小組件與卡片自由佈局。
 - 🔖 **瀏覽器書籤原生匯入與智慧去重 (Bookmarks Importer, v1.3.0)**：支援毫秒級直讀 Chrome、Edge、Firefox 等原生書籤樹（書籤列、其他書籤等），亦相容 Safari 與各大瀏覽器的 HTML 書籤檔案。支援視覺化樹形勾選、智慧展平對應、已存網址自動去重比對與匯入前統計預覽。
 - 🔒 **私密空間獨立容器 (Private Space, v1.2.0)**：創新雙容器架構，實現「預設空間 (`default`)」與「私密空間 (`private`)」物理級資料隔離。不同空間享有獨立的書籤網址、分類體系與桌布背景；在無痕模式（Incognito）或造訪獨立私密頁面（`private.html`）時自動啟動，保障私人隱私。
 - 📌 **工具列一鍵快速收藏 (Popup)**：造訪任何網頁時，點擊瀏覽器工具列圖示即可自動擷取當前頁面標題、網址與高解析度 Favicon，一鍵歸類儲存至指定空間與分類，具備重複新增智慧預警與系統主題自適應。
@@ -262,7 +262,7 @@ MyTab 的誕生與成長離不開開源社群的滋養與支援，衷心感謝�
 
 - ⚛️ **[React](https://react.dev/)**：構建高響應、宣告式現代化元件介面的前端基石。
 - ⚡ **[Vite](https://vitejs.dev/)**：極速的新一代前端打包建置與本地模組熱重載（HMR）工具。
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**：輕量級、高擴充、具備物理慣性與手勢觸控特性的現代化輪播引擎。
+- 🔲 **[GridStack](https://gridstackjs.com/)**：現代化網格拖曳佈局引擎，為組件與捷徑卡片的自由拖曳、自適應縮放與多桌面獨立佈局提供底層技術支援。
 - 🎨 **[Lucide Icons](https://lucide.dev/)**：極具美感、線條優雅且高度一致的開源圖示庫。
 - 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**：由 [@6tail](https://github.com/6tail) 開發的功能強大、零外部依賴的農曆、中國傳統二十四節氣與干支曆演算法庫。
 - 🌈 **[Tailwind CSS](https://tailwindcss.com/)**：靈活優雅的原子化樣式框架，為毛玻璃質感 (Glassmorphism) 與暗黑自適應提供強大動力。

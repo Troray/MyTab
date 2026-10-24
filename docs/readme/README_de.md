@@ -44,7 +44,7 @@ Eine minimalistische, ästhetische und datenschutzfreundliche moderne Browser-Er
 
 ## 🌟 Hauptfunktionen
 
-- 📱 **Multi-Desktop-Karussell & Wischgesten (v1.3.0)**: Neu eingeführte Multi-Desktop-Architektur auf Basis der Embla Carousel-Engine. Unterstützt sanftes Wischen per Mausdrag, Tastatur-Pfeiltasten und schwebende Milchglas-Seitenindikatoren. Bietet Desktop-Umbenennung, sicheres Löschen mit automatischer Lesezeichenmigration und seitenspezifischen Kategoriespeicher.
+- 📱 **Multi-Desktop & Freies Layout-System**: Multi-Desktop-Architektur auf Basis der modernen GridStack-Engine. Unterstützt Drag & Drop, Tastatur-Pfeiltasten, schwebende Milchglas-Seitenindikatoren und vollständig unabhängige Widgets pro Desktop.
 - 🔖 **Nativer Lesezeichen-Import mit intelligenter Duplikaterkennung (v1.3.0)**: Schnelles Auslesen der nativen Lesezeichenbäume aus Chrome, Edge und Firefox sowie Unterstützung von Standard-HTML-Lesezeichendateien (Safari usw.). Visuelle Baumauswahl, intelligente Ordnerglättung, Echtzeit-Duplikatabgleich und Import-Vorschau.
 - 🔒 **Privater Bereich im Doppel-Container (v1.2.0)**: Innovative Multi-Profile-Architektur zur physischen Trennung von Alltags-Browsing (Standard-Bereich) und vertraulichen Seiten (Privater Bereich). Wird im Inkognito-Modus oder über `private.html` automatisch aktiviert.
 - 📌 **Schnelllesezeichen per Klick in der Symbolleiste (Popup)**: Beim Surfen auf beliebigen Webseiten genügt ein Klick auf das Symbolleistensymbol, um Titel, URL und hochauflösendes Favicon zu erfassen und sofort im gewünschten Bereich abzulegen.
@@ -204,7 +204,7 @@ Nach dem Build finden Sie die fertigen Erweiterungen im Ordner `dist/`:
 
 - ⚛️ **[React](https://react.dev/)**
 - ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
+- 🔲 **[GridStack](https://gridstackjs.com/)**
 - 🎨 **[Lucide Icons](https://lucide.dev/)**
 - 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
 - 🌈 **[Tailwind CSS](https://tailwindcss.com/)**

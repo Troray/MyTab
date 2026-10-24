@@ -44,7 +44,7 @@ Uma extensão moderna, minimalista e focada em privacidade para a página Nova G
 
 ## 🌟 Recursos Principais
 
-- 📱 **Carrossel de Múltiplas Áreas de Trabalho & Gestos de Deslize (v1.3.0)**: Nova arquitetura multi-desktop impulsionada pelo motor de física Embla Carousel. Suporta deslizamento suave com o mouse, teclas de seta do teclado e indicadores flutuantes em vidro fosco. Permite renomear áreas de trabalho, excluir páginas migrando links com segurança e memória de categorias independente.
+- 📱 **Múltiplas Áreas de Trabalho & Layout Livre**: Nova arquitetura multi-desktop impulsionada pelo motor GridStack. Suporta arrastar e soltar livre, navegação por setas do teclado e widgets totalmente independentes em cada área de trabalho.
 - 🔖 **Importação Nativa de Favoritos com Deduplicação Inteligente (v1.3.0)**: Leitura rápida de árvores de favoritos nativas do Chrome, Edge e Firefox, além de suporte a arquivos HTML padrão (Safari, etc.). Seleção em árvore interativa, nivelamento inteligente de pastas, comparação de duplicatas em tempo real e visualização prévia de estatísticas.
 - 🔒 **Contêiner Duplo de Espaço Privado (v1.2.0)**: Arquitetura inovadora de múltiplos perfis que separa fisicamente a navegação cotidiana (Espaço Padrão) da navegação confidencial (Espaço Privado). Ativa-se automaticamente em janelas anônimas (Incognito) ou através de `private.html`.
 - 📌 **Salvamento Rápido com Um Clique na Barra de Ferramentas (Popup)**: Ao navegar em qualquer página, clique no ícone da barra de ferramentas para capturar o título, a URL e o favicon em alta resolução e salvá-los imediatamente no espaço e categoria desejados.
@@ -202,7 +202,7 @@ Os arquivos compilados estarão prontos no diretório `dist/`:
 
 - ⚛️ **[React](https://react.dev/)**
 - ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
+- 🔲 **[GridStack](https://gridstackjs.com/)**
 - 🎨 **[Lucide Icons](https://lucide.dev/)**
 - 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
 - 🌈 **[Tailwind CSS](https://tailwindcss.com/)**

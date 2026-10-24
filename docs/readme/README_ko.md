@@ -44,7 +44,7 @@
 
 ## 🌟 주요 기능
 
-- 📱 **멀티 데스크톱 캐러셀 & 스와이프 제스처 (Multi-Desktop Carousel, v1.3.0)**: 물리 관성 기반의 Embla Carousel 엔진을 탑재하여 마우스 드래그나 키보드 좌우 방향키로 부드럽게 화면을 전환할 수 있습니다. 데스크톱 이름 변경, 사이트 자동 이동을 통한 안전한 삭제, 데스크톱별 독립적인 카테고리 기억 기능을 제공합니다.
+- 📱 **멀티 데스크톱 & 자유 배치 레이아웃**: 현대적인 GridStack 엔진을 탑재하여 직관적인 드래그 앤 드롭, 키보드 방향키 화면 전환, 데스크톱별로 완전히 독립된 위젯 및 사이트 카드 배치를 제공합니다.
 - 🔖 **브라우저 북마크 원클릭 가져오기 및 중복 제거 (Bookmarks Importer, v1.3.0)**: Chrome, Edge, Firefox 등의 기본 북마크 트리와 Safari 등의 HTML 북마크 파일을 빠르게 읽어옵니다. 트리 다중 선택, 지능형 폴더 평탄화, 실시간 중복 URL 비교 및 가져오기 통계 미리보기를 지원합니다.
 - 🔒 **프라이빗 공간 듀얼 컨테이너 (Private Space, v1.2.0)**: 혁신적인 듀얼 컨테이너 구조로 일상 업무용 공간(`default`)과 민감한 개인용 공간(`private`)을 물리적으로 완벽히 격리합니다. 시크릿 모드(Incognito)나 전용 페이지(`private.html`) 접속 시 자동 활성화됩니다.
 - 📌 **툴바 원클릭 빠른 추가 (Popup)**: 웹서핑 중 툴바 아이콘 클릭 한 번으로 현재 페이지의 제목, URL, 고화질 파비콘을 자동 추출하여 원하는 공간과 카테고리에 즉시 저장합니다. 중복 추가 방지 안내 제공.
@@ -208,7 +208,7 @@ npm run package # (선택사항) 배포용 zip 압축파일 생성
 
 - ⚛️ **[React](https://react.dev/)**
 - ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
+- 🔲 **[GridStack](https://gridstackjs.com/)**
 - 🎨 **[Lucide Icons](https://lucide.dev/)**
 - 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
 - 🌈 **[Tailwind CSS](https://tailwindcss.com/)**

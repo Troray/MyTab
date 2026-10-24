@@ -44,7 +44,7 @@ Une extension moderne, minimaliste et respectueuse de la vie privée pour la pag
 
 ## 🌟 Fonctionnalités Principales
 
-- 📱 **Carrousel Multi-Bureaux & Gestes de Glissement (v1.3.0)** : Nouvelle architecture multi-bureaux propulsée par le moteur physique Embla Carousel. Prend en charge le glissement fluide à la souris, les touches fléchées du clavier et les indicateurs flottants en verre dépoli. Permet de renommer les bureaux, de supprimer des pages en migrant automatiquement les liens et conserve la mémoire des catégories par bureau.
+- 📱 **Multi-Bureaux & Disposition Libre** : Architecture multi-bureaux propulsée par le moteur GridStack. Prise en charge du glisser-déposer, changement de bureau, indicateurs flottants et widgets entièrement indépendants par bureau.
 - 🔖 **Importation Native de Favoris avec Déduplication Intelligente (v1.3.0)** : Lecture instantanée des arborescences de favoris natifs de Chrome, Edge et Firefox, ainsi que des fichiers HTML Netscape (Safari, etc.). Sélection arborescente visuelle, aplatissement intelligent des dossiers, comparaison des doublons en temps réel et aperçu des statistiques.
 - 🔒 **Espace Privé en Double Conteneur (v1.2.0)** : Architecture innovante à double profil offrant une séparation physique entre la navigation quotidienne (Espace par Défaut) et la navigation confidentielle (Espace Privé). S'active automatiquement en mode Navigation privée (Incognito) ou via `private.html`.
 - 📌 **Enregistrement Rapide en un Clic dans la Barre d'Outils (Popup)** : Lors de la navigation sur n'importe quel site, cliquez sur l'icône de la barre d'outils pour capturer le titre, l'URL et le favicon haute résolution et les classer instantanément dans l'espace souhaité.
@@ -202,7 +202,7 @@ Les fichiers prêts à être testés sont générés dans le dossier `dist/` :
 
 - ⚛️ **[React](https://react.dev/)**
 - ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
+- 🔲 **[GridStack](https://gridstackjs.com/)**
 - 🎨 **[Lucide Icons](https://lucide.dev/)**
 - 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
 - 🌈 **[Tailwind CSS](https://tailwindcss.com/)**

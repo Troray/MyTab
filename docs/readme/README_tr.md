@@ -44,7 +44,7 @@ Minimalist, şık ve gizlilik odaklı, buzlu cam tasarımlı (Glassmorphism), di
 
 ## 🌟 Temel Özellikler
 
-- 📱 **Çoklu Masaüstü Karuseli ve Kaydırma Hareketleri (v1.3.0)**: Embla Carousel fizik motoruyla güçlendirilmiş çoklu masaüstü yapısı. Fareyle sürükleyerek veya yön tuşlarıyla pürüzsüz sayfa geçişi, buzlu cam sayfa göstergeleri. Masaüstlerini yeniden adlandırma, bağlantıları otomatik taşıyarak güvenli silme ve bağımsız kategori belleği.
+- 📱 **Çoklu Masaüstü ve Serbest Düzen**: Modern GridStack motoruyla güçlendirilmiş çoklu masaüstü yapısı. Serbest sürükle ve bırak, yön tuşlarıyla sayfa geçişi ve her masaüstü için tamamen bağımsız widget düzenleri.
 - 🔖 **Yinelenenleri Önleyen Yerleşik Yer İmi İçe Aktarma (v1.3.0)**: Chrome, Edge ve Firefox'un yer imi ağaçlarını ve Netscape HTML dosyalarını (Safari vb.) anında okuma. Görsel ağaç seçimi, akıllı klasör düzleştirme, gerçek zamanlı kopya kontrolü ve içe aktarma önizlemesi.
 - 🔒 **Çift Kapsayıcılı Gizli Alan (v1.2.0)**: Günlük gezinme (Varsayılan Alan) ile hassas siteleri (Gizli Alan) fiziksel olarak ayıran yenilikçi çoklu profil mimarisi. Gizli pencerelerde (Incognito) veya `private.html` sayfasında otomatik olarak etkinleşir.
 - 📌 **Araç Çubuğundan Tek Tıkla Hızlı Kaydetme (Popup)**: Herhangi bir sitedeyken araç çubuğu simgesine tıklayarak sayfa başlığını, URL'yi ve yüksek çözünürlüklü favicon'u anında istediğiniz alana kaydedin.
@@ -202,7 +202,7 @@ Derleme çıktıları `dist/` klasöründe yer alır:
 
 - ⚛️ **[React](https://react.dev/)**
 - ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
+- 🔲 **[GridStack](https://gridstackjs.com/)**
 - 🎨 **[Lucide Icons](https://lucide.dev/)**
 - 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
 - 🌈 **[Tailwind CSS](https://tailwindcss.com/)**

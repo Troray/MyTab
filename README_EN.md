@@ -44,7 +44,7 @@ A minimalist, aesthetic, and privacy-focused modern browser New Tab extension wi
 
 ## 🌟 Key Features
 
-- 📱 **Multi-Desktop Carousel & Gesture Swiping (v1.3.0)**: Newly introduced multi-desktop architecture powered by the physics-based Embla Carousel engine. Supports authentic touch/mouse drag momentum, keyboard arrow keys navigation, and a floating frosted-glass page indicator (● ○ ○). Features desktop renaming, safe page deletion with automatic site migration, independent per-page category memory, and cross-desktop category movement.
+- 📱 **Multi-Desktop & Free Layout System**: Multi-desktop architecture powered by the modern GridStack layout engine. Supports intuitive drag-and-drop, gesture desktop switching, keyboard arrow navigation, and a floating frosted-glass page indicator (● ○ ○). Features desktop renaming, safe page deletion with automatic site migration, and fully independent widget layouts per desktop.
 - 🔖 **Native Browser Bookmarks Importer with Smart Deduplication (v1.3.0)**: One-click extraction of native bookmark trees (Bookmarks Bar, Other Bookmarks, Mobile Bookmarks) across Chrome, Edge, and Firefox, alongside Netscape HTML bookmark file import (compatible with Safari and all browsers). Offers interactive tree selection, tri-state checkboxes, smart folder flattening, real-time URL duplicate comparison, and live import preview stats.
 - 🔒 **Private Space Dual-Container (v1.2.0)**: Innovative Multi-Profile architecture providing physical separation between your daily browsing (Default Space) and sensitive browsing (Private Space). Each space maintains independent bookmarks, categories, and wallpapers. Automatically activated in Incognito / Private windows or accessible via `private.html`.
 - 📌 **One-Click Toolbar Quick Collector (Popup)**: While browsing any webpage, click the MyTab icon on your browser toolbar to instantly summon the bookmark modal. Automatically extracts the current page title, URL, and high-res Favicon with one-click classification into your chosen space and category, complete with duplicate URL detection.
@@ -261,7 +261,7 @@ MyTab's creation and continuous growth are deeply indebted to the open-source co
 
 - ⚛️ **[React](https://react.dev/)**: The cornerstone for building modern, highly responsive, and declarative user interfaces.
 - ⚡ **[Vite](https://vitejs.dev/)**: Next-generation, lightning-fast frontend tooling and Hot Module Replacement (HMR).
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**: Lightweight, highly extensible, and physics-driven carousel engine for fluid gesture navigation.
+- 🔲 **[GridStack](https://gridstackjs.com/)**: Modern grid layout engine providing underlying technical support for free drag-and-drop, dynamic resizing, and independent multi-desktop layouts.
 - 🎨 **[Lucide Icons](https://lucide.dev/)**: An aesthetically pleasing, elegant, and consistent open-source icon library.
 - 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**: High-performance, zero-dependency lunar calendar and 24 Solar Terms library created by [@6tail](https://github.com/6tail).
 - 🌈 **[Tailwind CSS](https://tailwindcss.com/)**: Highly flexible atomic CSS framework powering our frosted glass (Glassmorphism) and adaptive themes.
