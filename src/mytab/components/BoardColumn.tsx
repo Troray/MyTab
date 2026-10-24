@@ -118,12 +118,26 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
     setActiveMenu({ type: 'category', x, y });
   };
 
-  // Category Title Color: category.color (per-category custom) -> custom boardTitle -> preset palette fallback
+  // Category Title Color:
+  // When board is in custom color mode or a custom boardTitle color is defined,
+  // prioritize resolvedColors.boardTitle; otherwise fall back to category.color or preset palette.
+  const isCustomBoardTitle =
+    (settings.boardTextColorModeLight === 'custom' ||
+     settings.boardTextColorModeDark === 'custom' ||
+     settings.boardTextColorMode === 'custom' ||
+     settings.textColorModeLight === 'custom' ||
+     settings.textColorModeDark === 'custom' ||
+     settings.textColorMode === 'custom' ||
+     Boolean(settings.customTextColorsLight?.boardTitle) ||
+     Boolean(settings.customTextColorsDark?.boardTitle) ||
+     Boolean(settings.customTextColors?.boardTitle)) &&
+    Boolean(resolvedColors?.boardTitle);
+
   const titleColor =
+    (isCustomBoardTitle ? resolvedColors?.boardTitle : undefined) ||
     category.color ||
-    (settings.textColorMode === 'custom' && settings.customTextColors?.boardTitle
-      ? resolvedColors?.boardTitle
-      : DEFAULT_CATEGORY_COLORS[index % DEFAULT_CATEGORY_COLORS.length]);
+    resolvedColors?.boardTitle ||
+    DEFAULT_CATEGORY_COLORS[index % DEFAULT_CATEGORY_COLORS.length];
 
   // Site text color: resolvedColors.boardText -> light/dark default
   const siteTextColor =
@@ -173,6 +187,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
           }
         }
       }}
+      data-tour={index === 0 ? 'board-column' : undefined}
       className={`w-full flex flex-col rounded-2xl pt-3 px-3.5 pb-3 border duration-0 ${
         showCardBg
           ? isLight
@@ -294,6 +309,10 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
         ) : (
           sites.map((site, siteIdx) => {
             const targetUrl = resolveSiteUrl(site, settings.networkMode);
+            const showBadge = settings.showNetworkBadge !== false;
+            const hasDualUrl = showBadge && Boolean(site.url && site.urlLan);
+            const isOnlyLan = showBadge && !site.url && Boolean(site.urlLan);
+            const isCurrentLan = settings.networkMode === 'lan';
             const isBeingDragged = draggingSiteId === site.id;
             // Visual indicator conditions for drop target
             const showLineAbove = isThisColTarget && dropTarget?.index === siteIdx && !isBeingDragged;
@@ -306,6 +325,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
             return (
               <div
                 key={site.id}
+                data-tour={index === 0 && siteIdx === 0 ? 'board-card' : undefined}
                 draggable={isEditing}
                 aria-label={site.title}
                 aria-roledescription={isEditing ? 'draggable shortcut' : undefined}
@@ -341,9 +361,9 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                   paddingBottom: `${Math.max(1, itemSpacing / 2)}px`,
                 }}
                 data-tooltip={
-                  site.description?.trim()
-                    ? site.description
-                    : targetUrl
+                  settings.boardShowTooltip !== false
+                    ? (site.description?.trim() ? site.description : targetUrl)
+                    : undefined
                 }
                 className={`group/item board-site-row relative flex items-center justify-between px-2 -mx-1 rounded-lg duration-0 transition-colors ${
                   isBeingDragged ? 'opacity-30' : 'opacity-100'
@@ -405,16 +425,46 @@ export const BoardColumn: React.FC<BoardColumnProps> = React.memo(({
                   />
                 </div>
 
-                {/* Site Title */}
-                <span
-                  style={{
-                    color: siteTextColor,
-                    fontSize: `${siteFontSize}px`,
-                  }}
-                  className="font-medium tracking-tight truncate min-w-0 flex-1 select-none pr-2 transition-colors leading-tight pointer-events-none"
-                >
-                  {site.title}
-                </span>
+                {/* Site Title with WAN / LAN Badge */}
+                <div className="flex items-center gap-1.5 min-w-0 flex-1 pr-2 overflow-hidden">
+                  <span
+                    style={{
+                      color: siteTextColor,
+                      fontSize: `${siteFontSize}px`,
+                    }}
+                    className="font-medium tracking-tight truncate select-none transition-colors leading-tight pointer-events-none"
+                  >
+                    {site.title}
+                  </span>
+
+                  {/* Dual URL indicator badge */}
+                  {hasDualUrl && (
+                    <span
+                      className={`shrink-0 px-1 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider ${
+                        isCurrentLan
+                          ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                          : 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20'
+                      }`}
+                      title={
+                        isCurrentLan
+                          ? `${t('networkModeLan', settings.language)}: ${site.urlLan}`
+                          : `${t('networkModeWan', settings.language)}: ${site.url}`
+                      }
+                    >
+                      {isCurrentLan ? 'LAN' : 'WAN'}
+                    </span>
+                  )}
+
+                  {/* LAN-only indicator badge */}
+                  {isOnlyLan && (
+                    <span
+                      className="shrink-0 px-1 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                      title={`${t('networkModeLan', settings.language)}: ${site.urlLan}`}
+                    >
+                      LAN
+                    </span>
+                  )}
+                </div>
 
                 {/* Site Action Icons: Only shown on hover during Edit Mode */}
                 {isEditing && (

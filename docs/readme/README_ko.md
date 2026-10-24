@@ -44,12 +44,16 @@
 
 ## 🌟 주요 기능
 
-- 📱 **멀티 데스크톱 캐러셀 & 스와이프 제스처 (Multi-Desktop Carousel, v1.3.0)**: 물리 관성 기반의 Embla Carousel 엔진을 탑재하여 마우스 드래그나 키보드 좌우 방향키로 부드럽게 화면을 전환할 수 있습니다. 데스크톱 이름 변경, 사이트 자동 이동을 통한 안전한 삭제, 데스크톱별 독립적인 카테고리 기억 기능을 제공합니다.
-- 🔖 **브라우저 북마크 원클릭 가져오기 및 중복 제거 (Bookmarks Importer, v1.3.0)**: Chrome, Edge, Firefox 등의 기본 북마크 트리와 Safari 등의 HTML 북마크 파일을 빠르게 읽어옵니다. 트리 다중 선택, 지능형 폴더 평탄화, 실시간 중복 URL 비교 및 가져오기 통계 미리보기를 지원합니다.
-- 🔒 **프라이빗 공간 듀얼 컨테이너 (Private Space, v1.2.0)**: 혁신적인 듀얼 컨테이너 구조로 일상 업무용 공간(`default`)과 민감한 개인용 공간(`private`)을 물리적으로 완벽히 격리합니다. 시크릿 모드(Incognito)나 전용 페이지(`private.html`) 접속 시 자동 활성화됩니다.
+- 📱 **멀티 데스크톱 & 자유 캔버스 레이아웃 (Multi-Desktop & Free Canvas Layout)**: 현대적인 GridStack 엔진을 탑재하여 자유로운 드래그 앤 드롭, 크기 조절, 컴포넌트 겹침 허용/방지 및 자동 격자 스냅을 지원합니다. 시계, 날짜, 인사말, 음력, 검색창, 카테고리 필을 독립 위젯으로 배치할 수 있으며 데스크톱별 레이아웃 기억과 클라우드 동기화를 제공합니다.
+- 📑 **컴팩트 리스트 뷰 & 부드러운 드래그 재정렬 (List View & DndKit)**: 고밀도 세로형 카테고리 리스트 뷰를 지원합니다. `@dnd-kit`을 통해 카테고리 내 및 컨테이너 간 드래그 재정렬 시 아이콘 깜빡임을 제거하였으며, 아이콘 배경 스타일 커스터마이징 및 세로 텍스트 자동 회전을 지원합니다.
+- 🌐 **내/외망 듀얼 URL & 스마트 네트워크 라우팅 (Dual URL & Network Routing)**: 바로가기마다 외부망(WAN)과 내부망(LAN) 주소 및 메모를 동시 설정할 수 있습니다. 상단 바에서 원클릭으로 환경을 전환하고 카드에 네트워크 뱃지를 표시합니다.
+- 📊 **카테고리 칸반 보드 뷰 (Board View)**: 모든 카테고리를 멀티 컬럼 칸반 보드 형태로 가로로 나열하여 수많은 북마크를 한눈에 탐색할 수 있습니다.
+- 🧭 **인터랙티브 기능 투어 (Feature Tour)**: 자유 레이아웃, 리스트 및 칸반 보드 모드에 맞춤형 가이드를 제공하는 경량 스포트라이트 안내 기능입니다. 상단 위젯 자유 드래그 및 음력/인사말 설정을 안내하며 버전 업그레이드 시 자동 실행됩니다.
+- 🔖 **브라우저 북마크 원클릭 가져오기 및 중복 제거 (Bookmarks Importer)**: Chrome, Edge, Firefox 등의 기본 북마크 트리와 Safari 등의 HTML 북마크 파일을 빠르게 읽어옵니다. 트리 다중 선택, 지능형 폴더 평탄화, 실시간 중복 URL 비교 및 가져오기 통계 미리보기를 지원합니다.
+- 🔒 **프라이빗 공간 듀얼 컨테이너 (Private Space)**: 혁신적인 듀얼 컨테이너 구조로 일상 업무용 공간(`default`)과 민감한 개인용 공간(`private`)을 물리적으로 완벽히 격리합니다. 시크릿 모드(Incognito)나 전용 페이지(`private.html`) 접속 시 자동 활성화됩니다.
 - 📌 **툴바 원클릭 빠른 추가 (Popup)**: 웹서핑 중 툴바 아이콘 클릭 한 번으로 현재 페이지의 제목, URL, 고화질 파비콘을 자동 추출하여 원하는 공간과 카테고리에 즉시 저장합니다. 중복 추가 방지 안내 제공.
-- 🎨 **깔끔한 앱 아이콘 뷰 & 세밀한 커스터마이징 (v1.3.0)**: 모바일 홈 화면처럼 깔끔한 아이콘 모드를 지원하며 시계, 날짜, 인사말, 검색창, 카테고리 탭, 사이트 카드 등 **6대 요소의 색상을 개별 설정**할 수 있습니다. Canvas 배경 밝기를 자동 감지하여 최적의 그림자 효과를 적용합니다.
-- 📅 **음력 달력 및 24절기 (v1.2.0)**: 가벼운 음력 알고리즘을 탑재하여 시계 상단에 음력 일자, 간지, 24절기를 미려하게 표시하며 개별 토글 설정을 지원합니다.
+- 🎨 **깔끔한 앱 아이콘 뷰 & 색상 커스터마이징**: 깔끔한 순수 아이콘 뷰와 반투명 글래스 카드 간의 자유로운 전환, 카드 투명도 및 크기 미세 조정을 지원합니다. 시계, 날짜, 인사말, 검색창, 카테고리 탭, 사이트 카드 등 **6대 요소의 색상을 개별 설정**할 수 있습니다. Canvas 배경 밝기를 자동 감지하여 최적의 그림자 효과를 적용합니다.
+- 📅 **음력 달력 및 24절기**: 가벼운 음력 알고리즘을 탑재하여 시계 상단에 음력 일자, 간지, 24절기를 미려하게 표시하며 개별 토글 설정을 지원합니다.
 - 🖼️ **엄선된 배경화면 & 부드러운 전환**: Bing 오늘의 고화질 배경화면과 Unsplash 사진(CDN 가속)을 지원하며 듀얼 버퍼 페이드 전환 효과로 화면 깜빡임 없이 부드럽게 전환됩니다.
 - ⚡ **스마트 파비콘 자동 추출 & 벡터 대체 아이콘**: 다중 소스 추출 엔진을 통해 아이콘을 가져오며, 없을 경우 도메인 첫 글자를 기반으로 세련된 그라데이션 SVG 벡터 아이콘을 자동 생성합니다.
 - 🛡️ **반투명 에러 바운더리 (ErrorBoundary)**: 예기치 못한 런타임 오류를 글래스모피즘 모달로 가로채어 원클릭 새로고침 및 캐시 재설정 복구 옵션을 제공합니다.
@@ -206,15 +210,16 @@ npm run package # (선택사항) 배포용 zip 압축파일 생성
 
 ## 🙏 감사의 글 (Acknowledgements)
 
-- ⚛️ **[React](https://react.dev/)**
-- ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
-- 🎨 **[Lucide Icons](https://lucide.dev/)**
-- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
-- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**
-- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**
-- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**
-- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**
+- ⚛️ **[React](https://react.dev/)**: 높은 반응성과 선언적 컴포넌트 인터페이스를 구축하는 프론트엔드 핵심 프레임워크.
+- ⚡ **[Vite](https://vitejs.dev/)**: 초고속 번들링 및 모듈 핫 리로딩(HMR)을 지원하는 차세대 프론트엔드 빌드 도구.
+- 🔲 **[GridStack](https://gridstackjs.com/)**: 위젯 및 사이트 카드의 자유로운 드래그, 크기 조절, 데스크톱별 독립 레이아웃을 지원하는 그리드 엔진.
+- 🎯 **[@dnd-kit](https://dndkit.com/)**: 리스트 모드에서 깜빡임 없는 매끄러운 드래그 앤 드롭 정렬을 제공하는 경량 툴킷.
+- 🎨 **[Lucide Icons](https://lucide.dev/)**: 세련되고 일관된 디자인의 오픈소스 아이콘 라이브러리.
+- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**: [@6tail](https://github.com/6tail) 님이 개발한 제로 의존성의 음력, 24절기 및 간지력 연산 라이브러리.
+- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**: 글래스모피즘(Glassmorphism)과 다크모드 대응을 구현하는 유연한 유틸리티 CSS 프레임워크.
+- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**: Mozilla가 유지 관리하는 크로스 브라우저 WebExtension 표준 Promise 호환 계층.
+- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**: 고화질 일일 배경화면 및 사진 리소스를 제공하는 API.
+- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**: 안정적인 Git / Gist REST API 및 개발자 호스팅 생태계.
 
 ---
 

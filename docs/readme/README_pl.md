@@ -44,12 +44,16 @@ Minimalistyczne, stylowe i dbające o prywatność rozszerzenie Nowej Karty (New
 
 ## 🌟 Główne Funkcje
 
-- 📱 **Karuzela Wielu Pulpitów i Gesty Przesuwania (v1.3.0)**: Architektura wielu pulpitów napędzana silnikiem fizyki Embla Carousel. Płynne przewijanie przeciąganiem myszy lub strzałkami klawiatury z pływającymi wskaźnikami stron. Zmiana nazw pulpitów, bezpieczne usuwanie z automatyczną migracją zakładek i niezależna pamięć kategorii.
-- 🔖 **Natywny Import Zakładek z Inteligentną Deduplikacją (v1.3.0)**: Błyskawiczny odczyt drzew zakładek z przeglądarek Chrome, Edge i Firefox oraz plików HTML Netscape (Safari itp.). Wizualny wybór drzewa, inteligentne spłaszczanie folderów, porównywanie duplikatów w czasie rzeczywistym i podgląd statystyk.
-- 🔒 **Przestrzeń Prywatna w Podwójnym Kontenerze (v1.2.0)**: Fizyczne rozdzielenie przeglądania codziennego (Przestrzeń Domyślna) od stron poufnych (Przestrzeń Prywatna). Uruchamia się automatycznie w trybie incognito lub pod adresem `private.html`.
+- 📱 **Wiele Pulpitów i Swobodne Płótno (Multi-Desktop & Free Canvas Layout)**: Nowy system swobodnego układu oparty na GridStack. Przeciągaj, zmieniaj rozmiar, zarządzaj nakładaniem i automatycznie przyciągaj do siatki. Zegar, data, powitanie, kalendarz księżycowy, pasek wyszukiwania i kategorie to niezależne widżety z osobnym układem dla każdego pulpitu.
+- 📑 **Kompaktowy Widok Listy & Płynne Sortowanie (List View & DndKit)**: Pionowa lista o wysokiej gęstości z `@dnd-kit` zapewniająca bezmigotliwe przeciąganie wewnątrz i między kategoriami. Obsługa niestandardowych stylów tła ikon.
+- 🌐 **Podwójny adres URL (WAN / LAN) & Inteligentne Routing**: Definiuj zewnętrzne i wewnętrzne adresy oraz notatki dla każdego skrótu. Przełączaj środowisko jednym kliknięciem w nagłówku i wyświetlaj odznaki sieci na kartach.
+- 📊 **Widok Tablicy Kanban (Board View)**: Poziome wyświetlanie wszystkich kategorii w postaci kolumn Kanban z płynnym powiększaniem po najechaniu kursorem.
+- 🧭 **Interaktywny Przewodnik po Funkcjach (Feature Tour)**: Lekki przewodnik dla trybów Układu Swobodnego, Listy i Tablicy Kanban podświetlający swobodne przeciąganie widżetów i konfigurację kalendarza księżycowego, uruchamiany automatycznie po aktualizacji wersji.
+- 🔖 **Natywny Import Zakładek z Inteligentną Deduplikacją (Bookmarks Importer)**: Błyskawiczny odczyt drzew zakładek z przeglądarek Chrome, Edge i Firefox oraz plików HTML Netscape (Safari itp.). Wizualny wybór drzewa, inteligentne spłaszczanie folderów, porównywanie duplikatów w czasie rzeczywistym i podgląd statystyk.
+- 🔒 **Przestrzeń Prywatna w Podwójnym Kontenerze (Private Space)**: Fizyczne rozdzielenie przeglądania codziennego (Przestrzeń Domyślna) od stron poufnych (Przestrzeń Prywatna). Uruchamia się automatycznie w trybie incognito lub pod adresem `private.html`.
 - 📌 **Szybkie Zapisywanie z Paska Narzędzi (Popup)**: Podczas przeglądania dowolnej witryny kliknij ikonę na pasku, aby przechwycić tytuł, URL i favicon w wysokiej rozdzielczości i natychmiast zapisać je w wybranej przestrzeni.
-- 🎨 **Tryb Czystych Ikon Aplikacji i Głęboka Personalizacja (v1.3.0)**: Przejrzysty widok ikon w stylu mobilnym z obsługą kart ze szkła matowego. Indywidualna personalizacja kolorów dla **6 głównych elementów** (zegar, data, powitanie, pasek wyszukiwania, karty kategorii i kafelki) z automatyczną analizą jasności Canvas.
-- 📅 **Kalendarz Księżycowy i Tradycyjne 24 Okresy Słoneczne (v1.2.0)**: Zintegrowany lekki algorytm kalendarza księżycowego z eleganckim wyświetlaniem w nagłówku i osobnym przełącznikiem.
+- 🎨 **Tryb Czystych Ikon i Personalizacja Kolorów**: Płynne przełączanie między minimalistycznym widokiem czystych ikon a kartami ze szkła matowego, z precyzyjną regulacją przezroczystości i rozmiaru. Indywidualna personalizacja kolorów dla **6 głównych elementów** (zegar, data, powitanie, pasek wyszukiwania, karty kategorii i kafelki) z automatyczną analizą jasności Canvas.
+- 📅 **Kalendarz Księżycowy i Tradycyjne 24 Okresy Słoneczne**: Zintegrowany lekki algorytm kalendarza księżycowego z eleganckim wyświetlaniem w nagłówku i osobnym przełącznikiem.
 - 🖼️ **Wyselekcjonowane Tapety i Płynne Przejścia**: Codzienne tapety Bing HD i fotografie Unsplash (z akceleracją CDN) z podwójnie buforowanym łagodnym przejściem bez migotania ekranu.
 - ⚡ **Inteligentne Pobieranie Favicon i Wektorowe Ikony Zastępcze**: Wielozadaniowy silnik pobierania z lokalną pamięcią podręczną Base64. W przypadku braku ikony generowana jest kolorowa wektorowa ikona SVG na podstawie inicjału domeny.
 - 🛡️ **Obsługa Błędów ze Szkła Matowego (ErrorBoundary)**: Przechwytuje nieoczekiwane wyjątki za pomocą eleganckiego okna dialogowego z opcją natychmiastowego odświeżenia i resetu pamięci podręcznej.
@@ -200,15 +204,16 @@ Pliki wynikowe znajdziesz w folderze `dist/`:
 
 ## 🙏 Podziękowania (Acknowledgements)
 
-- ⚛️ **[React](https://react.dev/)**
-- ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
-- 🎨 **[Lucide Icons](https://lucide.dev/)**
-- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
-- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**
-- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**
-- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**
-- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**
+- ⚛️ **[React](https://react.dev/)**: Fundament do budowy nowoczesnych, deklaratywnych i wysoce responsywnych interfejsów użytkownika.
+- ⚡ **[Vite](https://vitejs.dev/)**: Błyskawiczne narzędzie nowej generacji do budowania frontendu z obsługą Hot Module Replacement (HMR).
+- 🔲 **[GridStack](https://gridstackjs.com/)**: Nowoczesny silnik siatki do swobodnego przeciągania i niezależnych układów wielu pulpitów.
+- 🎯 **[@dnd-kit](https://dndkit.com/)**: Lekki, modułowy zestaw narzędzi do płynnego, bezmigotliwego sortowania w widoku listy.
+- 🎨 **[Lucide Icons](https://lucide.dev/)** : Estetyczna, elegancka i spójna biblioteka ikon open-source.
+- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**: Zaawansowana biblioteka kalendarza księżycowego i 24 okresów słonecznych autorstwa [@6tail](https://github.com/6tail).
+- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**: Elastyczny framework CSS napędzający efekty szkła matowego (Glassmorphism) i adaptacyjne motywy.
+- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**: Zunifikowana warstwa zgodności WebExtensions oparta na Promise, utrzymywana przez Mozillę.
+- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**: Fotografia w wysokiej rozdzielczości i codzienne tapety.
+- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**: Niezawodne interfejsy REST API Git / Gist oraz ekosystem deweloperski.
 
 ---
 

@@ -44,12 +44,16 @@ Une extension moderne, minimaliste et respectueuse de la vie privée pour la pag
 
 ## 🌟 Fonctionnalités Principales
 
-- 📱 **Carrousel Multi-Bureaux & Gestes de Glissement (v1.3.0)** : Nouvelle architecture multi-bureaux propulsée par le moteur physique Embla Carousel. Prend en charge le glissement fluide à la souris, les touches fléchées du clavier et les indicateurs flottants en verre dépoli. Permet de renommer les bureaux, de supprimer des pages en migrant automatiquement les liens et conserve la mémoire des catégories par bureau.
-- 🔖 **Importation Native de Favoris avec Déduplication Intelligente (v1.3.0)** : Lecture instantanée des arborescences de favoris natifs de Chrome, Edge et Firefox, ainsi que des fichiers HTML Netscape (Safari, etc.). Sélection arborescente visuelle, aplatissement intelligent des dossiers, comparaison des doublons en temps réel et aperçu des statistiques.
-- 🔒 **Espace Privé en Double Conteneur (v1.2.0)** : Architecture innovante à double profil offrant une séparation physique entre la navigation quotidienne (Espace par Défaut) et la navigation confidentielle (Espace Privé). S'active automatiquement en mode Navigation privée (Incognito) ou via `private.html`.
+- 📱 **Multi-Bureaux & Canevas Libre (Multi-Desktop & Free Canvas Layout)** : Système de disposition libre propulsé par GridStack avec glisser-déposer, redimensionnement continu, gestion des superpositions et alignement sur grille. Horloge, date, message d'accueil, calendrier lunaire, barre de recherche et pilules de catégories sont des widgets autonomes persistants par bureau.
+- 📑 **Vue Liste Compacte & Réorganisation Fluide (List View & DndKit)** : Affichage vertical haute densité avec `@dnd-kit` pour un réarrangement sans scintillement au sein des catégories et entre elles. Prise en charge des styles d'arrière-plan personnalisés pour les icônes.
+- 🌐 **Double URL (WAN / LAN) & Routage Intelligent** : Configurez des adresses externes et internes ainsi que des notes par raccourci. Basculez d'environnement en un clic et visualisez les badges réseau sur les cartes.
+- 📊 **Vue Tableau Kanban (Board View)** : Présentation horizontale de toutes les catégories sous forme de colonnes Kanban avec zoom et effets de ressort au survol.
+- 🧭 **Visite Interactive des Fonctionnalités (Feature Tour)** : Guide projecteur léger pour les modes Disposition Libre, Liste et Tableau Kanban, mettant en valeur le déplacement libre des widgets et la configuration du calendrier lunaire, avec déclenchement automatique lors des mises à jour.
+- 🔖 **Importation Native de Favoris avec Déduplication Intelligente (Bookmarks Importer)** : Lecture instantanée des arborescences de favoris natifs de Chrome, Edge et Firefox, ainsi que des fichiers HTML Netscape (Safari, etc.). Sélection arborescente visuelle, aplatissement intelligent des dossiers, comparaison des doublons en temps réel et aperçu des statistiques.
+- 🔒 **Espace Privé en Double Conteneur (Private Space)** : Architecture innovante à double profil offrant une séparation physique entre la navigation quotidienne (Espace par Défaut) et la navigation confidentielle (Espace Privé). S'active automatiquement en mode Navigation privée (Incognito) ou via `private.html`.
 - 📌 **Enregistrement Rapide en un Clic dans la Barre d'Outils (Popup)** : Lors de la navigation sur n'importe quel site, cliquez sur l'icône de la barre d'outils pour capturer le titre, l'URL et le favicon haute résolution et les classer instantanément dans l'espace souhaité.
-- 🎨 **Vue Icônes Pures & Personnalisation Poussée (v1.3.0)** : Affichage épuré inspiré des écrans mobiles, avec prise en charge des cartes en verre dépoli. Personnalisation individuelle des couleurs pour **6 éléments clés** (horloge, date, salutation, barre de recherche, onglets de catégories et cartes) avec analyse automatique de contraste Canvas.
-- 📅 **Calendrier Lunaire & 24 Termes Solaires Traditionnels (v1.2.0)** : Algorithme lunaire léger intégré avec affichage élégant des dates lunaires et des termes solaires dans l'en-tête, activable individuellement.
+- 🎨 **Vue Icônes Pures & Personnalisation des Couleurs** : Basculez en toute fluidité entre un affichage épuré d'icônes et des cartes en verre dépoli, avec ajustement précis de l'opacité et de la taille. Personnalisation individuelle des couleurs pour **6 éléments clés** (horloge, date, salutation, barre de recherche, onglets de catégories et cartes) avec analyse automatique de contraste Canvas.
+- 📅 **Calendrier Lunaire & 24 Termes Solaires Traditionnels** : Algorithme lunaire léger intégré avec affichage élégant des dates lunaires et des termes solaires dans l'en-tête, activable individuellement.
 - 🖼️ **Fonds d'Écran Soigneusement Sélectionnés & Transitions Fluides** : Fonds quotidiens Bing HD et photographies Unsplash (accélérés par CDN) avec fondu enchaîné à double tampon sans scintillement et mémoire anti-répétition.
 - ⚡ **Récupération Intelligente de Favicons & Repli Vectoriel** : Moteur multi-sources avec mise en cache locale Base64. Si aucune icône n'est disponible, génère automatiquement une icône vectorielle SVG dégradée élégante basée sur l'initiale du domaine.
 - 🛡️ **Gestionnaire d'Erreurs en Verre Dépoli (ErrorBoundary)** : Intercepte les exceptions d'exécution imprévues avec une boîte de dialogue élégante proposant un rechargement immédiat et une réinitialisation du cache.
@@ -200,15 +204,16 @@ Les fichiers prêts à être testés sont générés dans le dossier `dist/` :
 
 ## 🙏 Remerciements (Acknowledgements)
 
-- ⚛️ **[React](https://react.dev/)**
-- ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
-- 🎨 **[Lucide Icons](https://lucide.dev/)**
-- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
-- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**
-- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**
-- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**
-- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**
+- ⚛️ **[React](https://react.dev/)** : La pierre angulaire pour créer des interfaces utilisateur modernes, déclaratives et hautement réactives.
+- ⚡ **[Vite](https://vitejs.dev/)** : Outil de build frontend nouvelle génération ultrarapide avec rechargement à chaud (HMR).
+- 🔲 **[GridStack](https://gridstackjs.com/)** : Moteur de grille moderne pour le glisser-déposer libre et les dispositions indépendantes multi-bureaux.
+- 🎯 **[@dnd-kit](https://dndkit.com/)** : Boîte à outils légère et modulaire pour un réarrangement fluide et sans scintillement dans la vue liste.
+- 🎨 **[Lucide Icons](https://lucide.dev/)** : Bibliothèque d'icônes open source élégante et cohérente.
+- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)** : Bibliothèque de calendrier lunaire et des 24 termes solaires développée par [@6tail](https://github.com/6tail).
+- 🌈 **[Tailwind CSS](https://tailwindcss.com/)** : Framework CSS atomique pour le verre dépoli (Glassmorphism) et les thèmes adaptatifs.
+- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)** : Couche de compatibilité unifiée pour WebExtensions basée sur les promesses de Mozilla.
+- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing** : Photographies haute résolution et fonds d'écran quotidiens.
+- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)** : API REST Git / Gist fiables et écosystème développeur.
 
 ---
 

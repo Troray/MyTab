@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Palette, Check, RotateCcw, Sparkles, X } from 'lucide-react';
+import { Palette, Check, RotateCcw, Sparkles, X, LayoutGrid, Kanban, List } from 'lucide-react';
 import { ThemeSettings, TextColorMode, CustomTextColors } from '../../types';
 import { TranslationKey } from '../../locales/types';
 import { t } from '../../utils/i18n';
@@ -11,7 +11,20 @@ interface TextColorCustomizerProps {
   onClose: () => void;
 }
 
-type ElementTarget = 'all' | 'clock' | 'date' | 'greeting' | 'search' | 'tabs' | 'cards' | 'boardTitle' | 'boardText' | 'listCategory' | 'listTitle' | 'listDesc';
+type LayoutType = 'grid' | 'board' | 'list';
+
+type ElementTarget =
+  | 'all'
+  | 'clock'
+  | 'date'
+  | 'greeting'
+  | 'search'
+  | 'cards'
+  | 'boardTitle'
+  | 'boardText'
+  | 'listCategory'
+  | 'listTitle'
+  | 'listDesc';
 
 interface PaletteItem {
   labelKey: TranslationKey;
@@ -36,49 +49,89 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
 }) => {
   const isLight = isLightMode(settings.mode);
 
-  // Dual-mode separation: light and dark maintain their own independent settings
-  const currentMode: TextColorMode = (isLight
-    ? settings.textColorModeLight ?? settings.textColorMode
-    : settings.textColorModeDark ?? settings.textColorMode) || 'auto';
+  // Selected layout mode tab (defaults to current desktop layout)
+  const [selectedLayout, setSelectedLayout] = useState<LayoutType>(settings.layoutMode || 'grid');
 
+  // Dual-mode separation: light and dark maintain their own independent settings
   const customColors: CustomTextColors = (isLight
     ? settings.customTextColorsLight ?? settings.customTextColors
     : settings.customTextColorsDark ?? settings.customTextColors) || {};
 
   const defaultColor = isLight ? '#0f172a' : '#ffffff';
 
+  // Read the active mode for a specific layout
+  const getLayoutMode = (layout: LayoutType): TextColorMode => {
+    if (isLight) {
+      if (layout === 'grid') return settings.gridTextColorModeLight ?? settings.gridTextColorMode ?? settings.textColorModeLight ?? settings.textColorMode ?? 'auto';
+      if (layout === 'board') return settings.boardTextColorModeLight ?? settings.boardTextColorMode ?? settings.textColorModeLight ?? settings.textColorMode ?? 'auto';
+      if (layout === 'list') return settings.listTextColorModeLight ?? settings.listTextColorMode ?? settings.textColorModeLight ?? settings.textColorMode ?? 'auto';
+    } else {
+      if (layout === 'grid') return settings.gridTextColorModeDark ?? settings.gridTextColorMode ?? settings.textColorModeDark ?? settings.textColorMode ?? 'auto';
+      if (layout === 'board') return settings.boardTextColorModeDark ?? settings.boardTextColorMode ?? settings.textColorModeDark ?? settings.textColorMode ?? 'auto';
+      if (layout === 'list') return settings.listTextColorModeDark ?? settings.listTextColorMode ?? settings.textColorModeDark ?? settings.textColorMode ?? 'auto';
+    }
+    return 'auto';
+  };
+
+  const currentMode = getLayoutMode(selectedLayout);
+
   // Snapshot initial settings on mount to allow abandoning all changes on close
-  const initialMode = useRef<TextColorMode>(currentMode);
-  const initialColors = useRef<CustomTextColors>({ ...customColors });
+  const initialSettings = useRef<Partial<ThemeSettings>>({
+    textColorModeLight: settings.textColorModeLight,
+    textColorModeDark: settings.textColorModeDark,
+    gridTextColorModeLight: settings.gridTextColorModeLight,
+    gridTextColorModeDark: settings.gridTextColorModeDark,
+    boardTextColorModeLight: settings.boardTextColorModeLight,
+    boardTextColorModeDark: settings.boardTextColorModeDark,
+    listTextColorModeLight: settings.listTextColorModeLight,
+    listTextColorModeDark: settings.listTextColorModeDark,
+    customTextColorsLight: settings.customTextColorsLight,
+    customTextColorsDark: settings.customTextColorsDark,
+  });
 
   const [activeTarget, setActiveTarget] = useState<ElementTarget>('all');
 
-  const applyColorUpdate = (newMode: TextColorMode, newColors?: CustomTextColors) => {
-    if (isLight) {
-      onUpdateSettings({
-        textColorModeLight: newMode,
-        ...(newColors ? { customTextColorsLight: newColors } : {}),
-      });
-    } else {
-      onUpdateSettings({
-        textColorModeDark: newMode,
-        ...(newColors ? { customTextColorsDark: newColors } : {}),
-      });
+  const getTargetsForLayout = (layout: LayoutType): { id: ElementTarget; labelKey: TranslationKey }[] => {
+    const common: { id: ElementTarget; labelKey: TranslationKey }[] = [
+      { id: 'all', labelKey: 'textColorTargetAll' },
+      { id: 'clock', labelKey: 'textColorTargetClock' },
+      { id: 'date', labelKey: 'textColorTargetDate' },
+      { id: 'greeting', labelKey: 'textColorTargetGreeting' },
+      { id: 'search', labelKey: 'textColorTargetSearch' },
+    ];
+    if (layout === 'grid') {
+      return [
+        ...common,
+        { id: 'cards', labelKey: 'textColorTargetCards' },
+      ];
     }
+    if (layout === 'board') {
+      return [
+        ...common,
+        { id: 'boardTitle', labelKey: 'textColorTargetBoardTitle' },
+        { id: 'boardText', labelKey: 'textColorTargetBoard' },
+      ];
+    }
+    return [
+      ...common,
+      { id: 'listCategory', labelKey: 'textColorTargetListCategory' },
+      { id: 'listTitle', labelKey: 'textColorTargetListTitle' },
+      { id: 'listDesc', labelKey: 'textColorTargetListDesc' },
+    ];
   };
 
-  const handleCancel = () => {
-    if (isLight) {
-      onUpdateSettings({
-        textColorModeLight: initialMode.current,
-        customTextColorsLight: initialColors.current,
-      });
-    } else {
-      onUpdateSettings({
-        textColorModeDark: initialMode.current,
-        customTextColorsDark: initialColors.current,
-      });
+  const currentTargets = getTargetsForLayout(selectedLayout);
+
+  // When switching layout tabs, ensure activeTarget is valid for the new layout
+  useEffect(() => {
+    const targetIds = getTargetsForLayout(selectedLayout).map((t) => t.id);
+    if (!targetIds.includes(activeTarget)) {
+      setActiveTarget('all');
     }
+  }, [selectedLayout]);
+
+  const handleCancel = () => {
+    onUpdateSettings(initialSettings.current);
     onClose();
   };
 
@@ -92,8 +145,14 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handleModeSelect = (mode: TextColorMode) => {
-    applyColorUpdate(mode);
+  const handleModeSelect = (newMode: TextColorMode) => {
+    const key = isLight
+      ? (selectedLayout === 'grid' ? 'gridTextColorModeLight' : selectedLayout === 'board' ? 'boardTextColorModeLight' : 'listTextColorModeLight')
+      : (selectedLayout === 'grid' ? 'gridTextColorModeDark' : selectedLayout === 'board' ? 'boardTextColorModeDark' : 'listTextColorModeDark');
+
+    onUpdateSettings({
+      [key]: newMode,
+    });
   };
 
   const getCurrentColor = (target: ElementTarget): string => {
@@ -102,7 +161,6 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
     if (target === 'date') return customColors.date || defaultColor;
     if (target === 'greeting') return customColors.greeting || defaultColor;
     if (target === 'search') return customColors.search || defaultColor;
-    if (target === 'tabs') return customColors.tabs || defaultColor;
     if (target === 'cards') return customColors.cards || defaultColor;
     if (target === 'boardTitle') return customColors.boardTitle || defaultColor;
     if (target === 'boardText') return customColors.boardText || defaultColor;
@@ -113,58 +171,51 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
   };
 
   const handleColorChange = (hex: string) => {
+    const modeKey = isLight
+      ? (selectedLayout === 'grid' ? 'gridTextColorModeLight' : selectedLayout === 'board' ? 'boardTextColorModeLight' : 'listTextColorModeLight')
+      : (selectedLayout === 'grid' ? 'gridTextColorModeDark' : selectedLayout === 'board' ? 'boardTextColorModeDark' : 'listTextColorModeDark');
+
+    const colorsKey = isLight ? 'customTextColorsLight' : 'customTextColorsDark';
+
     if (activeTarget === 'all') {
-      applyColorUpdate('custom', {
+      const updates: Partial<CustomTextColors> = {
         clock: hex,
         date: hex,
         greeting: hex,
         search: hex,
-        tabs: hex,
-        cards: hex,
-        boardTitle: hex,
-        boardText: hex,
-        listCategory: hex,
-        listTitle: hex,
-        listDesc: hex,
+      };
+      if (selectedLayout === 'grid') {
+        updates.cards = hex;
+      } else if (selectedLayout === 'board') {
+        updates.boardTitle = hex;
+        updates.boardText = hex;
+      } else if (selectedLayout === 'list') {
+        updates.listCategory = hex;
+        updates.listTitle = hex;
+        updates.listDesc = hex;
+      }
+
+      onUpdateSettings({
+        [modeKey]: 'custom',
+        [colorsKey]: {
+          ...customColors,
+          ...updates,
+        },
       });
     } else {
-      const nextColors: CustomTextColors = {
-        clock: customColors.clock || defaultColor,
-        date: customColors.date || defaultColor,
-        greeting: customColors.greeting || defaultColor,
-        search: customColors.search || defaultColor,
-        tabs: customColors.tabs || defaultColor,
-        cards: customColors.cards || defaultColor,
-        boardTitle: customColors.boardTitle || defaultColor,
-        boardText: customColors.boardText || defaultColor,
-        listCategory: customColors.listCategory || defaultColor,
-        listTitle: customColors.listTitle || defaultColor,
-        listDesc: customColors.listDesc || defaultColor,
-        ...customColors,
-        [activeTarget]: hex,
-      };
-      applyColorUpdate('custom', nextColors);
+      onUpdateSettings({
+        [modeKey]: 'custom',
+        [colorsKey]: {
+          ...customColors,
+          [activeTarget]: hex,
+        },
+      });
     }
   };
 
   const handleReset = () => {
-    applyColorUpdate(isLight ? 'auto' : 'light', {});
+    handleModeSelect('auto');
   };
-
-  const targets: { id: ElementTarget; labelKey: TranslationKey }[] = [
-    { id: 'all', labelKey: 'textColorTargetAll' },
-    { id: 'clock', labelKey: 'textColorTargetClock' },
-    { id: 'date', labelKey: 'textColorTargetDate' },
-    { id: 'greeting', labelKey: 'textColorTargetGreeting' },
-    { id: 'search', labelKey: 'textColorTargetSearch' },
-    { id: 'tabs', labelKey: 'textColorTargetTabs' },
-    { id: 'cards', labelKey: 'textColorTargetCards' },
-    { id: 'boardTitle', labelKey: 'textColorTargetBoardTitle' },
-    { id: 'boardText', labelKey: 'textColorTargetBoard' },
-    { id: 'listCategory', labelKey: 'textColorTargetListCategory' },
-    { id: 'listTitle', labelKey: 'textColorTargetListTitle' },
-    { id: 'listDesc', labelKey: 'textColorTargetListDesc' },
-  ];
 
   return (
     <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-[94vw] max-w-[540px] animate-in fade-in slide-in-from-bottom-4 duration-200">
@@ -176,7 +227,7 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-black/5 dark:border-white/10">
+        <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-black/5 dark:border-white/10">
           <div className="flex items-center gap-2">
             <Palette className="w-4 h-4 text-amber-500" />
             <span className="text-xs font-semibold tracking-wide">
@@ -205,7 +256,53 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
           </button>
         </div>
 
-        {/* Mode Selector */}
+        {/* Layout Tabs: Free Canvas | Board | List */}
+        <div className="flex items-center gap-1 mb-2.5 p-1 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] text-xs font-medium">
+          <button
+            type="button"
+            onClick={() => setSelectedLayout('grid')}
+            className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              selectedLayout === 'grid'
+                ? isLight
+                  ? 'bg-white text-slate-900 font-semibold shadow-xs'
+                  : 'bg-white/20 text-white font-semibold shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+            }`}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>{t('layoutGrid', settings.language)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedLayout('board')}
+            className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              selectedLayout === 'board'
+                ? isLight
+                  ? 'bg-white text-slate-900 font-semibold shadow-xs'
+                  : 'bg-white/20 text-white font-semibold shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+            }`}
+          >
+            <Kanban className="w-3.5 h-3.5" />
+            <span>{t('layoutBoard', settings.language)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedLayout('list')}
+            className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              selectedLayout === 'list'
+                ? isLight
+                  ? 'bg-white text-slate-900 font-semibold shadow-xs'
+                  : 'bg-white/20 text-white font-semibold shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+            }`}
+          >
+            <List className="w-3.5 h-3.5" />
+            <span>{t('layoutList', settings.language)}</span>
+          </button>
+        </div>
+
+        {/* Mode Selector for Selected Layout */}
         <div className="mb-3">
           <div
             className={`grid grid-cols-4 gap-1 p-1 rounded-xl border text-xs font-medium ${
@@ -274,12 +371,12 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
           </div>
         </div>
 
-        {/* Custom Section */}
+        {/* Custom Section for Selected Layout */}
         {currentMode === 'custom' && (
           <div className="space-y-3 pt-1 border-t border-black/5 dark:border-white/10 animate-in fade-in duration-150">
             {/* Target Element Tabs: Wrap naturally without horizontal scroll */}
             <div className="flex items-center flex-wrap gap-1.5 pt-1">
-              {targets.map((tgt) => (
+              {currentTargets.map((tgt) => (
                 <button
                   key={tgt.id}
                   type="button"

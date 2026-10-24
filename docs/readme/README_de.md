@@ -44,12 +44,16 @@ Eine minimalistische, ästhetische und datenschutzfreundliche moderne Browser-Er
 
 ## 🌟 Hauptfunktionen
 
-- 📱 **Multi-Desktop-Karussell & Wischgesten (v1.3.0)**: Neu eingeführte Multi-Desktop-Architektur auf Basis der Embla Carousel-Engine. Unterstützt sanftes Wischen per Mausdrag, Tastatur-Pfeiltasten und schwebende Milchglas-Seitenindikatoren. Bietet Desktop-Umbenennung, sicheres Löschen mit automatischer Lesezeichenmigration und seitenspezifischen Kategoriespeicher.
-- 🔖 **Nativer Lesezeichen-Import mit intelligenter Duplikaterkennung (v1.3.0)**: Schnelles Auslesen der nativen Lesezeichenbäume aus Chrome, Edge und Firefox sowie Unterstützung von Standard-HTML-Lesezeichendateien (Safari usw.). Visuelle Baumauswahl, intelligente Ordnerglättung, Echtzeit-Duplikatabgleich und Import-Vorschau.
-- 🔒 **Privater Bereich im Doppel-Container (v1.2.0)**: Innovative Multi-Profile-Architektur zur physischen Trennung von Alltags-Browsing (Standard-Bereich) und vertraulichen Seiten (Privater Bereich). Wird im Inkognito-Modus oder über `private.html` automatisch aktiviert.
+- 📱 **Multi-Desktop & Freies Canvas-Layout**: Modernes GridStack-Layout-System mit freiem Drag & Drop, stufenloser Größenanpassung, Überlappungssteuerung und automatischem Rasterschnappen. Uhr, Datum, Begrüßung, Mondkalender, Suchleiste und Kategorie-Pills sind eigenständige Widgets mit separatem Layout pro Desktop.
+- 📑 **Kompakte Listenansicht & flüssiges Drag & Drop (List View & DndKit)**: Vertikale Listenanzeige mit `@dnd-kit` für flimmerfreie Umsortierung innerhalb und zwischen Kategorien. Unterstützt benutzerdefinierte Symbolhintergründe und automatisches Drehen von Text.
+- 🌐 **Duale URL (WAN / LAN) & intelligentes Routing**: Externe und interne URLs sowie Notizen pro Lesezeichen festlegen. Ein-Klick-Umgebungswechsel in der Kopfleiste und dynamische Netzwerkabzeichen auf Kacheln.
+- 📊 **Kanban-Board-Ansicht (Board View)**: Horizontale Spaltenansicht aller Kategorien mit Schwebeflug-Kartenerweiterung und Federeffekten.
+- 🧭 **Interaktive Feature-Tour (Feature Tour)**: Benutzerfreundliche Spotlight-Einführung für Freies Layout, Listen- und Board-Modus mit automatischer Auslösung nach Versionsaktualisierungen.
+- 🔖 **Nativer Lesezeichen-Import mit intelligenter Duplikaterkennung (Bookmarks Importer)**: Schnelles Auslesen der nativen Lesezeichenbäume aus Chrome, Edge und Firefox sowie Unterstützung von Standard-HTML-Lesezeichendateien (Safari usw.). Visuelle Baumauswahl, intelligente Ordnerglättung, Echtzeit-Duplikatabgleich und Import-Vorschau.
+- 🔒 **Privater Bereich im Doppel-Container (Private Space)**: Innovative Multi-Profile-Architektur zur physischen Trennung von Alltags-Browsing (Standard-Bereich) und vertraulichen Seiten (Privater Bereich). Wird im Inkognito-Modus oder über `private.html` automatisch aktiviert.
 - 📌 **Schnelllesezeichen per Klick in der Symbolleiste (Popup)**: Beim Surfen auf beliebigen Webseiten genügt ein Klick auf das Symbolleistensymbol, um Titel, URL und hochauflösendes Favicon zu erfassen und sofort im gewünschten Bereich abzulegen.
-- 🎨 **Reine App-Symbolansicht & Tiefenanpassung (v1.3.0)**: Unterstützt eine aufgeräumte App-Icon-Ansicht im Mobilgeräte-Stil sowie anpassbare Milchglaskarten. Ermöglicht individuelle Farbdefinitionen für **6 Hauptelemente** (Uhr, Datum, Begrüßung, Suchleiste, Kategorien und Kacheln) mit automatischer Canvas-Helligkeitsanalyse.
-- 📅 **Mondkalender & traditionelle 24 Sonnenabschnitte (v1.2.0)**: Integrierter leichtgewichtiger Mondkalender-Algorithmus mit eleganter Anzeige im Kopfbereich und eigenem Umschalter.
+- 🎨 **Reine App-Symbolansicht & Tiefen-Farbanpassung**: Nahtloser Wechsel zwischen aufgeräumter reiner App-Icon-Ansicht und Milchglaskarten, mit stufenloser Transparenz- und Größenanpassung. Ermöglicht individuelle Farbdefinitionen für **6 Hauptelemente** (Uhr, Datum, Begrüßung, Suchleiste, Kategorien und Kacheln) mit automatischer Canvas-Helligkeitsanalyse.
+- 📅 **Mondkalender & traditionelle 24 Sonnenabschnitte**: Integrierter leichtgewichtiger Mondkalender-Algorithmus mit eleganter Anzeige im Kopfbereich und eigenem Umschalter.
 - 🖼️ **Kuratierte Hintergrundbilder & nahtlose Übergänge**: Tägliche Bing-HD-Hintergründe und Unsplash-Fotografien (CDN-beschleunigt) mit flackerfreier Doppel-Puffer-Überblendung und Wiederholungsschutz.
 - ⚡ **Multi-Source Smart-Favicon & Vektor-Fallback**: Automatischer Favicon-Abruf über mehrere Quellen mit lokalem Base64-Cache. Bei fehlendem Icon wird automatisch ein farbenfrohes SVG-Vektorsymbol generiert.
 - 🛡️ **Eleganter Milchglas-Fehlerabfang (ErrorBoundary)**: Fängt unerwartete Laufzeitfehler mit einem stilvollen Dialog ab und bietet Sofort-Neuladen sowie Cache-Reset zur Selbstreparatur.
@@ -202,15 +206,16 @@ Nach dem Build finden Sie die fertigen Erweiterungen im Ordner `dist/`:
 
 ## 🙏 Danksagung (Acknowledgements)
 
-- ⚛️ **[React](https://react.dev/)**
-- ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
-- 🎨 **[Lucide Icons](https://lucide.dev/)**
-- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
-- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**
-- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**
-- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**
-- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**
+- ⚛️ **[React](https://react.dev/)**: Das Fundament für reaktionsschnelle, deklarative Benutzeroberflächen.
+- ⚡ **[Vite](https://vitejs.dev/)**: Blitzschnelles Frontend-Build-Tool und Hot Module Replacement (HMR).
+- 🔲 **[GridStack](https://gridstackjs.com/)**: Modernes Raster-Layout-System für freies Drag & Drop und unabhängige Multi-Desktop-Layouts.
+- 🎯 **[@dnd-kit](https://dndkit.com/)**: Leichtes, modulares Toolkit für flüssiges, flimmerfreies Sortieren in der Listenansicht.
+- 🎨 **[Lucide Icons](https://lucide.dev/)**: Elegante, konsistente Open-Source-Icon-Bibliothek.
+- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**: Leistungsstarke Mondkalender- und 24-Sonnenabschnitte-Bibliothek von [@6tail](https://github.com/6tail).
+- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**: Atomares CSS-Framework für Milchglaseffekte (Glassmorphism) und adaptive Farbthemen.
+- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**: Mozillas einheitliche Promise-basierte WebExtension-Kompatibilitätsschicht.
+- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**: Hochauflösende Fotografie und tägliche Hintergrundbilder.
+- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**: Zuverlässige Git / Gist REST-APIs für Datensynchronisation.
 
 ---
 
