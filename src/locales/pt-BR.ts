@@ -623,7 +623,7 @@ export const ptBR: Translation = {
   tourGotIt: "Entendi",
   tourSkip: "Pular",
   tourGridStep1Title: "Barra de controle rápido",
-  tourGridStep1Desc: "- Mova o cursor para o canto superior direito para ver as ações\n- Clique em ⚙️ para configurações, sincronização e backup\n- Alterne rapidamente entre os modos Grade, Quadro e Lista\n- Entre no modo de edição, adicione atalhos ou importe favoritos",
+  tourGridStep1Desc: "- Mova o cursor para o canto superior direito para ver as ações\n- Clique em ⚙️ para configurações, sincronização e backup\n- Alterne rapidamente entre os modos Layout livre, Quadro e Lista\n- Entre no modo de edição, adicione atalhos ou importe favoritos",
   tourGridStep2Title: "Edição de tela livre",
   tourGridStep2Desc: "- Clique no ícone de lápis ✏️ no topo direito para editar a tela\n- Arraste o relógio e os cartões livremente para onde quiser\n- Altere o tamanho e formato dos cartões com suporte a sobreposição\n- Clique no visto no canto superior direito para salvar",
   tourGridStep3Title: "Cartões de atalho",

@@ -626,7 +626,7 @@ export const en: Translation = {
   tourGotIt: "Got it",
   tourSkip: "Skip",
   tourGridStep1Title: "Quick Control Bar",
-  tourGridStep1Desc: "- Move cursor to the top right to reveal the floating action bar\n- Click ⚙️ for preferences, cloud sync, and backup restore\n- Click the layout icon to switch between Grid, Board, and List\n- Easily enter edit mode, add shortcuts, or import bookmarks",
+  tourGridStep1Desc: "- Move cursor to the top right to reveal the floating action bar\n- Click ⚙️ for preferences, cloud sync, and backup restore\n- Click the layout icon to switch between Free Layout, Board, and List\n- Easily enter edit mode, add shortcuts, or import bookmarks",
   tourGridStep2Title: "Free Canvas Editing",
   tourGridStep2Desc: "- Click the ✏️ pencil icon in the top right to enter editing mode\n- Freely drag the clock and site cards to place them anywhere\n- Resize and change card shapes freely, with stacking support\n- Click the checkmark in the top right when done to save layout",
   tourGridStep3Title: "Shortcut Cards",

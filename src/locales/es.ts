@@ -623,7 +623,7 @@ export const es: Translation = {
   tourGotIt: "Entendido",
   tourSkip: "Omitir",
   tourGridStep1Title: "Barra de control rápido",
-  tourGridStep1Desc: "- Mueva el cursor a la esquina superior derecha para ver las opciones\n- Haga clic en ⚙️ para ajustes avanzados, sincronización y respaldo\n- Cambie rápidamente entre cuadrícula libre, tablero y lista\n- Acceda al modo de edición, agregue enlaces o importe marcadores",
+  tourGridStep1Desc: "- Mueva el cursor a la esquina superior derecha para ver las opciones\n- Haga clic en ⚙️ para ajustes avanzados, sincronización y respaldo\n- Cambie rápidamente entre diseño libre, tablero y lista\n- Acceda al modo de edición, agregue enlaces o importe marcadores",
   tourGridStep2Title: "Edición de lienzo libre",
   tourGridStep2Desc: "- Haga clic en el icono ✏️ superior derecho para editar el lienzo\n- Arrastre el reloj y las tarjetas libremente a cualquier posición\n- Cambie tamaño y forma de tarjetas con soporte de superposición\n- Haga clic en la marca de verificación al terminar para guardar",
   tourGridStep3Title: "Tarjetas de acceso rápido",

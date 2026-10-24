@@ -623,7 +623,7 @@ export const tr: Translation = {
   tourGotIt: "Anladım",
   tourSkip: "Geç",
   tourGridStep1Title: "Hızlı Kontrol Çubuğu",
-  tourGridStep1Desc: "- İşlem butonlarını görmek için imleci sağ üst köşeye getirin\n- Gelişmiş ayarlar, bulut senkronizasyonu ve yedekleme için ⚙️ tıklayın\n- Izgara, Pano ve Liste düzenleri arasında hızlıca geçiş yapın\n- Düzenleme moduna geçin, kısayol ekleyin veya yer imlerini içe aktarın",
+  tourGridStep1Desc: "- İşlem butonlarını görmek için imleci sağ üst köşeye getirin\n- Gelişmiş ayarlar, bulut senkronizasyonu ve yedekleme için ⚙️ tıklayın\n- Serbest Düzen, Pano ve Liste düzenleri arasında hızlıca geçiş yapın\n- Düzenleme moduna geçin, kısayol ekleyin veya yer imlerini içe aktarın",
   tourGridStep2Title: "Serbest Tuval Düzenleme",
   tourGridStep2Desc: "- Düzenleme moduna girmek için sağ üstteki ✏️ kalem simgesine tıklayın\n- Saati ve kartları tuvalde istediğiniz yere özgürce sürükleyin\n- Kart boyutlarını ve şekillerini değiştirin, üst üste sıralayın\n- İşiniz bittiğinde kaydetmek için sağ üstteki onay işaretine tıklayın",
   tourGridStep3Title: "Kısayol Kartları",

@@ -626,7 +626,7 @@ export const fr: Translation = {
   tourGotIt: "J’ai compris",
   tourSkip: "Passer",
   tourGridStep1Title: "Barre d'actions rapides",
-  tourGridStep1Desc: "- Survolez le coin supérieur droit pour afficher les commandes\n- Cliquez sur ⚙️ pour les paramètres avancés et la synchronisation\n- Basculez facilement entre les modes Grille, Tableau et Liste\n- Entrez en mode édition, ajoutez des sites ou importez des favoris",
+  tourGridStep1Desc: "- Survolez le coin supérieur droit pour afficher les commandes\n- Cliquez sur ⚙️ pour les paramètres avancés et la synchronisation\n- Basculez facilement entre les modes Disposition libre, Tableau et Liste\n- Entrez en mode édition, ajoutez des sites ou importez des favoris",
   tourGridStep2Title: "Édition libre du canevas",
   tourGridStep2Desc: "- Cliquez sur l'icône ✏️ en haut à droite pour activer l'édition\n- Déplacez l'horloge et les cartes où vous le souhaitez\n- Redimensionnez et ajustez les formes de cartes en toute liberté\n- Cliquez sur la coche en haut à droite pour enregistrer",
   tourGridStep3Title: "Cartes de raccourcis",

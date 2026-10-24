@@ -623,7 +623,7 @@ export const it: Translation = {
   tourGotIt: "Ho capito",
   tourSkip: "Salta",
   tourGridStep1Title: "Barra di controllo rapido",
-  tourGridStep1Desc: "- Sposta il cursore in alto a destra per mostrare i comandi\n- Clicca su ⚙️ per impostazioni avanzate, backup e sincronizzazione\n- Passa istantaneamente tra layout a griglia, bacheca o elenco\n- Entra in modalità modifica, aggiungi link o importa segnalibri",
+  tourGridStep1Desc: "- Sposta il cursore in alto a destra per mostrare i comandi\n- Clicca su ⚙️ per impostazioni avanzate, backup e sincronizzazione\n- Passa istantaneamente tra layout libero, bacheca o elenco\n- Entra in modalità modifica, aggiungi link o importa segnalibri",
   tourGridStep2Title: "Modifica libera della tela",
   tourGridStep2Desc: "- Clicca sull'icona ✏️ in alto a destra per avviare la modifica\n- Trascina liberamente l'orologio e le schede in qualsiasi posizione\n- Ridimensiona e modifica la forma delle schede con sovrapposizione\n- Clicca sul segno di spunta in alto a destra per salvare",
   tourGridStep3Title: "Schede di scelta rapida",

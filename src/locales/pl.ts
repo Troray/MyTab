@@ -623,7 +623,7 @@ export const pl: Translation = {
   tourGotIt: "Rozumiem",
   tourSkip: "Pomiń",
   tourGridStep1Title: "Pasek szybkiej kontroli",
-  tourGridStep1Desc: "- Przesuń kursor w prawy górny róg, aby odkryć menu narzędzi\n- Kliknij ⚙️, aby przejść do ustawień, synchronizacji i kopii zapasowych\n- Przełączaj błyskawicznie między siatką, tablicą a listą\n- Łatwe włączanie trybu edycji, dodawanie stron i import zakładek",
+  tourGridStep1Desc: "- Przesuń kursor w prawy górny róg, aby odkryć menu narzędzi\n- Kliknij ⚙️, aby przejść do ustawień, synchronizacji i kopii zapasowych\n- Przełączaj błyskawicznie między układem swobodnym, tablicą a listą\n- Łatwe włączanie trybu edycji, dodawanie stron i import zakładek",
   tourGridStep2Title: "Swobodna edycja płótna",
   tourGridStep2Desc: "- Kliknij ikonę ✏️ w prawym górnym rogu, aby rozpocząć edycję\n- Dowolnie przeciągaj zegar i karty w dowolne miejsce na ekranie\n- Swobodnie zmieniaj kształt i rozmiar kart oraz układaj je na sobie\n- Kliknij haczyk w prawym górnym rogu, aby zapisać układ",
   tourGridStep3Title: "Karty skrótów",

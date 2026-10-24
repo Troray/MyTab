@@ -625,7 +625,7 @@ export const zhTW: Translation = {
   tourGotIt: "我已知曉",
   tourSkip: "略過",
   tourGridStep1Title: "快捷控制台",
-  tourGridStep1Desc: "- 滑鼠移動至右上角會自動顯現功能操作區\n- 點擊 ⚙️ 圖示可進入進階設定及同步備份還原等\n- 點擊版面切換圖示可快速切換網格、看板或列表版面\n- 也可以快速進入編輯模式、新增網址或匯入書籤",
+  tourGridStep1Desc: "- 滑鼠移動至右上角會自動顯現功能操作區\n- 點擊 ⚙️ 圖示可進入進階設定及同步備份還原等\n- 點擊版面切換圖示可快速切換自由佈局、看板或列表版面\n- 也可以快速進入編輯模式、新增網址或匯入書籤",
   tourGridStep2Title: "自由畫布編輯",
   tourGridStep2Desc: "- 點擊右上角 ✏️ 畫筆圖示即可進入畫布編輯模式\n- 自由拖放時鐘與卡片，隨意擺放至任意位置\n- 支援隨意調整卡片形狀尺寸，並支援疊放與置頂\n- 編輯完成後點擊右上角勾號即可儲存版面",
   tourGridStep3Title: "捷徑卡片",
