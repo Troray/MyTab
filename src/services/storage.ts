@@ -31,6 +31,8 @@ export const STORAGE_KEYS = {
   WEBDAV: 'mytab_webdav',
   GIT: 'mytab_git',
   FIRST_LAUNCH: 'mytab_first_launch',
+  GUIDED_MODES: 'mytab_guided_modes',
+  TOUR_VERSION: 'mytab_tour_version',
   POPUP_PREFS: 'mytab_popup_prefs',
 
   // Legacy keys used only for migration
@@ -465,6 +467,7 @@ export async function loadAppState(targetProfileId?: ProfileId): Promise<AppStat
     categories: normalizedCategories,
     activeCategoryId: currentProfile.activeCategoryId,
     pageCategoryMap: currentProfile.pageCategoryMap || {},
+    freeLayouts: currentProfile.freeLayouts || {},
     gridPages: effectiveGridPages,
     activeGridPageId: fallbackPageId,
     settings: effectiveSettings,
@@ -472,9 +475,39 @@ export async function loadAppState(targetProfileId?: ProfileId): Promise<AppStat
     git: normalizedGit,
     syncSettings,
     isFirstLaunch: isFirst,
+    guidedModes: await getGuidedModes(),
     hasCustomSettings: hasCustom,
     hasCustomWallpaper: hasCustom,
   };
+}
+
+export async function saveFreeLayouts(
+  pageId: string,
+  layoutMap: import('../types').FreeCanvasLayoutMap,
+  profileId?: ProfileId
+): Promise<void> {
+  const targetProfileId = profileId || (await getCurrentProfileId());
+  await updateProfile(targetProfileId, (profile) => ({
+    ...profile,
+    freeLayouts: {
+      ...(profile.freeLayouts || {}),
+      [pageId]: layoutMap,
+    },
+  }));
+}
+
+export async function saveAllFreeLayouts(
+  freeLayouts: Record<string, import('../types').FreeCanvasLayoutMap>,
+  profileId?: ProfileId
+): Promise<void> {
+  const targetProfileId = profileId || (await getCurrentProfileId());
+  await updateProfile(targetProfileId, (profile) => ({
+    ...profile,
+    freeLayouts: {
+      ...(profile.freeLayouts || {}),
+      ...freeLayouts,
+    },
+  }));
 }
 
 export async function saveSites(sites: SiteItem[], profileId?: ProfileId): Promise<void> {
@@ -717,6 +750,39 @@ export async function setFirstLaunchComplete(): Promise<void> {
 }
 
 /**
+ * Current major tour version.
+ * When substantial new features or layouts are released, bumping this version
+ * automatically triggers the new step-by-step feature tour once for existing users.
+ */
+export const CURRENT_TOUR_VERSION = '1.5.0';
+
+export async function getGuidedModes(): Promise<Record<string, boolean>> {
+  const recordedVersion = await getItem<string | null>(STORAGE_KEYS.TOUR_VERSION, null);
+
+  // If user upgraded from an older version where TOUR_VERSION was never recorded,
+  // or was an earlier version, reset guidedModes so the new tour will show once.
+  if (recordedVersion !== CURRENT_TOUR_VERSION) {
+    await setItem(STORAGE_KEYS.GUIDED_MODES, {});
+    await setItem(STORAGE_KEYS.TOUR_VERSION, CURRENT_TOUR_VERSION);
+    return {};
+  }
+
+  return await getItem<Record<string, boolean>>(STORAGE_KEYS.GUIDED_MODES, {});
+}
+
+export async function markModeGuided(mode: string): Promise<Record<string, boolean>> {
+  const current = await getGuidedModes();
+  const updated = { ...current, [mode]: true };
+  await setItem(STORAGE_KEYS.GUIDED_MODES, updated);
+  await setItem(STORAGE_KEYS.TOUR_VERSION, CURRENT_TOUR_VERSION);
+  return updated;
+}
+
+export async function resetGuidedModes(): Promise<void> {
+  await setItem(STORAGE_KEYS.GUIDED_MODES, {});
+}
+
+/**
  * Profile-aware popup preferences.
  * Stores lastUsedGroupId scoped to each Profile.
  */
@@ -854,6 +920,7 @@ export async function importData(
             gridPages: restoredPages,
             activeGridPageId: fallbackPageId,
             pageCategoryMap: p.pageCategoryMap && typeof p.pageCategoryMap === 'object' ? p.pageCategoryMap : { [fallbackPageId]: 'all' },
+            ...(p.freeLayouts && typeof p.freeLayouts === 'object' ? { freeLayouts: p.freeLayouts } : (currentContainer.profiles[destId]?.freeLayouts ? { freeLayouts: currentContainer.profiles[destId]?.freeLayouts } : {})),
             ...(p.settings ? { settings: p.settings } : {}),
             ...(p.wallpaper ? { wallpaper: p.wallpaper } : {}),
           };
