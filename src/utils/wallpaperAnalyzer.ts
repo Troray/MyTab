@@ -744,151 +744,42 @@ export function resolveTextColors(
   luminance: WallpaperLuminance,
   activeThemeMode: 'light' | 'dark' = 'dark'
 ): ResolvedTextColors {
-  const mode: TextColorMode =
-    (activeThemeMode === 'light'
+  const isLight = activeThemeMode === 'light';
+
+  // 全局模式回退（兼容旧版数据）
+  const globalMode: TextColorMode =
+    (isLight
       ? settings.textColorModeLight ?? settings.textColorMode
       : settings.textColorModeDark ?? settings.textColorMode) || 'auto';
 
+  // 三大桌面布局模式的独立字色模式推导：
+  const gridMode: TextColorMode =
+    (isLight
+      ? settings.gridTextColorModeLight ?? settings.gridTextColorMode ?? globalMode
+      : settings.gridTextColorModeDark ?? settings.gridTextColorMode ?? globalMode) || 'auto';
+
+  const boardMode: TextColorMode =
+    (isLight
+      ? settings.boardTextColorModeLight ?? settings.boardTextColorMode ?? globalMode
+      : settings.boardTextColorModeDark ?? settings.boardTextColorMode ?? globalMode) || 'auto';
+
+  const listMode: TextColorMode =
+    (isLight
+      ? settings.listTextColorModeLight ?? settings.listTextColorMode ?? globalMode
+      : settings.listTextColorModeDark ?? settings.listTextColorMode ?? globalMode) || 'auto';
+
+  // 当前激活布局决定公共头部组件（时钟、搜索、日期、问候语）的模式
+  const currentLayout = settings.layoutMode || 'grid';
+  const activeLayoutMode =
+    currentLayout === 'board' ? boardMode : currentLayout === 'list' ? listMode : gridMode;
+
   const custom: CustomTextColors =
-    (activeThemeMode === 'light'
+    (isLight
       ? settings.customTextColorsLight ?? settings.customTextColors
       : settings.customTextColorsDark ?? settings.customTextColors) || {};
 
-  // 1. 全局强制亮白模式
-  if (mode === 'light') {
-    return {
-      clock: '#ffffff',
-      date: '#ffffff',
-      greeting: '#ffffff',
-      search: '#ffffff',
-      tabs: '#ffffff',
-      cards: '#ffffff',
-      boardText: '#ffffff',
-      boardTitle: '#ffffff',
-      listCategory: '#ffffff',
-      listTitle: '#ffffff',
-      listDesc: 'rgba(255, 255, 255, 0.80)',
-      clockShadow: 'drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]',
-      dateShadow: 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]',
-      greetingShadow: 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]',
-      searchShadow: 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]',
-      tabsShadow: 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]',
-      cardShadow: 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]',
-      clockProtection: 'none',
-      dateProtection: 'none',
-      greetingProtection: 'none',
-      searchProtection: 'none',
-      tabsProtection: 'none',
-      cardsProtection: 'none',
-      clockIsDark: true,
-      dateIsDark: true,
-      greetingIsDark: true,
-      searchIsDark: true,
-      tabsIsDark: true,
-      cardsIsDark: true,
-      topIsDark: true,
-      centerIsDark: true,
-      bottomIsDark: true,
-    };
-  }
+  const defaultColor = isLight ? '#0f172a' : '#ffffff';
 
-  // 2. 全局强制墨黑模式
-  if (mode === 'dark') {
-    return {
-      clock: '#0f172a',
-      date: '#334155',
-      greeting: '#334155',
-      search: '#1e293b',
-      tabs: '#1e293b',
-      cards: '#0f172a',
-      boardText: '#334155',
-      boardTitle: '#0f172a',
-      listCategory: '#0f172a',
-      listTitle: '#0f172a',
-      listDesc: '#64748b',
-      clockShadow: 'drop-shadow-sm',
-      dateShadow: 'drop-shadow-none',
-      greetingShadow: 'drop-shadow-none',
-      searchShadow: 'drop-shadow-none',
-      tabsShadow: 'drop-shadow-none',
-      cardShadow: 'drop-shadow-none',
-      clockProtection: 'none',
-      dateProtection: 'none',
-      greetingProtection: 'none',
-      searchProtection: 'none',
-      tabsProtection: 'none',
-      cardsProtection: 'none',
-      clockIsDark: false,
-      dateIsDark: false,
-      greetingIsDark: false,
-      searchIsDark: false,
-      tabsIsDark: false,
-      cardsIsDark: false,
-      topIsDark: false,
-      centerIsDark: false,
-      bottomIsDark: false,
-    };
-  }
-
-  // 3. 深度自定义模式 (各个元素完全解耦，独立定制)
-  if (mode === 'custom') {
-    const defaultColor = activeThemeMode === 'light' ? '#0f172a' : '#ffffff';
-    const clockColor = custom.clock || defaultColor;
-    const dateColor = custom.date || defaultColor;
-    const greetingColor = custom.greeting || defaultColor;
-    const searchColor = custom.search || defaultColor;
-    const tabsColor = custom.tabs || defaultColor;
-    const cardsColor = custom.cards || defaultColor;
-    const boardTextColor = custom.boardText || defaultColor;
-    const boardTitleColor = custom.boardTitle || defaultColor;
-    const listCategoryColor = custom.listCategory || defaultColor;
-    const listTitleColor = custom.listTitle || defaultColor;
-    const listDescColor = custom.listDesc || (activeThemeMode === 'light' ? '#64748b' : 'rgba(255, 255, 255, 0.70)');
-
-    const isClockDark = parseHexLuminance(clockColor) < 135;
-    const isDateDark = parseHexLuminance(dateColor) < 135;
-    const isGreetingDark = parseHexLuminance(greetingColor) < 135;
-    const isSearchDark = parseHexLuminance(searchColor) < 135;
-    const isTabsDark = parseHexLuminance(tabsColor) < 135;
-    const isCardsDark = parseHexLuminance(cardsColor) < 135;
-
-    return {
-      clock: clockColor,
-      date: dateColor,
-      greeting: greetingColor,
-      search: searchColor,
-      tabs: tabsColor,
-      cards: cardsColor,
-      boardText: boardTextColor,
-      boardTitle: boardTitleColor,
-      listCategory: listCategoryColor,
-      listTitle: listTitleColor,
-      listDesc: listDescColor,
-      clockShadow: isClockDark ? 'drop-shadow-none' : 'drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]',
-      dateShadow: isDateDark ? 'drop-shadow-none' : 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]',
-      greetingShadow: isGreetingDark ? 'drop-shadow-none' : 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]',
-      searchShadow: isSearchDark ? 'drop-shadow-none' : 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]',
-      tabsShadow: isTabsDark ? 'drop-shadow-none' : 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]',
-      cardShadow: isCardsDark ? 'drop-shadow-none' : 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]',
-      clockProtection: 'none',
-      dateProtection: 'none',
-      greetingProtection: 'none',
-      searchProtection: 'none',
-      tabsProtection: 'none',
-      cardsProtection: 'none',
-      clockIsDark: !isClockDark,
-      dateIsDark: !isDateDark,
-      greetingIsDark: !isGreetingDark,
-      searchIsDark: !isSearchDark,
-      tabsIsDark: !isTabsDark,
-      cardsIsDark: !isCardsDark,
-      topIsDark: !isClockDark,
-      centerIsDark: !isSearchDark,
-      bottomIsDark: !isCardsDark,
-    };
-  }
-
-  // 4. 精细自适应模式（auto）：白字优先 + 自适应抗眩光微光晕
   const clock = luminance.clock;
   const date = luminance.date;
   const greeting = luminance.greeting;
@@ -899,7 +790,6 @@ export function resolveTextColors(
   const getAdaptiveShadow = (comp: ComponentReadability, level: 'large' | 'medium' | 'small') => {
     const isWhite = comp.recommendedColor === '#ffffff';
     if (isWhite) {
-      // 存在高反差、强光斑或复杂背景时：启用双层高质感抗眩光光晕
       if (comp.hasHighContrast || comp.variance > 700 || comp.protectionLevel === 'shadow') {
         return level === 'large'
           ? 'drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] drop-shadow-[0_3px_12px_rgba(0,0,0,0.7)]'
@@ -907,14 +797,12 @@ export function resolveTextColors(
           ? 'drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]'
           : 'drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] drop-shadow-[0_1px_5px_rgba(0,0,0,0.55)]';
       }
-      // 纯净暗色背景：柔和自然环境光影
       return level === 'large'
         ? 'drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]'
         : level === 'medium'
         ? 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]'
         : 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]';
     } else {
-      // 极浅背景（黑字）：极简微阴影或无阴影
       if (comp.hasHighContrast) {
         return 'drop-shadow-[0_1px_2px_rgba(255,255,255,0.95)] drop-shadow-[0_1px_4px_rgba(0,0,0,0.25)]';
       }
@@ -922,22 +810,59 @@ export function resolveTextColors(
     }
   };
 
-  // 物理 Alpha 混合与复合表面真实明度推导 (True Physical Alpha Blending & Contrast Engine):
+  // 1. 公共头部组件根据 activeLayoutMode 解析
+  let clockColor: string = clock.recommendedColor;
+  let dateColor = clock.recommendedColor === '#ffffff' ? 'rgba(255, 255, 255, 0.95)' : '#334155';
+  let greetingColor = greeting.recommendedColor === '#ffffff' ? 'rgba(255, 255, 255, 0.95)' : '#334155';
+  let searchColor = search.recommendedColor === '#ffffff' ? 'rgba(255, 255, 255, 0.92)' : '#1e293b';
+  let tabsColor: string = tabs.recommendedColor;
+
+  let clockShadow = getAdaptiveShadow(clock, 'large');
+  let dateShadow = getAdaptiveShadow(date, 'medium');
+  let greetingShadow = getAdaptiveShadow(greeting, 'medium');
+  let searchShadow = getAdaptiveShadow(search, 'medium');
+  let tabsShadow = getAdaptiveShadow(tabs, 'small');
+
+  if (activeLayoutMode === 'light') {
+    clockColor = '#ffffff';
+    dateColor = '#ffffff';
+    greetingColor = '#ffffff';
+    searchColor = '#ffffff';
+    tabsColor = '#ffffff';
+    clockShadow = 'drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]';
+    dateShadow = 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]';
+    greetingShadow = 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]';
+    searchShadow = 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]';
+    tabsShadow = 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]';
+  } else if (activeLayoutMode === 'dark') {
+    clockColor = '#0f172a';
+    dateColor = '#334155';
+    greetingColor = '#334155';
+    searchColor = '#1e293b';
+    tabsColor = '#1e293b';
+    clockShadow = 'drop-shadow-sm';
+    dateShadow = 'drop-shadow-none';
+    greetingShadow = 'drop-shadow-none';
+    searchShadow = 'drop-shadow-none';
+    tabsShadow = 'drop-shadow-none';
+  } else if (activeLayoutMode === 'custom') {
+    clockColor = custom.clock || defaultColor;
+    dateColor = custom.date || defaultColor;
+    greetingColor = custom.greeting || defaultColor;
+    searchColor = custom.search || defaultColor;
+    tabsColor = custom.tabs || defaultColor;
+    clockShadow = parseHexLuminance(clockColor) < 135 ? 'drop-shadow-none' : 'drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]';
+    dateShadow = parseHexLuminance(dateColor) < 135 ? 'drop-shadow-none' : 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]';
+    greetingShadow = parseHexLuminance(greetingColor) < 135 ? 'drop-shadow-none' : 'drop-shadow-[0_1px_6px_rgba(0,0,0,0.5)]';
+    searchShadow = parseHexLuminance(searchColor) < 135 ? 'drop-shadow-none' : 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]';
+    tabsShadow = parseHexLuminance(tabsColor) < 135 ? 'drop-shadow-none' : 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]';
+  }
+
+  // 物理 Alpha 混合与复合表面真实明度推导
   const isLightMode = activeThemeMode === 'light';
   const wallpaperLum = cards.luminance ?? 128;
 
-  // 1. 看板模式 (Board Mode) 表面复合可读性推导
-  const showBoardCardBg = settings.boardShowCardBackground !== false;
-  const boardOpacity = settings.boardCardOpacity ?? 0.20;
-  const boardSurface = getCompositeSurfaceReadability(
-    wallpaperLum,
-    isLightMode,
-    boardOpacity,
-    showBoardCardBg,
-    cards
-  );
-
-  // 2. 网格模式 (Grid Mode) 表面复合可读性推导
+  // 2. 自由画布 / 网格模式卡片独立解析 (Grid Mode)
   const showGridCardBg = settings.showCardBackground ?? false;
   const gridOpacity = settings.cardOpacity ?? 0.20;
   const gridSurface = getCompositeSurfaceReadability(
@@ -948,7 +873,44 @@ export function resolveTextColors(
     cards
   );
 
-  // 3. 列表模式 (List Mode) 表面复合可读性推导
+  let cardsColor: string = gridSurface.textColor;
+  let cardShadow = gridSurface.shadow;
+  if (gridMode === 'light') {
+    cardsColor = '#ffffff';
+    cardShadow = 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]';
+  } else if (gridMode === 'dark') {
+    cardsColor = '#0f172a';
+    cardShadow = 'drop-shadow-none';
+  } else if (gridMode === 'custom') {
+    cardsColor = custom.cards || defaultColor;
+    cardShadow = parseHexLuminance(cardsColor) < 135 ? 'drop-shadow-none' : 'drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]';
+  }
+
+  // 3. 看板模式独立解析 (Board Mode)
+  const showBoardCardBg = settings.boardShowCardBackground !== false;
+  const boardOpacity = settings.boardCardOpacity ?? 0.20;
+  const boardSurface = getCompositeSurfaceReadability(
+    wallpaperLum,
+    isLightMode,
+    boardOpacity,
+    showBoardCardBg,
+    cards
+  );
+
+  let boardTextColor = boardSurface.textColor === '#0f172a' ? '#334155' : 'rgba(255, 255, 255, 0.90)';
+  let boardTitleColor: string = boardSurface.textColor;
+  if (boardMode === 'light') {
+    boardTitleColor = '#ffffff';
+    boardTextColor = '#ffffff';
+  } else if (boardMode === 'dark') {
+    boardTitleColor = '#0f172a';
+    boardTextColor = '#334155';
+  } else if (boardMode === 'custom') {
+    boardTitleColor = custom.boardTitle || defaultColor;
+    boardTextColor = custom.boardText || defaultColor;
+  }
+
+  // 4. 列表模式独立解析 (List Mode)
   const showListCardBg = settings.listShowCardBackground !== false;
   const listOpacity = settings.listCardOpacity ?? 0.25;
   const listSurface = getCompositeSurfaceReadability(
@@ -959,38 +921,62 @@ export function resolveTextColors(
     cards
   );
 
+  let listCategoryColor: string = clock.recommendedColor;
+  let listTitleColor: string = listSurface.textColor;
+  let listDescColor = listSurface.textColor === '#0f172a' ? '#64748b' : 'rgba(255, 255, 255, 0.70)';
+  if (listMode === 'light') {
+    listCategoryColor = '#ffffff';
+    listTitleColor = '#ffffff';
+    listDescColor = 'rgba(255, 255, 255, 0.80)';
+  } else if (listMode === 'dark') {
+    listCategoryColor = '#0f172a';
+    listTitleColor = '#0f172a';
+    listDescColor = '#64748b';
+  } else if (listMode === 'custom') {
+    listCategoryColor = custom.listCategory || defaultColor;
+    listTitleColor = custom.listTitle || defaultColor;
+    listDescColor = custom.listDesc || (isLight ? '#64748b' : 'rgba(255, 255, 255, 0.70)');
+  }
+
+  const isClockDark = parseHexLuminance(clockColor) < 135;
+  const isCardsDark = parseHexLuminance(cardsColor) < 135;
+  const isSearchDark = parseHexLuminance(searchColor) < 135;
+  const isDateDark = parseHexLuminance(dateColor) < 135;
+  const isGreetingDark = parseHexLuminance(greetingColor) < 135;
+  const isTabsDark = parseHexLuminance(tabsColor) < 135;
+
   return {
-    clock: clock.recommendedColor,
-    date: clock.recommendedColor === '#ffffff' ? 'rgba(255, 255, 255, 0.95)' : '#334155',
-    greeting: greeting.recommendedColor === '#ffffff' ? 'rgba(255, 255, 255, 0.95)' : '#334155',
-    search: search.recommendedColor === '#ffffff' ? 'rgba(255, 255, 255, 0.92)' : '#1e293b',
-    tabs: tabs.recommendedColor,
-    cards: gridSurface.textColor,
-    boardText: boardSurface.textColor === '#0f172a' ? '#334155' : 'rgba(255, 255, 255, 0.90)',
-    boardTitle: boardSurface.textColor,
-    listCategory: clock.recommendedColor,
-    listTitle: listSurface.textColor,
-    listDesc: listSurface.textColor === '#0f172a' ? '#64748b' : 'rgba(255, 255, 255, 0.70)',
-    clockShadow: getAdaptiveShadow(clock, 'large'),
-    dateShadow: getAdaptiveShadow(date, 'medium'),
-    greetingShadow: getAdaptiveShadow(greeting, 'medium'),
-    searchShadow: getAdaptiveShadow(search, 'medium'),
-    tabsShadow: getAdaptiveShadow(tabs, 'small'),
-    cardShadow: gridSurface.shadow,
+    clock: clockColor,
+    date: dateColor,
+    greeting: greetingColor,
+    search: searchColor,
+    tabs: tabsColor,
+    cards: cardsColor,
+    boardText: boardTextColor,
+    boardTitle: boardTitleColor,
+    listCategory: listCategoryColor,
+    listTitle: listTitleColor,
+    listDesc: listDescColor,
+    clockShadow,
+    dateShadow,
+    greetingShadow,
+    searchShadow,
+    tabsShadow,
+    cardShadow,
     clockProtection: clock.protectionLevel,
     dateProtection: date.protectionLevel,
     greetingProtection: greeting.protectionLevel,
     searchProtection: search.protectionLevel,
     tabsProtection: tabs.protectionLevel,
     cardsProtection: cards.protectionLevel,
-    clockIsDark: clock.recommendedColor === '#ffffff',
-    dateIsDark: date.recommendedColor === '#ffffff',
-    greetingIsDark: greeting.recommendedColor === '#ffffff',
-    searchIsDark: search.recommendedColor === '#ffffff',
-    tabsIsDark: tabs.recommendedColor === '#ffffff',
-    cardsIsDark: gridSurface.textColor === '#ffffff',
-    topIsDark: clock.recommendedColor === '#ffffff',
-    centerIsDark: search.recommendedColor === '#ffffff',
-    bottomIsDark: gridSurface.textColor === '#ffffff',
+    clockIsDark: !isClockDark,
+    dateIsDark: !isDateDark,
+    greetingIsDark: !isGreetingDark,
+    searchIsDark: !isSearchDark,
+    tabsIsDark: !isTabsDark,
+    cardsIsDark: !isCardsDark,
+    topIsDark: !isClockDark,
+    centerIsDark: !isSearchDark,
+    bottomIsDark: !isCardsDark,
   };
 }
