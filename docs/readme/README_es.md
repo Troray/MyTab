@@ -44,7 +44,11 @@ Una extensión moderna, minimalista y centrada en la privacidad para la Nueva Pe
 
 ## 🌟 Características Principales
 
-- 📱 **Múltiples Escritorios y Diseño Libre**: Arquitectura multi-escritorio impulsada por el motor moderno GridStack. Soporta arrastrar y soltar, cambio de escritorio por gestos, teclas de flecha y widgets completamente independientes por escritorio.
+- 📱 **Múltiples Escritorios y Lienzo Libre (Multi-Desktop & Free Canvas Layout, v1.5.0)**: Nuevo sistema de diseño libre impulsado por GridStack. Arrastra, cambia el tamaño, controla superposiciones y ajusta automáticamente a la cuadrícula. Widgets independientes para reloj, fecha, saludo, calendario lunar, búsqueda y categorías con persistencia por escritorio.
+- 📑 **Vista de Lista Compacta y Reordenación Fluida (List View & DndKit, v1.4.0 / v1.5.0)**: Diseño vertical de alta densidad con `@dnd-kit` para arrastrar y soltar sin parpadeos dentro y entre categorías. Admite estilos de fondo de iconos personalizados y rotación vertical de texto.
+- 🌐 **URL Dual (WAN / LAN) y Enrutamiento Inteligente (v1.4.0)**: Configura direcciones externas e internas y notas por acceso directo. Cambia de entorno con un clic y visualiza insignias dinámicas en las tarjetas.
+- 📊 **Vista de Tablero Kanban (Board View, v1.4.0)**: Visualización horizontal de todas las categorías en columnas tipo Kanban con expansión al pasar el cursor y efectos de muelle.
+- 🧭 **Tour Interactivo de Funciones (Feature Tour, v1.5.0)**: Guía ligera de foco que destaca el arrastre de widgets y la configuración del calendario lunar, con activación automática al actualizar de versión.
 - 🔖 **Importación Nativa de Marcadores sin Duplicados (v1.3.0)**: Lectura en milisegundos de árboles de marcadores de Chrome, Edge y Firefox, además de compatibilidad con archivos HTML de Netscape (Safari, etc.). Árbol interactivo con casillas de selección, aplanado de carpetas inteligente, comparación de duplicados en tiempo real y vista previa de importación.
 - 🔒 **Contenedor Dual de Espacio Privado (v1.2.0)**: Arquitectura de perfiles múltiples que separa físicamente la navegación diaria (Espacio Predeterminado) de la navegación sensible (Espacio Privado). Se activa automáticamente en ventanas de incógnito o a través de `private.html`.
 - 📌 **Guardado Rápido con un Clic en la Barra de Herramientas (Popup)**: Al navegar por cualquier sitio, haz clic en el icono de la barra de herramientas para capturar el título, la URL y el favicon en alta resolución y guardarlo en el espacio y categoría que elijas.
@@ -201,15 +205,16 @@ Los archivos compilados estarán listos en el directorio `dist/`:
 
 ## 🙏 Agradecimientos (Acknowledgements)
 
-- ⚛️ **[React](https://react.dev/)**
-- ⚡ **[Vite](https://vitejs.dev/)**
-- 🔲 **[GridStack](https://gridstackjs.com/)**
-- 🎨 **[Lucide Icons](https://lucide.dev/)**
-- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
-- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**
-- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**
-- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**
-- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**
+- ⚛️ **[React](https://react.dev/)**: La base para construir interfaces modernas, altamente responsivas y declarativas.
+- ⚡ **[Vite](https://vitejs.dev/)**: Herramienta de compilación ultrarrápida de última generación con reemplazo de módulos en caliente (HMR).
+- 🔲 **[GridStack](https://gridstackjs.com/)**: Motor de diseño de cuadrícula moderno para arrastrar y soltar libremente y diseños independientes por escritorio.
+- 🎯 **[@dnd-kit](https://dndkit.com/)**: Kit de herramientas modular y ligero para reordenar listas sin parpadeos.
+- 🎨 **[Lucide Icons](https://lucide.dev/)**: Biblioteca de iconos de código abierto estéticamente agradable, elegante y consistente.
+- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**: Biblioteca de calendario lunar y 24 términos solares desarrollada por [@6tail](https://github.com/6tail).
+- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**: Marco CSS atómico para efectos de vidrio esmerilado (Glassmorphism) y temas adaptativos.
+- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**: Capa de compatibilidad unificada para WebExtensions basada en promesas de Mozilla.
+- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**: Recursos fotográficos de alta definición y fondos diarios.
+- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**: API REST fiables de Git / Gist y ecosistemas de desarrolladores.
 
 ---
 

@@ -44,7 +44,11 @@ Minimalistyczne, stylowe i dbające o prywatność rozszerzenie Nowej Karty (New
 
 ## 🌟 Główne Funkcje
 
-- 📱 **Wiele Pulpitów i Swobodny Układ**: Architektura wielu pulpitów oparta na nowoczesnym silniku GridStack. Płynne przeciąganie i upuszczanie, zmiana pulpitów strzałkami klawiatury i w pełni niezależne widżety na każdym pulpicie.
+- 📱 **Wiele Pulpitów i Swobodne Płótno (Multi-Desktop & Free Canvas Layout, v1.5.0)**: Nowy system swobodnego układu oparty na GridStack. Przeciągaj, zmieniaj rozmiar, zarządzaj nakładaniem i automatycznie przyciągaj do siatki. Zegar, data, powitanie, kalendarz księżycowy, pasek wyszukiwania i kategorie to niezależne widżety z osobnym układem dla każdego pulpitu.
+- 📑 **Kompaktowy Widok Listy & Płynne Sortowanie (List View & DndKit, v1.4.0 / v1.5.0)**: Pionowa lista o wysokiej gęstości z `@dnd-kit` zapewniająca bezmigotliwe przeciąganie wewnątrz i między kategoriami. Obsługa niestandardowych stylów tła ikon.
+- 🌐 **Podwójny adres URL (WAN / LAN) & Inteligentne Routing (v1.4.0)**: Definiuj zewnętrzne i wewnętrzne adresy oraz notatki dla każdego skrótu. Przełączaj środowisko jednym kliknięciem w nagłówku i wyświetlaj odznaki sieci na kartach.
+- 📊 **Widok Tablicy Kanban (Board View, v1.4.0)**: Poziome wyświetlanie wszystkich kategorii w postaci kolumn Kanban z płynnym powiększaniem po najechaniu kursorem.
+- 🧭 **Interaktywny Przewodnik po Funkcjach (Feature Tour, v1.5.0)**: Lekki przewodnik podświetlający swobodne przeciąganie widżetów i konfigurację kalendarza księżycowego, uruchamiany automatycznie po aktualizacji wersji.
 - 🔖 **Natywny Import Zakładek z Inteligentną Deduplikacją (v1.3.0)**: Błyskawiczny odczyt drzew zakładek z przeglądarek Chrome, Edge i Firefox oraz plików HTML Netscape (Safari itp.). Wizualny wybór drzewa, inteligentne spłaszczanie folderów, porównywanie duplikatów w czasie rzeczywistym i podgląd statystyk.
 - 🔒 **Przestrzeń Prywatna w Podwójnym Kontenerze (v1.2.0)**: Fizyczne rozdzielenie przeglądania codziennego (Przestrzeń Domyślna) od stron poufnych (Przestrzeń Prywatna). Uruchamia się automatycznie w trybie incognito lub pod adresem `private.html`.
 - 📌 **Szybkie Zapisywanie z Paska Narzędzi (Popup)**: Podczas przeglądania dowolnej witryny kliknij ikonę na pasku, aby przechwycić tytuł, URL i favicon w wysokiej rozdzielczości i natychmiast zapisać je w wybranej przestrzeni.
@@ -200,15 +204,16 @@ Pliki wynikowe znajdziesz w folderze `dist/`:
 
 ## 🙏 Podziękowania (Acknowledgements)
 
-- ⚛️ **[React](https://react.dev/)**
-- ⚡ **[Vite](https://vitejs.dev/)**
-- 🔲 **[GridStack](https://gridstackjs.com/)**
-- 🎨 **[Lucide Icons](https://lucide.dev/)**
-- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
-- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**
-- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**
-- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**
-- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**
+- ⚛️ **[React](https://react.dev/)**: Fundament do budowy nowoczesnych, deklaratywnych i wysoce responsywnych interfejsów użytkownika.
+- ⚡ **[Vite](https://vitejs.dev/)**: Błyskawiczne narzędzie nowej generacji do budowania frontendu z obsługą Hot Module Replacement (HMR).
+- 🔲 **[GridStack](https://gridstackjs.com/)**: Nowoczesny silnik siatki do swobodnego przeciągania i niezależnych układów wielu pulpitów.
+- 🎯 **[@dnd-kit](https://dndkit.com/)**: Lekki, modułowy zestaw narzędzi do płynnego, bezmigotliwego sortowania w widoku listy.
+- 🎨 **[Lucide Icons](https://lucide.dev/)** : Estetyczna, elegancka i spójna biblioteka ikon open-source.
+- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**: Zaawansowana biblioteka kalendarza księżycowego i 24 okresów słonecznych autorstwa [@6tail](https://github.com/6tail).
+- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**: Elastyczny framework CSS napędzający efekty szkła matowego (Glassmorphism) i adaptacyjne motywy.
+- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**: Zunifikowana warstwa zgodności WebExtensions oparta na Promise, utrzymywana przez Mozillę.
+- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**: Fotografia w wysokiej rozdzielczości i codzienne tapety.
+- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**: Niezawodne interfejsy REST API Git / Gist oraz ekosystem deweloperski.
 
 ---
 

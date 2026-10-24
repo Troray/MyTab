@@ -44,7 +44,11 @@
 
 ## 🌟 主な機能
 
-- 📱 **マルチデスクトップ＆自由配置レイアウト**：モダンな GridStack エンジンを搭載したマルチデスクトップ構造。直感的なドラッグ＆ドロップ、矢印キーでの切り替え、各デスクトップで完全に独立したウィジェット配置に対応。
+- 📱 **マルチデスクトップ＆自由配置キャンバス (Multi-Desktop & Free Canvas Layout, v1.5.0)**：モダンな GridStack エンジンによる自由配置レイアウト。ウィジェットやカードを自由自在にドラッグ＆リサイズ可能。時計・日付・挨拶・旧暦・検索バー・カテゴリピルを独立ウィジェット化し、デスクトップごとのレイアウト記憶とクラウド同期に対応。
+- 📑 **コンパクトリストビュー＆スムーズなドラッグ並べ替え (List View & DndKit, v1.4.0 / v1.5.0)**：高密度な縦並びリスト表示に対応。`@dnd-kit` によりカテゴリ内・カテゴリ間のスムーズなドラッグ並べ替えを実現。アイコン背景色カスタマイズや縦書き自動回転に対応。
+- 🌐 **内外網デュアル URL＆スマート環境切り替え (Dual URL & Network Routing, v1.4.0)**：ショートカットごとに WAN/LAN の両アドレスとメモを設定可能。ヘッダーからワンクリックで環境を切り替え、カードにネットワークバッジを表示。
+- 📊 **カンバンボードビュー (Board View, v1.4.0)**：全カテゴリを複数列のカンバン方式で水平に一覧表示。ホバー時のスムーズな展開とスプリング拡大アニメーションを搭載。
+- 🧭 **インタラクティブ機能ツアー (Feature Tour, v1.5.0)**：各モードに対応した軽量スポットライト型ガイド。ウィジェットの自由ドラッグや旧暦・挨拶の設定などをわかりやすく案内し、バージョンアップ時にも自動表示。
 - 🔖 **ブラウザ標準ブックマークインポート＆重複排除 (Bookmarks Importer, v1.3.0)**：Chrome、Edge、Firefox などの標準ブックマークツリー（ブックマークバー、その他のブックマーク）をワンクリックで高速読み込み。Safari 等の HTML ブックマークファイルにも対応。視覚的なツリー選択、スマートフォルダ展開、重複 URL のリアルタイム照合、インポート前プレビューを完備。
 - 🔒 **プライベートスペース独立コンテナ (Private Space, v1.2.0)**：革新的なデュアルコンテナ構造により、「通常スペース (`default`)」と「プライベートスペース (`private`)」を物理的に完全分離。シークレットモード（Incognito）またはプライベートページ（`private.html`）を開くと自動的に起動し、個人のプライバシーを保護。
 - 📌 **ツールバーからワンクリック追加 (Popup)**：任意のウェブサイト閲覧中にツールバーのアイコンをクリックするだけで、現在のタイトル・URL・高解像度ファビコンを自動抽出し、指定のスペースとカテゴリに一発保存。重複登録の警告機能付き。
@@ -217,15 +221,16 @@ npm run package
 
 ## 🙏 謝辞 (Acknowledgements)
 
-- ⚛️ **[React](https://react.dev/)**
-- ⚡ **[Vite](https://vitejs.dev/)**
-- 🔲 **[GridStack](https://gridstackjs.com/)**
-- 🎨 **[Lucide Icons](https://lucide.dev/)**
-- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
-- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**
-- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**
-- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**
-- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**
+- ⚛️ **[React](https://react.dev/)**：高応答で宣言的なUIを構築するためのフロントエンド基盤。
+- ⚡ **[Vite](https://vitejs.dev/)**：高速な次世代フロントエンドビルド＆HMR開発ツール。
+- 🔲 **[GridStack](https://gridstackjs.com/)**：自由なドラッグ＆ドロップ、動的リサイズ、独立マルチデスクトップを実現するモダンなグリッドエンジン。
+- 🎯 **[@dnd-kit](https://dndkit.com/)**：リストビューにおけるスムーズでちらつきのないドラッグ並べ替えを提供する軽量ツールキット。
+- 🎨 **[Lucide Icons](https://lucide.dev/)**：美しく洗練された一貫性のあるオープンソースアイコンライブラリ。
+- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**：[@6tail](https://github.com/6tail) 氏による高機能な旧暦・二十四節気・干支暦計算ライブラリ。
+- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**：すりガラス調（Glassmorphism）やダークモード適応を支える柔軟なCSSフレームワーク。
+- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**：Mozillaが保守するWebExtension標準Promise互換レイヤー。
+- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**：美しい日替わり壁紙や高品質写真を提供するAPI。
+- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**：安定したGit / Gist REST APIと開発者エコシステム。
 
 ---
 
