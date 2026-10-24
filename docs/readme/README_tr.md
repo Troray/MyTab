@@ -44,16 +44,16 @@ Minimalist, şık ve gizlilik odaklı, buzlu cam tasarımlı (Glassmorphism), di
 
 ## 🌟 Temel Özellikler
 
-- 📱 **Çoklu Masaüstü ve Serbest Tuval Düzeni (Multi-Desktop & Free Canvas Layout, v1.5.0)**: GridStack ile güçlendirilmiş yeni serbest düzen sistemi. Serbest sürükleme, boyutlandırma, çakışma kontrolü ve otomatik ızgaraya yaslama. Saat, tarih, selamlama, ay takvimi, arama çubuğu ve kategoriler bağımsız widget'lar olarak masaüstü bazında kaydedilir.
-- 📑 **Kompakt Liste Görünümü & Akıcı Sıralama (List View & DndKit, v1.4.0 / v1.5.0)**: `@dnd-kit` ile kategoriler içinde ve arasında titreşimsiz sürükle-bırak desteği sunan yüksek yoğunluklu dikey liste. Özel simge arka planları desteği.
-- 🌐 **Çift URL (WAN / LAN) ve Akıllı Yönlendirme (v1.4.0)**: Her kısayol için harici ve dahili adresler ile notlar tanımlayın. Başlıktan tek tıkla ortam değiştirin ve kartlarda ağ rozetlerini görüntüleyin.
-- 📊 **Kategori Kanban Panosu Görünümü (Board View, v1.4.0)**: Tüm kategorileri sütunlar halinde yatay olarak listeleyen Kanban panosu görünümü.
-- 🧭 **Etkileşimli Özellik Turu (Feature Tour, v1.5.0)**: Serbest Düzen, Liste ve Kanban Panosu görünümleri için widget sürükleme ve ay takvimi ayarlarını gösteren hafif kılavuz, sürüm güncellemelerinde otomatik olarak tetiklenir.
-- 🔖 **Yinelenenleri Önleyen Yerleşik Yer İmi İçe Aktarma (v1.3.0)**: Chrome, Edge ve Firefox'un yer imi ağaçlarını ve Netscape HTML dosyalarını (Safari vb.) anında okuma. Görsel ağaç seçimi, akıllı klasör düzleştirme, gerçek zamanlı kopya kontrolü ve içe aktarma önizlemesi.
-- 🔒 **Çift Kapsayıcılı Gizli Alan (v1.2.0)**: Günlük gezinme (Varsayılan Alan) ile hassas siteleri (Gizli Alan) fiziksel olarak ayıran yenilikçi çoklu profil mimarisi. Gizli pencerelerde (Incognito) veya `private.html` sayfasında otomatik olarak etkinleşir.
+- 📱 **Çoklu Masaüstü ve Serbest Tuval Düzeni (Multi-Desktop & Free Canvas Layout)**: GridStack ile güçlendirilmiş yeni serbest düzen sistemi. Serbest sürükleme, boyutlandırma, çakışma kontrolü ve otomatik ızgaraya yaslama. Saat, tarih, selamlama, ay takvimi, arama çubuğu ve kategoriler bağımsız widget'lar olarak masaüstü bazında kaydedilir.
+- 📑 **Kompakt Liste Görünümü & Akıcı Sıralama (List View & DndKit)**: `@dnd-kit` ile kategoriler içinde ve arasında titreşimsiz sürükle-bırak desteği sunan yüksek yoğunluklu dikey liste. Özel simge arka planları desteği.
+- 🌐 **Çift URL (WAN / LAN) ve Akıllı Yönlendirme**: Her kısayol için harici ve dahili adresler ile notlar tanımlayın. Başlıktan tek tıkla ortam değiştirin ve kartlarda ağ rozetlerini görüntüleyin.
+- 📊 **Kategori Kanban Panosu Görünümü (Board View)**: Tüm kategorileri sütunlar halinde yatay olarak listeleyen Kanban panosu görünümü.
+- 🧭 **Etkileşimli Özellik Turu (Feature Tour)**: Serbest Düzen, Liste ve Kanban Panosu görünümleri için widget sürükleme ve ay takvimi ayarlarını gösteren hafif kılavuz, sürüm güncellemelerinde otomatik olarak tetiklenir.
+- 🔖 **Yinelenenleri Önleyen Yerleşik Yer İmi İçe Aktarma (Bookmarks Importer)**: Chrome, Edge ve Firefox'un yer imi ağaçlarını ve Netscape HTML dosyalarını (Safari vb.) anında okuma. Görsel ağaç seçimi, akıllı klasör düzleştirme, gerçek zamanlı kopya kontrolü ve içe aktarma önizlemesi.
+- 🔒 **Çift Kapsayıcılı Gizli Alan (Private Space)**: Günlük gezinme (Varsayılan Alan) ile hassas siteleri (Gizli Alan) fiziksel olarak ayıran yenilikçi çoklu profil mimarisi. Gizli pencerelerde (Incognito) veya `private.html` sayfasında otomatik olarak etkinleşir.
 - 📌 **Araç Çubuğundan Tek Tıkla Hızlı Kaydetme (Popup)**: Herhangi bir sitedeyken araç çubuğu simgesine tıklayarak sayfa başlığını, URL'yi ve yüksek çözünürlüklü favicon'u anında istediğiniz alana kaydedin.
-- 🎨 **Sade Simge Görünümü ve Derin Özelleştirme (v1.3.0)**: Mobil tarzı sade simge düzeni ve buzlu cam kart desteği. **6 temel bileşen** (saat, tarih, karşılama, arama çubuğu, kategori sekmeleri ve kartlar) için bağımsız renk ayarı ve otomatik Canvas kontrast analizi.
-- 📅 **Ay Takvimi ve Geleneksel Güneş Dönemleri (v1.2.0)**: Entegre hafif ay takvimi algoritmasıyla başlıkta zarif gösterim ve bağımsız açma/kapama seçeneği.
+- 🎨 **Sade Simge Görünümü ve Renk Özelleştirmesi**: Sade simge görünümü ile buzlu cam kartlar arasında akıcı geçiş, opaklık ve boyut ince ayarı. **6 temel bileşen** (saat, tarih, karşılama, arama çubuğu, kategori sekmeleri ve kartlar) için bağımsız renk ayarı ve otomatik Canvas kontrast analizi.
+- 📅 **Ay Takvimi ve Geleneksel Güneş Dönemleri**: Entegre hafif ay takvimi algoritmasıyla başlıkta zarif gösterim ve bağımsız açma/kapama seçeneği.
 - 🖼️ **Seçkin Duvar Kağıtları ve Akıcı Geçişler**: Bing günlük HD duvar kağıtları ve Unsplash fotoğrafları (CDN hızlandırmalı) ile çift tamponlu pürüzsüz solma geçişi.
 - ⚡ **Akıllı Çok Kaynaklı Favicon ve Vektörel Yedek**: Çok kaynaklı favicon alma motoru ve yerel Base64 önbelleği. Simge bulunamadığında alan adı baş harfinden renkli degrade SVG vektör simgesi oluşturulur.
 - 🛡️ **Buzlu Cam Hata Yakalayıcı (ErrorBoundary)**: Beklenmeyen çalışma zamanı hatalarını zarif bir pencereyle yakalayarak anında yenileme ve önbellek sıfırlama seçeneği sunar.
