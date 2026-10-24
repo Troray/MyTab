@@ -623,7 +623,7 @@ export const de: Translation = {
   tourGotIt: "Verstanden",
   tourSkip: "Überspringen",
   tourGridStep1Title: "Schnellsteuerleiste",
-  tourGridStep1Desc: "- Mauszeiger oben rechts bewegen, um Aktionssymbole einzublenden\n- ⚙️ anklicken für Einstellungen, Synchronisierung und Backups\n- Layout-Symbol anklicken für Gitter-, Board- oder Listenansicht\n- Schnell in den Bearbeitungsmodus wechseln oder Lesezeichen importieren",
+  tourGridStep1Desc: "- Mauszeiger oben rechts bewegen, um Aktionssymbole einzublenden\n- ⚙️ anklicken für Einstellungen, Synchronisierung und Backups\n- Layout-Symbol anklicken für Freies Layout, Board- oder Listenansicht\n- Schnell in den Bearbeitungsmodus wechseln oder Lesezeichen importieren",
   tourGridStep2Title: "Freie Canvas-Bearbeitung",
   tourGridStep2Desc: "- Auf das ✏️ Stiftsymbol oben rechts klicken, um zu bearbeiten\n- Uhr und Kacheln völlig frei an jede beliebige Stelle verschieben\n- Kachelformen und -größen anpassen und Ebenen anordnen\n- Auf das Häkchen oben rechts klicken, um das Layout zu speichern",
   tourGridStep3Title: "Website-Kacheln",
