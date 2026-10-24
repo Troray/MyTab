@@ -44,7 +44,11 @@ Minimalist, şık ve gizlilik odaklı, buzlu cam tasarımlı (Glassmorphism), di
 
 ## 🌟 Temel Özellikler
 
-- 📱 **Çoklu Masaüstü Karuseli ve Kaydırma Hareketleri (v1.3.0)**: Embla Carousel fizik motoruyla güçlendirilmiş çoklu masaüstü yapısı. Fareyle sürükleyerek veya yön tuşlarıyla pürüzsüz sayfa geçişi, buzlu cam sayfa göstergeleri. Masaüstlerini yeniden adlandırma, bağlantıları otomatik taşıyarak güvenli silme ve bağımsız kategori belleği.
+- 📱 **Çoklu Masaüstü ve Serbest Tuval Düzeni (Multi-Desktop & Free Canvas Layout, v1.5.0)**: GridStack ile güçlendirilmiş yeni serbest düzen sistemi. Serbest sürükleme, boyutlandırma, çakışma kontrolü ve otomatik ızgaraya yaslama. Saat, tarih, selamlama, ay takvimi, arama çubuğu ve kategoriler bağımsız widget'lar olarak masaüstü bazında kaydedilir.
+- 📑 **Kompakt Liste Görünümü & Akıcı Sıralama (List View & DndKit, v1.4.0 / v1.5.0)**: `@dnd-kit` ile kategoriler içinde ve arasında titreşimsiz sürükle-bırak desteği sunan yüksek yoğunluklu dikey liste. Özel simge arka planları desteği.
+- 🌐 **Çift URL (WAN / LAN) ve Akıllı Yönlendirme (v1.4.0)**: Her kısayol için harici ve dahili adresler ile notlar tanımlayın. Başlıktan tek tıkla ortam değiştirin ve kartlarda ağ rozetlerini görüntüleyin.
+- 📊 **Kategori Kanban Panosu Görünümü (Board View, v1.4.0)**: Tüm kategorileri sütunlar halinde yatay olarak listeleyen Kanban panosu görünümü.
+- 🧭 **Etkileşimli Özellik Turu (Feature Tour, v1.5.0)**: Widget sürükleme ve ay takvimi ayarlarını gösteren hafif kılavuz, sürüm güncellemelerinde otomatik olarak tetiklenir.
 - 🔖 **Yinelenenleri Önleyen Yerleşik Yer İmi İçe Aktarma (v1.3.0)**: Chrome, Edge ve Firefox'un yer imi ağaçlarını ve Netscape HTML dosyalarını (Safari vb.) anında okuma. Görsel ağaç seçimi, akıllı klasör düzleştirme, gerçek zamanlı kopya kontrolü ve içe aktarma önizlemesi.
 - 🔒 **Çift Kapsayıcılı Gizli Alan (v1.2.0)**: Günlük gezinme (Varsayılan Alan) ile hassas siteleri (Gizli Alan) fiziksel olarak ayıran yenilikçi çoklu profil mimarisi. Gizli pencerelerde (Incognito) veya `private.html` sayfasında otomatik olarak etkinleşir.
 - 📌 **Araç Çubuğundan Tek Tıkla Hızlı Kaydetme (Popup)**: Herhangi bir sitedeyken araç çubuğu simgesine tıklayarak sayfa başlığını, URL'yi ve yüksek çözünürlüklü favicon'u anında istediğiniz alana kaydedin.
@@ -200,15 +204,16 @@ Derleme çıktıları `dist/` klasöründe yer alır:
 
 ## 🙏 Teşekkürler (Acknowledgements)
 
-- ⚛️ **[React](https://react.dev/)**
-- ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
-- 🎨 **[Lucide Icons](https://lucide.dev/)**
-- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
-- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**
-- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**
-- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**
-- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**
+- ⚛️ **[React](https://react.dev/)**: Modern, bildirime dayalı ve yüksek düzeyde duyarlı kullanıcı arayüzleri oluşturmanın temeli.
+- ⚡ **[Vite](https://vitejs.dev/)**: Modül Değiştirme (HMR) özellikli ışık hızında yeni nesil ön uç derleme aracı.
+- 🔲 **[GridStack](https://gridstackjs.com/)**: Serbest sürükle ve bırak ve bağımsız çoklu masaüstü düzenleri için modern ızgara motoru.
+- 🎯 **[@dnd-kit](https://dndkit.com/)**: Liste görünümünde akıcı ve titreşimsiz sıralama sağlayan hafif, modüler araç kiti.
+- 🎨 **[Lucide Icons](https://lucide.dev/)**: Estetik, zarif ve tutarlı açık kaynaklı simge kitaplığı.
+- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**: [@6tail](https://github.com/6tail) tarafından geliştirilen ay takvimi ve 24 güneş dönemi kitaplığı.
+- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**: Buzlu cam efektleri (Glassmorphism) ve uyarlanabilir temalar için atomik CSS çerçevesi.
+- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**: Mozilla'nın Promise tabanlı birleşik WebExtension uyumluluk katmanı.
+- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**: Yüksek kaliteli fotoğrafçılık ve günlük arka plan görselleri.
+- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**: Güvenilir Git / Gist REST API'leri ve geliştirici ekosistemleri.
 
 ---
 

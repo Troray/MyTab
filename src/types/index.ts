@@ -1,4 +1,5 @@
 import { Locale, TranslationKey } from '../locales';
+export type { Locale, TranslationKey };
 
 export interface BookmarkSourceMeta {
   sourceId?: string;
@@ -19,6 +20,23 @@ export interface PresetGradient {
   value: string;
 }
 
+export type FreeWidgetType = 'clock' | 'date' | 'lunar' | 'greeting' | 'search' | 'site' | 'category-pill';
+
+export interface FreeWidgetLayout {
+  id: string; // 'sys-clock' | 'sys-date' | 'sys-lunar' | 'sys-greeting' | 'sys-search' | `site-${siteId}` | `cat-pill-${categoryId}`
+  type: FreeWidgetType;
+  x: number; // grid column (0-59)
+  y: number; // grid row (0-...)
+  w: number; // width in grid columns
+  h: number; // height in grid rows
+  zIndex?: number;
+  isLocked?: boolean;
+}
+
+export type FreeCanvasLayoutMap = Record<string, FreeWidgetLayout>;
+
+export type IconBgType = 'frosted' | 'white' | 'dark' | 'transparent' | 'custom';
+
 export interface SiteItem {
   id: string;
   title: string;
@@ -33,6 +51,8 @@ export interface SiteItem {
   updatedAt: number;
   bookmark?: BookmarkSourceMeta;
   pageId?: string;
+  iconBgType?: IconBgType | 'inherit';
+  iconBgColor?: string;
 }
 
 export interface Category {
@@ -98,10 +118,12 @@ export interface ThemeSettings {
   cardBlur?: number; // 废弃：保留可选兼容旧版存储
   cardOpacity: number; // 0.1 ~ 1.0 (default 0.2)
   cardSize: number; // in px or scale: e.g. 90 ~ 160 (default 110)
-  iconSizeRatio?: number; // 0.28 ~ 0.68, default 0.42
+  iconSizeRatio?: number; // 0.28 ~ 0.85, default 0.60
+  gridIconSize?: number; // Unified icon size in px (28 ~ 80px, default 48)
   maxCardsPerRow?: number; // e.g. 4 ~ 12 (default 8)
   activeEngineId: string;
   openInNewTab: boolean;
+  showNetworkBadge?: boolean; // Whether to display WAN / LAN network badge on site shortcuts (default: true)
   timeFormat?: '12h' | '24h';
   showSearch: boolean;
   showClock: boolean;
@@ -111,15 +133,19 @@ export interface ThemeSettings {
   showCardBackground?: boolean;
   showSiteTitle?: boolean;
   showCategories?: boolean;
+  categoryDisplayMode?: 'tabs' | 'groups'; // 'tabs' for category tabs bar, 'groups' for standalone draggable group containers
   maxNavCategories?: number; // Max categories shown on navbar before folding to 'More' (0 means unlimited, default 6)
   iconSpacing?: number; // Spacing/compactness between icons in icon-only mode (8 ~ 48px, default 20)
 
   // Grid Mode fine-tuning
   gridGapX?: number; // Horizontal gap between cards (8 ~ 40px, default 16)
   gridGapY?: number; // Vertical gap between cards (8 ~ 40px, default 16)
-  gridTitleFontSize?: number; // Title font size (11 ~ 18px, default 12)
+  gridTitleFontSize?: number; // Title font size (10 ~ 26px, default 14)
   gridCategoryFontSize?: number; // Category tabs font size (12 ~ 22px, default 14)
-  gridIconTextGap?: number; // Distance between icon and title (2 ~ 16px, default 8)
+  gridIconTextGap?: number; // Distance between icon and title (2 ~ 24px, default 8)
+  gridTextLineGap?: number; // Distance between title and subtitle lines (0 ~ 20px, default 2)
+  gridIconBgType?: IconBgType; // Icon background style: 'frosted' (default) | 'white' | 'dark' | 'transparent' | 'custom'
+  gridIconBgColor?: string; // Custom color for icon background (hex or rgba)
 
   // Board Mode
   boardColumnsPerRow?: number; // Board view columns per row (2 ~ 8, default 5)
@@ -147,6 +173,17 @@ export interface ThemeSettings {
   listIconTextGap?: number; // Gap between icon and text block (4 ~ 24px, default 10)
   listCardOpacity?: number; // Card opacity (0.05 ~ 0.95, default 0.22)
   listShowCardBackground?: boolean; // Show card background (default true)
+  listIconBgType?: IconBgType; // List card/icon background style: 'frosted' (default) | 'white' | 'dark' | 'transparent' | 'custom'
+  listIconBgColor?: string; // Custom color for list card background (hex or rgba)
+
+  // Free Layout Settings
+  freeLayoutAllowOverlap?: boolean; // Whether components can overlap (default: true)
+  freeLayoutSnapGrid?: number; // Snap grid step in px (0 for continuous pixel, >0 for snap)
+
+  // Mode-specific Tooltip Switches
+  gridShowTooltip?: boolean; // Show tooltip in Grid mode (default true)
+  boardShowTooltip?: boolean; // Show tooltip in Board mode (default true)
+  listShowTooltip?: boolean; // Show tooltip in List mode (default true)
   language: Locale;
   textColorMode?: TextColorMode;
   customTextColors?: CustomTextColors;
@@ -154,6 +191,15 @@ export interface ThemeSettings {
   customTextColorsLight?: CustomTextColors;
   textColorModeDark?: TextColorMode;
   customTextColorsDark?: CustomTextColors;
+  gridTextColorMode?: TextColorMode;
+  gridTextColorModeLight?: TextColorMode;
+  gridTextColorModeDark?: TextColorMode;
+  boardTextColorMode?: TextColorMode;
+  boardTextColorModeLight?: TextColorMode;
+  boardTextColorModeDark?: TextColorMode;
+  listTextColorMode?: TextColorMode;
+  listTextColorModeLight?: TextColorMode;
+  listTextColorModeDark?: TextColorMode;
   customGreetings?: CustomGreetings;
   unsplashAccessKey?: string;
   unsplashActiveTab?: string;
@@ -238,6 +284,15 @@ export interface WallpaperSettings {
   customTextColorsLight?: CustomTextColors;
   textColorModeDark?: TextColorMode;
   customTextColorsDark?: CustomTextColors;
+  gridTextColorMode?: TextColorMode;
+  gridTextColorModeLight?: TextColorMode;
+  gridTextColorModeDark?: TextColorMode;
+  boardTextColorMode?: TextColorMode;
+  boardTextColorModeLight?: TextColorMode;
+  boardTextColorModeDark?: TextColorMode;
+  listTextColorMode?: TextColorMode;
+  listTextColorModeLight?: TextColorMode;
+  listTextColorModeDark?: TextColorMode;
 }
 
 export interface ProfileData {
@@ -247,6 +302,7 @@ export interface ProfileData {
   gridPages?: GridPage[];
   activeGridPageId?: string;
   pageCategoryMap?: Record<string, string>;
+  freeLayouts?: Record<string, FreeCanvasLayoutMap>; // keyed by gridPageId e.g. 'page-1'
   settings?: Partial<ThemeSettings>;
   wallpaper?: WallpaperSettings;
 }
@@ -268,6 +324,7 @@ export interface SyncPayload {
   categories?: Category[]; // V1 backward compatibility
   sites?: SiteItem[];      // V1 backward compatibility
   gridPages?: GridPage[];
+  freeLayouts?: Record<string, FreeCanvasLayoutMap>;
   settings: ThemeSettings;
 }
 
@@ -278,12 +335,14 @@ export interface AppState {
   gridPages?: GridPage[];
   activeGridPageId?: string;
   pageCategoryMap?: Record<string, string>;
+  freeLayouts?: Record<string, FreeCanvasLayoutMap>;
   settings: ThemeSettings;
   webdav: WebdavConfig;
   git: GitSyncConfig;
   syncSettings: ProfileSyncSettings;
   activeCategoryId: string;
   isFirstLaunch: boolean;
+  guidedModes?: Record<string, boolean>;
   hasCustomSettings?: boolean;
   hasCustomWallpaper?: boolean;
 }

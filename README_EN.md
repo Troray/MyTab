@@ -44,7 +44,11 @@ A minimalist, aesthetic, and privacy-focused modern browser New Tab extension wi
 
 ## 🌟 Key Features
 
-- 📱 **Multi-Desktop Carousel & Gesture Swiping (v1.3.0)**: Newly introduced multi-desktop architecture powered by the physics-based Embla Carousel engine. Supports authentic touch/mouse drag momentum, keyboard arrow keys navigation, and a floating frosted-glass page indicator (● ○ ○). Features desktop renaming, safe page deletion with automatic site migration, independent per-page category memory, and cross-desktop category movement.
+- 📱 **Multi-Desktop & Free Canvas Layout (v1.5.0)**: Brand-new free layout system powered by the modern GridStack layout engine! Enjoy freeform drag-and-drop, stepless resizing, component overlap toggle, and automatic snap-to-grid alignment. System widgets (Clock, Date, Greeting, Lunar Calendar, Search Bar, and Category Pills) are now modular, draggable widgets with independent per-desktop layout persistence and cloud sync.
+- 📑 **Compact List View & Smooth Drag Reordering (List View & DndKit, v1.4.0 / v1.5.0)**: High-density vertical category layout with single and dual-column display. Integrated with `@dnd-kit` for fluid in-category and cross-category drag reordering without post-drop icon flickering. Supports custom card/icon background styling (frosted glass, white, dark, transparent, or custom Hex) and auto-rotating text for vertical layouts.
+- 🌐 **Dual URL (WAN / LAN) & Intelligent Network Routing (v1.4.0)**: Configure both external (WAN) and internal (LAN) URLs plus custom notes for any shortcut. One-click global network environment toggle in the header, dynamic network badges on cards, and instant right-click routing.
+- 📊 **Category Board View (v1.4.0)**: Multi-column Kanban-style board view displaying all categories horizontally for effortless browsing. Features smooth hover expansion and micro-spring icon animations.
+- 🧭 **Interactive Spotlight Feature Tour (v1.5.0)**: Lightweight spotlight onboarding tour tailored for Grid, List, Board, and Free Canvas modes. Highlights top widgets free dragging, lunar calendar, and greeting settings, with smooth auto-triggering on version upgrades.
 - 🔖 **Native Browser Bookmarks Importer with Smart Deduplication (v1.3.0)**: One-click extraction of native bookmark trees (Bookmarks Bar, Other Bookmarks, Mobile Bookmarks) across Chrome, Edge, and Firefox, alongside Netscape HTML bookmark file import (compatible with Safari and all browsers). Offers interactive tree selection, tri-state checkboxes, smart folder flattening, real-time URL duplicate comparison, and live import preview stats.
 - 🔒 **Private Space Dual-Container (v1.2.0)**: Innovative Multi-Profile architecture providing physical separation between your daily browsing (Default Space) and sensitive browsing (Private Space). Each space maintains independent bookmarks, categories, and wallpapers. Automatically activated in Incognito / Private windows or accessible via `private.html`.
 - 📌 **One-Click Toolbar Quick Collector (Popup)**: While browsing any webpage, click the MyTab icon on your browser toolbar to instantly summon the bookmark modal. Automatically extracts the current page title, URL, and high-res Favicon with one-click classification into your chosen space and category, complete with duplicate URL detection.
@@ -203,7 +207,13 @@ npm install
 npm run dev
 ```
 
-### 3. Build Extension Packages
+### 3. Run Automated Unit Tests
+```bash
+# Run all automated test suites
+npm test
+```
+
+### 4. Build Extension Packages
 ```bash
 # Build production extension packages for all platforms (Chrome MV3 & Firefox into dist/)
 npm run build
@@ -217,7 +227,7 @@ Build outputs will be generated in the `dist/` directory:
 - `dist/firefox/`: Unpacked extension for Mozilla Firefox.
 - `dist/mytab-chrome.zip` / `dist/mytab-firefox.zip`: Distribution archives.
 
-### 4. Load Extension for Debugging
+### 5. Load Extension for Debugging
 1. **Google Chrome / Microsoft Edge / Brave**:
    - Navigate to `chrome://extensions/` (or `edge://extensions/`).
    - Enable **"Developer mode"**.
@@ -261,7 +271,8 @@ MyTab's creation and continuous growth are deeply indebted to the open-source co
 
 - ⚛️ **[React](https://react.dev/)**: The cornerstone for building modern, highly responsive, and declarative user interfaces.
 - ⚡ **[Vite](https://vitejs.dev/)**: Next-generation, lightning-fast frontend tooling and Hot Module Replacement (HMR).
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**: Lightweight, highly extensible, and physics-driven carousel engine for fluid gesture navigation.
+- 🔲 **[GridStack](https://gridstackjs.com/)**: Modern grid layout engine providing underlying technical support for free drag-and-drop, dynamic resizing, and independent multi-desktop layouts.
+- 🎯 **[@dnd-kit](https://dndkit.com/)**: Lightweight and modular drag-and-drop toolkit powering smooth, zero-flicker list reordering.
 - 🎨 **[Lucide Icons](https://lucide.dev/)**: An aesthetically pleasing, elegant, and consistent open-source icon library.
 - 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**: High-performance, zero-dependency lunar calendar and 24 Solar Terms library created by [@6tail](https://github.com/6tail).
 - 🌈 **[Tailwind CSS](https://tailwindcss.com/)**: Highly flexible atomic CSS framework powering our frosted glass (Glassmorphism) and adaptive themes.

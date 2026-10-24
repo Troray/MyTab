@@ -44,7 +44,11 @@ Un'estensione moderna, minimale e attenta alla privacy per la pagina Nuova Sched
 
 ## 🌟 Funzionalità Principali
 
-- 📱 **Carosello Multi-Desktop & Gesti di Scorrimento (v1.3.0)**: Nuova architettura multi-desktop basata sul motore fisico Embla Carousel. Supporta lo scorrimento fluido con trascinamento del mouse, i tasti freccia della tastiera e indicatori di pagina galleggianti in vetro satinato. Permette di rinominare i desktop, eliminare pagine migrando automaticamente i collegamenti e memorizzare categorie indipendenti per desktop.
+- 📱 **Multi-Desktop & Tela Libera (Multi-Desktop & Free Canvas Layout, v1.5.0)**: Nuovo sistema di layout libero basato su GridStack con trascinamento, ridimensionamento fluido, gestione sovrapposizioni e allineamento a griglia. Orologio, data, saluto, calendario lunare, barra di ricerca e pillole di categoria sono widget indipendenti persistenti per desktop.
+- 📑 **Vista Elenco Compatta & Riordino Fluido (List View & DndKit, v1.4.0 / v1.5.0)**: Layout verticale ad alta densità con `@dnd-kit` per riordinare senza sfarfallio all'interno e tra le categorie. Supporta stili di sfondo personalizzati per le icone.
+- 🌐 **Doppio URL (WAN / LAN) & Routing Intelligente (v1.4.0)**: Configura indirizzi esterni e interni e note per ogni scorciatoia. Cambia ambiente con un clic e visualizza i badge di rete sulle schede.
+- 📊 **Vista Bacheca Kanban (Board View, v1.4.0)**: Visualizzazione orizzontale di tutte le categorie in colonne Kanban con espansione al passaggio del mouse ed effetti elastici.
+- 🧭 **Tour Interattivo delle Funzionalità (Feature Tour, v1.5.0)**: Guida spotlight leggera che illustra il trascinamento dei widget e la configurazione del calendario lunare, con attivazione automatica dopo gli aggiornamenti di versione.
 - 🔖 **Importazione Nativa dei Segnalibri con Deduplicazione Intelligente (v1.3.0)**: Lettura istantanea dei segnalibri nativi da Chrome, Edge e Firefox, oltre al supporto per file HTML standard (Safari, ecc.). Selezione visiva ad albero, appiattimento intelligente delle cartelle, confronto dei duplicati in tempo reale e anteprima delle statistiche.
 - 🔒 **Spazio Privato a Doppio Contenitore (v1.2.0)**: Innovativa architettura multi-profilo che separa fisicamente la navigazione quotidiana (Spazio Predefinito) da quella riservata (Spazio Privato). Si attiva automaticamente nelle finestre in incognito o tramite `private.html`.
 - 📌 **Aggiunta Rapida con un Clic dalla Barra degli Strumenti (Popup)**: Durante la navigazione, fai clic sull'icona della barra degli strumenti per estrarre istantaneamente titolo, URL e favicon ad alta risoluzione e salvarli nello spazio e categoria desiderati.
@@ -200,15 +204,16 @@ I pacchetti compilati saranno disponibili nella cartella `dist/`:
 
 ## 🙏 Ringraziamenti (Acknowledgements)
 
-- ⚛️ **[React](https://react.dev/)**
-- ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
-- 🎨 **[Lucide Icons](https://lucide.dev/)**
-- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
-- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**
-- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**
-- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**
-- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**
+- ⚛️ **[React](https://react.dev/)**: Il punto di riferimento per la creazione di interfacce utente moderne, dichiarative e altamente reattive.
+- ⚡ **[Vite](https://vitejs.dev/)**: Strumento di compilazione frontend ultraveloce di nuova generazione con ricaricamento a caldo (HMR).
+- 🔲 **[GridStack](https://gridstackjs.com/)**: Motore di layout a griglia moderno per trascinamento libero e layout multi-desktop indipendenti.
+- 🎯 **[@dnd-kit](https://dndkit.com/)**: Toolkit modulare e leggero per riordinare elenchi in modo fluido e senza sfarfallio.
+- 🎨 **[Lucide Icons](https://lucide.dev/)**: Libreria di icone open source elegante, coerente e rifinita.
+- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**: Libreria per calendario lunare e 24 termini solari sviluppata da [@6tail](https://github.com/6tail).
+- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**: Framework CSS atomico per effetti vetro satinato (Glassmorphism) e temi adattivi.
+- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**: Livello di compatibilità unificato per WebExtension basato su Promise di Mozilla.
+- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**: Fotografia ad alta risoluzione e sfondi giornalieri.
+- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**: API REST Git / Gist affidabili ed ecosistema per sviluppatori.
 
 ---
 

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Sparkles, Image as ImageIcon, Upload, Loader2, Check, AlertCircle } from 'lucide-react';
-import { SiteItem, ThemeSettings, Category, GridPage } from '../../types';
+import { SiteItem, ThemeSettings, Category, GridPage, IconBgType } from '../../types';
 import { fetchSiteMetadata, generateFallbackIcon, normalizeUrl, fileToBase64Icon, urlToBase64Icon } from '../../services/metadata';
 import { t } from '../../utils/i18n';
 import { CustomSelect } from './CustomSelect';
-import { isLightMode, getCategoryDisplayName, getGridPageDisplayName } from '../../utils/constants';
+import { isLightMode, getCategoryDisplayName, getGridPageDisplayName, getEffectiveIconBg } from '../../utils/constants';
 
 interface SiteModalProps {
   isOpen: boolean;
@@ -52,6 +52,8 @@ export const SiteModal: React.FC<SiteModalProps> = ({
   const [description, setDescription] = useState(() => editingSite?.description || '');
   const [title, setTitle] = useState(() => editingSite?.title || '');
   const [icon, setIcon] = useState(() => editingSite?.icon || '');
+  const [iconBgType, setIconBgType] = useState<IconBgType | 'inherit'>(() => editingSite?.iconBgType || 'inherit');
+  const [iconBgColor, setIconBgColor] = useState<string>(() => editingSite?.iconBgColor || '#f3f3f3');
   const [pageId, setPageId] = useState(() => initialPageId);
 
   const availableCategories = useMemo(() => {
@@ -109,6 +111,8 @@ export const SiteModal: React.FC<SiteModalProps> = ({
       setDescription(editingSite.description || '');
       setTitle(editingSite.title || '');
       setIcon(editingSite.icon || '');
+      setIconBgType(editingSite.iconBgType || 'inherit');
+      setIconBgColor(editingSite.iconBgColor || '#f3f3f3');
       const validSitePageId = (editingSite.pageId && gridPages?.some((p) => p.id === editingSite.pageId))
         ? editingSite.pageId
         : (siteCategory?.pageId && gridPages?.some((p) => p.id === siteCategory.pageId)
@@ -140,6 +144,8 @@ export const SiteModal: React.FC<SiteModalProps> = ({
       setDescription('');
       setTitle('');
       setIcon('');
+      setIconBgType('inherit');
+      setIconBgColor('#f3f3f3');
       setPageId(initialPage);
       setCategoryId(initialCat);
     }
@@ -257,6 +263,8 @@ export const SiteModal: React.FC<SiteModalProps> = ({
       description: description.trim() || undefined,
       title: finalTitle,
       icon: finalIcon,
+      iconBgType: iconBgType === 'inherit' ? undefined : iconBgType,
+      iconBgColor: iconBgColor.trim() || '#f3f3f3',
       categoryId: categoryId || 'all',
       pageId: pageId || defaultPageId,
     });
@@ -264,6 +272,11 @@ export const SiteModal: React.FC<SiteModalProps> = ({
 
   const isLight = isLightMode(settings.mode);
   const previewIcon = icon.trim() || generateFallbackIcon(title.trim() || url.trim() || urlLan.trim() || 'W');
+  const effectiveBg = getEffectiveIconBg(
+    { iconBgType: iconBgType === 'inherit' ? undefined : iconBgType, iconBgColor },
+    settings,
+    isLight
+  );
   const content = (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -447,9 +460,8 @@ export const SiteModal: React.FC<SiteModalProps> = ({
             <div className="flex items-center gap-3">
               {/* Live Preview */}
               <div
-                className={`w-11 h-11 rounded-xl border flex items-center justify-center overflow-hidden shrink-0 shadow-inner ${
-                  isLight ? 'bg-black/5 border-black/10' : 'bg-white/10 border-white/20'
-                }`}
+                className={`w-11 h-11 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 shadow-sm transition-all ${effectiveBg.className}`}
+                style={effectiveBg.style}
               >
                 <img
                   src={previewIcon}
@@ -494,6 +506,122 @@ export const SiteModal: React.FC<SiteModalProps> = ({
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Icon Background Selection */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                className={`block text-xs font-medium ${
+                  isLight ? 'text-slate-700' : 'text-white/80'
+                }`}
+              >
+                {t('iconBgTitle', settings.language)}
+              </label>
+              <span className={`text-[10px] ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                {iconBgType === 'inherit'
+                  ? t('iconBgInherit', settings.language)
+                  : iconBgType === 'frosted'
+                  ? t('iconBgFrosted', settings.language)
+                  : iconBgType === 'white'
+                  ? t('iconBgWhite', settings.language)
+                  : iconBgType === 'dark'
+                  ? t('iconBgDark', settings.language)
+                  : iconBgType === 'transparent'
+                  ? t('iconBgTransparent', settings.language)
+                  : t('iconBgCustom', settings.language)}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5">
+              {[
+                { id: 'inherit' as const, label: t('iconBgInherit', settings.language) },
+                { id: 'frosted' as const, label: t('iconBgFrosted', settings.language) },
+                { id: 'white' as const, label: t('iconBgWhite', settings.language) },
+                { id: 'dark' as const, label: t('iconBgDark', settings.language) },
+                { id: 'transparent' as const, label: t('iconBgTransparent', settings.language) },
+                { id: 'custom' as const, label: t('iconBgCustom', settings.language) },
+              ].map((opt) => {
+                const isSelected = iconBgType === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setIconBgType(opt.id)}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 text-center truncate ${
+                      isSelected
+                        ? isLight
+                          ? 'bg-white text-slate-900 shadow-xs border border-black/10 font-semibold'
+                          : 'bg-white/20 text-white shadow-sm border border-white/20 font-semibold'
+                        : isLight
+                        ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                        : 'text-white/60 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom Color Picker if 'custom' is selected */}
+            {iconBgType === 'custom' && (
+              <div className="mt-2.5 p-2.5 rounded-xl border flex items-center justify-between gap-3 bg-black/[0.02] dark:bg-white/[0.03] border-black/5 dark:border-white/5 animate-fade-in">
+                <div className="flex items-center gap-2 shrink-0">
+                  <label
+                    className="rounded-xl border-2 border-black/15 dark:border-white/25 flex items-center justify-center cursor-pointer relative overflow-hidden shadow-sm shrink-0 hover:scale-105 transition-transform"
+                    style={{ backgroundColor: iconBgColor, width: 32, height: 32, minWidth: 32, minHeight: 32 }}
+                    title={t('iconBgCustom', settings.language)}
+                  >
+                    <input
+                      type="color"
+                      value={iconBgColor.startsWith('#') && iconBgColor.length === 7 ? iconBgColor : '#f3f3f3'}
+                      onChange={(e) => setIconBgColor(e.target.value)}
+                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                    />
+                  </label>
+                  <input
+                    type="text"
+                    value={iconBgColor}
+                    onChange={(e) => {
+                      let val = e.target.value.trim();
+                      if (!val.startsWith('#') && val.length > 0) val = '#' + val;
+                      setIconBgColor(val);
+                    }}
+                    placeholder="#F3F3F3"
+                    maxLength={7}
+                    className={`w-24 px-2 py-1 text-xs font-mono font-bold tracking-wider rounded-lg border outline-none uppercase transition-all ${
+                      isLight
+                        ? 'bg-white border-black/15 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                        : 'bg-white/10 border-white/20 text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400'
+                    }`}
+                  />
+                </div>
+
+                {/* Preset color dots */}
+                <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                  {['#ffffff', '#f3f3f3', '#0f172a', '#1e293b', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'].map((hex) => {
+                    const isSelected = iconBgColor.toLowerCase() === hex.toLowerCase();
+                    const isWhite = hex.toLowerCase() === '#ffffff';
+                    return (
+                      <button
+                        key={hex}
+                        type="button"
+                        onClick={() => setIconBgColor(hex)}
+                        style={{ backgroundColor: hex, width: 22, height: 22, minWidth: 22, minHeight: 22 }}
+                        className={`rounded-full transition-all cursor-pointer shrink-0 flex items-center justify-center ${
+                          isWhite ? 'border border-black/20 dark:border-white/40' : 'border border-black/10 dark:border-white/20'
+                        } ${
+                          isSelected
+                            ? 'scale-110 ring-2 ring-blue-500 shadow-sm'
+                            : 'hover:scale-110 opacity-90 hover:opacity-100'
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
         {/* Category Select (only shown if categories exist) */}

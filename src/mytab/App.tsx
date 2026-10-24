@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
-import { Settings as SettingsIcon, Plus, Lock, Pencil, Check, LayoutGrid, Columns3, LayoutList, Globe, Home, FolderPlus, Bookmark, SquarePlus } from 'lucide-react';
+import { Settings as SettingsIcon, Plus, Pencil, Check, LayoutGrid, Columns3, LayoutList, Globe, Home, FolderPlus, Bookmark, SquarePlus } from 'lucide-react';
 import { t } from '../locales';
-import { AppState, Category, GitSyncConfig, GridPage, ProfileSyncSettings, SiteItem, ThemeSettings, WebdavConfig } from '../types';
+import { AppState, Category, GitSyncConfig, GridPage, ProfileSyncSettings, SiteItem, ThemeSettings, WebdavConfig, FreeCanvasLayoutMap } from '../types';
 import {
   loadAppState,
   saveSites,
@@ -15,18 +15,23 @@ import {
   saveProfileItems,
   saveGridPages,
   saveActiveGridPageId,
+  saveFreeLayouts,
+  saveAllFreeLayouts,
   deleteGridPage,
   moveCategoryToGridPage,
   moveSiteToGridPage,
   DEFAULT_GRID_PAGES,
   setFirstLaunchComplete,
+  markModeGuided,
+  resetGuidedModes,
 } from '../services/storage';
 import { ClockHeader } from './components/ClockHeader';
 import { SearchBar } from './components/SearchBar';
 import { CategoryTabs } from './components/CategoryTabs';
-import { SiteGrid } from './components/SiteGrid';
 import { CategoryBoard } from './components/CategoryBoard';
 import { CategoryList } from './components/CategoryList';
+import { FreeCanvas } from './components/FreeCanvas';
+import { HeaderFreeGrid } from './components/HeaderFreeGrid';
 import { Tooltip } from './components/Tooltip';
 import { urlToBase64Icon } from '../services/metadata';
 import { DEFAULT_SETTINGS, isLightMode } from '../utils/constants';
@@ -37,7 +42,7 @@ const CACHE_WARMER_DELAY = 1200; // Delay to avoid blocking initial render
 // Lazy-load heavy modal/drawer components to reduce initial bundle size
 const SiteModal = lazy(() => import('./components/SiteModal').then(m => ({ default: m.SiteModal })));
 const SettingsDrawer = lazy(() => import('./components/SettingsDrawer').then(m => ({ default: m.SettingsDrawer })));
-const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
+import { FeatureTour } from './components/FeatureTour';
 const ConfirmModal = lazy(() => import('./components/ConfirmModal').then(m => ({ default: m.ConfirmModal })));
 const TextColorCustomizer = lazy(() => import('./components/TextColorCustomizer').then(m => ({ default: m.TextColorCustomizer })));
 const BookmarkImportModal = lazy(() => import('./components/BookmarkImportModal').then(m => ({ default: m.BookmarkImportModal })));
@@ -56,6 +61,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const [deletingSite, setDeletingSite] = useState<SiteItem | null>(null);
   const [isCustomizingColors, setIsCustomizingColors] = useState(false);
   const [isBoardEditing, setIsBoardEditing] = useState(false);
+  const [isFreeLayoutEditing, setIsFreeLayoutEditing] = useState(false);
   const [wallpaperLuminance, setWallpaperLuminance] = useState<WallpaperLuminance>(DEFAULT_LUMINANCE);
   const handleAddMouseEnter = () => {
     if (addHoverTimeoutRef.current) {
@@ -377,6 +383,9 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
   const isFirstLaunch = appState?.isFirstLaunch || false;
   const settings = currentSettings;
 
+  const currentLayoutMode = settings.layoutMode || 'grid';
+  const isTourActive = Boolean(appState && !appState.guidedModes?.[currentLayoutMode]);
+
   const gridPages = useMemo(() => {
     return appState?.gridPages && appState.gridPages.length > 0
       ? appState.gridPages
@@ -616,7 +625,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         id: `site-${now}`,
         title: siteData.title || '',
         url: siteData.url || '',
+        urlLan: siteData.urlLan,
+        description: siteData.description,
         icon: siteData.icon || '',
+        iconBgType: siteData.iconBgType,
+        iconBgColor: siteData.iconBgColor,
         categoryId: siteData.categoryId || fallbackCatId,
         pageId: siteData.pageId || activeGridPageId || defaultPageId,
         sortOrder: sites.length,
@@ -669,8 +682,8 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         return site;
       });
     }
-    await saveSites(updated);
     setAppState((prev) => (prev ? { ...prev, sites: updated } : null));
+    await saveSites(updated);
   }, [sites]);
 
   const handleAddCategory = useCallback(async (data: { name: string; showInAll: boolean; color?: string; pageId?: string }) => {
@@ -792,7 +805,18 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       s.id === siteId ? { ...s, pageId: targetPageId, categoryId: newCategoryId, updatedAt: now } : s
     );
 
-    setAppState((prev) => (prev ? { ...prev, sites: updatedSites } : null));
+    setAppState((prev) => {
+      if (!prev) return null;
+      const updatedFreeLayouts = { ...(prev.freeLayouts || {}) };
+      const sourcePageId = site.pageId || defaultPageId;
+      if (updatedFreeLayouts[sourcePageId]) {
+        const sourceMap = { ...updatedFreeLayouts[sourcePageId] };
+        delete sourceMap[`site-${siteId}`];
+        updatedFreeLayouts[sourcePageId] = sourceMap;
+        saveFreeLayouts(sourcePageId, sourceMap).catch(() => {});
+      }
+      return { ...prev, sites: updatedSites, freeLayouts: updatedFreeLayouts };
+    });
   }, [sites, categories, defaultPageId]);
 
   const handleDeleteCategory = useCallback(async (catId: string, deleteSites: boolean = false) => {
@@ -903,6 +927,31 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     });
   };
 
+  const handleResetSiteIconBgs = useCallback(async () => {
+    setAppState((prev) => {
+      if (!prev) return prev;
+      let hasChange = false;
+      const updatedSites = prev.sites.map((s) => {
+        if (s.iconBgType && s.iconBgType !== 'inherit') {
+          hasChange = true;
+          return {
+            ...s,
+            iconBgType: 'inherit' as const,
+            iconBgColor: undefined,
+          };
+        }
+        return s;
+      });
+      if (hasChange) {
+        saveSites(updatedSites).catch((err) =>
+          console.error('[MyTab] Failed to save reset sites:', err)
+        );
+        return { ...prev, sites: updatedSites };
+      }
+      return prev;
+    });
+  }, []);
+
   const handleUpdateWebdav = async (newWebdav: WebdavConfig) => {
     await saveWebdavConfig(newWebdav);
     setAppState((prev) => (prev ? { ...prev, webdav: newWebdav } : null));
@@ -913,10 +962,119 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     setAppState((prev) => (prev ? { ...prev, git: newGit } : null));
   };
 
-  const handleFinishOnboarding = async () => {
+  const handleUpdateFreeLayouts = useCallback(async (pageId: string, map: FreeCanvasLayoutMap) => {
+    setAppState((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        freeLayouts: {
+          ...(prev.freeLayouts || {}),
+          [pageId]: map,
+        },
+      };
+    });
+    await saveFreeLayouts(pageId, map);
+  }, []);
+
+  const handleResetFreeWidgets = useCallback(async () => {
+    if (!appState) return;
+    const currentFreeLayouts = appState.freeLayouts || {};
+    const updatedFreeLayouts: Record<string, FreeCanvasLayoutMap> = {};
+    const allPageIds = new Set([
+      ...(appState.gridPages || []).map((p) => p.id),
+      ...Object.keys(currentFreeLayouts),
+      activeGridPageId,
+    ]);
+
+    const showDate = settings.showDate ?? true;
+    const showLunar = settings.showLunar ?? true;
+    const showSearch = settings.showSearch ?? true;
+    const targetSiteStartY = showSearch ? 16 : 13;
+
+    allPageIds.forEach((pageId) => {
+      if (!pageId) return;
+      const prevMap = currentFreeLayouts[pageId] ? { ...currentFreeLayouts[pageId] } : {};
+
+      // Clear custom category pill coordinates so they auto-realign below search
+      Object.keys(prevMap).forEach((k) => {
+        if (k.startsWith('cat-pill-')) {
+          delete prevMap[k];
+        }
+      });
+
+      // Reset system widgets to their default positions and dimensions (with generous widths to prevent text truncation)
+      prevMap['sys-clock'] = { id: 'sys-clock', type: 'clock', x: 18, y: 1, w: 24, h: 6 };
+      if (showDate && showLunar) {
+        prevMap['sys-date'] = { id: 'sys-date', type: 'date', x: 21, y: 8, w: 10, h: 2 };
+        prevMap['sys-lunar'] = { id: 'sys-lunar', type: 'lunar', x: 31, y: 8, w: 8, h: 2 };
+      } else if (showDate) {
+        prevMap['sys-date'] = { id: 'sys-date', type: 'date', x: 24, y: 8, w: 12, h: 2 };
+        delete prevMap['sys-lunar'];
+      } else if (showLunar) {
+        prevMap['sys-lunar'] = { id: 'sys-lunar', type: 'lunar', x: 25, y: 8, w: 10, h: 2 };
+        delete prevMap['sys-date'];
+      }
+      prevMap['sys-greeting'] = { id: 'sys-greeting', type: 'greeting', x: 21, y: 10, w: 18, h: 2 };
+      prevMap['sys-search'] = { id: 'sys-search', type: 'search', x: 18, y: 13, w: 24, h: 2 };
+
+      // Ensure site cards do NOT overlap with search bar or header widgets:
+      // If any site card has y < targetSiteStartY, shift all site cards down to maintain spacing
+      const siteKeys = Object.keys(prevMap).filter((k) => k.startsWith('site-'));
+      if (siteKeys.length > 0) {
+        let minSiteY = Infinity;
+        siteKeys.forEach((k) => {
+          if (typeof prevMap[k].y === 'number') {
+            minSiteY = Math.min(minSiteY, prevMap[k].y);
+          }
+        });
+
+        if (minSiteY < targetSiteStartY) {
+          const deltaY = targetSiteStartY - minSiteY;
+          siteKeys.forEach((k) => {
+            prevMap[k] = {
+              ...prevMap[k],
+              y: prevMap[k].y + deltaY,
+            };
+          });
+        }
+      }
+
+      updatedFreeLayouts[pageId] = prevMap;
+    });
+
+    // Also reset header free grid layout for board and list modes with compact, zero-gap positions
+    const headerMap: FreeCanvasLayoutMap = {
+      'sys-clock': { id: 'sys-clock', type: 'clock', x: 16, y: 0, w: 28, h: 5 },
+      'sys-greeting': { id: 'sys-greeting', type: 'greeting', x: 18, y: 6, w: 24, h: 1 },
+      'sys-search': { id: 'sys-search', type: 'search', x: 16, y: 7, w: 28, h: 2 },
+    };
+    if (showDate && showLunar) {
+      headerMap['sys-date'] = { id: 'sys-date', type: 'date', x: 22, y: 5, w: 9, h: 1 };
+      headerMap['sys-lunar'] = { id: 'sys-lunar', type: 'lunar', x: 31, y: 5, w: 7, h: 1 };
+    } else if (showDate) {
+      headerMap['sys-date'] = { id: 'sys-date', type: 'date', x: 24, y: 5, w: 12, h: 1 };
+    } else if (showLunar) {
+      headerMap['sys-lunar'] = { id: 'sys-lunar', type: 'lunar', x: 25, y: 5, w: 10, h: 1 };
+    }
+    updatedFreeLayouts['header'] = headerMap;
+    updatedFreeLayouts['header_board'] = { ...headerMap };
+    updatedFreeLayouts['header_list'] = { ...headerMap };
+
+    setAppState((prev) => (prev ? { ...prev, freeLayouts: updatedFreeLayouts } : prev));
+    await saveAllFreeLayouts(updatedFreeLayouts);
+  }, [appState, activeGridPageId, settings.showDate, settings.showLunar, settings.showSearch]);
+
+  const handleFinishTour = useCallback(async () => {
+    const mode = settings.layoutMode || 'grid';
+    const updated = await markModeGuided(mode);
+    setAppState((prev) => (prev ? { ...prev, guidedModes: updated, isFirstLaunch: false } : prev));
     await setFirstLaunchComplete();
-    setAppState((prev) => (prev ? { ...prev, isFirstLaunch: false } : prev));
-  };
+  }, [settings.layoutMode]);
+
+  const handleResetGuidedModes = useCallback(async () => {
+    await resetGuidedModes();
+    setAppState((prev) => (prev ? { ...prev, guidedModes: {} } : prev));
+  }, []);
 
   const handleOpenEditSite = useCallback((site: SiteItem) => {
     setEditingSite(site);
@@ -980,27 +1138,23 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       </div>
 
       {/* Top Floating Actions Bar */}
-      <header className="relative z-10 w-full flex items-center justify-between p-5 md:px-8">
-        <div className="flex items-center gap-2">
-          <span
-            className={`text-xs font-medium tracking-wider px-2.5 py-0.5 rounded-full border transition-colors ${isLight
-                ? 'text-slate-500 bg-white/50 border-black/5'
-                : 'text-white/60 bg-white/5 border-white/5'
-              }`}
-          >
-            MyTab
-          </span>
-          {appState?.profileId === 'private' && (
-            <span
-              className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 backdrop-blur-md flex items-center gap-1.5 shadow-sm"
-            >
-              <Lock className="w-3 h-3 text-purple-400" />
-              <span>{t('syncPrivateSpace', appState?.settings?.language || 'zh-CN')}</span>
-            </span>
-          )}
-        </div>
+      <header
+        className={`w-full flex items-center justify-between p-5 md:px-8 transition-all ${
+          settings.layoutMode === 'grid'
+            ? 'absolute top-0 left-0 right-0 z-20 pointer-events-none [&>*]:pointer-events-auto'
+            : 'relative z-10'
+        }`}
+      >
+        <div />
 
-        <div className="flex items-center gap-2">
+        <div
+          data-tour="header-tools"
+          className={`flex items-center gap-2 -mt-5 -mr-5 md:-mr-8 pt-5 pr-5 md:pr-8 pb-3 pl-4 transition-opacity duration-300 ease-out pointer-events-auto ${
+            isAddHovered || isBoardEditing || isFreeLayoutEditing || isSettingsOpen || isTourActive
+              ? 'opacity-100'
+              : 'opacity-0 hover:opacity-100 focus-within:opacity-100'
+          }`}
+        >
           {/* Global Network Mode Switcher (WAN 🌐 <-> LAN 🏠) */}
           <div className="relative group/tooltip flex items-center justify-center">
             <button
@@ -1035,12 +1189,17 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             </span>
           </div>
 
+
+
           {/* Quick Layout Switcher (Grid <-> Board <-> List) */}
           <div className="relative group/tooltip flex items-center justify-center">
             <button
               onClick={() => {
                 if (settings.layoutMode === 'board' && isBoardEditing) {
                   setIsBoardEditing(false);
+                }
+                if (settings.layoutMode === 'grid' && isFreeLayoutEditing) {
+                  setIsFreeLayoutEditing(false);
                 }
                 const nextMode =
                   settings.layoutMode === 'grid'
@@ -1083,10 +1242,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           >
             {/* Import Bookmarks Button (reveals on hover) */}
             <div
-              className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${isAddHovered
+              className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${
+                isAddHovered
                   ? 'w-8 opacity-100 mr-1'
                   : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
-                }`}
+              }`}
             >
               <button
                 onClick={() => {
@@ -1094,10 +1254,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                   setIsBookmarkImportModalOpen(true);
                 }}
                 tabIndex={isAddHovered ? 0 : -1}
-                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isLight
+                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                  isLight
                     ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
                     : 'text-white/80 hover:text-white hover:bg-white/10'
-                  }`}
+                }`}
               >
                 <Bookmark className="w-4 h-4" />
               </button>
@@ -1111,10 +1272,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             {/* Add Desktop Page Button (only in Grid mode, reveals on hover) */}
             {settings.layoutMode === 'grid' && (
               <div
-                className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${isAddHovered
+                className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${
+                  isAddHovered
                     ? 'w-8 opacity-100 mr-1'
                     : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
-                  }`}
+                }`}
               >
                 <button
                   onClick={() => {
@@ -1122,10 +1284,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                     handleAddGridPage();
                   }}
                   tabIndex={isAddHovered ? 0 : -1}
-                  className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isLight
+                  className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                    isLight
                       ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
                       : 'text-white/80 hover:text-white hover:bg-white/10'
-                    }`}
+                  }`}
                 >
                   <SquarePlus className="w-4 h-4" />
                 </button>
@@ -1139,10 +1302,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
 
             {/* Add Category Button (reveals on hover) */}
             <div
-              className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${isAddHovered
+              className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${
+                isAddHovered
                   ? 'w-8 opacity-100 mr-1'
                   : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
-                }`}
+              }`}
             >
               <button
                 onClick={() => {
@@ -1150,10 +1314,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                   setIsCategoryModalOpen(true);
                 }}
                 tabIndex={isAddHovered ? 0 : -1}
-                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isLight
+                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                  isLight
                     ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
                     : 'text-white/80 hover:text-white hover:bg-white/10'
-                  }`}
+                }`}
               >
                 <FolderPlus className="w-4 h-4" />
               </button>
@@ -1164,39 +1329,63 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               )}
             </div>
 
-            {/* Board Edit Mode Toggle (only in board layout mode, reveals on hover or while editing) */}
-            {settings.layoutMode === 'board' && (
-              <div
-                className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${isBoardEditing || isAddHovered
-                    ? 'w-8 opacity-100 mr-1'
-                    : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
-                  }`}
+            {/* Unified Edit Mode Toggle for all modes (reveals on hover or while editing) */}
+            <div
+              data-tour="header-edit"
+              className={`relative group/tooltip flex items-center justify-center transition-all duration-200 ease-out ${
+                (settings.layoutMode === 'grid' ? isFreeLayoutEditing : isBoardEditing) || isAddHovered || isTourActive
+                  ? 'w-8 opacity-100 mr-1'
+                  : 'w-0 opacity-0 mr-0 overflow-hidden pointer-events-none'
+              }`}
+            >
+              <button
+                onClick={() => {
+                  if (settings.layoutMode === 'grid') {
+                    setIsFreeLayoutEditing((prev) => !prev);
+                  } else {
+                    setIsBoardEditing((prev) => !prev);
+                  }
+                }}
+                tabIndex={((settings.layoutMode === 'grid' ? isFreeLayoutEditing : isBoardEditing) || isAddHovered) ? 0 : -1}
+                className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                  (settings.layoutMode === 'grid' ? isFreeLayoutEditing : isBoardEditing)
+                    ? 'bg-amber-500/15 text-amber-500 dark:text-amber-400 font-semibold'
+                    : isLight
+                    ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                }`}
+                aria-label={
+                  settings.layoutMode === 'grid'
+                    ? isFreeLayoutEditing
+                      ? t('freeLayoutDone', settings.language)
+                      : t('freeLayoutEdit', settings.language)
+                    : isBoardEditing
+                    ? t('doneEditingBoard', settings.language)
+                    : settings.layoutMode === 'list'
+                    ? t('editWidgets', settings.language)
+                    : t('editBoardAndWidgets', settings.language)
+                }
               >
-                <button
-                  onClick={() => setIsBoardEditing((prev) => !prev)}
-                  tabIndex={isBoardEditing || isAddHovered ? 0 : -1}
-                  className={`shrink-0 p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isBoardEditing
-                      ? 'bg-amber-500/15 text-amber-500 dark:text-amber-400'
-                      : isLight
-                        ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
-                        : 'text-white/80 hover:text-white hover:bg-white/10'
-                    }`}
-                >
-                  {isBoardEditing ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Pencil className="w-4 h-4" />
-                  )}
-                </button>
-                {(isBoardEditing || isAddHovered) && (
-                  <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
-                    {isBoardEditing
-                      ? t('doneEditingBoard', settings.language)
-                      : t('editBoard', settings.language)}
-                  </span>
+                {(settings.layoutMode === 'grid' ? isFreeLayoutEditing : isBoardEditing) ? (
+                  <Check className="w-4 h-4 stroke-[2.5]" />
+                ) : (
+                  <Pencil className="w-4 h-4" />
                 )}
-              </div>
-            )}
+              </button>
+              {((settings.layoutMode === 'grid' ? isFreeLayoutEditing : isBoardEditing) || isAddHovered) && (
+                <span className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium tracking-tight whitespace-nowrap opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-150 glass-tooltip z-50">
+                  {settings.layoutMode === 'grid'
+                    ? isFreeLayoutEditing
+                      ? t('freeLayoutDone', settings.language)
+                      : t('freeLayoutEdit', settings.language)
+                    : isBoardEditing
+                    ? t('doneEditingBoard', settings.language)
+                    : settings.layoutMode === 'list'
+                    ? t('editWidgets', settings.language)
+                    : t('editBoardAndWidgets', settings.language)}
+                </span>
+              )}
+            </div>
 
             {/* Add Shortcut / Site (+) Button */}
             <div className="relative group/tooltip flex items-center justify-center">
@@ -1207,10 +1396,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
                   setEditingSite(null);
                   setIsSiteModalOpen(true);
                 }}
-                className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isLight
+                className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                  isLight
                     ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
                     : 'text-white/80 hover:text-white hover:bg-white/10'
-                  }`}
+                }`}
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -1224,10 +1414,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           <div className="relative group/tooltip flex items-center justify-center">
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${isLight
+              className={`p-2 rounded-lg transition-all duration-150 cursor-pointer active:scale-90 outline-none ${
+                isLight
                   ? 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
                   : 'text-white/80 hover:text-white hover:bg-white/10'
-                }`}
+              }`}
             >
               <SettingsIcon className="w-4 h-4" />
             </button>
@@ -1239,94 +1430,106 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
       </header>
 
       {/* Center Main Section */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-start max-w-7xl mx-auto w-full pb-6">
-        {/* Clock & Greetings */}
-        <ClockHeader settings={settings} resolvedColors={resolvedColors} isLight={isLight} />
-
-        {/* Search Bar */}
-        {(settings.showSearch ?? true) && (
-          <SearchBar
+      <main
+        className={`relative z-10 flex-1 flex flex-col items-center justify-start w-full pb-6 ${
+          settings.layoutMode === 'grid' ? 'pt-2 px-3 md:px-6' : 'px-2 sm:px-4'
+        }`}
+      >
+        {settings.layoutMode === 'grid' ? (
+          <FreeCanvas
+            sites={sites}
+            categories={categories}
             settings={settings}
             resolvedColors={resolvedColors}
+            isLight={isLight}
+            gridPages={gridPages}
+            activeGridPageId={activeGridPageId}
+            isEditing={isFreeLayoutEditing}
+            freeLayouts={appState.freeLayouts}
+            onUpdateLayouts={handleUpdateFreeLayouts}
+            onUpdateSettings={handleUpdateSettings}
+            onToggleEditing={() => setIsFreeLayoutEditing((prev) => !prev)}
+            onOpenSite={handleOpenSite}
+            onEditSite={handleOpenEditSite}
+            onDeleteSite={handleDeleteSite}
+            onMoveSiteToPage={handleMoveSiteToPage}
+            onAddSite={handleOpenAddSite}
+            onSelectPage={handleSelectGridPage}
+            onAddPage={handleAddGridPage}
+            onRenamePage={handleRenameGridPage}
+            onDeletePage={handleDeleteGridPage}
             onEngineChange={(engineId) =>
               handleUpdateSettings({ activeEngineId: engineId })
             }
-          />
-        )}
-
-        {/* Content View: Category Board vs Sun-Panel List vs Icon Grid */}
-        {settings.layoutMode === 'board' ? (
-          <CategoryBoard
-            categories={categories}
-            sites={sites}
-            settings={settings}
-            resolvedColors={resolvedColors}
-            isLight={isLight}
-            isEditing={isBoardEditing}
-            onOpenSite={handleOpenSite}
-            onEditSite={handleOpenEditSite}
-            onDeleteSite={handleDeleteSite}
-            onAddSiteToCategory={handleAddSiteToCategory}
+            activeCategoryId={effectiveActiveCategoryId}
+            siteCounts={siteCounts}
+            onSelectCategory={handleSelectCategory}
             onAddCategory={handleAddCategory}
             onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}
-            onReorderSites={handleReorderSites}
-          />
-        ) : settings.layoutMode === 'list' ? (
-          <CategoryList
-            categories={categories}
-            sites={sites}
-            settings={settings}
-            resolvedColors={resolvedColors}
-            isLight={isLight}
-            onOpenSite={handleOpenSite}
-            onEditSite={handleOpenEditSite}
-            onDeleteSite={handleDeleteSite}
+            onMoveCategoryToPage={handleMoveCategoryToPage}
             onAddSiteToCategory={handleAddSiteToCategory}
-            onAddCategory={handleAddCategory}
-            onUpdateCategory={handleUpdateCategory}
-            onDeleteCategory={handleDeleteCategory}
-            onReorderSites={handleReorderSites}
+            onOpenBookmarkImport={() => setIsBookmarkImportModalOpen(true)}
           />
         ) : (
           <>
-            {/* Category Tabs */}
-            {(settings.showCategories ?? true) && (
-              <CategoryTabs
-                categories={currentGridCategories}
-                resolvedColors={resolvedColors}
-                activeCategoryId={effectiveActiveCategoryId}
-                settings={settings}
-                siteCounts={siteCounts}
-                gridPages={gridPages}
-                activeGridPageId={activeGridPageId}
-                onSelectCategory={handleSelectCategory}
-                onAddCategory={handleAddCategory}
-                onUpdateCategory={handleUpdateCategory}
-                onDeleteCategory={handleDeleteCategory}
-                onMoveCategoryToPage={handleMoveCategoryToPage}
-                onOpenBookmarkImport={() => setIsBookmarkImportModalOpen(true)}
-              />
-            )}
-
-            {/* Shortcuts Grid */}
-            <SiteGrid
-              sites={allGridSites}
+            {/* Free Grid Header for Board and List modes (separate layout keys) */}
+            <HeaderFreeGrid
               settings={settings}
               resolvedColors={resolvedColors}
               isLight={isLight}
-              gridPages={gridPages}
-              activeGridPageId={activeGridPageId}
-              onEditSite={handleOpenEditSite}
-              onDeleteSite={handleDeleteSite}
-              onMoveSiteToPage={handleMoveSiteToPage}
-              onAddSite={handleOpenAddSite}
-              onReorderSites={handleReorderSites}
-              onSelectPage={handleSelectGridPage}
-              onAddPage={handleAddGridPage}
-              onRenamePage={handleRenameGridPage}
-              onDeletePage={handleDeleteGridPage}
+              isEditing={isBoardEditing}
+              onToggleEditing={() => setIsBoardEditing(false)}
+              headerLayout={
+                appState?.freeLayouts?.[settings.layoutMode === 'board' ? 'header_board' : 'header_list'] ||
+                appState?.freeLayouts?.['header']
+              }
+              onUpdateLayout={(map) =>
+                handleUpdateFreeLayouts(
+                  settings.layoutMode === 'board' ? 'header_board' : 'header_list',
+                  map
+                )
+              }
+              onEngineChange={(engineId) =>
+                handleUpdateSettings({ activeEngineId: engineId })
+              }
             />
+
+            {/* Content View: Category Board vs Sun-Panel List */}
+            {settings.layoutMode === 'board' ? (
+              <CategoryBoard
+                categories={categories}
+                sites={sites}
+                settings={settings}
+                resolvedColors={resolvedColors}
+                isLight={isLight}
+                isEditing={isBoardEditing}
+                onOpenSite={handleOpenSite}
+                onEditSite={handleOpenEditSite}
+                onDeleteSite={handleDeleteSite}
+                onAddSiteToCategory={handleAddSiteToCategory}
+                onAddCategory={handleAddCategory}
+                onUpdateCategory={handleUpdateCategory}
+                onDeleteCategory={handleDeleteCategory}
+                onReorderSites={handleReorderSites}
+              />
+            ) : (
+              <CategoryList
+                categories={categories}
+                sites={sites}
+                settings={settings}
+                resolvedColors={resolvedColors}
+                isLight={isLight}
+                onOpenSite={handleOpenSite}
+                onEditSite={handleOpenEditSite}
+                onDeleteSite={handleDeleteSite}
+                onAddSiteToCategory={handleAddSiteToCategory}
+                onAddCategory={handleAddCategory}
+                onUpdateCategory={handleUpdateCategory}
+                onDeleteCategory={handleDeleteCategory}
+                onReorderSites={handleReorderSites}
+              />
+            )}
           </>
         )}
       </main>
@@ -1409,6 +1612,8 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
             appState={appState}
             onClose={() => setIsSettingsOpen(false)}
             onUpdateSettings={handleUpdateSettings}
+            onResetSiteIconBgs={handleResetSiteIconBgs}
+            onResetFreeWidgets={handleResetFreeWidgets}
             onUpdateWebdav={handleUpdateWebdav}
             onUpdateGit={handleUpdateGit}
             onUpdateSyncSettings={handleUpdateSyncSettings}
@@ -1421,6 +1626,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
               setIsSettingsOpen(false);
               setIsBookmarkImportModalOpen(true);
             }}
+            onResetGuidedModes={handleResetGuidedModes}
           />
         )}
 
@@ -1445,11 +1651,11 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
           />
         )}
 
-        {isFirstLaunch && (
-          <OnboardingModal
-            isOpen={isFirstLaunch}
-            settings={settings}
-            onFinish={handleFinishOnboarding}
+        {isTourActive && (
+          <FeatureTour
+            layoutMode={currentLayoutMode}
+            language={settings.language}
+            onFinish={handleFinishTour}
           />
         )}
 

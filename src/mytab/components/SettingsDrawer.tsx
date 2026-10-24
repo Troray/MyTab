@@ -36,11 +36,11 @@ import {
   Folder,
   Bookmark
 } from 'lucide-react';
-import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, ProfileId, ProfileSyncSettings, ThemeSettings, WebdavConfig } from '../../types';
+import { AppState, BackgroundType, CustomGreetings, GitSyncConfig, IconBgType, ProfileId, ProfileSyncSettings, ThemeSettings, WebdavConfig } from '../../types';
 import { PRESET_GRADIENTS, DEFAULT_SETTINGS, DEFAULT_PRIVATE_BACKGROUND_VALUE, isLightMode } from '../../utils/constants';
 import { WebdavSettings } from './WebdavSettings';
 import { GitSettings } from './GitSettings';
-import { exportAllData, importData, resetProfileSettings } from '../../services/storage';
+import { exportAllData, importData, resetProfileSettings, resetGuidedModes } from '../../services/storage';
 import { t, supportedLocales, Translation, Locale } from '../../utils/i18n';
 import { CustomSelect } from './CustomSelect';
 import { FlagIcon } from './FlagIcon';
@@ -55,12 +55,15 @@ interface SettingsDrawerProps {
   appState: AppState;
   onClose: () => void;
   onUpdateSettings: (settings: Partial<ThemeSettings>) => void;
+  onResetSiteIconBgs?: () => void;
+  onResetFreeWidgets?: () => void;
   onUpdateWebdav: (config: WebdavConfig) => void;
   onUpdateGit: (config: GitSyncConfig) => void;
   onUpdateSyncSettings?: (newPolicy: ProfileSyncSettings) => Promise<void> | void;
   onStateReload: () => void;
   onOpenColorCustomizer?: () => void;
   onOpenBookmarkImport?: () => void;
+  onResetGuidedModes?: () => void;
 }
 
 export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
@@ -68,12 +71,15 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   appState,
   onClose,
   onUpdateSettings,
+  onResetSiteIconBgs,
+  onResetFreeWidgets,
   onUpdateWebdav,
   onUpdateGit,
   onUpdateSyncSettings,
   onStateReload,
   onOpenColorCustomizer,
   onOpenBookmarkImport,
+  onResetGuidedModes,
 }) => {
   const settings: ThemeSettings = {
     ...DEFAULT_SETTINGS,
@@ -84,6 +90,14 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   const [activeTab, setActiveTab] = useState<'appearance' | 'behavior' | 'sync' | 'backup'>('appearance');
   const [syncProvider, setSyncProvider] = useState<'webdav' | 'git'>(() => resolveBestSyncProvider(appState.webdav, appState.git));
   const [importStatus, setImportStatus] = useState<{ success: boolean; text: string } | null>(null);
+  const [resetTourStatus, setResetTourStatus] = useState(false);
+
+  const handleResetTour = async () => {
+    await resetGuidedModes();
+    onResetGuidedModes?.();
+    setResetTourStatus(true);
+    setTimeout(() => setResetTourStatus(false), 2500);
+  };
   const [greetingStatus, setGreetingStatus] = useState<{ success?: boolean; text: string } | null>(null);
   const [isCardLayoutExpanded, setIsCardLayoutExpanded] = useState(false);
   const [isUnsplashTopicModalOpen, setIsUnsplashTopicModalOpen] = useState(false);
@@ -864,9 +878,24 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       </div>
                       <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                         {(() => {
-                          const currentMode = (isLight
-                            ? settings.textColorModeLight ?? settings.textColorMode
-                            : settings.textColorModeDark ?? settings.textColorMode) || 'auto';
+                          const currentLayout = settings.layoutMode || 'grid';
+                          const currentMode = isLight
+                            ? (currentLayout === 'board'
+                                ? settings.boardTextColorModeLight ?? settings.boardTextColorMode
+                                : currentLayout === 'list'
+                                  ? settings.listTextColorModeLight ?? settings.listTextColorMode
+                                  : settings.gridTextColorModeLight ?? settings.gridTextColorMode) ??
+                              settings.textColorModeLight ??
+                              settings.textColorMode ??
+                              'auto'
+                            : (currentLayout === 'board'
+                                ? settings.boardTextColorModeDark ?? settings.boardTextColorMode
+                                : currentLayout === 'list'
+                                  ? settings.listTextColorModeDark ?? settings.listTextColorMode
+                                  : settings.gridTextColorModeDark ?? settings.gridTextColorMode) ??
+                              settings.textColorModeDark ??
+                              settings.textColorMode ??
+                              'auto';
                           const modeText = currentMode === 'auto'
                             ? t('textColorAuto', settings.language)
                             : currentMode === 'light'
@@ -874,8 +903,13 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               : currentMode === 'dark'
                                 ? t('textColorBlack', settings.language)
                                 : t('textColorCustom', settings.language);
+                          const layoutLabel = currentLayout === 'board'
+                            ? t('layoutBoard', settings.language)
+                            : currentLayout === 'list'
+                              ? t('layoutList', settings.language)
+                              : t('layoutGrid', settings.language);
                           const themeLabel = isLight ? t('themeLight', settings.language) : t('themeDark', settings.language);
-                          return `${themeLabel} · ${modeText}`;
+                          return `${themeLabel} · ${layoutLabel} (${modeText})`;
                         })()}
                       </div>
                     </div>
@@ -911,16 +945,18 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       </div>
                       <div>
                         <div className={`text-xs font-semibold ${isLight ? 'text-slate-800' : 'text-white'}`}>
-                          {t('cardLayoutAdvanced', settings.language)}
+                          {settings.layoutMode === 'list'
+                            ? (t('listLayoutAdvanced', settings.language) || t('cardLayoutAdvanced', settings.language))
+                            : settings.layoutMode === 'board'
+                              ? (t('boardLayoutAdvanced', settings.language) || t('cardLayoutAdvanced', settings.language))
+                              : (t('freeLayoutAdvanced', settings.language) || t('cardLayoutAdvanced', settings.language))}
                         </div>
                         <div className={`text-[10px] mt-0.5 font-tabular ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
                           {settings.layoutMode === 'list'
                             ? `${settings.listCardWidth || 180}px · ${settings.listCardHeight || 48}px · ${Math.round((settings.listCardOpacity ?? 0.25) * 100)}%`
                             : settings.layoutMode === 'board'
                               ? `${settings.boardColumnsPerRow || 5}${t('boardColumnsUnit', settings.language)} · ${settings.boardCardGap ?? 16}px · ${Math.round((settings.boardCardOpacity ?? 0.2) * 100)}%`
-                              : !settings.showCardBackground
-                                ? `${settings.cardSize || 110}px · ${settings.gridGapX ?? settings.iconSpacing ?? 20}px · ${settings.maxCardsPerRow || 8}${t('cardsPerRowUnit', settings.language)}`
-                                : `${settings.cardSize || 110}px · ${Math.round(settings.cardOpacity * 100)}% · ${settings.maxCardsPerRow || 8}${t('cardsPerRowUnit', settings.language)}`}
+                              : `${settings.gridIconSize ?? 65}px · ${settings.gridTitleFontSize || 14}px · ${t('freeLayoutEdit', settings.language)}`}
                         </div>
                       </div>
                     </div>
@@ -968,6 +1004,23 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             <ToggleSwitch
                               checked={settings.boardAlwaysShowIcons ?? false}
                               onChange={(checked) => handleSettingsChange({ boardAlwaysShowIcons: checked })}
+                              isLight={isLight}
+                            />
+                          </div>
+
+                          {/* Board Show Tooltip */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                                {t('showTooltip', settings.language)}
+                              </div>
+                              <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                                {t('showTooltipDesc', settings.language)}
+                              </div>
+                            </div>
+                            <ToggleSwitch
+                              checked={settings.boardShowTooltip !== false}
+                              onChange={(checked) => handleSettingsChange({ boardShowTooltip: checked })}
                               isLight={isLight}
                             />
                           </div>
@@ -1191,6 +1244,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               type="button"
                               onClick={() => handleSettingsChange({
                                 boardAlwaysShowIcons: false,
+                                boardShowTooltip: true,
                                 boardShowCardBackground: true,
                                 boardColumnsPerRow: 5,
                                 boardAlign: 'center',
@@ -1227,6 +1281,23 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             <ToggleSwitch
                               checked={settings.listShowCardBackground !== false}
                               onChange={(checked) => handleSettingsChange({ listShowCardBackground: checked })}
+                              isLight={isLight}
+                            />
+                          </div>
+
+                          {/* List Show Tooltip */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                                {t('showTooltip', settings.language)}
+                              </div>
+                              <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                                {t('showTooltipDesc', settings.language)}
+                              </div>
+                            </div>
+                            <ToggleSwitch
+                              checked={settings.listShowTooltip !== false}
+                              onChange={(checked) => handleSettingsChange({ listShowTooltip: checked })}
                               isLight={isLight}
                             />
                           </div>
@@ -1453,23 +1524,155 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             </div>
                           </div>
 
+                          {/* List Icon / Card Background Style */}
+                          <div>
+                            <div className="flex justify-between text-xs font-medium mb-1.5">
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconBgTitle', settings.language)}</span>
+                              <span className={`text-[10px] ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                                {settings.listIconBgType === 'white'
+                                  ? t('iconBgWhite', settings.language)
+                                  : settings.listIconBgType === 'dark'
+                                  ? t('iconBgDark', settings.language)
+                                  : settings.listIconBgType === 'transparent'
+                                  ? t('iconBgTransparent', settings.language)
+                                  : settings.listIconBgType === 'custom'
+                                  ? t('iconBgCustom', settings.language)
+                                  : t('iconBgFrosted', settings.language)}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-5 gap-1.5 p-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5">
+                              {[
+                                { id: 'frosted' as const, label: t('iconBgFrosted', settings.language) },
+                                { id: 'white' as const, label: t('iconBgWhite', settings.language) },
+                                { id: 'dark' as const, label: t('iconBgDark', settings.language) },
+                                { id: 'transparent' as const, label: t('iconBgTransparent', settings.language) },
+                                { id: 'custom' as const, label: t('iconBgCustom', settings.language) },
+                              ].map((item) => {
+                                const isSelected = (settings.listIconBgType || 'frosted') === item.id;
+                                return (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => {
+                                      handleSettingsChange({ listIconBgType: item.id });
+                                      onResetSiteIconBgs?.();
+                                    }}
+                                    className={`py-1.5 px-1 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 text-center truncate ${
+                                      isSelected
+                                        ? isLight
+                                          ? 'bg-white text-slate-900 shadow-xs border border-black/10 font-semibold'
+                                          : 'bg-white/20 text-white shadow-sm border border-white/20 font-semibold'
+                                        : isLight
+                                        ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                                        : 'text-white/60 hover:text-white hover:bg-white/10'
+                                    }`}
+                                  >
+                                    {item.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* Custom Color Picker if 'custom' is selected */}
+                            {settings.listIconBgType === 'custom' && (
+                              <div className="mt-2.5 p-2.5 rounded-xl border flex items-center justify-between gap-3 bg-black/[0.02] dark:bg-white/[0.03] border-black/5 dark:border-white/5 animate-fade-in">
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <label
+                                    className="rounded-xl border-2 border-black/15 dark:border-white/25 flex items-center justify-center cursor-pointer relative overflow-hidden shadow-sm shrink-0 hover:scale-105 transition-transform"
+                                    style={{
+                                      backgroundColor: settings.listIconBgColor || '#ffffff',
+                                      width: 32,
+                                      height: 32,
+                                      minWidth: 32,
+                                      minHeight: 32,
+                                    }}
+                                    title={t('iconBgCustom', settings.language)}
+                                  >
+                                    <input
+                                      type="color"
+                                      value={
+                                        (settings.listIconBgColor || '#ffffff').startsWith('#') && (settings.listIconBgColor || '#ffffff').length === 7
+                                          ? (settings.listIconBgColor || '#ffffff')
+                                          : '#ffffff'
+                                      }
+                                      onChange={(e) => {
+                                        handleSettingsChange({ listIconBgColor: e.target.value });
+                                        onResetSiteIconBgs?.();
+                                      }}
+                                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                                    />
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={settings.listIconBgColor || '#f3f3f3'}
+                                    onChange={(e) => {
+                                      let val = e.target.value.trim();
+                                      if (!val.startsWith('#') && val.length > 0) val = '#' + val;
+                                      handleSettingsChange({ listIconBgColor: val });
+                                      onResetSiteIconBgs?.();
+                                    }}
+                                    placeholder="#F3F3F3"
+                                    maxLength={7}
+                                    className={`w-24 px-2 py-1 text-xs font-mono font-bold tracking-wider rounded-lg border outline-none uppercase transition-all ${
+                                      isLight
+                                        ? 'bg-white border-black/15 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                                        : 'bg-white/10 border-white/20 text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400'
+                                    }`}
+                                  />
+                                </div>
+
+                                {/* Preset color quick dots */}
+                                <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                                  {['#ffffff', '#f3f3f3', '#0f172a', '#1e293b', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'].map((hex) => {
+                                    const isSelected = (settings.listIconBgColor || '#ffffff').toLowerCase() === hex.toLowerCase();
+                                    const isWhite = hex.toLowerCase() === '#ffffff';
+                                    return (
+                                      <button
+                                        key={hex}
+                                        type="button"
+                                        onClick={() => {
+                                          handleSettingsChange({ listIconBgColor: hex });
+                                          onResetSiteIconBgs?.();
+                                        }}
+                                        style={{ backgroundColor: hex, width: 22, height: 22, minWidth: 22, minHeight: 22 }}
+                                        className={`rounded-full transition-all cursor-pointer shrink-0 flex items-center justify-center ${
+                                          isWhite ? 'border border-black/20 dark:border-white/40' : 'border border-black/10 dark:border-white/20'
+                                        } ${
+                                          isSelected
+                                            ? 'scale-110 ring-2 ring-blue-500 shadow-sm'
+                                            : 'hover:scale-110 opacity-90 hover:opacity-100'
+                                        }`}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
                           {/* Reset List Layout Defaults Button */}
                           <div className="pt-2">
                             <button
                               type="button"
-                              onClick={() => handleSettingsChange({
-                                listShowCardBackground: true,
-                                listCardOpacity: 0.25,
-                                listCardWidth: 200,
-                                listCardHeight: 50,
-                                listIconSize: 40,
-                                listTitleFontSize: 16,
-                                listDescFontSize: 14,
-                                listCategoryFontSize: 18,
-                                listGapX: 10,
-                                listGapY: 12,
-                                listIconTextGap: 10,
-                              })}
+                              onClick={() => {
+                                handleSettingsChange({
+                                  listShowCardBackground: true,
+                                  listShowTooltip: true,
+                                  listCardOpacity: 0.25,
+                                  listCardWidth: 200,
+                                  listCardHeight: 50,
+                                  listIconSize: 40,
+                                  listTitleFontSize: 16,
+                                  listDescFontSize: 14,
+                                  listCategoryFontSize: 18,
+                                  listGapX: 10,
+                                  listGapY: 12,
+                                  listIconTextGap: 10,
+                                  listIconBgType: 'frosted',
+                                  listIconBgColor: '#ffffff',
+                                });
+                                onResetSiteIconBgs?.();
+                              }}
                               className={`w-full py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${isLight
                                   ? 'bg-black/[0.03] border-black/8 text-slate-600 hover:bg-black/[0.06] hover:text-slate-900'
                                   : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/[0.1] hover:text-white'
@@ -1482,23 +1685,6 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         </>
                       ) : (
                         <>
-                          {/* Toggle Show Card Background */}
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
-                                {t('showCardBackground', settings.language)}
-                              </div>
-                              <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
-                                {t('showCardBackgroundDesc', settings.language)}
-                              </div>
-                            </div>
-                            <ToggleSwitch
-                              checked={settings.showCardBackground ?? false}
-                              onChange={(checked) => handleSettingsChange({ showCardBackground: checked })}
-                              isLight={isLight}
-                            />
-                          </div>
-
                           {/* Toggle Show Site Title */}
                           <div className="flex items-center justify-between">
                             <div>
@@ -1516,115 +1702,82 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             />
                           </div>
 
-                          {/* Card Size Slider */}
-                          <div>
-                            <div className="flex justify-between text-xs font-medium mb-1.5">
-                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardSizeTitle', settings.language)}</span>
-                              <span className="font-tabular font-semibold">{settings.cardSize || 110}px</span>
-                            </div>
-                            <input
-                              type="range"
-                              min="80"
-                              max="160"
-                              step="5"
-                              value={settings.cardSize || 110}
-                              onChange={(e) => handleSettingsChange({ cardSize: parseInt(e.target.value, 10) })}
-                              className="range-slider"
-                            />
-                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                              <span>{t('cardSizeCompact', settings.language)}</span>
-                              <span>{t('cardSizeDefault', settings.language)}</span>
-                              <span>{t('cardSizeLarge', settings.language)}</span>
-                            </div>
-                          </div>
-
-                          {/* Card Opacity Slider (When Card Background is ON) */}
-                          {Boolean(settings.showCardBackground) && (
+                          {/* Toggle Grid Show Tooltip */}
+                          <div className="flex items-center justify-between">
                             <div>
-                              <div className="flex justify-between text-xs font-medium mb-1.5">
-                                <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('cardOpacityTitle', settings.language)}</span>
-                                <span className="font-tabular font-semibold">{Math.round(settings.cardOpacity * 100)}%</span>
+                              <div className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                                {t('showTooltip', settings.language)}
                               </div>
-                              <input
-                                type="range"
-                                min="0.05"
-                                max="0.9"
-                                step="0.05"
-                                value={settings.cardOpacity}
-                                onChange={(e) => handleSettingsChange({ cardOpacity: parseFloat(e.target.value) })}
-                                className="range-slider"
-                              />
-                              <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                                <span>{t('cardOpacityLow', settings.language)}</span>
-                                <span>{t('cardOpacityMed', settings.language)}</span>
-                                <span>{t('cardOpacityHigh', settings.language)}</span>
+                              <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                                {t('showTooltipDesc', settings.language)}
                               </div>
                             </div>
-                          )}
-
-                          {/* Grid Gap X (Horizontal) */}
-                          <div>
-                            <div className="flex justify-between text-xs font-medium mb-1.5">
-                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('gapHorizontalTitle', settings.language)}</span>
-                              <span className="font-tabular font-semibold">{settings.gridGapX ?? settings.iconSpacing ?? 20}px</span>
-                            </div>
-                            <input
-                              type="range"
-                              min="8"
-                              max="48"
-                              step="2"
-                              value={settings.gridGapX ?? settings.iconSpacing ?? 20}
-                              onChange={(e) => handleSettingsChange({ gridGapX: parseInt(e.target.value, 10) })}
-                              className="range-slider"
+                            <ToggleSwitch
+                              checked={settings.gridShowTooltip !== false}
+                              onChange={(checked) => handleSettingsChange({ gridShowTooltip: checked })}
+                              isLight={isLight}
                             />
-                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                              <span>8px</span>
-                              <span>20px</span>
-                              <span>48px</span>
-                            </div>
                           </div>
 
-                          {/* Grid Gap Y (Vertical) */}
-                          <div>
-                            <div className="flex justify-between text-xs font-medium mb-1.5">
-                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('gapVerticalTitle', settings.language)}</span>
-                              <span className="font-tabular font-semibold">{settings.gridGapY ?? settings.iconSpacing ?? 20}px</span>
+                          {/* Toggle Free Layout Allow Overlap */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                                {t('freeLayoutAllowOverlap', settings.language)}
+                              </div>
+                              <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                                {t('freeLayoutAllowOverlapDesc', settings.language)}
+                              </div>
                             </div>
-                            <input
-                              type="range"
-                              min="8"
-                              max="48"
-                              step="2"
-                              value={settings.gridGapY ?? settings.iconSpacing ?? 20}
-                              onChange={(e) => handleSettingsChange({ gridGapY: parseInt(e.target.value, 10) })}
-                              className="range-slider"
+                            <ToggleSwitch
+                              checked={settings.freeLayoutAllowOverlap ?? true}
+                              onChange={(checked) => handleSettingsChange({ freeLayoutAllowOverlap: checked })}
+                              isLight={isLight}
                             />
-                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                              <span>8px</span>
-                              <span>20px</span>
-                              <span>48px</span>
-                            </div>
                           </div>
 
-                          {/* Card Icon Ratio Slider */}
+                          {/* Toggle Show Categories */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                                {t('showCategoriesOnly', settings.language)}
+                              </div>
+                              <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                                {t('categoryModeGroupsDesc', settings.language)}
+                              </div>
+                            </div>
+                            <ToggleSwitch
+                              checked={settings.showCategories ?? false}
+                              onChange={(checked) => handleSettingsChange({ showCategories: checked })}
+                              isLight={isLight}
+                            />
+                          </div>
+
+                          {/* Card Icon Size Slider */}
                           <div>
                             <div className="flex justify-between text-xs font-medium mb-1.5">
                               <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconSizeRatio', settings.language)}</span>
-                              <span className="font-tabular font-semibold">{Math.round((settings.iconSizeRatio ?? 0.55) * 100)}%</span>
+                              <span className="font-tabular font-semibold">{settings.gridIconSize ?? 65}px</span>
                             </div>
                             <input
                               type="range"
-                              min="0.28"
-                              max="0.65"
-                              step="0.01"
-                              value={settings.iconSizeRatio ?? 0.55}
-                              onChange={(e) => handleSettingsChange({ iconSizeRatio: parseFloat(e.target.value) })}
+                              min="32"
+                              max="84"
+                              step="2"
+                              value={settings.gridIconSize ?? 65}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                handleSettingsChange({
+                                  gridIconSize: val,
+                                  iconSizeRatio: parseFloat((val / 110).toFixed(2)),
+                                });
+                              }}
                               className="range-slider"
                             />
                             <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                              <span>{t('iconRatioLow', settings.language)}</span>
-                              <span>{t('iconRatioMed', settings.language)}</span>
-                              <span>{t('iconRatioHigh', settings.language)}</span>
+                              <span>32px</span>
+                              <span>{settings.gridIconSize ? `${settings.gridIconSize}px` : '65px (XXL)'}</span>
+                              <span>84px</span>
                             </div>
                           </div>
 
@@ -1632,47 +1785,25 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           {settings.showSiteTitle !== false && (
                             <div>
                               <div className="flex justify-between text-xs font-medium mb-1.5">
-                                <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('listTitleFontSizeTitle', settings.language)}</span>
-                                <span className="font-tabular font-semibold">{settings.gridTitleFontSize || 12}px</span>
+                                <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('gridTitleFontSizeTitle', settings.language)}</span>
+                                <span className="font-tabular font-semibold">{settings.gridTitleFontSize || 14}px</span>
                               </div>
                               <input
                                 type="range"
                                 min="10"
-                                max="30"
+                                max="26"
                                 step="1"
-                                value={settings.gridTitleFontSize || 12}
+                                value={settings.gridTitleFontSize || 14}
                                 onChange={(e) => handleSettingsChange({ gridTitleFontSize: parseInt(e.target.value, 10) })}
                                 className="range-slider"
                               />
                               <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
                                 <span>10px</span>
-                                <span>18px</span>
-                                <span>30px</span>
+                                <span>14px</span>
+                                <span>26px</span>
                               </div>
                             </div>
                           )}
-
-                          {/* Grid Category Font Size */}
-                          <div>
-                            <div className="flex justify-between text-xs font-medium mb-1.5">
-                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('listCategoryFontSizeTitle', settings.language)}</span>
-                              <span className="font-tabular font-semibold">{settings.gridCategoryFontSize || 14}px</span>
-                            </div>
-                            <input
-                              type="range"
-                              min="11"
-                              max="30"
-                              step="1"
-                              value={settings.gridCategoryFontSize || 14}
-                              onChange={(e) => handleSettingsChange({ gridCategoryFontSize: parseInt(e.target.value, 10) })}
-                              className="range-slider"
-                            />
-                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                              <span>11px</span>
-                              <span>20px</span>
-                              <span>30px</span>
-                            </div>
-                          </div>
 
                           {/* Grid Icon to Text Gap */}
                           {settings.showSiteTitle !== false && (
@@ -1698,47 +1829,176 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                             </div>
                           )}
 
-                          {/* Max Cards Per Row Slider */}
+                          {/* Grid Text Line Gap */}
+                          {settings.showSiteTitle !== false && (
+                            <div>
+                              <div className="flex justify-between text-xs font-medium mb-1.5">
+                                <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('gridTextLineGapTitle', settings.language)}</span>
+                                <span className="font-tabular font-semibold">{settings.gridTextLineGap ?? 2}px</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max="20"
+                                step="1"
+                                value={settings.gridTextLineGap ?? 2}
+                                onChange={(e) => handleSettingsChange({ gridTextLineGap: parseInt(e.target.value, 10) })}
+                                className="range-slider"
+                              />
+                              <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
+                                <span>0px</span>
+                                <span>2px</span>
+                                <span>20px</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Grid Icon Background Style */}
                           <div>
                             <div className="flex justify-between text-xs font-medium mb-1.5">
-                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('maxCardsPerRow', settings.language)}</span>
-                              <span className="font-tabular font-semibold">{settings.maxCardsPerRow || 8}</span>
+                              <span className={isLight ? 'text-slate-700' : 'text-white/80'}>{t('iconBgTitle', settings.language)}</span>
+                              <span className={`text-[10px] ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                                {settings.gridIconBgType === 'white'
+                                  ? t('iconBgWhite', settings.language)
+                                  : settings.gridIconBgType === 'dark'
+                                  ? t('iconBgDark', settings.language)
+                                  : settings.gridIconBgType === 'transparent'
+                                  ? t('iconBgTransparent', settings.language)
+                                  : settings.gridIconBgType === 'custom'
+                                  ? t('iconBgCustom', settings.language)
+                                  : t('iconBgFrosted', settings.language)}
+                              </span>
                             </div>
-                            <input
-                              type="range"
-                              min="4"
-                              max="12"
-                              step="1"
-                              value={settings.maxCardsPerRow || 8}
-                              onChange={(e) => handleSettingsChange({ maxCardsPerRow: parseInt(e.target.value, 10) })}
-                              className="range-slider"
-                            />
-                            <div className={`flex justify-between text-[10px] mt-1 ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
-                              <span>{t('cardsPerRowCompact', settings.language)}</span>
-                              <span>{t('cardsPerRowDefault', settings.language)}</span>
-                              <span>{t('cardsPerRowWide', settings.language)}</span>
+                            <div className="grid grid-cols-5 gap-1.5 p-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5">
+                              {[
+                                { id: 'frosted' as const, label: t('iconBgFrosted', settings.language) },
+                                { id: 'white' as const, label: t('iconBgWhite', settings.language) },
+                                { id: 'dark' as const, label: t('iconBgDark', settings.language) },
+                                { id: 'transparent' as const, label: t('iconBgTransparent', settings.language) },
+                                { id: 'custom' as const, label: t('iconBgCustom', settings.language) },
+                              ].map((item) => {
+                                const isSelected = (settings.gridIconBgType || 'frosted') === item.id;
+                                return (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => {
+                                      handleSettingsChange({ gridIconBgType: item.id });
+                                      onResetSiteIconBgs?.();
+                                    }}
+                                    className={`py-1.5 px-1 rounded-lg text-xs font-medium transition-all cursor-pointer active:scale-95 text-center truncate ${
+                                      isSelected
+                                        ? isLight
+                                          ? 'bg-white text-slate-900 shadow-xs border border-black/10 font-semibold'
+                                          : 'bg-white/20 text-white shadow-sm border border-white/20 font-semibold'
+                                        : isLight
+                                        ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                                        : 'text-white/60 hover:text-white hover:bg-white/10'
+                                    }`}
+                                  >
+                                    {item.label}
+                                  </button>
+                                );
+                              })}
                             </div>
+
+                            {/* Custom Color Picker if 'custom' is selected */}
+                            {settings.gridIconBgType === 'custom' && (
+                              <div className="mt-2.5 p-2.5 rounded-xl border flex items-center justify-between gap-3 bg-black/[0.02] dark:bg-white/[0.03] border-black/5 dark:border-white/5 animate-fade-in">
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <label
+                                    className="rounded-xl border-2 border-black/15 dark:border-white/25 flex items-center justify-center cursor-pointer relative overflow-hidden shadow-sm shrink-0 hover:scale-105 transition-transform"
+                                    style={{
+                                      backgroundColor: settings.gridIconBgColor || '#ffffff',
+                                      width: 32,
+                                      height: 32,
+                                      minWidth: 32,
+                                      minHeight: 32,
+                                    }}
+                                    title={t('iconBgCustom', settings.language)}
+                                  >
+                                    <input
+                                      type="color"
+                                      value={
+                                        (settings.gridIconBgColor || '#ffffff').startsWith('#') && (settings.gridIconBgColor || '#ffffff').length === 7
+                                          ? (settings.gridIconBgColor || '#ffffff')
+                                          : '#ffffff'
+                                      }
+                                      onChange={(e) => {
+                                        handleSettingsChange({ gridIconBgColor: e.target.value });
+                                        onResetSiteIconBgs?.();
+                                      }}
+                                      className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                                    />
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={settings.gridIconBgColor || '#f3f3f3'}
+                                    onChange={(e) => {
+                                      let val = e.target.value.trim();
+                                      if (!val.startsWith('#') && val.length > 0) val = '#' + val;
+                                      handleSettingsChange({ gridIconBgColor: val });
+                                      onResetSiteIconBgs?.();
+                                    }}
+                                    placeholder="#F3F3F3"
+                                    maxLength={7}
+                                    className={`w-24 px-2 py-1 text-xs font-mono font-bold tracking-wider rounded-lg border outline-none uppercase transition-all ${
+                                      isLight
+                                        ? 'bg-white border-black/15 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                                        : 'bg-white/10 border-white/20 text-white focus:border-blue-400 focus:ring-1 focus:ring-blue-400'
+                                    }`}
+                                  />
+                                </div>
+
+                                {/* Preset color quick dots */}
+                                <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                                  {['#ffffff', '#f3f3f3', '#0f172a', '#1e293b', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'].map((hex) => {
+                                    const isSelected = (settings.gridIconBgColor || '#ffffff').toLowerCase() === hex.toLowerCase();
+                                    const isWhite = hex.toLowerCase() === '#ffffff';
+                                    return (
+                                      <button
+                                        key={hex}
+                                        type="button"
+                                        onClick={() => {
+                                          handleSettingsChange({ gridIconBgColor: hex });
+                                          onResetSiteIconBgs?.();
+                                        }}
+                                        style={{ backgroundColor: hex, width: 22, height: 22, minWidth: 22, minHeight: 22 }}
+                                        className={`rounded-full transition-all cursor-pointer shrink-0 flex items-center justify-center ${
+                                          isWhite ? 'border border-black/20 dark:border-white/40' : 'border border-black/10 dark:border-white/20'
+                                        } ${
+                                          isSelected
+                                            ? 'scale-110 ring-2 ring-blue-500 shadow-sm'
+                                            : 'hover:scale-110 opacity-90 hover:opacity-100'
+                                        }`}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {/* Reset Card Layout Defaults Button */}
                           <div className="pt-2">
                             <button
                               type="button"
-                              onClick={() => handleSettingsChange({
-                                showCardBackground: false,
-                                showSiteTitle: true,
-                                showCategories: true,
-                                cardSize: 110,
-                                cardOpacity: 0.20,
-                                iconSizeRatio: 0.55,
-                                maxCardsPerRow: 8,
-                                iconSpacing: 20,
-                                gridGapX: 20,
-                                gridGapY: 20,
-                                gridTitleFontSize: 12,
-                                gridCategoryFontSize: 14,
-                                gridIconTextGap: 8,
-                              })}
+                              onClick={() => {
+                                handleSettingsChange({
+                                  showSiteTitle: true,
+                                  gridShowTooltip: true,
+                                  freeLayoutAllowOverlap: true,
+                                  gridIconSize: 48,
+                                  iconSizeRatio: 0.60,
+                                  gridTitleFontSize: 14,
+                                  gridIconTextGap: 8,
+                                  gridTextLineGap: 2,
+                                  gridIconBgType: 'frosted',
+                                  gridIconBgColor: '#ffffff',
+                                });
+                                onResetSiteIconBgs?.();
+                                onResetFreeWidgets?.();
+                              }}
                               className={`w-full py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${isLight
                                   ? 'bg-black/[0.03] border-black/8 text-slate-600 hover:bg-black/[0.06] hover:text-slate-900'
                                   : 'bg-white/[0.05] border-white/10 text-white/70 hover:bg-white/[0.1] hover:text-white'
@@ -1797,6 +2057,24 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   <ToggleSwitch
                     checked={settings.openInNewTab || false}
                     onChange={(checked) => handleSettingsChange({ openInNewTab: checked })}
+                    isLight={isLight}
+                  />
+                </div>
+
+                {/* Show Network Mode Badge (WAN / LAN) */}
+                <div
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
+                    ? 'bg-black/[0.03] border-black/8 text-slate-900'
+                    : 'bg-white/[0.05] border-white/10 text-white'
+                    }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Globe className="w-4 h-4 opacity-70" />
+                    <span className="text-xs font-medium">{t('showNetworkBadge', settings.language)}</span>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.showNetworkBadge !== false}
+                    onChange={(checked) => handleSettingsChange({ showNetworkBadge: checked })}
                     isLight={isLight}
                   />
                 </div>
@@ -1905,68 +2183,7 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   />
                 </div>
 
-                {/* Show Categories (Grid mode only) */}
-                {(settings.layoutMode || 'grid') === 'grid' && (
-                  <>
-                    <div
-                      className={`flex items-center justify-between p-3.5 rounded-2xl border duration-0 ${isLight
-                        ? 'bg-black/[0.03] border-black/8 text-slate-900'
-                        : 'bg-white/[0.05] border-white/10 text-white'
-                        }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Folder className="w-4 h-4 opacity-70" />
-                        <span className="text-xs font-medium">{t('showCategoriesOnly', settings.language)}</span>
-                      </div>
-                      <ToggleSwitch
-                        checked={settings.showCategories ?? true}
-                        onChange={(checked) => handleSettingsChange({ showCategories: checked })}
-                        isLight={isLight}
-                      />
-                    </div>
 
-                    {/* Max Categories on Navbar Setting */}
-                    {(settings.showCategories ?? true) && (
-                      <div
-                        className={`p-3.5 rounded-2xl border duration-0 space-y-2.5 ${isLight
-                          ? 'bg-black/[0.03] border-black/8 text-slate-900'
-                          : 'bg-white/[0.05] border-white/10 text-white'
-                          }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-xs font-medium">{t('maxNavCategories', settings.language)}</div>
-                            <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
-                              {t('maxNavCategoriesDesc', settings.language)}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-6 gap-1 p-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5">
-                          {[4, 6, 8, 10, 12, 0].map((num) => {
-                            const isSelected = (settings.maxNavCategories ?? 6) === num;
-                            return (
-                              <button
-                                key={num}
-                                type="button"
-                                onClick={() => handleSettingsChange({ maxNavCategories: num })}
-                                className={`py-1 px-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer text-center ${isSelected
-                                    ? isLight
-                                      ? 'bg-white text-slate-900 shadow-xs border border-black/10 font-semibold'
-                                      : 'bg-white/20 text-white shadow-sm border border-white/20 font-semibold'
-                                    : isLight
-                                      ? 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
-                                      : 'text-white/60 hover:text-white hover:bg-white/10'
-                                  }`}
-                              >
-                                {num === 0 ? t('unlimited', settings.language) : num}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
 
                 {/* Show Greeting & Custom Greetings Section */}
                 <div
@@ -2261,6 +2478,34 @@ export const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         className="hidden"
                       />
                     </label>
+                  </div>
+
+                  {/* Reset Feature Tours */}
+                  <div className="pt-3 border-t border-black/5 dark:border-white/5 flex items-center justify-between">
+                    <div>
+                      <div className={`text-xs font-medium ${isLight ? 'text-slate-700' : 'text-white/80'}`}>
+                        {t('resetTour', settings.language)}
+                      </div>
+                      <div className={`text-[10px] mt-0.5 ${isLight ? 'text-slate-400' : 'text-white/40'}`}>
+                        {resetTourStatus ? (
+                          <span className="text-emerald-500 font-semibold">{t('resetTourDone', settings.language)}</span>
+                        ) : (
+                          t('resetTourDesc', settings.language)
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleResetTour}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 ${
+                        isLight
+                          ? 'bg-black/[0.03] hover:bg-black/[0.07] border-black/10 text-slate-700'
+                          : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
+                      }`}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>{t('resetTour', settings.language)}</span>
+                    </button>
                   </div>
 
                   {importStatus && (

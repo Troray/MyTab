@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Pencil, Trash2, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Pencil, Trash2, ChevronLeft, ChevronRight, X, Plus } from 'lucide-react';
 import { GridPage, ThemeSettings } from '../../types';
 import { ResolvedTextColors } from '../../utils/wallpaperAnalyzer';
 import { ConfirmModal } from './ConfirmModal';
@@ -8,9 +8,12 @@ import { t } from '../../utils/i18n';
 import { getGridPageDisplayName } from '../../utils/constants';
 
 interface GridPageIndicatorProps {
-  gridPages: GridPage[];
-  activeGridPageId: string;
-  settings: ThemeSettings;
+  gridPages?: GridPage[];
+  pages?: GridPage[];
+  activeGridPageId?: string;
+  activePageId?: string;
+  settings?: ThemeSettings;
+  language?: string;
   resolvedColors?: ResolvedTextColors;
   isLight?: boolean;
   onSelectPage: (pageId: string) => void;
@@ -20,15 +23,22 @@ interface GridPageIndicatorProps {
 }
 
 export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
-  gridPages,
-  activeGridPageId,
-  settings,
+  gridPages: propGridPages,
+  pages: propPages,
+  activeGridPageId: propActiveGridPageId,
+  activePageId: propActivePageId,
+  settings: propSettings,
+  language: propLanguage,
   resolvedColors,
   isLight = false,
   onSelectPage,
+  onAddPage,
   onRenamePage,
   onDeletePage,
 }) => {
+  const gridPages = propGridPages || propPages || [];
+  const activeGridPageId = propActiveGridPageId || propActivePageId || '';
+  const settings = propSettings || ({ language: propLanguage || 'zh-CN' } as ThemeSettings);
   const [contextMenu, setContextMenu] = useState<{
     page: GridPage;
     x: number;
@@ -87,12 +97,12 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
     setRenamingPage(null);
   };
 
+  if (typeof document === 'undefined' || !gridPages || gridPages.length === 0) return null;
+
   const activeIndex = Math.max(
     0,
     gridPages.findIndex((p) => p.id === activeGridPageId)
   );
-
-  if (typeof document === 'undefined' || gridPages.length <= 1) return null;
 
   return (
     <>
@@ -100,10 +110,11 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
       {createPortal(
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 select-none z-40 pointer-events-none">
           <div
+            data-tour="grid-page-indicator"
             className={`pointer-events-auto inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border backdrop-blur-xl shadow-lg transition-all duration-300 ease-out ${
               contextMenu || renamingPage || deletingPage
                 ? 'opacity-100 scale-100 shadow-xl'
-                : 'opacity-35 hover:opacity-100 hover:scale-105 hover:shadow-2xl'
+                : 'opacity-90 hover:opacity-100 hover:scale-105 hover:shadow-2xl'
             } ${
               isLight
                 ? 'bg-white/80 hover:bg-white/95 border-black/10 text-slate-800 shadow-black/10'
@@ -182,6 +193,24 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             )}
+
+            {/* Add Desktop Page Button */}
+            {onAddPage && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddPage();
+                }}
+                className={`p-1 ml-0.5 rounded-full transition-all cursor-pointer ${
+                  isLight ? 'hover:bg-black/10 text-slate-600 hover:text-slate-900' : 'hover:bg-white/15 text-white/70 hover:text-white'
+                }`}
+                aria-label={t('addDesktopPage', settings.language)}
+                data-tooltip={t('addDesktopPage', settings.language)}
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>,
         document.body
@@ -193,6 +222,10 @@ export const GridPageIndicator: React.FC<GridPageIndicatorProps> = ({
           <div
             ref={menuRef}
             onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
             onContextMenu={(e) => {
               e.preventDefault();
               e.stopPropagation();

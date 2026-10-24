@@ -617,4 +617,25 @@ test('Grid Pages: SiteModal category resolution correctly preserves site categor
   assert.equal(resAddOnAll.resolvedCategoryId, 'cloud');
 });
 
+test('Storage: getGuidedModes resets guidedModes and updates version when upgrading to CURRENT_TOUR_VERSION', async () => {
+  const { getGuidedModes, markModeGuided, resetGuidedModes, CURRENT_TOUR_VERSION, STORAGE_KEYS } = await import('../src/services/storage.ts');
+
+  // 1. Simulate legacy storage where guidedModes was set in older version, but TOUR_VERSION is absent
+  mockStorage.set(STORAGE_KEYS.GUIDED_MODES, JSON.stringify({ grid: true, board: true, list: true }));
+  mockStorage.delete(STORAGE_KEYS.TOUR_VERSION);
+
+  const initialModes = await getGuidedModes();
+  assert.deepEqual(initialModes, {}, 'Upgraded user should have guidedModes reset so new tour triggers');
+  assert.equal(JSON.parse(mockStorage.get(STORAGE_KEYS.TOUR_VERSION)), CURRENT_TOUR_VERSION, 'TOUR_VERSION should be updated to current');
+
+  // 2. Mark mode as guided
+  const afterMark = await markModeGuided('grid');
+  assert.equal(afterMark.grid, true);
+
+  // 3. Subsequent calls should retain guided status
+  const subsequentModes = await getGuidedModes();
+  assert.equal(subsequentModes.grid, true, 'Subsequent calls must preserve guided status');
+});
+
+
 

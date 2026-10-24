@@ -44,7 +44,11 @@ Uma extensão moderna, minimalista e focada em privacidade para a página Nova G
 
 ## 🌟 Recursos Principais
 
-- 📱 **Carrossel de Múltiplas Áreas de Trabalho & Gestos de Deslize (v1.3.0)**: Nova arquitetura multi-desktop impulsionada pelo motor de física Embla Carousel. Suporta deslizamento suave com o mouse, teclas de seta do teclado e indicadores flutuantes em vidro fosco. Permite renomear áreas de trabalho, excluir páginas migrando links com segurança e memória de categorias independente.
+- 📱 **Múltiplas Áreas de Trabalho & Tela Livre (Multi-Desktop & Free Canvas Layout, v1.5.0)**: Novo sistema de layout livre impulsionado pelo GridStack com arrastar e soltar, redimensionamento fluido, controle de sobreposições e alinhamento automático à grade. Relógio, data, saudação, calendário lunar, barra de pesquisa e categorias são widgets independentes com persistência por área de trabalho.
+- 📑 **Visualização em Lista Compacta & Reordenação Fluida (List View & DndKit, v1.4.0 / v1.5.0)**: Layout vertical de alta densidade com `@dnd-kit` para arrastar sem oscilações dentro e entre categorias. Suporta estilos de fundo personalizados para ícones.
+- 🌐 **URL Dupla (WAN / LAN) & Roteamento Inteligente (v1.4.0)**: Configure endereços externos e internos e notas por atalho. Alterne de ambiente com um clique e visualize emblemas de rede nos cartões.
+- 📊 **Visualização em Quadro Kanban (Board View, v1.4.0)**: Exibição horizontal de todas as categorias em colunas Kanban com expansão suave e efeitos de mola ao passar o mouse.
+- 🧭 **Tour Interativo de Recursos (Feature Tour, v1.5.0)**: Guia de destaque leve demonstrando o arrasto de widgets e a configuração do calendário lunar, com acionamento automático após atualizações de versão.
 - 🔖 **Importação Nativa de Favoritos com Deduplicação Inteligente (v1.3.0)**: Leitura rápida de árvores de favoritos nativas do Chrome, Edge e Firefox, além de suporte a arquivos HTML padrão (Safari, etc.). Seleção em árvore interativa, nivelamento inteligente de pastas, comparação de duplicatas em tempo real e visualização prévia de estatísticas.
 - 🔒 **Contêiner Duplo de Espaço Privado (v1.2.0)**: Arquitetura inovadora de múltiplos perfis que separa fisicamente a navegação cotidiana (Espaço Padrão) da navegação confidencial (Espaço Privado). Ativa-se automaticamente em janelas anônimas (Incognito) ou através de `private.html`.
 - 📌 **Salvamento Rápido com Um Clique na Barra de Ferramentas (Popup)**: Ao navegar em qualquer página, clique no ícone da barra de ferramentas para capturar o título, a URL e o favicon em alta resolução e salvá-los imediatamente no espaço e categoria desejados.
@@ -200,15 +204,16 @@ Os arquivos compilados estarão prontos no diretório `dist/`:
 
 ## 🙏 Agradecimentos (Acknowledgements)
 
-- ⚛️ **[React](https://react.dev/)**
-- ⚡ **[Vite](https://vitejs.dev/)**
-- 🎠 **[Embla Carousel](https://www.embla-carousel.com/)**
-- 🎨 **[Lucide Icons](https://lucide.dev/)**
-- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**
-- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**
-- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**
-- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**
-- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**
+- ⚛️ **[React](https://react.dev/)**: O alicerce para a construção de interfaces modernas, altamente responsivas e declarativas.
+- ⚡ **[Vite](https://vitejs.dev/)**: Ferramenta de build de frontend de última geração ultrarrápida com Hot Module Replacement (HMR).
+- 🔲 **[GridStack](https://gridstackjs.com/)**: Motor de layout em grade moderno para arrastar e soltar livremente e layouts multi-desktop independentes.
+- 🎯 **[@dnd-kit](https://dndkit.com/)**: Kit de ferramentas leve e modular para reordenação fluida e sem oscilações na visualização em lista.
+- 🎨 **[Lucide Icons](https://lucide.dev/)**: Biblioteca de ícones open source esteticamente agradável, elegante e consistente.
+- 📅 **[lunar-javascript](https://github.com/6tail/lunar-javascript)**: Biblioteca de calendário lunar e 24 termos solares desenvolvida por [@6tail](https://github.com/6tail).
+- 🌈 **[Tailwind CSS](https://tailwindcss.com/)**: Framework CSS atômico para efeitos de vidro fosco (Glassmorphism) e temas adaptativos.
+- 🦊 **[webextension-polyfill](https://github.com/mozilla/webextension-polyfill)**: Camada unificada de compatibilidade para WebExtensions baseada em Promises da Mozilla.
+- 🖼️ **[Unsplash](https://unsplash.com/) & Microsoft Bing**: Recursos fotográficos de alta resolução e papéis de parede diários.
+- 🐙 **[GitHub](https://github.com/) & [Gitee](https://gitee.com/)**: APIs REST confiáveis de Git / Gist e ecossistema de desenvolvedores.
 
 ---
 
