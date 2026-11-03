@@ -251,3 +251,58 @@ test('FreeCanvas: Valid pill keys algorithm strictly retains cat-pill-all, page 
   assert.ok(p2Keys.has('cat-pill-uncategorized'), 'page-2 must retain cat-pill-uncategorized');
   assert.ok(!p2Keys.has('cat-pill-cat-work'), 'page-2 must not contain cat-pill-cat-work from page-1');
 });
+
+
+test('FreeCanvas: Cross-desktop referenced categories are preserved as real categories instead of false uncategorized pills', () => {
+  const defaultPageId = 'page-1';
+  const categories = [
+    { id: 'all', name: '全部' },
+    { id: 'work', name: '工作与开发', pageId: 'page-1' },
+    { id: 'tools', name: '常用工具', pageId: 'page-1' },
+    { id: 'media', name: '吹水', pageId: 'page-2' },
+  ];
+
+  const sites = [
+    // Site on page-1 referencing category 'media' (which belongs to page-2)
+    { id: 's1', title: 'History Map', pageId: 'page-1', categoryId: 'media' },
+    // Site on page-2 referencing category 'work' (which belongs to page-1)
+    { id: 's2', title: 'Linux SB', pageId: 'page-2', categoryId: 'work' },
+  ];
+
+  // Helper function replicating FreeCanvas logic
+  const resolvePageCategoriesAndUncategorized = (currentPageId, pageSites) => {
+    const pageCatIds = new Set(
+      categories
+        .filter((c) => (c.pageId || defaultPageId) === currentPageId && c.id !== 'all')
+        .map((c) => c.id)
+    );
+    pageSites.forEach((s) => {
+      if (s.categoryId && s.categoryId !== 'all') {
+        pageCatIds.add(s.categoryId);
+      }
+    });
+
+    const pageCats = categories
+      .filter((c) => pageCatIds.has(c.id) && c.id !== 'all')
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
+    const allKnownCatIds = new Set(categories.map((c) => c.id));
+    const uncatSites = pageSites.filter(
+      (s) => !s.categoryId || s.categoryId === 'all' || !allKnownCatIds.has(s.categoryId)
+    );
+
+    return { pageCats, uncatSites };
+  };
+
+  // Test Page-1
+  const page1Sites = sites.filter((s) => s.pageId === 'page-1');
+  const res1 = resolvePageCategoriesAndUncategorized('page-1', page1Sites);
+  assert.equal(res1.uncatSites.length, 0, 'No false uncategorized sites on page-1');
+  assert.ok(res1.pageCats.some((c) => c.id === 'media'), 'page-1 includes media category because s1 references it');
+
+  // Test Page-2
+  const page2Sites = sites.filter((s) => s.pageId === 'page-2');
+  const res2 = resolvePageCategoriesAndUncategorized('page-2', page2Sites);
+  assert.equal(res2.uncatSites.length, 0, 'No false uncategorized sites on page-2');
+  assert.ok(res2.pageCats.some((c) => c.id === 'work'), 'page-2 includes work category because s2 references it');
+});

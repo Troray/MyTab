@@ -370,18 +370,32 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
     return sites.filter((s) => (s.pageId || defaultPageId) === currentPageId);
   }, [sites, defaultPageId, currentPageId]);
 
-  // Categories belonging to current desktop page
+  // Categories belonging to current desktop page, plus any category referenced by sites on this page
   const pageCategories = useMemo(() => {
-    return categories
-      .filter((c) => (c.pageId || defaultPageId) === currentPageId && c.id !== 'all')
-      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-  }, [categories, defaultPageId, currentPageId]);
+    const pageCatIds = new Set(
+      categories
+        .filter((c) => (c.pageId || defaultPageId) === currentPageId && c.id !== 'all')
+        .map((c) => c.id)
+    );
+    // Also include any valid category that currently has sites on this page
+    pageSites.forEach((s) => {
+      if (s.categoryId && s.categoryId !== 'all') {
+        pageCatIds.add(s.categoryId);
+      }
+    });
 
-  // Uncategorized sites detection
+    return categories
+      .filter((c) => pageCatIds.has(c.id) && c.id !== 'all')
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  }, [categories, defaultPageId, currentPageId, pageSites]);
+
+  // Uncategorized sites detection (only sites with no category, 'all', or an invalid/deleted category ID)
   const uncategorizedSites = useMemo(() => {
-    const knownCatIds = new Set(pageCategories.map((c) => c.id));
-    return pageSites.filter((s) => !knownCatIds.has(s.categoryId));
-  }, [pageSites, pageCategories]);
+    const allKnownCatIds = new Set(categories.map((c) => c.id));
+    return pageSites.filter(
+      (s) => !s.categoryId || s.categoryId === 'all' || !allKnownCatIds.has(s.categoryId)
+    );
+  }, [pageSites, categories]);
 
   // All category pills for current desktop page
   const categoryPills = useMemo(() => {
