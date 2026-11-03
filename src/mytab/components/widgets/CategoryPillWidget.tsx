@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { GripVertical } from 'lucide-react';
 import { Category } from '../../../types';
 import { ResolvedTextColors } from '../../../utils/wallpaperAnalyzer';
@@ -28,9 +28,31 @@ export const CategoryPillWidget: React.FC<CategoryPillWidgetProps> = React.memo(
   onSelect,
   onContextMenu,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [overflowDist, setOverflowDist] = useState(0);
+
   const displayName = getCategoryDisplayName(category, language);
   const hasCustomColor = Boolean(category.color);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+    if (!isEditing && containerRef.current && textRef.current) {
+      const containerW = containerRef.current.clientWidth;
+      const textW = textRef.current.scrollWidth;
+      const diff = textW - containerW;
+      setOverflowDist(diff > 2 ? diff : 0);
+    }
+  }, [isEditing]);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+    setOverflowDist(0);
+  }, []);
+
+  const isMarqueeActive = overflowDist > 0 && isHovered && !isEditing;
+  const marqueeDuration = Math.max(2.8, 1.8 + (overflowDist / 30) * 1.5);
 
   return (
     <div
@@ -53,9 +75,9 @@ export const CategoryPillWidget: React.FC<CategoryPillWidgetProps> = React.memo(
           onContextMenu(e, category);
         }
       }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className={`w-full h-full flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs md:text-sm font-medium transition-all duration-200 select-none border backdrop-blur-md ${
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`w-full h-full flex items-center justify-center px-2.5 py-1 rounded-full text-xs md:text-sm font-medium transition-all duration-200 select-none border backdrop-blur-md ${
         isEditing ? 'cursor-move' : 'cursor-pointer active:scale-95'
       } ${
         isActive
@@ -75,33 +97,38 @@ export const CategoryPillWidget: React.FC<CategoryPillWidgetProps> = React.memo(
           : undefined
       }
     >
-      {/* Edit Mode Grip Drag Handle (like SearchWidget's draggable area) */}
+      {/* Edit Mode Grip Drag Handle */}
       {isEditing && (
         <GripVertical className="w-3.5 h-3.5 -ml-1 opacity-50 shrink-0 pointer-events-none" />
       )}
 
-      {/* Category Name */}
-      <span
-        className="truncate tracking-tight pointer-events-none"
-        style={!isActive && resolvedColors?.tabs ? { color: resolvedColors.tabs } : undefined}
+      {/* Category Name Container with Hover Marquee */}
+      <div
+        ref={containerRef}
+        className="w-full h-full min-w-0 overflow-hidden flex items-center justify-center pointer-events-none"
       >
-        {displayName}
-      </span>
-
-      {/* Count Badge */}
-      <span
-        className={`text-[10px] px-1.5 py-0.2 rounded-full font-tabular shrink-0 pointer-events-none ${
-          isActive
-            ? isLight
-              ? 'bg-black/15 text-slate-900 font-semibold'
-              : 'bg-white/30 text-white font-semibold'
-            : isLight
-            ? 'bg-black/[0.06] text-slate-600'
-            : 'bg-white/[0.12] text-white/70'
-        }`}
-      >
-        {count}
-      </span>
+        <span
+          ref={textRef}
+          className={`tracking-tight select-none pointer-events-none transition-colors duration-200 ${
+            isMarqueeActive
+              ? 'whitespace-nowrap shrink-0 animate-pill-marquee'
+              : 'truncate max-w-full'
+          }`}
+          style={{
+            ...(!isActive && resolvedColors?.tabs ? { color: resolvedColors.tabs } : {}),
+            ...(isMarqueeActive
+              ? ({
+                  '--marquee-dist': `${overflowDist}px`,
+                  '--marquee-duration': `${marqueeDuration}s`,
+                  marginLeft: 0,
+                  marginRight: 'auto',
+                } as React.CSSProperties)
+              : {}),
+          }}
+        >
+          {displayName}
+        </span>
+      </div>
     </div>
   );
 });
