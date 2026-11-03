@@ -257,6 +257,11 @@ export const SiteModal: React.FC<SiteModalProps> = ({
       }
     }
 
+    const targetCat = categoryId && categoryId !== 'all' ? categories.find((c) => c.id === categoryId) : undefined;
+    const finalPageId = (targetCat?.pageId && gridPages?.some((p) => p.id === targetCat.pageId))
+      ? targetCat.pageId
+      : (pageId || defaultPageId);
+
     onSave({
       url: finalUrl,
       urlLan: finalUrlLan,
@@ -266,7 +271,7 @@ export const SiteModal: React.FC<SiteModalProps> = ({
       iconBgType: iconBgType === 'inherit' ? undefined : iconBgType,
       iconBgColor: iconBgColor.trim() || '#f3f3f3',
       categoryId: categoryId || 'all',
-      pageId: pageId || defaultPageId,
+      pageId: finalPageId,
     });
   };
 
@@ -636,7 +641,13 @@ export const SiteModal: React.FC<SiteModalProps> = ({
             </label>
             <CustomSelect
               value={categoryId}
-              onChange={setCategoryId}
+              onChange={(newCatId) => {
+                setCategoryId(newCatId);
+                const cat = categories.find((c) => c.id === newCatId);
+                if (cat?.pageId && gridPages?.some((p) => p.id === cat.pageId)) {
+                  setPageId(cat.pageId);
+                }
+              }}
               isLight={isLight}
               options={availableCategories.map((cat) => ({
                 value: cat.id,

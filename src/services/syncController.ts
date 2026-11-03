@@ -391,17 +391,22 @@ export function applyRemotePayload(
       const isValidPage = remotePages.some((p) => p && p.id === preferredPageId);
       const validRemotePageIds = new Set(remotePages.map((p) => p.id));
       const fallbackPageId = isValidPage ? preferredPageId : (remotePages[0]?.id || 'page-1');
-      const cleanRemoteSites = remoteSites.map((s) => {
-        if (!s.pageId || !validRemotePageIds.has(s.pageId)) {
-          return { ...s, pageId: fallbackPageId };
-        }
-        return s;
-      });
       const cleanRemoteCats = remoteCats.map((c) => {
         if (!c.pageId || !validRemotePageIds.has(c.pageId)) {
           return { ...c, pageId: fallbackPageId };
         }
         return c;
+      });
+      const remoteCatPageMap = new Map<string, string>();
+      cleanRemoteCats.forEach((c) => {
+        if (c.id && c.id !== 'all' && c.pageId) {
+          remoteCatPageMap.set(c.id, c.pageId);
+        }
+      });
+      const cleanRemoteSites = remoteSites.map((s) => {
+        const catPageId = s.categoryId ? remoteCatPageMap.get(s.categoryId) : undefined;
+        const effectivePageId = catPageId || (s.pageId && validRemotePageIds.has(s.pageId) ? s.pageId : fallbackPageId);
+        return { ...s, pageId: effectivePageId };
       });
 
       const mergedPageCategoryMap = {
@@ -442,17 +447,22 @@ export function applyRemotePayload(
       const validMergedPageIds = new Set(mergedPages.map((p) => p.id));
       const fallbackPageId = isValidPage ? preferredPageId : (mergedPages[0]?.id || 'page-1');
 
-      const cleanSites = mergedSites.map((s) => {
-        if (!s.pageId || !validMergedPageIds.has(s.pageId)) {
-          return { ...s, pageId: fallbackPageId };
-        }
-        return s;
-      });
       const cleanCats = mergedCats.map((c) => {
         if (!c.pageId || !validMergedPageIds.has(c.pageId)) {
           return { ...c, pageId: fallbackPageId };
         }
         return c;
+      });
+      const mergedCatPageMap = new Map<string, string>();
+      cleanCats.forEach((c) => {
+        if (c.id && c.id !== 'all' && c.pageId) {
+          mergedCatPageMap.set(c.id, c.pageId);
+        }
+      });
+      const cleanSites = mergedSites.map((s) => {
+        const catPageId = s.categoryId ? mergedCatPageMap.get(s.categoryId) : undefined;
+        const effectivePageId = catPageId || (s.pageId && validMergedPageIds.has(s.pageId) ? s.pageId : fallbackPageId);
+        return { ...s, pageId: effectivePageId };
       });
 
       const mergedPageCategoryMap = {

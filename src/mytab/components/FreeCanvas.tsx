@@ -370,32 +370,18 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
     return sites.filter((s) => (s.pageId || defaultPageId) === currentPageId);
   }, [sites, defaultPageId, currentPageId]);
 
-  // Categories belonging to current desktop page, plus any category referenced by sites on this page
+  // Categories belonging to current desktop page (strictly 1:1 desktop isolation: one category only belongs to one desktop)
   const pageCategories = useMemo(() => {
-    const pageCatIds = new Set(
-      categories
-        .filter((c) => (c.pageId || defaultPageId) === currentPageId && c.id !== 'all')
-        .map((c) => c.id)
-    );
-    // Also include any valid category that currently has sites on this page
-    pageSites.forEach((s) => {
-      if (s.categoryId && s.categoryId !== 'all') {
-        pageCatIds.add(s.categoryId);
-      }
-    });
-
     return categories
-      .filter((c) => pageCatIds.has(c.id) && c.id !== 'all')
+      .filter((c) => (c.pageId || defaultPageId) === currentPageId && c.id !== 'all')
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-  }, [categories, defaultPageId, currentPageId, pageSites]);
+  }, [categories, defaultPageId, currentPageId]);
 
-  // Uncategorized sites detection (only sites with no category, 'all', or an invalid/deleted category ID)
+  // Uncategorized sites detection
   const uncategorizedSites = useMemo(() => {
-    const allKnownCatIds = new Set(categories.map((c) => c.id));
-    return pageSites.filter(
-      (s) => !s.categoryId || s.categoryId === 'all' || !allKnownCatIds.has(s.categoryId)
-    );
-  }, [pageSites, categories]);
+    const knownCatIds = new Set(pageCategories.map((c) => c.id));
+    return pageSites.filter((s) => !knownCatIds.has(s.categoryId));
+  }, [pageSites, pageCategories]);
 
   // All category pills for current desktop page
   const categoryPills = useMemo(() => {
@@ -1239,11 +1225,13 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
         if (dx < 0) {
           // Swipe Left -> Next desktop page
           if (currentIdx < gridPages.length - 1) {
+            flushSave(currentPageId);
             onSelectPage(gridPages[currentIdx + 1].id);
           }
         } else {
           // Swipe Right -> Previous desktop page
           if (currentIdx > 0) {
+            flushSave(currentPageId);
             onSelectPage(gridPages[currentIdx - 1].id);
           }
         }
@@ -1751,7 +1739,10 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
           settings={settings}
           resolvedColors={resolvedColors}
           isLight={isLight}
-          onSelectPage={onSelectPage || (() => {})}
+          onSelectPage={(targetId) => {
+            flushSave(currentPageId);
+            onSelectPage?.(targetId);
+          }}
           onAddPage={onAddPage}
           onRenamePage={onRenamePage || (() => {})}
           onDeletePage={onDeletePage || (() => {})}

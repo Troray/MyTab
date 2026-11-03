@@ -253,7 +253,7 @@ test('FreeCanvas: Valid pill keys algorithm strictly retains cat-pill-all, page 
 });
 
 
-test('FreeCanvas: Cross-desktop referenced categories are preserved as real categories instead of false uncategorized pills', () => {
+test('FreeCanvas: Categories strictly isolated 1:1 per desktop and site pageId aligned with category pageId', () => {
   const defaultPageId = 'page-1';
   const categories = [
     { id: 'all', name: '全部' },
@@ -262,47 +262,59 @@ test('FreeCanvas: Cross-desktop referenced categories are preserved as real cate
     { id: 'media', name: '吹水', pageId: 'page-2' },
   ];
 
-  const sites = [
-    // Site on page-1 referencing category 'media' (which belongs to page-2)
+  const rawSites = [
+    // Site initially marked with page-1, but referencing category 'media' (which belongs to page-2)
     { id: 's1', title: 'History Map', pageId: 'page-1', categoryId: 'media' },
-    // Site on page-2 referencing category 'work' (which belongs to page-1)
+    // Site initially marked with page-2, but referencing category 'work' (which belongs to page-1)
     { id: 's2', title: 'Linux SB', pageId: 'page-2', categoryId: 'work' },
+    // Normal site on page-1
+    { id: 's3', title: 'GitHub', pageId: 'page-1', categoryId: 'work' },
   ];
 
-  // Helper function replicating FreeCanvas logic
-  const resolvePageCategoriesAndUncategorized = (currentPageId, pageSites) => {
-    const pageCatIds = new Set(
-      categories
-        .filter((c) => (c.pageId || defaultPageId) === currentPageId && c.id !== 'all')
-        .map((c) => c.id)
-    );
-    pageSites.forEach((s) => {
-      if (s.categoryId && s.categoryId !== 'all') {
-        pageCatIds.add(s.categoryId);
-      }
-    });
+  // 1. Storage normalization: site pageId follows category pageId
+  const catPageMap = new Map();
+  categories.forEach((c) => {
+    if (c.id && c.id !== 'all' && c.pageId) {
+      catPageMap.set(c.id, c.pageId);
+    }
+  });
+  const normalizedSites = rawSites.map((s) => {
+    const catPageId = s.categoryId ? catPageMap.get(s.categoryId) : undefined;
+    const effectivePageId = catPageId || s.pageId || defaultPageId;
+    return { ...s, pageId: effectivePageId };
+  });
 
-    const pageCats = categories
-      .filter((c) => pageCatIds.has(c.id) && c.id !== 'all')
+  // Verify site alignment
+  const s1 = normalizedSites.find((s) => s.id === 's1');
+  const s2 = normalizedSites.find((s) => s.id === 's2');
+  assert.equal(s1.pageId, 'page-2', 's1 auto-aligned to page-2 where its category media lives');
+  assert.equal(s2.pageId, 'page-1', 's2 auto-aligned to page-1 where its category work lives');
+
+  // 2. FreeCanvas desktop category filtering (strict 1:1 isolation)
+  const getPageCategories = (currentPageId) => {
+    return categories
+      .filter((c) => (c.pageId || defaultPageId) === currentPageId && c.id !== 'all')
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-
-    const allKnownCatIds = new Set(categories.map((c) => c.id));
-    const uncatSites = pageSites.filter(
-      (s) => !s.categoryId || s.categoryId === 'all' || !allKnownCatIds.has(s.categoryId)
-    );
-
-    return { pageCats, uncatSites };
   };
 
-  // Test Page-1
-  const page1Sites = sites.filter((s) => s.pageId === 'page-1');
-  const res1 = resolvePageCategoriesAndUncategorized('page-1', page1Sites);
-  assert.equal(res1.uncatSites.length, 0, 'No false uncategorized sites on page-1');
-  assert.ok(res1.pageCats.some((c) => c.id === 'media'), 'page-1 includes media category because s1 references it');
+  const getUncategorized = (currentPageId, sitesList) => {
+    const pageCats = getPageCategories(currentPageId);
+    const knownCatIds = new Set(pageCats.map((c) => c.id));
+    const pageSites = sitesList.filter((s) => (s.pageId || defaultPageId) === currentPageId);
+    return pageSites.filter((s) => !knownCatIds.has(s.categoryId));
+  };
 
-  // Test Page-2
-  const page2Sites = sites.filter((s) => s.pageId === 'page-2');
-  const res2 = resolvePageCategoriesAndUncategorized('page-2', page2Sites);
-  assert.equal(res2.uncatSites.length, 0, 'No false uncategorized sites on page-2');
-  assert.ok(res2.pageCats.some((c) => c.id === 'work'), 'page-2 includes work category because s2 references it');
+  // Page 1 assertions
+  const page1Cats = getPageCategories('page-1');
+  assert.deepEqual(page1Cats.map((c) => c.id), ['work', 'tools'], 'Page-1 strictly contains only work and tools');
+  assert.ok(!page1Cats.some((c) => c.id === 'media'), 'Page-1 NEVER contains page-2 category media');
+  const page1Uncat = getUncategorized('page-1', normalizedSites);
+  assert.equal(page1Uncat.length, 0, 'Page-1 has zero uncategorized sites');
+
+  // Page 2 assertions
+  const page2Cats = getPageCategories('page-2');
+  assert.deepEqual(page2Cats.map((c) => c.id), ['media'], 'Page-2 strictly contains only media');
+  assert.ok(!page2Cats.some((c) => c.id === 'work'), 'Page-2 NEVER contains page-1 category work');
+  const page2Uncat = getUncategorized('page-2', normalizedSites);
+  assert.equal(page2Uncat.length, 0, 'Page-2 has zero uncategorized sites');
 });
