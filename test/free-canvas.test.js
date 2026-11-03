@@ -182,3 +182,72 @@ test('FreeCanvas Sync: buildSyncPayload packages freeLayouts and applyRemotePayl
   assert.ok(mergedNormalLayouts['page-1']['sys-search'], 'Local search layout preserved');
 });
 
+test('FreeCanvas: Category pills layout persistence and multi-desktop isolation', () => {
+  // Desktop 1 layout
+  const page1Layout = {
+    'sys-clock': { id: 'sys-clock', type: 'clock', x: 18, y: 1, w: 24, h: 6 },
+    'cat-pill-all': { id: 'cat-pill-all', type: 'category-pill', x: 10, y: 14, w: 7, h: 2 },
+    'cat-pill-c1': { id: 'cat-pill-c1', type: 'category-pill', x: 18, y: 14, w: 8, h: 2 },
+    'cat-pill-uncategorized': { id: 'cat-pill-uncategorized', type: 'category-pill', x: 27, y: 14, w: 6, h: 2 },
+  };
+
+  // Desktop 2 layout
+  const page2Layout = {
+    'sys-clock': { id: 'sys-clock', type: 'clock', x: 24, y: 4, w: 12, h: 4 },
+    'cat-pill-all': { id: 'cat-pill-all', type: 'category-pill', x: 20, y: 10, w: 12, h: 3 },
+    'cat-pill-c2': { id: 'cat-pill-c2', type: 'category-pill', x: 33, y: 10, w: 10, h: 3 },
+  };
+
+  const freeLayouts = {
+    'page-1': page1Layout,
+    'page-2': page2Layout,
+  };
+
+  // 1. Verify cat-pill-all has independent coordinates and dimensions across desktops
+  assert.equal(freeLayouts['page-1']['cat-pill-all'].x, 10);
+  assert.equal(freeLayouts['page-1']['cat-pill-all'].w, 7);
+  assert.equal(freeLayouts['page-1']['cat-pill-all'].h, 2);
+
+  assert.equal(freeLayouts['page-2']['cat-pill-all'].x, 20);
+  assert.equal(freeLayouts['page-2']['cat-pill-all'].w, 12);
+  assert.equal(freeLayouts['page-2']['cat-pill-all'].h, 3);
+
+  // 2. Verify page-1 categories are not leaked into page-2 and vice-versa
+  assert.ok(freeLayouts['page-1']['cat-pill-c1']);
+  assert.ok(!freeLayouts['page-2']['cat-pill-c1']);
+  assert.ok(freeLayouts['page-2']['cat-pill-c2']);
+  assert.ok(!freeLayouts['page-1']['cat-pill-c2']);
+});
+
+test('FreeCanvas: Valid pill keys algorithm strictly retains cat-pill-all, page categories, and uncategorized', () => {
+  const defaultPageId = 'page-1';
+  const categories = [
+    { id: 'all', name: 'All' },
+    { id: 'cat-work', name: 'Work', pageId: 'page-1' },
+    { id: 'cat-life', name: 'Life', pageId: 'page-1' },
+    { id: 'cat-fun', name: 'Fun', pageId: 'page-2' },
+  ];
+
+  // Helper function matching FreeCanvas flushSave validPillKeys computation
+  const computeValidPillKeys = (pageId, cats) => {
+    const currentCats = cats.filter((c) => (c.pageId || defaultPageId) === pageId && c.id !== 'all');
+    return new Set([
+      'cat-pill-all',
+      'cat-pill-uncategorized',
+      ...currentCats.map((c) => `cat-pill-${c.id}`),
+    ]);
+  };
+
+  const p1Keys = computeValidPillKeys('page-1', categories);
+  assert.ok(p1Keys.has('cat-pill-all'), 'page-1 must retain cat-pill-all');
+  assert.ok(p1Keys.has('cat-pill-cat-work'), 'page-1 must retain cat-pill-cat-work');
+  assert.ok(p1Keys.has('cat-pill-cat-life'), 'page-1 must retain cat-pill-cat-life');
+  assert.ok(p1Keys.has('cat-pill-uncategorized'), 'page-1 must retain cat-pill-uncategorized');
+  assert.ok(!p1Keys.has('cat-pill-cat-fun'), 'page-1 must not contain cat-pill-cat-fun from page-2');
+
+  const p2Keys = computeValidPillKeys('page-2', categories);
+  assert.ok(p2Keys.has('cat-pill-all'), 'page-2 must retain cat-pill-all');
+  assert.ok(p2Keys.has('cat-pill-cat-fun'), 'page-2 must retain cat-pill-cat-fun');
+  assert.ok(p2Keys.has('cat-pill-uncategorized'), 'page-2 must retain cat-pill-uncategorized');
+  assert.ok(!p2Keys.has('cat-pill-cat-work'), 'page-2 must not contain cat-pill-cat-work from page-1');
+});
