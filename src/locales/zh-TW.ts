@@ -367,7 +367,7 @@ export const zhTW: Translation = {
   textColorTargetDate: "日期",
   textColorTargetGreeting: "問候語",
   textColorTargetSearch: "搜尋欄",
-  textColorTargetTabs: "分類標籤",
+  textColorTargetTabs: "分類標題",
   textColorTargetCards: "快捷卡片",
   textColorAutoHint: "已開啟智能自適應，隨桌布明暗自動調色",
   textColorWysiwygHint: "所見即所得，背景文字正在即時響應變色",
