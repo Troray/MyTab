@@ -36,7 +36,7 @@ export const CategoryPillWidget: React.FC<CategoryPillWidgetProps> = React.memo(
     <div
       role="button"
       tabIndex={isEditing ? -1 : 0}
-      title={isEditing ? t('freeLayoutEditingHint', language) : undefined}
+      title={isEditing ? t('freeLayoutEditingHint', language) : `${displayName} (${count})`}
       onClick={() => {
         if (!isEditing) onSelect(category.id);
       }}
@@ -78,14 +78,6 @@ export const CategoryPillWidget: React.FC<CategoryPillWidgetProps> = React.memo(
       {/* Edit Mode Grip Drag Handle (like SearchWidget's draggable area) */}
       {isEditing && (
         <GripVertical className="w-3.5 h-3.5 -ml-1 opacity-50 shrink-0 pointer-events-none" />
-      )}
-
-      {/* Category Color Dot (if custom color set) */}
-      {hasCustomColor && category.color && (
-        <span
-          className="w-2 h-2 rounded-full shrink-0 shadow-xs pointer-events-none"
-          style={{ backgroundColor: category.color }}
-        />
       )}
 
       {/* Category Name */}
