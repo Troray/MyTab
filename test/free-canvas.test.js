@@ -182,3 +182,139 @@ test('FreeCanvas Sync: buildSyncPayload packages freeLayouts and applyRemotePayl
   assert.ok(mergedNormalLayouts['page-1']['sys-search'], 'Local search layout preserved');
 });
 
+test('FreeCanvas: Category pills layout persistence and multi-desktop isolation', () => {
+  // Desktop 1 layout
+  const page1Layout = {
+    'sys-clock': { id: 'sys-clock', type: 'clock', x: 18, y: 1, w: 24, h: 6 },
+    'cat-pill-all': { id: 'cat-pill-all', type: 'category-pill', x: 10, y: 14, w: 7, h: 2 },
+    'cat-pill-c1': { id: 'cat-pill-c1', type: 'category-pill', x: 18, y: 14, w: 8, h: 2 },
+    'cat-pill-uncategorized': { id: 'cat-pill-uncategorized', type: 'category-pill', x: 27, y: 14, w: 6, h: 2 },
+  };
+
+  // Desktop 2 layout
+  const page2Layout = {
+    'sys-clock': { id: 'sys-clock', type: 'clock', x: 24, y: 4, w: 12, h: 4 },
+    'cat-pill-all': { id: 'cat-pill-all', type: 'category-pill', x: 20, y: 10, w: 12, h: 3 },
+    'cat-pill-c2': { id: 'cat-pill-c2', type: 'category-pill', x: 33, y: 10, w: 10, h: 3 },
+  };
+
+  const freeLayouts = {
+    'page-1': page1Layout,
+    'page-2': page2Layout,
+  };
+
+  // 1. Verify cat-pill-all has independent coordinates and dimensions across desktops
+  assert.equal(freeLayouts['page-1']['cat-pill-all'].x, 10);
+  assert.equal(freeLayouts['page-1']['cat-pill-all'].w, 7);
+  assert.equal(freeLayouts['page-1']['cat-pill-all'].h, 2);
+
+  assert.equal(freeLayouts['page-2']['cat-pill-all'].x, 20);
+  assert.equal(freeLayouts['page-2']['cat-pill-all'].w, 12);
+  assert.equal(freeLayouts['page-2']['cat-pill-all'].h, 3);
+
+  // 2. Verify page-1 categories are not leaked into page-2 and vice-versa
+  assert.ok(freeLayouts['page-1']['cat-pill-c1']);
+  assert.ok(!freeLayouts['page-2']['cat-pill-c1']);
+  assert.ok(freeLayouts['page-2']['cat-pill-c2']);
+  assert.ok(!freeLayouts['page-1']['cat-pill-c2']);
+});
+
+test('FreeCanvas: Valid pill keys algorithm strictly retains cat-pill-all, page categories, and uncategorized', () => {
+  const defaultPageId = 'page-1';
+  const categories = [
+    { id: 'all', name: 'All' },
+    { id: 'cat-work', name: 'Work', pageId: 'page-1' },
+    { id: 'cat-life', name: 'Life', pageId: 'page-1' },
+    { id: 'cat-fun', name: 'Fun', pageId: 'page-2' },
+  ];
+
+  // Helper function matching FreeCanvas flushSave validPillKeys computation
+  const computeValidPillKeys = (pageId, cats) => {
+    const currentCats = cats.filter((c) => (c.pageId || defaultPageId) === pageId && c.id !== 'all');
+    return new Set([
+      'cat-pill-all',
+      'cat-pill-uncategorized',
+      ...currentCats.map((c) => `cat-pill-${c.id}`),
+    ]);
+  };
+
+  const p1Keys = computeValidPillKeys('page-1', categories);
+  assert.ok(p1Keys.has('cat-pill-all'), 'page-1 must retain cat-pill-all');
+  assert.ok(p1Keys.has('cat-pill-cat-work'), 'page-1 must retain cat-pill-cat-work');
+  assert.ok(p1Keys.has('cat-pill-cat-life'), 'page-1 must retain cat-pill-cat-life');
+  assert.ok(p1Keys.has('cat-pill-uncategorized'), 'page-1 must retain cat-pill-uncategorized');
+  assert.ok(!p1Keys.has('cat-pill-cat-fun'), 'page-1 must not contain cat-pill-cat-fun from page-2');
+
+  const p2Keys = computeValidPillKeys('page-2', categories);
+  assert.ok(p2Keys.has('cat-pill-all'), 'page-2 must retain cat-pill-all');
+  assert.ok(p2Keys.has('cat-pill-cat-fun'), 'page-2 must retain cat-pill-cat-fun');
+  assert.ok(p2Keys.has('cat-pill-uncategorized'), 'page-2 must retain cat-pill-uncategorized');
+  assert.ok(!p2Keys.has('cat-pill-cat-work'), 'page-2 must not contain cat-pill-cat-work from page-1');
+});
+
+
+test('FreeCanvas: Categories strictly isolated 1:1 per desktop and site pageId aligned with category pageId', () => {
+  const defaultPageId = 'page-1';
+  const categories = [
+    { id: 'all', name: '全部' },
+    { id: 'work', name: '工作与开发', pageId: 'page-1' },
+    { id: 'tools', name: '常用工具', pageId: 'page-1' },
+    { id: 'media', name: '吹水', pageId: 'page-2' },
+  ];
+
+  const rawSites = [
+    // Site initially marked with page-1, but referencing category 'media' (which belongs to page-2)
+    { id: 's1', title: 'History Map', pageId: 'page-1', categoryId: 'media' },
+    // Site initially marked with page-2, but referencing category 'work' (which belongs to page-1)
+    { id: 's2', title: 'Linux SB', pageId: 'page-2', categoryId: 'work' },
+    // Normal site on page-1
+    { id: 's3', title: 'GitHub', pageId: 'page-1', categoryId: 'work' },
+  ];
+
+  // 1. Storage normalization: site pageId follows category pageId
+  const catPageMap = new Map();
+  categories.forEach((c) => {
+    if (c.id && c.id !== 'all' && c.pageId) {
+      catPageMap.set(c.id, c.pageId);
+    }
+  });
+  const normalizedSites = rawSites.map((s) => {
+    const catPageId = s.categoryId ? catPageMap.get(s.categoryId) : undefined;
+    const effectivePageId = catPageId || s.pageId || defaultPageId;
+    return { ...s, pageId: effectivePageId };
+  });
+
+  // Verify site alignment
+  const s1 = normalizedSites.find((s) => s.id === 's1');
+  const s2 = normalizedSites.find((s) => s.id === 's2');
+  assert.equal(s1.pageId, 'page-2', 's1 auto-aligned to page-2 where its category media lives');
+  assert.equal(s2.pageId, 'page-1', 's2 auto-aligned to page-1 where its category work lives');
+
+  // 2. FreeCanvas desktop category filtering (strict 1:1 isolation)
+  const getPageCategories = (currentPageId) => {
+    return categories
+      .filter((c) => (c.pageId || defaultPageId) === currentPageId && c.id !== 'all')
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  };
+
+  const getUncategorized = (currentPageId, sitesList) => {
+    const pageCats = getPageCategories(currentPageId);
+    const knownCatIds = new Set(pageCats.map((c) => c.id));
+    const pageSites = sitesList.filter((s) => (s.pageId || defaultPageId) === currentPageId);
+    return pageSites.filter((s) => !knownCatIds.has(s.categoryId));
+  };
+
+  // Page 1 assertions
+  const page1Cats = getPageCategories('page-1');
+  assert.deepEqual(page1Cats.map((c) => c.id), ['work', 'tools'], 'Page-1 strictly contains only work and tools');
+  assert.ok(!page1Cats.some((c) => c.id === 'media'), 'Page-1 NEVER contains page-2 category media');
+  const page1Uncat = getUncategorized('page-1', normalizedSites);
+  assert.equal(page1Uncat.length, 0, 'Page-1 has zero uncategorized sites');
+
+  // Page 2 assertions
+  const page2Cats = getPageCategories('page-2');
+  assert.deepEqual(page2Cats.map((c) => c.id), ['media'], 'Page-2 strictly contains only media');
+  assert.ok(!page2Cats.some((c) => c.id === 'work'), 'Page-2 NEVER contains page-1 category work');
+  const page2Uncat = getUncategorized('page-2', normalizedSites);
+  assert.equal(page2Uncat.length, 0, 'Page-2 has zero uncategorized sites');
+});

@@ -448,17 +448,23 @@ export async function loadAppState(targetProfileId?: ProfileId): Promise<AppStat
     ? currentProfile.activeGridPageId
     : effectiveGridPages[0]?.id) || 'page-1';
 
-  const normalizedSites = (currentProfile.sites || []).map((s) => {
-    if (!s.pageId || !validPageIds.has(s.pageId)) {
-      return { ...s, pageId: fallbackPageId };
-    }
-    return s;
-  });
   const normalizedCategories = (currentProfile.categories || []).map((c) => {
     if (!c.pageId || !validPageIds.has(c.pageId)) {
       return { ...c, pageId: fallbackPageId };
     }
     return c;
+  });
+  const categoryPageMap = new Map<string, string>();
+  normalizedCategories.forEach((c) => {
+    if (c.id && c.id !== 'all' && c.pageId) {
+      categoryPageMap.set(c.id, c.pageId);
+    }
+  });
+
+  const normalizedSites = (currentProfile.sites || []).map((s) => {
+    const catPageId = s.categoryId ? categoryPageMap.get(s.categoryId) : undefined;
+    const effectivePageId = catPageId || (s.pageId && validPageIds.has(s.pageId) ? s.pageId : fallbackPageId);
+    return { ...s, pageId: effectivePageId };
   });
 
   return {
@@ -900,17 +906,23 @@ export async function importData(
           const validGridPageIds = new Set(restoredPages.map((page: GridPage) => page.id));
           const fallbackPageId = isValidPage ? preferredPageId : (restoredPages[0]?.id || 'page-1');
 
-          const normalizedSites = p.sites.map((s: SiteItem) => {
-            if (!s.pageId || !validGridPageIds.has(s.pageId)) {
-              return { ...s, pageId: fallbackPageId };
-            }
-            return s;
-          });
           const normalizedCats = p.categories.map((c: Category) => {
             if (!c.pageId || !validGridPageIds.has(c.pageId)) {
               return { ...c, pageId: fallbackPageId };
             }
             return c;
+          });
+          const catPageMap = new Map<string, string>();
+          normalizedCats.forEach((c: Category) => {
+            if (c.id && c.id !== 'all' && c.pageId) {
+              catPageMap.set(c.id, c.pageId);
+            }
+          });
+
+          const normalizedSites = p.sites.map((s: SiteItem) => {
+            const catPageId = s.categoryId ? catPageMap.get(s.categoryId) : undefined;
+            const effectivePageId = catPageId || (s.pageId && validGridPageIds.has(s.pageId) ? s.pageId : fallbackPageId);
+            return { ...s, pageId: effectivePageId };
           });
 
           updatedProfiles[destId] = {
@@ -977,17 +989,23 @@ export async function importData(
       const validGridPageIds = new Set(restoredPages.map((page: GridPage) => page.id));
       const fallbackPageId = isValidPage ? preferredPageId : (restoredPages[0]?.id || 'page-1');
 
-      const normalizedSites = (data.sites || []).map((s: SiteItem) => {
-        if (!s.pageId || !validGridPageIds.has(s.pageId)) {
-          return { ...s, pageId: fallbackPageId };
-        }
-        return s;
-      });
       const normalizedCats = newCats.map((c: Category) => {
         if (!c.pageId || !validGridPageIds.has(c.pageId)) {
           return { ...c, pageId: fallbackPageId };
         }
         return c;
+      });
+      const catPageMap = new Map<string, string>();
+      normalizedCats.forEach((c: Category) => {
+        if (c.id && c.id !== 'all' && c.pageId) {
+          catPageMap.set(c.id, c.pageId);
+        }
+      });
+
+      const normalizedSites = (data.sites || []).map((s: SiteItem) => {
+        const catPageId = s.categoryId ? catPageMap.get(s.categoryId) : undefined;
+        const effectivePageId = catPageId || (s.pageId && validGridPageIds.has(s.pageId) ? s.pageId : fallbackPageId);
+        return { ...s, pageId: effectivePageId };
       });
 
       return {

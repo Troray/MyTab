@@ -19,6 +19,7 @@ type ElementTarget =
   | 'date'
   | 'greeting'
   | 'search'
+  | 'tabs'
   | 'cards'
   | 'boardTitle'
   | 'boardText'
@@ -102,6 +103,7 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
     if (layout === 'grid') {
       return [
         ...common,
+        { id: 'tabs', labelKey: 'textColorTargetTabs' },
         { id: 'cards', labelKey: 'textColorTargetCards' },
       ];
     }
@@ -161,6 +163,7 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
     if (target === 'date') return customColors.date || defaultColor;
     if (target === 'greeting') return customColors.greeting || defaultColor;
     if (target === 'search') return customColors.search || defaultColor;
+    if (target === 'tabs') return customColors.tabs || defaultColor;
     if (target === 'cards') return customColors.cards || defaultColor;
     if (target === 'boardTitle') return customColors.boardTitle || defaultColor;
     if (target === 'boardText') return customColors.boardText || defaultColor;
@@ -185,6 +188,7 @@ export const TextColorCustomizer: React.FC<TextColorCustomizerProps> = ({
         search: hex,
       };
       if (selectedLayout === 'grid') {
+        updates.tabs = hex;
         updates.cards = hex;
       } else if (selectedLayout === 'board') {
         updates.boardTitle = hex;
