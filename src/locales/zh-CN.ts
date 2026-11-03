@@ -367,7 +367,7 @@ export const zhCN: Translation = {
   textColorTargetDate: "日期",
   textColorTargetGreeting: "问候语",
   textColorTargetSearch: "搜索栏",
-  textColorTargetTabs: "分类标签",
+  textColorTargetTabs: "分类标题",
   textColorTargetCards: "快捷卡片",
   textColorAutoHint: "已开启智能自适应，随壁纸明暗自动调色",
   textColorWysiwygHint: "所见即所得，背景文字正在实时响应变色",

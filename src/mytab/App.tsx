@@ -612,9 +612,23 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
     let updatedSites: SiteItem[];
     const now = Date.now();
 
+    const targetCat = siteData.categoryId && siteData.categoryId !== 'all'
+      ? categories.find((c) => c.id === siteData.categoryId)
+      : undefined;
+    const targetCatPageId = targetCat?.pageId && gridPages.some((p) => p.id === targetCat.pageId)
+      ? targetCat.pageId
+      : undefined;
+
     if (editingSite) {
       updatedSites = sites.map((s) =>
-        s.id === editingSite.id ? ({ ...s, ...siteData, updatedAt: now } as SiteItem) : s
+        s.id === editingSite.id
+          ? ({
+              ...s,
+              ...siteData,
+              ...(targetCatPageId ? { pageId: targetCatPageId } : {}),
+              updatedAt: now,
+            } as SiteItem)
+          : s
       );
     } else {
       const fallbackCatId =
@@ -631,7 +645,7 @@ export const App: React.FC<{ initialState?: AppState }> = ({ initialState }) => 
         iconBgType: siteData.iconBgType,
         iconBgColor: siteData.iconBgColor,
         categoryId: siteData.categoryId || fallbackCatId,
-        pageId: siteData.pageId || activeGridPageId || defaultPageId,
+        pageId: targetCatPageId || siteData.pageId || activeGridPageId || defaultPageId,
         sortOrder: sites.length,
         createdAt: now,
         updatedAt: now,

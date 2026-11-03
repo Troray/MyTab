@@ -370,7 +370,7 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
     return sites.filter((s) => (s.pageId || defaultPageId) === currentPageId);
   }, [sites, defaultPageId, currentPageId]);
 
-  // Categories belonging to current desktop page
+  // Categories belonging to current desktop page (strictly 1:1 desktop isolation: one category only belongs to one desktop)
   const pageCategories = useMemo(() => {
     return categories
       .filter((c) => (c.pageId || defaultPageId) === currentPageId && c.id !== 'all')
@@ -713,7 +713,11 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
       const currentSites = sites.filter((s) => (s.pageId || defaultPageId) === pageId);
       const currentCategories = categories.filter((c) => (c.pageId || defaultPageId) === pageId && c.id !== 'all');
       const validSiteKeys = new Set(currentSites.map((s) => `site-${s.id}`));
-      const validPillKeys = new Set(currentCategories.map((c) => `cat-pill-${c.id}`));
+      const validPillKeys = new Set<string>([
+        'cat-pill-all',
+        'cat-pill-uncategorized',
+        ...currentCategories.map((c) => `cat-pill-${c.id}`),
+      ]);
 
       nodes.forEach((n) => {
         if (!n.id) return;
@@ -731,7 +735,7 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
           type: widgetType,
           x: n.x ?? 0,
           y: n.y ?? 0,
-          w: n.w ?? 4,
+          w: n.w ?? (widgetType === 'category-pill' ? 5 : 4),
           h: n.h ?? 2,
         };
       });
@@ -816,9 +820,14 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
         containerRef.current.classList.add('grid-stack-editing');
       } else {
         containerRef.current.classList.remove('grid-stack-editing');
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current);
+          saveTimeoutRef.current = null;
+          flushSaveRef.current(currentPageId);
+        }
       }
     }
-  }, [grid, isEditing]);
+  }, [grid, isEditing, currentPageId]);
 
   // Sync dynamic collision avoidance mode changes on active grid
   useLayoutEffect(() => {
@@ -953,7 +962,19 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
 
     grid.on('dragstop resizestop', debouncedSave);
 
+    const handleBeforeUnload = () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+        flushSaveRef.current(currentPageId);
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handleBeforeUnload);
+
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handleBeforeUnload);
       grid.off('resizestart');
       grid.off('resize');
       grid.off('dragstop resizestop');
@@ -1204,11 +1225,13 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
         if (dx < 0) {
           // Swipe Left -> Next desktop page
           if (currentIdx < gridPages.length - 1) {
+            flushSave(currentPageId);
             onSelectPage(gridPages[currentIdx + 1].id);
           }
         } else {
           // Swipe Right -> Previous desktop page
           if (currentIdx > 0) {
+            flushSave(currentPageId);
             onSelectPage(gridPages[currentIdx - 1].id);
           }
         }
@@ -1643,7 +1666,7 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
               y={layout.y}
               w={layout.w}
               h={layout.h}
-              minW={3}
+              minW={2}
               minH={1}
             >
               <CategoryPillWidget
@@ -1678,7 +1701,7 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
               y={layout.y}
               w={layout.w}
               h={layout.h}
-              minW={3}
+              minW={2}
               minH={2}
             >
               <SiteCard
@@ -1716,7 +1739,10 @@ export const FreeCanvas: React.FC<FreeCanvasProps> = React.memo(({
           settings={settings}
           resolvedColors={resolvedColors}
           isLight={isLight}
-          onSelectPage={onSelectPage || (() => {})}
+          onSelectPage={(targetId) => {
+            flushSave(currentPageId);
+            onSelectPage?.(targetId);
+          }}
           onAddPage={onAddPage}
           onRenamePage={onRenamePage || (() => {})}
           onDeletePage={onDeletePage || (() => {})}
